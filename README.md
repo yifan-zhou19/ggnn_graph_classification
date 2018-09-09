@@ -4,6 +4,9 @@ This is a PyTorch implementation of the Gated Graph Sequence Neural Networks (GG
 
 This is a fork form https://github.com/JamesChuanggg/ggnn.pytorch with some more details of how the data is generated and use as the input/output.
 
+- babi_data/extra_seq_tasks/generate_data.py : to generate sample data for each task to the terminal screen
+- babi_data/extra_seq_tasks/generate_10_fold_data.sh : a bash script to generate 10 fold data from the generate_data.py above
+
 <img src="images/ggnn.png">    
 
 ## What is GGNN?
