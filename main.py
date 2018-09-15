@@ -24,6 +24,8 @@ parser.add_argument('--lr', type=float, default=0.01, help='learning rate')
 parser.add_argument('--cuda', action='store_true', help='enables cuda')
 parser.add_argument('--verbal', type=bool, default=False, help='print training info or not')
 parser.add_argument('--manualSeed', type=int, help='manual seed')
+parser.add_argument('--n_classes', type=int, default=10, help='manual seed')
+
 
 opt = parser.parse_args()
 print(opt)
@@ -72,8 +74,7 @@ def main(opt):
 
 # This part is the implementation to illustrate Graph-Level output from program data
 def main2(opt):
-    opt.n_classes = 20
-
+   
     train_dataset = bAbIDataset2(opt.directory, True, opt.n_classes)
     train_dataloader = bAbIDataloader(train_dataset, batch_size=opt.batchSize, \
                                       shuffle=True, num_workers=0)
