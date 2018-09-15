@@ -16,7 +16,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--task_id', type=int, default=4, help='bAbI task id')
 parser.add_argument('--question_id', type=int, default=0, help='question types')
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=2)
-parser.add_argument('--batchSize', type=int, default=1, help='input batch size')
+parser.add_argument('--batchSize', type=int, default=32, help='input batch size')
 parser.add_argument('--state_dim', type=int, default=10, help='GGNN hidden state size')
 parser.add_argument('--n_steps', type=int, default=5, help='propogation steps number of GGNN')
 parser.add_argument('--niter', type=int, default=150, help='number of epochs to train for')
@@ -35,7 +35,6 @@ random.seed(opt.manualSeed)
 torch.manual_seed(opt.manualSeed)
 
 opt.dataroot = 'babi_data/processed_1/train/%d_graphs.txt' % opt.task_id
-
 opt.directory = "program_data/babi_format"
 
 if opt.cuda:
@@ -73,11 +72,13 @@ def main(opt):
 
 # This part is the implementation to illustrate Graph-Level output from program data
 def main2(opt):
-    train_dataset = bAbIDataset2(opt.directory, True)
+    opt.n_classes = 20
+
+    train_dataset = bAbIDataset2(opt.directory, True, opt.n_classes)
     train_dataloader = bAbIDataloader(train_dataset, batch_size=opt.batchSize, \
                                       shuffle=True, num_workers=0)
 
-    test_dataset = bAbIDataset2(opt.directory, False)
+    test_dataset = bAbIDataset2(opt.directory, False, opt.n_classes)
     test_dataloader = bAbIDataloader(test_dataset, batch_size=opt.batchSize, \
                                      shuffle=True, num_workers=2)
 

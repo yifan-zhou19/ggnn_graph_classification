@@ -28,12 +28,12 @@ def load_graphs_from_file(file_name):
     # print(data_list)
     return data_list
 
-def load_program_graphs_from_directory(directory,is_train=True):
+def load_program_graphs_from_directory(directory,is_train=True,n_classes=3):
     data_list = []
     edge_list = []
     target_list = []
     
-    for i in range(1,3):
+    for i in range(1,n_classes):
 
         if is_train == True:
             path =  os.path.join(directory,"train", "train_" + str(i) + ".txt")
@@ -126,7 +126,6 @@ def data_convert(data_list, n_annotation_dim):
         edge_list = item[0]
         target_list = item[1]
         for target in target_list:
-            print(target_list)
             task_type = target[0]
             task_output = target[-1]
             annotation = np.zeros([n_nodes, n_annotation_dim])
@@ -145,8 +144,12 @@ def data_convert_for_program_data(data_list, n_annotation_dim):
         for target in target_list:
             task_type = target[0]
             task_output = target[-1]
-            annotation = np.zeros([n_nodes, n_annotation_dim])
-            # annotation[target[1]-1][0] = 0
+            annotation = np.zeros([n_nodes, n_annotation_dim])   
+            for edge in edge_list:
+                src_idx = edge[0]
+                # print(src_idx)
+                annotation[src_idx-1][0] = 1
+          
             task_data_list.append([edge_list, annotation, task_output])
     return task_data_list
 
@@ -196,7 +199,7 @@ class bAbIDataset():
             self.data = all_task_val_data[question_types]
 
     def __getitem__(self, index):
-        print(self.data[index])
+        # print(self.data[index])
         
         am = create_adjacency_matrix(self.data[index][0], self.n_node, self.n_edge_types)
         annotation = self.data[index][1]
@@ -208,9 +211,9 @@ class bAbIDataset():
 
 class bAbIDataset2():
    
-    def __init__(self, path, is_train):
+    def __init__(self, path, is_train, n_classes):
        
-        all_data = load_program_graphs_from_directory(path,is_train)
+        all_data = load_program_graphs_from_directory(path,is_train,n_classes)
         all_data = np.array(all_data)[0:len(all_data)]
        
         if is_train == True:
@@ -218,7 +221,7 @@ class bAbIDataset2():
         else:
             print("Number of all testing data : " + str(len(all_data)))
         self.n_edge_types =  find_max_edge_id(all_data)
-        print("Edge types : " + str(self.n_edge_types))
+        # print("Edge types : " + str(self.n_edge_types))
         self.n_tasks = find_max_task_id(all_data)
         # self.n_node = find_max_node_id(all_data)
         self.n_node = 48

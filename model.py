@@ -74,6 +74,7 @@ class GGNN(nn.Module):
         self.n_edge_types = opt.n_edge_types
         self.n_node = opt.n_node
         self.n_steps = opt.n_steps
+        self.n_classes = opt.n_classes
 
         for i in range(self.n_edge_types):
             # incoming and outgoing edge embedding
@@ -93,14 +94,22 @@ class GGNN(nn.Module):
             nn.Linear(self.state_dim, self.state_dim),
             nn.Tanh(),
             nn.Linear(self.state_dim, 1),
-            nn.Tanh()
+            nn.Tanh(),   
+        )
+
+        self.class_prediction = nn.Sequential(
+            nn.Linear(self.n_node, 100),
+            nn.Tanh(),
+            nn.Linear(100, self.n_classes),
+            nn.Softmax()    
         )
 
         self.soft_attention = nn.Sequential(
             nn.Linear(self.state_dim, self.state_dim),
             nn.Tanh(),
             nn.Linear(self.state_dim, 1),
-            nn.Sigmoid()
+            nn.Sigmoid(),
+           
         )
 
 
@@ -141,10 +150,16 @@ class GGNN(nn.Module):
         soft_attention_ouput = self.soft_attention(prop_state)
 
         output = output + soft_attention_ouput
+
+    
         # print("&&&&&")
         # print(output)
         # print(output.shape)
         output = output.sum(2)
+        # print("JAPS{DJPS")
+        # print(output.shape)
+        output = self.class_prediction(output)
+        # print(output)
         # print("#####")
         # print(output)
         # print(output.shape)

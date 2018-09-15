@@ -24,9 +24,9 @@ def train(epoch, dataloader, net, criterion, optimizer, opt):
         adj_matrix = Variable(adj_matrix)
         annotation = Variable(annotation)
         target = Variable(target)
-
+        # print(target)
         output = net(init_input, annotation, adj_matrix)
-
+        # print(output)
         
         # print("---------------------------")
         # print("Prop state shape : " + str(output.shape))
