@@ -33,7 +33,7 @@ def load_program_graphs_from_directory(directory,is_train=True,n_classes=3):
     edge_list = []
     target_list = []
     
-    for i in range(1,n_classes):
+    for i in range(1,(n_classes+1)):
 
         if is_train == True:
             path =  os.path.join(directory,"train", "train_" + str(i) + ".txt")
