@@ -6,7 +6,9 @@ def test(dataloader, net, criterion, optimizer, opt):
     correct = 0
     net.eval()
     for i, (adj_matrix, annotation, target) in enumerate(dataloader, 0):
+        # print("Testing....")
         padding = torch.zeros(len(annotation), opt.n_node, opt.state_dim - opt.annotation_dim).double()
+        # print(padding.shape)
         init_input = torch.cat((annotation, padding), 2)
         if opt.cuda:
             init_input = init_input.cuda()
@@ -18,11 +20,12 @@ def test(dataloader, net, criterion, optimizer, opt):
         adj_matrix = Variable(adj_matrix)
         annotation = Variable(annotation)
         target = Variable(target)
-
+        # print(target)
         output = net(init_input, annotation, adj_matrix)
 
         test_loss += criterion(output, target).data[0]
         pred = output.data.max(1, keepdim=True)[1]
+        # print(pred)
 
         correct += pred.eq(target.data.view_as(pred)).cpu().sum()
 

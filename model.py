@@ -90,10 +90,19 @@ class GGNN(nn.Module):
 
         # Output Model
         self.out = nn.Sequential(
-            nn.Linear(self.state_dim + self.annotation_dim, self.state_dim),
+            nn.Linear(self.state_dim, self.state_dim),
             nn.Tanh(),
-            nn.Linear(self.state_dim, 1)
+            nn.Linear(self.state_dim, 1),
+            nn.Tanh()
         )
+
+        self.soft_attention = nn.Sequential(
+            nn.Linear(self.state_dim, self.state_dim),
+            nn.Tanh(),
+            nn.Linear(self.state_dim, 1),
+            nn.Sigmoid()
+        )
+
 
         self._initialization()
 
@@ -117,9 +126,26 @@ class GGNN(nn.Module):
 
             prop_state = self.propogator(in_states, out_states, prop_state, A)
 
-        join_state = torch.cat((prop_state, annotation), 2)
+       
+        # print("Annotation shape : " + str(annotation.shape))
+        # print("----------------------")
+        # print(prop_state)
 
-        output = self.out(join_state)
+        # print("*****")
+        # join_state = torch.cat((prop_state, annotation), 2)
+        # print(join_state)
+        # print(join_state.shape)
+        output = self.out(prop_state)
+
+
+        soft_attention_ouput = self.soft_attention(prop_state)
+
+        output = output + soft_attention_ouput
+        # print("&&&&&")
+        # print(output)
+        # print(output.shape)
         output = output.sum(2)
-
+        # print("#####")
+        # print(output)
+        # print(output.shape)
         return output
