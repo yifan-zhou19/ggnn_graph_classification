@@ -18,25 +18,12 @@ def train(epoch, dataloader, net, criterion, optimizer, opt):
             annotation = annotation.cuda()
             target = target.cuda()
 
-        # print(init_input)
-        # print(init_input.shape)
         init_input = Variable(init_input)
         adj_matrix = Variable(adj_matrix)
         annotation = Variable(annotation)
         target = Variable(target)
-        # print(target)
         output = net(init_input, annotation, adj_matrix)
-        # print(output)
-        
-        # print("---------------------------")
-        # print("Prop state shape : " + str(output.shape))
-        # print(output)
-
-        # print(annotation)
-
-        # print("target shape : " + str(target.shape))
-        # print("Target : " + str(target))
-
+       
         loss = criterion(output, target)
 
         loss.backward()
@@ -45,6 +32,7 @@ def train(epoch, dataloader, net, criterion, optimizer, opt):
         if i % int(len(dataloader) / 10 + 1) == 0 and opt.verbal:
             print('[%d/%d][%d/%d] Loss: %.4f' % (epoch, opt.niter, i, len(dataloader), loss.data[0]))
 
+    torch.save(net, opt.model_path)
 
 def train_graph_level(epoch, dataloader, net, criterion, optimizer, opt):
     net.train()

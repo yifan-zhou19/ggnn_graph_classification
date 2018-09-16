@@ -98,9 +98,9 @@ class GGNN(nn.Module):
         )
 
         self.class_prediction = nn.Sequential(
-            nn.Linear(self.n_node, 100),
+            nn.Linear(self.n_node, 50),
             nn.Tanh(),
-            nn.Linear(100, self.n_classes),
+            nn.Linear(50, self.n_classes),
             nn.Softmax()    
         )
 
@@ -136,31 +136,13 @@ class GGNN(nn.Module):
             prop_state = self.propogator(in_states, out_states, prop_state, A)
 
        
-        # print("Annotation shape : " + str(annotation.shape))
-        # print("----------------------")
-        # print(prop_state)
-
-        # print("*****")
-        # join_state = torch.cat((prop_state, annotation), 2)
-        # print(join_state)
-        # print(join_state.shape)
         output = self.out(prop_state)
 
 
         soft_attention_ouput = self.soft_attention(prop_state)
-
-        output = output + soft_attention_ouput
-
-    
-        # print("&&&&&")
-        # print(output)
-        # print(output.shape)
+        # Element wise hadamard product to get the graph representation, check Equation 7 in GGNN paper for more details
+        output = torch.mul(output,soft_attention_ouput)
         output = output.sum(2)
-        # print("JAPS{DJPS")
-        # print(output.shape)
         output = self.class_prediction(output)
         # print(output)
-        # print("#####")
-        # print(output)
-        # print(output.shape)
         return output

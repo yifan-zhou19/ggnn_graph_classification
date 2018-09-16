@@ -28,10 +28,8 @@ def load_graphs_from_file(file_name):
     # print(data_list)
     return data_list
 
-def load_program_graphs_from_directory(directory,is_train=True,n_classes=3):
+def load_program_graphs_from_directory(directory,is_train=True,n_classes=3, data_percentage=1):
     data_list = []
-    edge_list = []
-    target_list = []
     
     for i in range(1,(n_classes+1)):
 
@@ -39,34 +37,37 @@ def load_program_graphs_from_directory(directory,is_train=True,n_classes=3):
             path =  os.path.join(directory,"train", "train_" + str(i) + ".txt")
         else:
             path =  os.path.join(directory,"test","test_" + str(i) + ".txt")
-        try:
-            label = i
-            with open(path,'r') as f:
-                for line in f:
+        # print(path)
+        label = i
+        data_list_class_i = []
+        edge_list_class_i = []
+        target_list_class_i = []
+
+        with open(path,'r') as f:
+            for line in f: 
+                if len(line.strip()) == 0:
+
+                    data_list_class_i.append([edge_list_class_i,target_list_class_i])
+                    edge_list_class_i = []
+                    target_list_class_i = []
+                else:
+                    digits = []
+                    line_tokens = line.split(" ")
                     
-                    if len(line.strip()) == 0:
+                    if line_tokens[0] == "?":
 
-                        data_list.append([edge_list,target_list])
-                        edge_list = []
-                        target_list = []
+                        target_list_class_i.append([label])
                     else:
-                        digits = []
-                        line_tokens = line.split(" ")
-                        
-                        if line_tokens[0] == "?":
+                        for j in range(len(line_tokens)):
+                            digits.append(int(line_tokens[j]))
+                        edge_list_class_i.append(digits)
 
-                            # for i in range(1, len(line_tokens)):
-                                # digits.append(int(line_tokens[i]))
-                            # target_list.append(digits)
-                          
-                            target_list.append([label])
-                        else:
-                            for j in range(len(line_tokens)):
-                                digits.append(int(line_tokens[j]))
-                            edge_list.append(digits)
-        except Exception as e:
-            print(e)
-    # print(data_list)
+        if data_percentage != 1:
+            slicing = int(len(data_list_class_i)*data_percentage)
+            data_list_class_i = data_list_class_i[:slicing]
+
+        data_list.extend(data_list_class_i)
+
     return data_list
 
 def find_max_edge_id(data_list):
@@ -135,7 +136,7 @@ def data_convert(data_list, n_annotation_dim):
 
 def data_convert_for_program_data(data_list, n_annotation_dim):
     # n_nodes = find_max_node_id(data_list)
-    n_nodes = 48
+    n_nodes = 50
     task_data_list = []
  
     for item in data_list:
@@ -211,9 +212,9 @@ class bAbIDataset():
 
 class bAbIDataset2():
    
-    def __init__(self, path, is_train, n_classes):
+    def __init__(self, path, is_train, n_classes=3,data_percentage=1):
        
-        all_data = load_program_graphs_from_directory(path,is_train,n_classes)
+        all_data = load_program_graphs_from_directory(path,is_train,n_classes,data_percentage)
         all_data = np.array(all_data)[0:len(all_data)]
        
         if is_train == True:
@@ -224,7 +225,7 @@ class bAbIDataset2():
         # print("Edge types : " + str(self.n_edge_types))
         self.n_tasks = find_max_task_id(all_data)
         # self.n_node = find_max_node_id(all_data)
-        self.n_node = 48
+        self.n_node = 50
         
         all_data = data_convert_for_program_data(all_data,1)
 
