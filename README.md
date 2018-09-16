@@ -1,4 +1,4 @@
-# A PyTorch Implementation of GGNN
+# A PyTorch Implementation of GGNN for Graph Classification task
 
 This is a PyTorch implementation of the Gated Graph Sequence Neural Networks (GGNN) as described in the paper [Gated Graph Sequence Neural Networks](https://arxiv.org/abs/1511.05493) by Y. Li, D. Tarlow, M. Brockschmidt, and R. Zemel.
 
