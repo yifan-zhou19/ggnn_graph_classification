@@ -2,7 +2,7 @@
 
 This is a PyTorch implementation of the Gated Graph Sequence Neural Networks (GGNN) as described in the paper [Gated Graph Sequence Neural Networks](https://arxiv.org/abs/1511.05493) by Y. Li, D. Tarlow, M. Brockschmidt, and R. Zemel.
 
-This implementation focuses on the Graph Level output, which haven't been exploiting from the other code base. In concrete, we focus the Graph Classification task, which requires the Graph Level output to be implemented. 
+This implementation focuses on the Graph Level output, which hasn't been exploiting from the other code base. In concrete, we focus the Graph Classification task, which requires the Graph Level output to be implemented. 
 
 We took the dataset of 104 programming problems, which comprises of 52000 cpp files and parse the cpp file into the graph representation based on the details of the paper [Learning to Represent Programs with Graphs](https://arxiv.org/abs/1711.00740).
 
