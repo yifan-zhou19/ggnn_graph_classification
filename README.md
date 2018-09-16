@@ -1,11 +1,10 @@
 # A PyTorch Implementation of GGNN
 
-This is a PyTorch implementation of the Gated Graph Sequence Neural Networks (GGNN) as described in the paper [Gated Graph Sequence Neural Networks](https://arxiv.org/abs/1511.05493) by Y. Li, D. Tarlow, M. Brockschmidt, and R. Zemel. This implementation gets 100% accuracy on node-selection bAbI task 4, 15, and 16. Their official implementation are available in the [yujiali/ggnn](https://github.com/yujiali/ggnn) repo on GitHub.
+This is a PyTorch implementation of the Gated Graph Sequence Neural Networks (GGNN) as described in the paper [Gated Graph Sequence Neural Networks](https://arxiv.org/abs/1511.05493) by Y. Li, D. Tarlow, M. Brockschmidt, and R. Zemel.
 
-This is a fork form https://github.com/JamesChuanggg/ggnn.pytorch with some more details of how the data is generated and use as the input/output.
+This implementation focuses on the Graph Level output, which haven't been exploiting from the other code base. In concrete, we focus the Graph Classification task, which requires the Graph Level output to be implemented. 
 
-- babi_data/extra_seq_tasks/generate_data.py : to generate sample data for each task to the terminal screen
-- babi_data/extra_seq_tasks/generate_10_fold_data.sh : a bash script to generate 10 fold data from the generate_data.py above
+We took the dataset of 104 programming problems, which comprises of 52000 cpp files and parse the cpp file into the graph representation based on the details of the paper [Learning to Represent Programs with Graphs](https://arxiv.org/abs/1711.00740).
 
 <img src="images/ggnn.png">    
 
@@ -22,39 +21,10 @@ This is a fork form https://github.com/JamesChuanggg/ggnn.pytorch with some more
 ## Run 
 Train and test the GGNN:
 ```
-python main.py --cuda (use GPUs or not)
+python3 main.py --cuda (use GPUs or not)
 ```
-
-Suggesting configurations for each task:
-```
-# task 4
-python main.py --task_id 4 --state_dim 4 --niter 10
-# task 15
-python main.py --task_id 15 --state_dim 5 --niter 10
-# task 16
-python main.py --task_id 16 --state_dim 10 --niter 150
-```
-
-## Results
-I followed the paper, randomly picking only 50 training examples for training.
-Performances are evaluated on 50 random validation examples.
-
-| bAbI Task | Performance |
-| ------| ------ | 
-| 4 | 100% | 
-| 15 | 100% |
-| 16 | 100% |
-
-Here's an example of bAbI deduction task (task 15)
-
-<img src="images/babi15.png" width=700>
-
-## Disclaimer
-The data processing codes are from official implementation [yujiali/ggnn](https://github.com/yujiali/ggnn).
-
-## TODO 
-- [ ] GraphLevel Output
 
 ## References
 - [Gated Graph Sequence Neural Networks](https://arxiv.org/abs/1511.05493), ICLR 2016
 - [yujiali/ggnn](https://github.com/yujiali/ggnn)
+- [Learning to Represent Programs with Graphs](https://arxiv.org/abs/1711.00740), ICLR 2018
