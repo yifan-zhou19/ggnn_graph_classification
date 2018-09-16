@@ -15,7 +15,7 @@ We took the dataset of 104 programming problems, which comprises of 52000 cpp fi
 - An output model to make predictions on nodes
 
 ## Requirements
-- python==2.7
+- python==3.6
 - PyTorch>=0.2
 
 ## Run 
