@@ -1,0 +1,75 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	/**
+	 * ? ? ?????
+	 * ?    ?????
+	 * ????: 2010?11?12?
+	 * ???????A?B?C????????????????????
+	*/
+	public static int Main()
+	{
+		int A; //??3?????
+		int B;
+		int C;
+		int As; //??3?????
+		int Bs;
+		int Cs;
+		int Al; //?????????
+		int Bl;
+		int Cl;
+		for (A = 1; A <= 3; A++)
+		{
+			for (B = 1; B <= 3; B++)
+			{
+				for (C = 1; C <= 3; C++)
+				{
+			As = (B > A) + (C == A); //A???
+			Bs = (A > B) + (A > C); //B???
+					  Cs = (C > B) + (B > A); //C???
+			if (!(A <= B != 0 && As <= Bs != 0 || A <= C != 0 && As <= Cs != 0 || B <= A != 0 && Bs <= As != 0 || B <= C != 0 && Bs <= Cs != 0 || C <= A != 0 && Cs <= As != 0 || C <= B != 0 && Cs <= Bs))
+			{ //?????????????????
+												 Al = A; //???????????????????????????????????????
+						Bl = B;
+						Cl = C;
+			}
+				}
+			}
+		}
+		if (Al >= Bl != 0 && Bl >= Cl) //????????3???
+		{
+			System.out.print("ABC");
+			System.out.print("\n");
+		}
+		if (Al >= Cl != 0 && Cl >= Bl)
+		{
+			System.out.print("BCA");
+			System.out.print("\n");
+		}
+		if (Bl >= Al != 0 && Al >= Cl)
+		{
+			System.out.print("BAC");
+			System.out.print("\n");
+		}
+		if (Bl >= Cl != 0 && Cl >= Al)
+		{
+			System.out.print("BCA");
+			System.out.print("\n");
+		}
+		if (Cl >= Al != 0 && Al >= Bl)
+		{
+			System.out.print("CAB");
+			System.out.print("\n");
+		}
+		if (Cl >= Bl != 0 && Bl >= Al)
+		{
+			System.out.print("CBA");
+			System.out.print("\n");
+		}
+		return 0;
+	}
+
+
+
+}
