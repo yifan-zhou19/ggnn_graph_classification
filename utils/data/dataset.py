@@ -135,8 +135,8 @@ def data_convert(data_list, n_annotation_dim):
     return task_data_list
 
 def data_convert_for_program_data(data_list, n_annotation_dim):
-    # n_nodes = find_max_node_id(data_list)
-    n_nodes = 111
+    n_nodes = find_max_node_id(data_list)
+    #n_nodes = 111
     task_data_list = []
  
     for item in data_list:
@@ -224,8 +224,8 @@ class bAbIDataset2():
         self.n_edge_types =  find_max_edge_id(all_data)
         # print("Edge types : " + str(self.n_edge_types))
         self.n_tasks = find_max_task_id(all_data)
-        # self.n_node = find_max_node_id(all_data)
-        self.n_node = 111
+        self.n_node = find_max_node_id(all_data)
+        # self.n_node = 111
         
         all_data = data_convert_for_program_data(all_data,1)
 
