@@ -1,0 +1,43 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	public static int Main()
+	{
+	   int y;
+	   int m;
+	   int d;
+	   String tempVar = ConsoleInput.scanfRead();
+	   if (tempVar != null)
+	   {
+		   y = Integer.parseInt(tempVar);
+	   }
+	   String tempVar2 = ConsoleInput.scanfRead(" ");
+	   if (tempVar2 != null)
+	   {
+		   m = Integer.parseInt(tempVar2);
+	   }
+	   String tempVar3 = ConsoleInput.scanfRead(" ");
+	   if (tempVar3 != null)
+	   {
+		   d = Integer.parseInt(tempVar3);
+	   }
+	   int[] month = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30};
+	   int i;
+	   int ans;
+	   if (y % 400 == 0 || (y % 100 && y % 4 == 0))
+	   {
+		   month[2] = 29;
+	   }
+	   ans = 0;
+	   for (i = 1;i < m;i++)
+	   {
+		   ans += month[i];
+	   }
+	   ans += d;
+	   System.out.printf("%d\n",ans);
+	   return 0;
+	}
+
+}
+
