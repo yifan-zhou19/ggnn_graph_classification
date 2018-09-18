@@ -1,7 +1,10 @@
 mkdir -p babi_format
 mkdir -p protobuf_format
+rm -f maps.pkl
 #for index in {1..104}; do
-for index in {1..3}; do
-	docker run --rm -v $(pwd):/e -it yijun/fast -S -G ProgramData/$index protobuf_format/$index.fbs
-    docker run -v $(pwd):/e --entrypoint ggnn -it yijun/fast protobuf_format/$index.fbs babi_format/train/train_$index.txt babi_format/test/test_$index.txt
+for index in {3..104}; do
+    if [ ! -f protobuf_format/$index.fbs ]; then
+	    fast -S -G ProgramData/$index protobuf_format/$index.fbs
+    fi
+    ggnn protobuf_format/$index.fbs babi_format/train/train_$index.txt babi_format/test/test_$index.txt
 done
