@@ -1,6 +1,6 @@
-n_classes=3
+#n_classes=3
 #n_classes=10
-#n_classes=104
+n_classes=104
 lang=cpp
 seed=9688
 docker build -t progress progress
