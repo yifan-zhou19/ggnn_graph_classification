@@ -8,7 +8,6 @@ def train(epoch, dataloader, net, criterion, optimizer, opt):
         # print(adj_matrix)
         net.zero_grad()
 
-        padding_1 = torch.zeros(len(annotation), opt.n_node, opt.state_dim - opt.annotation_dim).double()
         padding = torch.zeros(len(annotation), opt.n_node, opt.state_dim - opt.annotation_dim).double()
         # print(padding.shape)
         init_input = torch.cat((annotation, padding), 2)
@@ -23,7 +22,7 @@ def train(epoch, dataloader, net, criterion, optimizer, opt):
         annotation = Variable(annotation)
         target = Variable(target)
         output = net(init_input, annotation, adj_matrix)
-       
+        # print(target)
         loss = criterion(output, target)
 
         loss.backward()
