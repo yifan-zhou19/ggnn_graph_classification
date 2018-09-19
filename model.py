@@ -1,5 +1,7 @@
 import torch
 import torch.nn as nn
+import torch.nn.init as init
+
 
 class AttrProxy(object):
     """
@@ -98,9 +100,9 @@ class GGNN(nn.Module):
         )
 
         self.class_prediction = nn.Sequential(
-            nn.Linear(self.n_node, 50),
+            nn.Linear(self.n_node, 100),
             nn.Tanh(),
-            nn.Linear(50, self.n_classes),
+            nn.Linear(100, self.n_classes),
             nn.Softmax()    
         )
 
@@ -118,8 +120,11 @@ class GGNN(nn.Module):
     def _initialization(self):
         for m in self.modules():
             if isinstance(m, nn.Linear):
-                m.weight.data.normal_(0.0, 0.02)
-                m.bias.data.fill_(0)
+                # m.weight.data.normal_(0.0, 0.02)
+                # m.bias.data.fill_(0)
+                init.xavier_normal_(m.weight.data)
+                if m.bias is not None:
+                    init.normal_(m.bias.data)
 
     def forward(self, prop_state, annotation, A):
         for i_step in range(self.n_steps):
