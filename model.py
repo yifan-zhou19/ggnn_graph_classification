@@ -102,7 +102,7 @@ class GGNN(nn.Module):
             nn.Linear(self.n_node, opt.n_hidden),
             nn.Tanh(),
             nn.Linear(opt.n_hidden, self.n_classes),
-            nn.Softmax()    
+            nn.Softmax(dim=0)    
         )
 
         self.soft_attention = nn.Sequential(
