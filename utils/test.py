@@ -23,7 +23,8 @@ def test(dataloader, net, criterion, optimizer, opt):
         # print(target)
         output = net(init_input, annotation, adj_matrix)
         # print(output)
-        test_loss += criterion(output, target).data[0]
+        #test_loss += criterion(output, target).data[0]
+        test_loss += criterion(output, target).item()
 
         pred = output.data.max(1, keepdim=True)[1]
         # print(pred)

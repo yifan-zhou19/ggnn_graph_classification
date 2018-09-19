@@ -4,6 +4,7 @@ from os import listdir
 from os.path import isfile, join
 import collections
 import re
+from tqdm import trange
 
 def load_graphs_from_file(file_name):
     data_list = []
@@ -50,9 +51,9 @@ def load_program_graphs_from_directory(directory,is_train=True,n_classes=3, data
            lookup[i] = join(dir_path, "train_%s.txt" % str(ordered_filenames[i-1]))
         else:
            lookup[i] = join(dir_path, "test_%s.txt" % str(ordered_filenames[i-1]))
-    for i in range(1, 1+n_classes):
+    for i in trange(1, 1+n_classes):
         path = lookup[i]
-        print(path)
+        # print(path)
         label = i
         data_list_class_i = []
         edge_list_class_i = []

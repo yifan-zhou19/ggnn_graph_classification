@@ -1,7 +1,9 @@
-n_classes=104
+n_classes=3
+#n_classes=10
+#n_classes=104
 lang=cpp
 seed=9688
-
-docker run --rm -v $(pwd):/e --shm-size 8G --rm --entrypoint bash -it pytorch/pytorch -c 'rm -f /e/model/*'
+docker build -t progress progress
+docker run --rm -v $(pwd):/e --shm-size 8G --rm --entrypoint bash -it progress -c 'rm -f /e/model/*'
 chmod a+w model
-nvidia-docker run -v $(pwd):/e -w /e --shm-size 8G --rm -it pytorch/pytorch:0.4_cuda9_cudnn7 python main.py --training --cuda --n_classes=$n_classes --train_batch_size 32 --manualSeed $seed --model_path=model/$lang-model-$n_classes.cpkl --directory=program_data/$lang_babi_format | tee $lang-log-$n_classes.txt
+nvidia-docker run -v $(pwd):/e -w /e --shm-size 8G --rm -it progress python main.py --training --cuda --n_classes=$n_classes --train_batch_size 32 --manualSeed $seed --model_path=model/$lang-model-$n_classes.cpkl --directory=program_data/"$lang"_babi_format | tee $lang-log-$n_classes.txt
