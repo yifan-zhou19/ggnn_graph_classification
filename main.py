@@ -29,6 +29,7 @@ parser.add_argument('--manualSeed', type=int, help='manual seed')
 parser.add_argument('--n_classes', type=int, default=104, help='manual seed')
 parser.add_argument('--directory', default="program_data/babi_format", help='program data')
 parser.add_argument('--model_path', default="model/model.ckpt", help='path to save the model')
+parser.add_argument('--n_hidden', type=int, default=50, help='number of hidden layers')
 parser.add_argument('--training', action="store_true",help='is training')
 parser.add_argument('--testing', action="store_true",help='is testing')
 

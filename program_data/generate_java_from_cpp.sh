@@ -1,6 +1,6 @@
 #!/bin/bash
 mkdir -p JavaProgramData
-find ProgramData -type f | while read f; do
+find CppProgramData -type f | while read f; do
    out=Java$f
    out=${out/.cpp/.java}
    txt=${out/.cpp/.txt}

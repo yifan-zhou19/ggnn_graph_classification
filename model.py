@@ -100,9 +100,9 @@ class GGNN(nn.Module):
         )
 
         self.class_prediction = nn.Sequential(
-            nn.Linear(self.n_node, 100),
+            nn.Linear(self.n_node, opt.n_hidden),
             nn.Tanh(),
-            nn.Linear(100, self.n_classes),
+            nn.Linear(opt.n_hidden, self.n_classes),
             nn.Softmax()    
         )
 
