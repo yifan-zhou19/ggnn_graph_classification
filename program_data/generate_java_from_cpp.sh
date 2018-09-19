@@ -3,8 +3,10 @@ mkdir -p JavaProgramData
 find ProgramData -type f | while read f; do
    out=Java$f
    out=${out/.cpp/.java}
-   ./"C++ to Java Converter.exe" $f $out
-   cat $out | awk '
+   txt=${out/.cpp/.txt}
+   if [ ! -f $out ]; then
+	   ./"C++ to Java Converter.exe" $f $out
+	   cat $out | awk '
 BEGIN { skip = 0 }
 /package tangible;/ {
 	skip=1
@@ -15,5 +17,7 @@ BEGIN { skip = 0 }
 	}
 }
 '  > $out.tmp
-   mv $out.tmp $out
+	   mv $out.tmp $out
+	   rm -f $txt
+   fi
 done

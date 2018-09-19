@@ -1,0 +1,54 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	//******************************
+	//* author ?? 1200012955    **
+	//* date 2012.10.29           **
+	//* description ??          **
+	//******************************
+
+	public static int Main()
+	{
+		int i; //i,j,k?????num???????????
+		int j;
+		int k;
+		int num;
+		double[] a = new double[16];
+		do //?????????
+		{
+			for (i = 0; i <= 15; i++) //??????????
+			{
+				a[i] = 0;
+			}
+			num = 0; //???num
+			for (i = 0; i <= 15; i++) //????
+			{
+				a[i] = Double.parseDouble(ConsoleInput.readToWhiteSpace(true));
+				if (a[i] == 0 || a[0] == -1) //????0?????????????????????-1???????
+				{
+					break;
+				}
+			}
+			if (a[0] == -1) //??????-1?????
+			{
+				break;
+			}
+			for (j = 0; j <= i - 1; j++)
+			{
+				for (k = j + 1; k <= i - 1; k++)
+				{
+					if (a[j] == 2 * a[k] || a[j] == a[k] / 2.0) //??????????
+					{
+						num = num + 1; //?????
+					}
+				}
+			}
+			System.out.print(num);
+			System.out.print("\n");
+		} while (1 != 0);
+
+		return 0;
+	}
+}
+
