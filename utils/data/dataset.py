@@ -1,5 +1,7 @@
 import numpy as np
 import os
+from os import listdir
+from os.path import isfile, join
 
 def load_graphs_from_file(file_name):
     data_list = []
@@ -30,14 +32,20 @@ def load_graphs_from_file(file_name):
 
 def load_program_graphs_from_directory(directory,is_train=True,n_classes=3, data_percentage=1):
     data_list = []
-    
-    for i in range(1,(n_classes+1)):
+    if is_train == True:
+            dir_path =  os.path.join(directory,"train")
+    else:
+            dir_path =  os.path.join(directory,"test")
+    i = 0
+    lookup = {}
+    for f in listdir(dir_path):
+      if isfile(join(dir_path, f)):
+        i = i + 1
+        lookup[i] = join(dir_path, f)
 
-        if is_train == True:
-            path =  os.path.join(directory,"train", "train_" + str(i) + ".txt")
-        else:
-            path =  os.path.join(directory,"test","test_" + str(i) + ".txt")
-        # print(path)
+    for i in range(1,(n_classes+1)):
+        path = lookup[i]
+        print(path)
         label = i
         data_list_class_i = []
         edge_list_class_i = []

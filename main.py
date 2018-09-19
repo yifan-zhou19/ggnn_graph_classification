@@ -27,6 +27,8 @@ parser.add_argument('--cuda', action='store_true', help='enables cuda')
 parser.add_argument('--verbal', type=bool, default=True, help='print training info or not')
 parser.add_argument('--manualSeed', type=int, help='manual seed')
 parser.add_argument('--n_classes', type=int, default=104, help='manual seed')
+parser.add_argument('--directory', default="program_data/babi_format", help='program data')
+parser.add_argument('--model_path', default="model/model.ckpt", help='path to save the model')
 parser.add_argument('--training', action="store_true",help='is training')
 parser.add_argument('--testing', action="store_true",help='is testing')
 
@@ -41,9 +43,7 @@ print("Random Seed: ", opt.manualSeed)
 random.seed(opt.manualSeed)
 torch.manual_seed(opt.manualSeed)
 
-opt.model_path = "model/model.ckpt"
 opt.dataroot = 'babi_data/processed_1/train/%d_graphs.txt' % opt.task_id
-opt.directory = "program_data/babi_format"
 
 if opt.cuda:
     torch.cuda.manual_seed_all(opt.manualSeed)
