@@ -2,6 +2,8 @@ import numpy as np
 import os
 from os import listdir
 from os.path import isfile, join
+import collections
+import re
 
 def load_graphs_from_file(file_name):
     data_list = []
@@ -36,14 +38,19 @@ def load_program_graphs_from_directory(directory,is_train=True,n_classes=3, data
             dir_path =  os.path.join(directory,"train")
     else:
             dir_path =  os.path.join(directory,"test")
-    i = 0
-    lookup = {}
+    filenames = []
     for f in listdir(dir_path):
       if isfile(join(dir_path, f)):
-        i = i + 1
-        lookup[i] = join(dir_path, f)
-
-    for i in range(1,(n_classes+1)):
+         filenames.append(f)
+    int_filenames = [int(re.search('_(.*).txt', x).group(1)) for x in filenames]
+    ordered_filenames = sorted(int_filenames)
+    lookup = {}
+    for i in range(1, 1+len(ordered_filenames)):
+        if is_train == True:
+           lookup[i] = join(dir_path, "train_%s.txt" % str(ordered_filenames[i-1]))
+        else:
+           lookup[i] = join(dir_path, "test_%s.txt" % str(ordered_filenames[i-1]))
+    for i in range(1, 1+n_classes):
         path = lookup[i]
         print(path)
         label = i
