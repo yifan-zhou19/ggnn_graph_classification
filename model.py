@@ -94,7 +94,7 @@ class GGNN(nn.Module):
         self.out = nn.Sequential(
             nn.Linear(self.state_dim, self.state_dim),
             nn.Tanh(),
-            nn.Linear(self.state_dim, 1),
+            nn.Linear(self.state_dim, 5),
             nn.Tanh(),   
         )
 
@@ -102,13 +102,13 @@ class GGNN(nn.Module):
             nn.Linear(self.n_node, opt.n_hidden),
             nn.Tanh(),
             nn.Linear(opt.n_hidden, self.n_classes),
-            nn.Softmax(dim=0)    
+            nn.Softmax(dim=1)    
         )
 
         self.soft_attention = nn.Sequential(
             nn.Linear(self.state_dim, self.state_dim),
             nn.Tanh(),
-            nn.Linear(self.state_dim, 1),
+            nn.Linear(self.state_dim, 5),
             nn.Sigmoid(),
            
         )
@@ -147,6 +147,8 @@ class GGNN(nn.Module):
         # Element wise hadamard product to get the graph representation, check Equation 7 in GGNN paper for more details
         output = torch.mul(output,soft_attention_ouput)
         output = output.sum(2)
+        # print(output)
+        # print(output)
         output = self.class_prediction(output)
         # print(output)
         return output
