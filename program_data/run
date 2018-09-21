@@ -1,0 +1,1 @@
+docker run -v $(pwd):/e -w /e --entrypoint bash --rm -it yijun/fast -c "./prepare_dataset.sh"
