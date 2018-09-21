@@ -1,10 +1,11 @@
 #!/bin/bash
 mkdir -p JavaProgramData
 find CppProgramData -type f | while read f; do
-   out=Java$f
+   out=${f/Cpp/Java}
    out=${out/.cpp/.java}
-   txt=${out/.cpp/.txt}
+   txt=${out/.java/.txt}
    if [ ! -f $out ]; then
+	   echo ./"C++ to Java Converter.exe" $f $out
 	   ./"C++ to Java Converter.exe" $f $out
 	   cat $out | awk '
 BEGIN { skip = 0 }
