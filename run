@@ -1,9 +1,19 @@
-#n_classes=3
-#n_classes=10
+n_classes=10
+n_classes=1
 n_classes=104
 lang=cpp
-seed=9688
+manualSeed=9688
+size_vocabulary=57
+n_hidden=48
+train_batch_size=128
+test_batch_size=32
+niter=1
+mem=32G
+verbal=False
+workers=16
+state_dim=5
+state_dim=3
 docker build -t progress progress
 docker run --rm -v $(pwd):/e --shm-size 8G --rm --entrypoint bash -it progress -c 'rm -f /e/model/*'
 chmod a+w model
-nvidia-docker run -v $(pwd):/e -w /e --shm-size 8G --rm -it progress python main.py --training --cuda --n_classes=$n_classes --train_batch_size 32 --manualSeed $seed --model_path=model/$lang-model-$n_classes.cpkl --directory=program_data/"$lang"_babi_format | tee $lang-log-$n_classes.txt
+/usr/bin/time -f %e nvidia-docker run -v $(pwd):/e -w /e --shm-size $mem --rm -it progress python main.py --training --cuda --niter $niter --n_classes $n_classes --state_dim $state_dim --n_hidden $n_hidden --train_batch_size $train_batch_size --test_batch_size $test_batch_size --manualSeed $manualSeed --model_path model/$lang-model-$n_classes.cpkl --directory program_data/"$lang"_babi_format --workers $workers --size_vocabulary $size_vocabulary | tee $lang-log-$n_classes.txt

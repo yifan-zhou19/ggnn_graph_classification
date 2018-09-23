@@ -24,12 +24,13 @@ parser.add_argument('--n_steps', type=int, default=5, help='propogation steps nu
 parser.add_argument('--niter', type=int, default=150, help='number of epochs to train for')
 parser.add_argument('--lr', type=float, default=0.01, help='learning rate')
 parser.add_argument('--cuda', action='store_true', help='enables cuda')
-parser.add_argument('--verbal', type=bool, default=True, help='print training info or not')
+parser.add_argument('--verbal', type=bool, default=False, help='print training info or not')
 parser.add_argument('--manualSeed', type=int, help='manual seed')
 parser.add_argument('--n_classes', type=int, default=104, help='manual seed')
 parser.add_argument('--directory', default="program_data/babi_format", help='program data')
 parser.add_argument('--model_path', default="model/model.ckpt", help='path to save the model')
 parser.add_argument('--n_hidden', type=int, default=100, help='number of hidden layers')
+parser.add_argument('--size_vocabulary', type=int, default=60, help='maximum number of node types')
 parser.add_argument('--training', action="store_true",help='is training')
 parser.add_argument('--testing', action="store_true",help='is testing')
 
@@ -85,11 +86,11 @@ def main(opt):
 # This part is the implementation to illustrate Graph-Level output from program data
 def main2(opt):
     opt.data_percentage = 1
-    train_dataset = bAbIDataset2(opt.directory, True, opt.n_classes,opt.data_percentage)
+    train_dataset = bAbIDataset2(opt, opt.directory, True, opt.n_classes,opt.data_percentage)
     train_dataloader = bAbIDataloader(train_dataset, batch_size=opt.train_batch_size, \
                                       shuffle=True, num_workers=2)
 
-    test_dataset = bAbIDataset2(opt.directory, False, opt.n_classes)
+    test_dataset = bAbIDataset2(opt, opt.directory, False, opt.n_classes)
     test_dataloader = bAbIDataloader(test_dataset, batch_size=opt.test_batch_size, \
                                      shuffle=True, num_workers=2)
 

@@ -7,6 +7,6 @@ for index in {1..104}; do
 	    fi
     fi
     if [ -f java_protobuf_format/$index.fbs ]; then
-	    ggnn java_protobuf_format/$index.fbs java_babi_format/train/train_$index.txt java_babi_format/test/test_$index.txt
+	    ggnn $MAPS java_protobuf_format/$index.fbs java_babi_format/train/train_$index.txt java_babi_format/test/test_$index.txt
     fi
 done

@@ -5,6 +5,9 @@ from os.path import isfile, join
 import collections
 import re
 from tqdm import trange
+#import pickle
+import pyarrow
+
 
 def load_graphs_from_file(file_name):
     data_list = []
@@ -150,9 +153,9 @@ def data_convert(data_list, n_annotation_dim):
             task_data_list[task_type-1].append([edge_list, annotation, task_output])
     return task_data_list
 
-def data_convert_for_program_data(data_list, n_annotation_dim):
+def data_convert_for_program_data(opt, data_list, n_annotation_dim):
     # n_nodes = find_max_node_id(data_list)
-    n_nodes = 111
+    n_nodes = opt.size_vocabulary
     task_data_list = []
  
     for item in data_list:
@@ -228,10 +231,24 @@ class bAbIDataset():
 
 class bAbIDataset2():
    
-    def __init__(self, path, is_train, n_classes=3,data_percentage=1):
+    def __init__(self, opt, path, is_train, n_classes=3,data_percentage=1):
        
-        all_data = load_program_graphs_from_directory(path,is_train,n_classes,data_percentage)
-        all_data = np.array(all_data)[0:len(all_data)]
+        if is_train:
+           saved_input_filename = "%s-%d-train.pkl" % (path, opt.n_classes)
+        else:
+           saved_input_filename = "%s-%d-test.pkl" % (path, opt.n_classes)
+        if os.path.exists(saved_input_filename): 
+           input_file = open(saved_input_filename, 'rb')
+           buf = input_file.read()
+           all_data = pyarrow.deserialize(buf)
+           input_file.close()
+        else:
+           all_data = load_program_graphs_from_directory(path,is_train,n_classes,data_percentage)
+           all_data = np.array(all_data)[0:len(all_data)]
+           buf = pyarrow.serialize(all_data).to_buffer()
+           out = pyarrow.OSFile(saved_input_filename, 'wb')
+           out.write(buf)
+           out.close()
        
         if is_train == True:
             print("Number of all training data : " + str(len(all_data)))
@@ -241,9 +258,9 @@ class bAbIDataset2():
         # print("Edge types : " + str(self.n_edge_types))
         self.n_tasks = find_max_task_id(all_data)
         # self.n_node = find_max_node_id(all_data)
-        self.n_node = 111
+        self.n_node = opt.size_vocabulary
         
-        all_data = data_convert_for_program_data(all_data,1)
+        all_data = data_convert_for_program_data(opt, all_data,1)
 
         
         self.data = all_data
