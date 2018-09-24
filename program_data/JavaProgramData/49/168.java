@@ -1,0 +1,59 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	/*
+	 *??? 
+	 *2010 - 11 - 30 
+	 *?????5 - ???? 
+	 */
+	public static int Main()
+	{
+		int fun = new int(char [], int); //????
+		String alp = new String(new char[501]);
+		alp = ConsoleInput.readToWhiteSpace(true).charAt(0);
+		int i;
+		int j;
+		int k;
+		int l;
+		l = alp.length();
+		for (i = 2; i <= l; i = i + 2) //???????????????????????????????
+		{
+			for (j = 0; j <= l - i; j++) //???????????l-i?
+			{
+				String str = new String(new char[501]);
+				for (k = 0; k < i; k++)
+				{
+					str = tangible.StringFunctions.changeCharacter(str, k, alp.charAt(k + j));
+				}
+				str = tangible.StringFunctions.changeCharacter(str, i, '\0'); //?str????????????
+				if (fun(str, i) != 0) //??????????????
+				{
+				   System.out.print(str);
+				   System.out.print("\n");
+				}
+			}
+		}
+		return 0;
+	}
+	public static int fun(String str, int a)
+	{
+		int i; //flag????????????
+		int flag = 1;
+		for (i = 0; i <= a / 2; i++)
+		{
+			if (!str[i].equals(str[a - i - 1])) //??????
+			{
+				 flag = 0; //????
+				 return 0; //??0
+				 break;
+			}
+		}
+		if (flag != 0) //?????
+		{
+		   return 1; //??1
+		}
+	}
+
+}
+

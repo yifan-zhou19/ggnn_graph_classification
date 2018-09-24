@@ -1,0 +1,37 @@
+import java.util.*;
+
+package <missing>;
+
+public class GlobalMembers
+{
+	//
+	//	?????	???????
+	//	?????	???????????????????????????????????
+	//	?????	?  ? ? ? ?? 1000012733 ?
+	//	?????	2010 ? 12 ? 10 ?
+	//
+	public static int Main()
+	{
+		String str = new String(new char[101]);
+		String p;
+		int i;
+		str = new Scanner(System.in).nextLine();
+		p = str;
+		for (i = 0; i < 101; i++)
+		{
+			if ((*(p.Substring(i)) != '\0') && (*(p.Substring(i)) != ' '))
+			{
+				System.out.print((p.Substring(i)));
+			}
+			if ((*(p.Substring(i)) == ' ') && (*(p.Substring(i) - 1) != ' '))
+			{
+				System.out.print((p.Substring(i)));
+			}
+			if (*(p.Substring(i)) == '\0')
+			{
+				break;
+			}
+		}
+		return 0;
+	}
+}

@@ -1,0 +1,51 @@
+import java.util.*;
+
+package <missing>;
+
+public class GlobalMembers
+{
+	public static int Main()
+	{
+		String word = new String(new char[100]); //??????????????
+		int i; //??????i?k????????p
+		int p = 0;
+		int k = 0;
+		while (word = new Scanner(System.in).nextLine()) //????
+		{
+			for (i = 0;i < 100;i++) //???????p
+			{
+				if (word.charAt(i) != '\0')
+				{
+					p = i;
+				}
+				else
+				{
+					break;
+				}
+
+			}
+			for (i = 0;i <= p;i++)
+			{
+				if (word.charAt(i) == ' ') //??????????????????????????????????????????????
+				{
+					if (word.charAt(i + 1) == ' ')
+					{
+						for (k = i;k <= p;k++)
+						{
+							word = tangible.StringFunctions.changeCharacter(word, k, word.charAt(k + 1));
+						}
+						i--;
+						p--;
+					}
+				}
+			}
+			for (i = 0;i <= p;i++) //?????
+			{
+				System.out.print(word.charAt(i));
+			}
+		}
+		return 0;
+
+	}
+}
+

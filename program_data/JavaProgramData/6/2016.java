@@ -1,0 +1,48 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	public static int Main()
+	{
+	int n;
+	n = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+	for (int k = 1;k <= n;k++)
+	{
+		int row;
+		int col;
+		int count = 0;
+		int i;
+		int j;
+		row = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+		col = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+		int[][] str = new int[101][101];
+		for (i = 1;i <= row;i++)
+		{
+		  for (j = 1;j <= col;j++)
+		  {
+			 *(*(str + i) + j) = ConsoleInput.readToWhiteSpace(true);
+		  }
+		}
+		for (i = 1;i <= col;i++)
+		{
+		   count = count + *(*(str + 1) + i);
+		}
+		for (i = 2;i <= row;i++)
+		{
+		   count = count + *(*(str + i) + col); //???????count
+		}
+		for (i = col - 1;i >= 1;i--)
+		{
+		   count = count + *(*(str + row) + i);
+		}
+		for (i = row - 1;i >= 2;i--)
+		{
+		   count = count + *(*(str + i) + 1);
+		}
+		System.out.print(count);
+		System.out.print("\n");
+	}
+	return 0;
+	}
+}
+

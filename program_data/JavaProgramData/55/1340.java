@@ -1,0 +1,78 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	//******************************************
+	//*???????.cpp                     **
+	//*??: ??     1100012808              **
+	//*???2011.11.13                       **
+	//******************************************
+	public static int shi(int a, String b) //???????????????????
+	{
+		int sum = 0;
+		int i = 0;
+		int f;
+		double t;
+		f = b.length(); //f?usigned int?????int
+		t = a; //t??a?????????????
+		for (i = 0; i < b.length(); i++)
+		{
+		if (b[i].compareTo('A') < 0) //????????????????
+		{
+				sum += (int)(b[i] - '0') * Math.pow(t, f - 1 - i);
+		}
+		else if (b[i].compareTo('a') < 0)
+		{
+			sum += (int)(b[i] - 'A' + 10) * Math.pow(t, f - 1 - i);
+		}
+		else
+		{
+			sum += (int)(b[i] - 'a' + 10) * Math.pow(t, f - 1 - i);
+		}
+		}
+		return sum;
+	}
+	public static void zhuanhua(int x, int y) //????????????????????
+	{
+		int i = 0;
+		int[] yu = new int[300];
+		int j = 0;
+		if (x != 0) //??????????0
+		{
+		  for (i = 0; x != 0; i++) //???????x??0
+		  {
+				yu[i] = x % y; //?????????????
+			x = x / y; //?????????
+		  }
+		}
+		else
+		{
+		 System.out.print("0");
+		 System.out.print("\n");
+		}
+		for (j = i - 1; j >= 0; j--)
+		{
+		if (yu[j] > 9) //????????9
+		{
+				System.out.print((char)(yu[j] - 10 + 'A'));
+		}
+		else
+		{
+			System.out.print(yu[j]);
+		}
+		}
+		return;
+	}
+	public static int Main() //???
+	{ //?????
+		int a;
+		int b;
+		String n = new String(new char[300]); //??????????
+		a = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+		n = ConsoleInput.readToWhiteSpace(true).charAt(0);
+		b = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+		zhuanhua(shi(a, n), b); //???????
+		return 0;
+	} //?????
+}
+

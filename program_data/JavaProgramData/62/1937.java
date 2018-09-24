@@ -1,0 +1,48 @@
+import java.util.*;
+
+package <missing>;
+
+public class GlobalMembers
+{
+	//********************************
+	//*????1.cpp                **
+	//*??????????         **
+	//*?????? 1200012834      **
+	//*???2012.11.30             **
+	//********************************
+
+
+	public static void del(String str) // ????????del
+	{
+		String p = str; // ????*p
+		int count; // count???????????
+		for (; * p != '\0'; p++) // ??????
+		{
+			if (*p == ' ' && *(p.Substring(1)) == ' ') // ????????????????
+			{
+//C++ TO JAVA CONVERTER TODO TASK: Pointer arithmetic is detected on this variable, so pointers on this variable are left unchanged:
+				char * q;
+				char temp;
+				count = 0;
+				for (q = p.Substring(1); * (q + 1) != '\0'; q++) // ??*q?p+1??????
+				{
+					temp = q;
+					*q = (q + 1);
+					*(q + 1) = temp; // ?p+1???????????
+					count++;
+				}
+				*(p.Substring(1) + count) = '\0'; // ???????????\0??
+				p = p - 1; // ??????????
+			}
+		}
+		System.out.print(str);
+	}
+
+	public static int Main()
+	{
+		String str = new String(new char[100]);
+		str = new Scanner(System.in).nextLine(); // ?????
+		del(str);
+		return 0;
+	}
+}
