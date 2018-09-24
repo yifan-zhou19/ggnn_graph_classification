@@ -7,6 +7,9 @@ import re
 from tqdm import trange
 from tqdm import *
 import random
+#import pickle
+import pyarrow
+
 
 def load_graphs_from_file(file_name):
     data_list = []
@@ -250,10 +253,24 @@ class bAbIDataset():
 
 class bAbIDataset2():
    
-    def __init__(self, path, is_train, n_classes=3,data_percentage=1):
+    def __init__(self, opt, path, is_train, n_classes=3,data_percentage=1):
        
-        all_data = load_program_graphs_from_directory(path,is_train,n_classes,data_percentage)
-        all_data = np.array(all_data)[0:len(all_data)]
+        if is_train:
+           saved_input_filename = "%s-%d-train.pkl" % (path, opt.n_classes)
+        else:
+           saved_input_filename = "%s-%d-test.pkl" % (path, opt.n_classes)
+        if os.path.exists(saved_input_filename): 
+           input_file = open(saved_input_filename, 'rb')
+           buf = input_file.read()
+           all_data = pyarrow.deserialize(buf)
+           input_file.close()
+        else:
+           all_data = load_program_graphs_from_directory(path,is_train,n_classes,data_percentage)
+           all_data = np.array(all_data)[0:len(all_data)]
+           buf = pyarrow.serialize(all_data).to_buffer()
+           out = pyarrow.OSFile(saved_input_filename, 'wb')
+           out.write(buf)
+           out.close()
        
         if is_train == True:
             print("Number of all training data : " + str(len(all_data)))
@@ -262,9 +279,8 @@ class bAbIDataset2():
         self.n_edge_types =  find_max_edge_id(all_data)
         # print("Edge types : " + str(self.n_edge_types))
         self.n_tasks = find_max_task_id(all_data)
-        potential_max_node = find_max_node_id(all_data)
-        print("Potential max node id : " + str(potential_max_node))
-        self.n_node = 60
+        # self.n_node = find_max_node_id(all_data)
+        self.n_node = opt.size_vocabulary
         
         all_data = convert_program_data(all_data,1, self.n_node)
 
