@@ -1,0 +1,53 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	//*************************************************
+	//????????                                *
+	//??????                                    *
+	//??10?8?                                     *
+	//************************************************* 
+	public static int Main()
+	{
+		//??i?n???????????n 
+		//????a?b?c???????????????i????? 
+		int i;
+		int n;
+		int[] a = new int[100];
+		int[] b = new int[100];
+		int[] c = new int[100];
+		n = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+		//?????
+		//????start??????????t?????????max?????????? 
+		int start = 0;
+		int t = 0;
+		int max = 0;
+		//???i????c[i]?1 
+		for (i = 1; i <= n; i++)
+		{
+		  a[i] = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+		  b[i] = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+		  if ((a[i] >= 90) && (a[i] <= 140) && (b[i] >= 60) && (b[i] <= 90))
+		  {
+		  c[i] = 1;
+		  }
+		}
+		//?????????????? 
+		for (i = 1; i <= n + 1; i++)
+		{
+				if (c[i] == 0)
+				{
+						t = i - start - 1;
+						start = i;
+
+				if (max < t)
+				{
+				max = t;
+				}
+				}
+		}
+		System.out.print(max);
+
+	}
+}
+

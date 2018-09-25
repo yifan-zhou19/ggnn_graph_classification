@@ -1,0 +1,47 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	public static void Main()
+	{
+		int n;
+		int i;
+		int j;
+		double[] x = new double[100];
+		double[] y = new double[100];
+		double d;
+		double max = 0;
+		String tempVar = ConsoleInput.scanfRead();
+		if (tempVar != null)
+		{
+			n = Integer.parseInt(tempVar);
+		}
+		for (i = 0;i < n;i++)
+		{
+			String tempVar2 = ConsoleInput.scanfRead();
+			if (tempVar2 != null)
+			{
+				x[i] = Double.parseDouble(tempVar2);
+			}
+			String tempVar3 = ConsoleInput.scanfRead();
+			if (tempVar3 != null)
+			{
+				y[i] = Double.parseDouble(tempVar3);
+			}
+			for (j = 0;j < i;j++)
+			{
+				d = (x[i] - x[j]) * (x[i] - x[j]) + (y[i] - y[j]) * (y[i] - y[j]);
+				if (d >= max)
+				{
+					max = d;
+				}
+			}
+		}
+		System.out.printf("%.4f",Math.sqrt(max));
+
+
+
+	}
+
+}
+

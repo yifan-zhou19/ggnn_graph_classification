@@ -1,0 +1,117 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	public static int prime(int x)
+	{
+		int i;
+		int k;
+		k = Math.sqrt(x);
+		if (x == 2 || x == 3)
+		{
+			return (1);
+		}
+		for (i = 2;i <= k;i++)
+		{
+			if (x % i == 0)
+			{
+				break;
+			}
+		}
+		if (i > 1 && i <= k)
+		{
+			return (0);
+		}
+		else
+		{
+			return (1);
+		}
+	}
+
+	public static int palin(int x)
+	{
+		int t;
+		int k;
+		t = x;
+		k = 0;
+		while (t > 0)
+		{
+			k = k * 10 + t % 10;
+			t = t / 10;
+		}
+		if (k == x)
+		{
+			return (1);
+		}
+		else
+		{
+			return (0);
+		}
+	}
+
+
+
+	public static int Main()
+	{
+		int m;
+		int n;
+		int i;
+		int[] resu = new int[100];
+		int num;
+		String tempVar = ConsoleInput.scanfRead();
+		if (tempVar != null)
+		{
+			m = Integer.parseInt(tempVar);
+		}
+		String tempVar2 = ConsoleInput.scanfRead();
+		if (tempVar2 != null)
+		{
+			n = Integer.parseInt(tempVar2);
+		}
+		num = 0;
+		for (i = m;i <= n;i++)
+		{
+			if (prime(i) == 1 && palin(i) == 1)
+			{
+				resu[num] = i;
+				num++;
+			}
+		}
+		if (num == 0)
+		{
+			System.out.print("no");
+		}
+		for (i = 0;i <= num - 1;i++)
+		{
+			System.out.printf("%d",resu[i]);
+			if (i <= num - 2)
+			{
+				System.out.print(',');
+			}
+		}
+
+	}
+
+
+
+	/*		??????   
+	 
+	?? ??-From Whf 
+	?? 
+	??????? m ?n ??????????????????m ? n?????m ???n??????????????????????????? no (??????????????????123321?121)?
+	 
+	???? 
+	m ? n ?1??????1??????
+	 
+	???? 
+	?????????????????????????? no
+	 
+	???? 
+	100  200
+	 
+	???? 
+	101,131,151,181,191
+	 */
+
+}
+

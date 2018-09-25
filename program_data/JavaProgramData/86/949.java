@@ -1,0 +1,61 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	//****************************************************** 
+	/* ? ? ?   ?????
+	/* ? ?      ????                           
+	/* ? ? ? ??2010 ? 11  ?  29  ?     
+	/* ? ? ? ??????????????????????
+	/* ? ?      ?1000012752        
+	*******************************************************/ 
+	public static int Main()
+	{
+		int n;
+		int i;
+		int j;
+		int t;
+		int[] a = new int[60]; //?????????????
+		n = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+		for (i = 1 ; i <= n ; i++)
+		{
+			t = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+			for (j = 0 ; j < t ; j++)
+			{
+				a[j] = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+			}
+
+			if (a[t - 1] + 3 * t <= 60) //?????????????????
+			{
+				 System.out.print(60 - 3 * t);
+				 System.out.print("\n");
+			}
+
+			else
+			{
+				for (j = 0 ; j < t ; j++) //????????????????????????
+				{
+					if (a[j] + 3 * (j + 1) >= 60 && a[j] + 3 * (j + 1) <= 63) //???????????
+					{
+						System.out.print(a[j]);
+						System.out.print("\n");
+						break;
+					}
+					if (a[j] + 3 * (j + 1) > 63) //??????????
+					{
+						System.out.print(60 - 3 * j);
+						System.out.print("\n");
+						break;
+					}
+				}
+			}
+		}
+
+		return 0;
+	}
+
+
+
+
+}
+
