@@ -5,6 +5,11 @@ from os.path import isfile, join
 import collections
 import re
 from tqdm import trange
+from tqdm import *
+import random
+#import pickle
+import pyarrow
+
 
 def load_graphs_from_file(file_name):
     data_list = []
@@ -150,10 +155,9 @@ def data_convert(data_list, n_annotation_dim):
             task_data_list[task_type-1].append([edge_list, annotation, task_output])
     return task_data_list
 
-def data_convert_for_program_data(data_list, n_annotation_dim):
+def convert_program_data(data_list, n_annotation_dim, n_nodes):
     # n_nodes = find_max_node_id(data_list)
-    n_nodes = 111
-    task_data_list = []
+    class_data_list = []
  
     for item in data_list:
         edge_list = item[0]
@@ -164,11 +168,32 @@ def data_convert_for_program_data(data_list, n_annotation_dim):
             annotation = np.zeros([n_nodes, n_annotation_dim])   
             for edge in edge_list:
                 src_idx = edge[0]
+                
                 # print(src_idx)
                 annotation[src_idx-1][0] = 1
           
-            task_data_list.append([edge_list, annotation, task_output])
-    return task_data_list
+            class_data_list.append([edge_list, annotation, task_output])
+    return class_data_list
+
+def convert_program_data_into_group(data_list, n_annotation_dim, n_nodes, n_classes):
+    class_data_list = []
+    
+    for i in range(n_classes):
+        class_data_list.append([])
+   
+    for item in data_list:
+        edge_list = item[0]
+        target_list = item[1]
+        for target in target_list:
+            class_output = target[-1]
+            annotation = np.zeros([n_nodes, n_annotation_dim])   
+            for edge in edge_list:
+                src_idx = edge[0]
+                # print(src_idx)
+                annotation[src_idx-1][0] = 1
+            # print(class_output)
+            class_data_list[class_output-1].append([edge_list, annotation, class_output])
+    return class_data_list
 
 def create_adjacency_matrix(edges, n_nodes, n_edge_types):
     a = np.zeros([n_nodes, n_nodes * n_edge_types * 2])
@@ -228,10 +253,24 @@ class bAbIDataset():
 
 class bAbIDataset2():
    
-    def __init__(self, path, is_train, n_classes=3,data_percentage=1):
+    def __init__(self, opt, path, is_train, n_classes=3,data_percentage=1):
        
-        all_data = load_program_graphs_from_directory(path,is_train,n_classes,data_percentage)
-        all_data = np.array(all_data)[0:len(all_data)]
+        if is_train:
+           saved_input_filename = "%s-%d-train.pkl" % (path, opt.n_classes)
+        else:
+           saved_input_filename = "%s-%d-test.pkl" % (path, opt.n_classes)
+        if os.path.exists(saved_input_filename): 
+           input_file = open(saved_input_filename, 'rb')
+           buf = input_file.read()
+           all_data = pyarrow.deserialize(buf)
+           input_file.close()
+        else:
+           all_data = load_program_graphs_from_directory(path,is_train,n_classes,data_percentage)
+           all_data = np.array(all_data)[0:len(all_data)]
+           buf = pyarrow.serialize(all_data).to_buffer()
+           out = pyarrow.OSFile(saved_input_filename, 'wb')
+           out.write(buf)
+           out.close()
        
         if is_train == True:
             print("Number of all training data : " + str(len(all_data)))
@@ -241,9 +280,9 @@ class bAbIDataset2():
         # print("Edge types : " + str(self.n_edge_types))
         self.n_tasks = find_max_task_id(all_data)
         # self.n_node = find_max_node_id(all_data)
-        self.n_node = 111
+        self.n_node = opt.size_vocabulary
         
-        all_data = data_convert_for_program_data(all_data,1)
+        all_data = convert_program_data(all_data,1, self.n_node)
 
         
         self.data = all_data
@@ -260,6 +299,87 @@ class bAbIDataset2():
         target = self.data[index][2] - 1
         # print("Target : " + str(target))
         return am, annotation, target
+
+    def __len__(self):
+        return len(self.data)
+
+
+class CrossLingualProgramData():
+   
+    def __init__(self, left_path, right_path, is_train, n_classes=3, data_percentage=1):
+       
+        left_all_data = load_program_graphs_from_directory(left_path,is_train,n_classes,data_percentage)
+        right_all_data = load_program_graphs_from_directory(right_path,is_train,n_classes,data_percentage)
+
+        left_all_data = np.array(left_all_data)[0:len(left_all_data)]
+        right_all_data = np.array(right_all_data)[0:len(right_all_data)]
+       
+        if is_train == True:
+            print("Number of all left training data : " + str(len(left_all_data)))
+            print("Number of all right training data : " + str(len(right_all_data)))
+        else:
+            print("Number of all left testing data : " + str(len(left_all_data)))
+            print("Number of all right testing data : " + str(len(right_all_data)))
+
+        self.n_edge_types =  find_max_edge_id(left_all_data)
+
+        # self.n_node = find_max_node_id(all_data)
+        self.n_node = 63
+        max_left_node = find_max_node_id(left_all_data)
+        max_right_node = find_max_node_id(right_all_data)
+        print("Left max node id : " + str(max_left_node))
+        print("Right max node id : " + str(max_right_node))
+
+        left_all_data_by_classes = convert_program_data_into_group(left_all_data,1, self.n_node, n_classes)
+
+        right_all_data_by_classes = convert_program_data_into_group(right_all_data,1, self.n_node, n_classes)
+
+        pairs_1 = []
+        pairs_0 = []
+
+        for i, left_class in tqdm(enumerate(left_all_data_by_classes)):
+            right_class = right_all_data_by_classes[i]
+
+            remaining_right_class = []
+
+            for j, other_right_class in enumerate(right_all_data_by_classes):
+                if j != i:
+                    remaining_right_class.extend(other_right_class)
+
+            if len(left_class) > len(right_class):
+                left_class = left_class[:len(right_class)]
+            
+            for k, left_data_point in enumerate(left_class):
+                righ_data_point = right_class[k]
+                pairs_1.append((left_data_point,righ_data_point))
+                pairs_0.append((left_data_point, random.choice(remaining_right_class)))
+
+        print("Number of all 1 pairs data : " + str(len(pairs_1)))
+        print("Number of all 0 pairs data : " + str(len(pairs_0)))
+        data = []
+        data.extend(pairs_1)
+        data.extend(pairs_0)
+        random.shuffle(data)
+        self.data = data
+
+     
+    def __getitem__(self, index):
+        
+        left_data_point = self.data[index][0]
+        right_data_point = self.data[index][1]
+
+        left_am = create_adjacency_matrix(left_data_point[0], self.n_node, self.n_edge_types)
+        right_am = create_adjacency_matrix(right_data_point[0], self.n_node, self.n_edge_types)
+
+        left_annotation = left_data_point[1]
+        right_annotation = right_data_point[1]
+
+        if left_data_point[2] == right_data_point[2]:
+            target = 1.0
+        else:
+            target = 0.0
+
+        return (left_am,right_am), (left_annotation,right_annotation), target
 
     def __len__(self):
         return len(self.data)

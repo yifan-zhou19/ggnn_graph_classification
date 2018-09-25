@@ -1,0 +1,342 @@
+import torch
+import torch.nn as nn
+import torch.nn.init as init
+import torch.nn.functional as F
+
+class AttrProxy(object):
+    """
+    Translates index lookups into attribute lookups.
+    To implement some trick which able to use list of nn.Module in a nn.Module
+    see https://discuss.pytorch.org/t/list-of-nn-module-in-a-nn-module/219/2
+    """
+    def __init__(self, module, prefix):
+        self.module = module
+        self.prefix = prefix
+
+    def __getitem__(self, i):
+        return getattr(self.module, self.prefix + str(i))
+
+
+class Propogator(nn.Module):
+    """
+    Gated Propogator for GGNN
+    Using LSTM gating mechanism
+    """
+    def __init__(self, state_dim, n_node, n_edge_types):
+        super(Propogator, self).__init__()
+
+        self.n_node = n_node
+        self.n_edge_types = n_edge_types
+
+        self.reset_gate = nn.Sequential(
+            nn.Linear(state_dim*3, state_dim),
+            nn.Sigmoid()
+        )
+        self.update_gate = nn.Sequential(
+            nn.Linear(state_dim*3, state_dim),
+            nn.Sigmoid()
+        )
+        self.tansform = nn.Sequential(
+            nn.Linear(state_dim*3, state_dim),
+            nn.Tanh()
+        )
+
+    def forward(self, state_in, state_out, state_cur, A):
+        A_in = A[:, :, :self.n_node*self.n_edge_types]
+        A_out = A[:, :, self.n_node*self.n_edge_types:]
+
+        a_in = torch.bmm(A_in, state_in)
+        a_out = torch.bmm(A_out, state_out)
+        a = torch.cat((a_in, a_out, state_cur), 2)
+
+        r = self.reset_gate(a)
+        z = self.update_gate(a)
+        joined_input = torch.cat((a_in, a_out, r * state_cur), 2)
+        h_hat = self.tansform(joined_input)
+
+        output = (1 - z) * state_cur + z * h_hat
+
+        return output
+
+class ClassPrediction(nn.Module):
+
+    def __init__(self, opt):
+        super(ClassPrediction, self).__init__()
+
+        self.class_prediction = nn.Sequential(
+            nn.Linear(opt.n_node, opt.n_hidden),
+            nn.Tanh(),
+            nn.Linear(opt.n_hidden, opt.n_classes),
+            nn.Softmax(dim=1)    
+        )
+
+        self._initialization()
+
+    def _initialization(self):
+        for m in self.modules():
+            if isinstance(m, nn.Linear):
+                init.xavier_normal_(m.weight.data)
+                if m.bias is not None:
+                    init.normal_(m.bias.data)
+
+    def forward(self, graph_representation):
+        output = self.class_prediction(graph_representation)
+        return output
+
+class ContrastiveLoss(nn.Module):
+    """
+    Contrastive loss function.
+    Based on: http://yann.lecun.com/exdb/publis/pdf/hadsell-chopra-lecun-06.pdf
+    """
+
+    def __init__(self, margin=1.0):
+        super(ContrastiveLoss, self).__init__()
+        self.margin = margin
+
+    def forward(self, output1, output2, label):
+        euclidean_distance = F.pairwise_distance(output1, output2)
+        # print("-----------------------")
+        # print(euclidean_distance)
+        # print(label)
+
+        loss_contrastive = torch.mean((1.0 - label) * torch.pow(euclidean_distance, 2) + (label) * torch.pow(torch.clamp(self.margin - euclidean_distance, min=0.0), 2))
+
+
+        return loss_contrastive
+
+class GGNN(nn.Module):
+    """
+    Gated Graph Sequence Neural Networks (GGNN)
+    Mode: SelectNode
+    Implementation based on https://arxiv.org/abs/1511.05493
+    """
+    def __init__(self, opt):
+        super(GGNN, self).__init__()
+
+        # assert (opt.state_dim >= opt.annotation_dim, 'state_dim must be no less than annotation_dim')
+
+        self.state_dim = opt.state_dim
+        self.annotation_dim = opt.annotation_dim
+        self.n_edge_types = opt.n_edge_types
+        self.n_node = opt.n_node
+        self.n_steps = opt.n_steps
+        self.n_classes = opt.n_classes
+
+        for i in range(self.n_edge_types):
+            # incoming and outgoing edge embedding
+            in_fc = nn.Linear(self.state_dim, self.state_dim)
+            out_fc = nn.Linear(self.state_dim, self.state_dim)
+            self.add_module("in_{}".format(i), in_fc)
+            self.add_module("out_{}".format(i), out_fc)
+
+        self.in_fcs = AttrProxy(self, "in_")
+        self.out_fcs = AttrProxy(self, "out_")
+
+        # Propogation Model
+        self.propogator = Propogator(self.state_dim, self.n_node, self.n_edge_types)
+
+        # Output Model
+        self.out = nn.Sequential(
+            nn.Linear(self.state_dim, self.state_dim),
+            nn.Tanh(),
+            nn.Linear(self.state_dim, 5),
+            nn.Tanh(),   
+        )
+
+      
+        self.soft_attention = nn.Sequential(
+            nn.Linear(self.state_dim, self.state_dim),
+            nn.Tanh(),
+            nn.Linear(self.state_dim, 5),
+            nn.Sigmoid(),
+           
+        )
+
+        self.class_prediction = nn.Sequential(
+            nn.Linear(opt.n_node, opt.n_hidden),
+            nn.Tanh(),
+            nn.Linear(opt.n_hidden, opt.n_classes),
+            nn.Softmax(dim=1)    
+        )
+
+        self._initialization()
+
+    def _initialization(self):
+        for m in self.modules():
+            if isinstance(m, nn.Linear):
+                init.xavier_normal_(m.weight.data)
+                if m.bias is not None:
+                    init.normal_(m.bias.data)
+
+    def forward(self, prop_state, annotation, A):
+        for i_step in range(self.n_steps):
+            in_states = []
+            out_states = []
+            for i in range(self.n_edge_types):
+                in_states.append(self.in_fcs[i](prop_state))
+                out_states.append(self.out_fcs[i](prop_state))
+            in_states = torch.stack(in_states).transpose(0, 1).contiguous()
+            in_states = in_states.view(-1, self.n_node*self.n_edge_types, self.state_dim)
+            out_states = torch.stack(out_states).transpose(0, 1).contiguous()
+            out_states = out_states.view(-1, self.n_node*self.n_edge_types, self.state_dim)
+
+            prop_state = self.propogator(in_states, out_states, prop_state, A)
+
+       
+        output = self.out(prop_state)
+
+
+        soft_attention_ouput = self.soft_attention(prop_state)
+        # Element wise hadamard product to get the graph representation, check Equation 7 in GGNN paper for more details
+        output = torch.mul(output,soft_attention_ouput)
+        output = output.sum(2)
+
+        output = self.class_prediction(output)
+
+        return output
+
+
+class BiGGNN(nn.Module):
+    def __init__(self, opt):
+        super(BiGGNN, self).__init__()
+
+        self.state_dim = opt.state_dim
+        self.annotation_dim = opt.annotation_dim
+        self.n_edge_types = opt.n_edge_types
+        self.n_node = opt.n_node
+        self.n_steps = opt.n_steps
+        self.n_classes = opt.n_classes
+
+        for i in range(self.n_edge_types):
+            # incoming and outgoing edge embedding
+            in_fc = nn.Linear(self.state_dim, self.state_dim)
+            out_fc = nn.Linear(self.state_dim, self.state_dim)
+            self.add_module("in_{}".format(i), in_fc)
+            self.add_module("out_{}".format(i), out_fc)
+
+        self.in_fcs = AttrProxy(self, "in_")
+        self.out_fcs = AttrProxy(self, "out_")
+
+        # Propogation Model
+        self.propogator = Propogator(self.state_dim, self.n_node, self.n_edge_types)
+
+        # Output Model
+        self.out = nn.Sequential(
+            nn.Linear(self.state_dim, self.state_dim),
+            nn.Tanh(),
+            nn.Linear(self.state_dim, 5),
+            nn.Tanh(),   
+        )
+      
+        self.soft_attention = nn.Sequential(
+            nn.Linear(self.state_dim, self.state_dim),
+            nn.Tanh(),
+            nn.Linear(self.state_dim, 5),
+            nn.Sigmoid(),
+           
+        )
+
+        self.fc_output = nn.Sequential(
+            nn.Linear(10*2, 50),
+            nn.ReLU(),
+            nn.Linear(50, 2),
+            nn.Softmax(dim=1)
+        )
+
+        self.feature_representation = nn.Sequential(
+            nn.Linear(self.n_node, 50),
+            nn.ReLU(),
+            nn.Linear(50, 10)  
+        )
+
+        self._initialization()
+
+    def _initialization(self):
+        for m in self.modules():
+            if isinstance(m, nn.Linear):
+                init.xavier_normal_(m.weight.data)
+                if m.bias is not None:
+                    init.normal_(m.bias.data)
+
+    def side_forward(self, prop_state, annotation, A):
+        for i_step in range(self.n_steps):
+            in_states = []
+            out_states = []
+            for i in range(self.n_edge_types):
+                in_states.append(self.in_fcs[i](prop_state))
+                out_states.append(self.out_fcs[i](prop_state))
+            in_states = torch.stack(in_states).transpose(0, 1).contiguous()
+            in_states = in_states.view(-1, self.n_node*self.n_edge_types, self.state_dim)
+            out_states = torch.stack(out_states).transpose(0, 1).contiguous()
+            out_states = out_states.view(-1, self.n_node*self.n_edge_types, self.state_dim)
+
+            prop_state = self.propogator(in_states, out_states, prop_state, A)
+  
+        output = self.out(prop_state)
+
+
+        soft_attention_ouput = self.soft_attention(prop_state)
+        output = torch.mul(output,soft_attention_ouput)
+        output = output.sum(2)
+        return output
+
+    def forward(self, left_prop_state, left_annotation, left_A, right_prop_state, right_annotation, right_A):
+        left_output = self.side_forward(left_prop_state, left_annotation, left_A)
+        right_output = self.side_forward(right_prop_state, right_annotation, right_A)
+
+        left_output = self.feature_representation(left_output)
+        right_output = self.feature_representation(right_output)
+    
+        # concat_layer = torch.cat((left_output, right_output),1)
+        # output = self.fc_output(concat_layer)
+        # print(output)
+        # return output
+        return left_output, right_output
+
+# class BiGGNN2(nn.Module):
+#     def __init__(self, left_net, right_net, opt):
+#         super(BiGGNN, self).__init__()
+
+#         self.left_net = left_net
+#         self.right_net = right_net
+
+#         self.n_node = opt.n_node
+
+#         self.fc_output = nn.Sequential(
+#             nn.Linear(10*2, 50),
+#             nn.ReLU(),
+#             nn.Linear(50, 2),
+#             nn.Softmax(dim=1)
+#         )
+
+#         self.feature_representation = nn.Sequential(
+#             nn.Linear(self.n_node, 50),
+#             nn.ReLU(),
+#             nn.Linear(50, 10)  
+#         )
+
+#         self._initialization()
+
+#     def _initialization(self):
+#         for m in self.modules():
+#             if isinstance(m, nn.Linear):
+#                 init.xavier_normal_(m.weight.data)
+#                 if m.bias is not None:
+#                     init.normal_(m.bias.data)
+
+#     def forward(self, left_prop_state, left_annotation, left_A, right_prop_state, right_annotation, right_A):
+        
+#         self.left_net.zero_grad()
+#         self.right_net.zero_grad()
+
+#         left_output = self.left_net(left_prop_state, left_annotation, left_A)
+#         right_output = self.right_net(right_prop_state, right_annotation, right_A)
+
+#         left_output = self.feature_representation(left_output)
+#         right_output = self.feature_representation(right_output)
+
+#         concat_layer = torch.cat((left_output, right_output),1)
+       
+#         output = self.fc_output(concat_layer)
+#         return output
+
