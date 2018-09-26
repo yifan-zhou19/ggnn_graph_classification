@@ -6,10 +6,10 @@ import torch.nn as nn
 import torch.optim as optim
 
 from utils.model import GGNN
+from utils.model import ClassPrediction
 from utils.train_ggnn import train
 from utils.test_ggnn import test
-from utils.data.dataset import bAbIDataset
-from utils.data.dataset import bAbIDataset2
+from utils.data.dataset import MonoLanguageProgramData
 from utils.data.dataloader import bAbIDataloader
 import os
 
@@ -27,9 +27,11 @@ parser.add_argument('--cuda', action='store_true', help='enables cuda')
 parser.add_argument('--verbal', type=bool, default=True, help='print training info or not')
 parser.add_argument('--manualSeed', type=int, help='manual seed')
 parser.add_argument('--n_classes', type=int, default=104, help='manual seed')
-parser.add_argument('--directory', default="program_data/babi_format", help='program data')
+parser.add_argument('--directory', default="program_data/cpp_babi_format_2", help='program data')
 parser.add_argument('--model_path', default="model/model.ckpt", help='path to save the model')
-parser.add_argument('--n_hidden', type=int, default=100, help='number of hidden layers')
+parser.add_argument('--n_hidden', type=int, default=50, help='number of hidden layers')
+parser.add_argument('--size_vocabulary', type=int, default=59, help='maximum number of node types')
+parser.add_argument('--is_training_ggnn', type=bool, default=True, help='Training GGNN or BiGGNN')
 parser.add_argument('--training', action="store_true",help='is training')
 parser.add_argument('--testing', action="store_true",help='is testing')
 
@@ -52,51 +54,21 @@ opt.dataroot = 'babi_data/processed_1/train/%d_graphs.txt' % opt.task_id
 if opt.cuda:
     torch.cuda.manual_seed_all(opt.manualSeed)
 
-def main(opt):
-    train_dataset = bAbIDataset(opt.dataroot, opt.question_id, True)
-    train_dataloader = bAbIDataloader(train_dataset, batch_size=opt.train_batch_size, \
-                                      shuffle=True, num_workers=0)
-
-    test_dataset = bAbIDataset(opt.dataroot, opt.question_id, False)
-    test_dataloader = bAbIDataloader(test_dataset, batch_size=opt.test_batch_size, \
-                                     shuffle=True, num_workers=2)
-
-    opt.annotation_dim = 1  # for bAbI
-    opt.n_edge_types = train_dataset.n_edge_types
-    opt.n_node = train_dataset.n_node
-
-    net = GGNN(opt)
-    net.double()
-    
-
-    criterion = nn.CrossEntropyLoss()
-
-    if opt.cuda:
-        net.cuda()
-        criterion.cuda()
-
-    optimizer = optim.Adam(net.parameters(), lr=opt.lr)
-
-    for epoch in range(0, opt.niter):
-        train(epoch, train_dataloader, net, criterion, optimizer, opt)
-        test(test_dataloader, net, criterion, optimizer, opt)
-
-
 # This part is the implementation to illustrate Graph-Level output from program data
-def main2(opt):
+def main(opt):
     opt.data_percentage = 1
-    train_dataset = bAbIDataset2(opt.directory, True, opt.n_classes,opt.data_percentage)
+    train_dataset = MonoLanguageProgramData(opt.size_vocabulary, opt.directory, True, opt.n_classes, opt.data_percentage)
     train_dataloader = bAbIDataloader(train_dataset, batch_size=opt.train_batch_size, \
                                       shuffle=True, num_workers=2)
 
-    test_dataset = bAbIDataset2(opt.directory, False, opt.n_classes)
+    test_dataset = MonoLanguageProgramData(opt.size_vocabulary, opt.directory, False, opt.n_classes)
     test_dataloader = bAbIDataloader(test_dataset, batch_size=opt.test_batch_size, \
                                      shuffle=True, num_workers=2)
 
     opt.annotation_dim = 1  # for bAbI
     opt.n_edge_types = train_dataset.n_edge_types
     opt.n_node = train_dataset.n_node
-    # print("Max node : " + str(opt.n_node))
+
     if os.path.isfile(opt.model_path):
         print("Using the saved model....")
         net = torch.load(opt.model_path)
@@ -116,11 +88,11 @@ def main2(opt):
     if opt.training:
         for epoch in range(0, opt.niter):
             train(epoch, train_dataloader, net, criterion, optimizer, opt)
-    # if opt.testing:
             test(test_dataloader, net, criterion, optimizer, opt)
-
+    if opt.testing:
+        test(test_dataloader, net, criterion, optimizer, opt)
 
 
 if __name__ == "__main__":
-    main2(opt)
+    main(opt)
 

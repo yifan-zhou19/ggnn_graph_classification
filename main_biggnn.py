@@ -32,29 +32,31 @@ parser.add_argument('--n_classes', type=int, default=104, help='manual seed')
 parser.add_argument('--directory', default="program_data/babi_format", help='program data')
 parser.add_argument('--model_path', default="model/model.ckpt", help='path to save the model')
 parser.add_argument('--n_hidden', type=int, default=50, help='number of hidden layers')
+parser.add_argument('--size_vocabulary', type=int, default=60, help='maximum number of node types')
+parser.add_argument('--is_training_ggnn', type=bool, default=True, help='Training GGNN or BiGGNN')
 parser.add_argument('--training', action="store_true",help='is training')
 parser.add_argument('--testing', action="store_true",help='is testing')
+parser.add_argument('--loss', type=int, default=1 ,help='1 is contrastive loss, 0 is cross entropy loss')
 
 
 
 opt = parser.parse_args()
 print(opt)
-opt.manualSeed = 9688
-# if opt.manualSeed is None:
-#     opt.manualSeed = random.randint(1, 10000)
+if opt.manualSeed is None:
+    opt.manualSeed = random.randint(1, 10000)
 print("Random Seed: ", opt.manualSeed)
 random.seed(opt.manualSeed)
 torch.manual_seed(opt.manualSeed)
 
-opt.left_directory = "program_data/github_cpp_babi_format"
-opt.right_directory = "program_data/github_cpp_babi_format"
+opt.left_directory = "program_data/cll_github_cpp_babi_format"
+opt.right_directory = "program_data/cll_github_java_babi_format"
 
 if opt.cuda:
     torch.cuda.manual_seed_all(opt.manualSeed)
 
 def main(opt):
     opt.data_percentage = 1
-    train_dataset = CrossLingualProgramData(opt.left_directory,opt.right_directory, True, opt.n_classes,opt.data_percentage)
+    train_dataset = CrossLingualProgramData(opt.left_directory,opt.right_directory, True, opt.loss, opt.n_classes,opt.data_percentage)
     train_dataloader = bAbIDataloader(train_dataset, batch_size=opt.train_batch_size, \
                                       shuffle=True, num_workers=2)
 
@@ -79,22 +81,32 @@ def main(opt):
         net = BiGGNN(opt)
         net.double()
 
-
-    criterion = ContrastiveLoss()
+    if opt.loss == 1:
+        criterion = ContrastiveLoss()
+    else:
+        criterion = nn.CrossEntropyLoss()
 
     if opt.cuda:
         net.cuda()
         criterion.cuda()
         
+    # fc_output = nn.Sequential(
+    #         nn.Linear(104*2, 50),
+    #         nn.ReLU(),
+    #         nn.Linear(50, 2),
+    #         nn.Softmax(dim=1)
+    #     )
+    # fc_output.double()
+    # fc_output.cuda()
 
     optimizer = optim.Adam(net.parameters(), lr=opt.lr)
 
     if opt.training:
         for epoch in range(0, opt.niter):
-            train(epoch, train_dataloader, net, criterion, optimizer, opt)
-            # train2(epoch, train_dataloader, left_net, criterion, optimizer, opt)
-    # if opt.testing:
+            train(epoch, train_dataloader, net, criterion, optimizer,  opt)
             # test(test_dataloader, net, criterion, optimizer, opt)
+    if opt.testing:
+        test(test_dataloader, net, criterion, optimizer, opt)
 
 
 

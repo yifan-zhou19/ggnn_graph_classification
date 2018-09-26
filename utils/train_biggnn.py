@@ -8,6 +8,7 @@ def train(epoch, dataloader, net, criterion, optimizer, opt):
     for i, (adj_matrices, annotations, target) in enumerate(dataloader, 0):
     
         net.zero_grad()
+        # optimizer.zero_grad()
         # print("------------------")
         left_adj_matrix = adj_matrices[0]
         right_adj_matrix = adj_matrices[1]
@@ -43,16 +44,18 @@ def train(epoch, dataloader, net, criterion, optimizer, opt):
 
         target = Variable(target)
         # print(target)
-        # output = net(left_init_input, left_annotation, left_adj_matrix, right_init_input, right_annotation, right_adj_matrix)
 
-        left_output, right_output = net(left_init_input, left_annotation, left_adj_matrix, right_init_input, right_annotation, right_adj_matrix)
-       
-        loss = criterion(left_output,right_output, target) 
-        # loss = criterion(output, target) 
-
+        if opt.loss == 1:
+            left_output, right_output = net(left_init_input, left_annotation, left_adj_matrix, right_init_input, right_annotation, right_adj_matrix)
+            loss = criterion(left_output,right_output, target) 
+    
+        else:
+            output = net(left_init_input, left_annotation, left_adj_matrix, right_init_input, right_annotation, right_adj_matrix)
+            loss = criterion(output, target) 
+           
+        # 
 
         loss.backward()
-
         optimizer.step()
 
         if i % int(len(dataloader) / 10 + 1) == 0 and opt.verbal:
