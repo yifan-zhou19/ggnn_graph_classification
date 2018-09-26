@@ -217,8 +217,8 @@ class MonoLanguageProgramData():
             print("Number of all testing data : " + str(len(all_data)))
         self.n_edge_types =  find_max_edge_id(all_data)
         # print("Edge types : " + str(self.n_edge_types))
-        self.n_tasks = find_max_task_id(all_data)
-        # self.n_node = find_max_node_id(all_data)
+        max_node = find_max_node_id(all_data)
+        print("Max node id : " + str(max_node))
         self.n_node = size_vocabulary
         
         all_data = convert_program_data(all_data,1, self.n_node)
