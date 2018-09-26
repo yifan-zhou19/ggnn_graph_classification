@@ -1,0 +1,50 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	/* ??????????
+	 * ?????2012-10-21
+	 * ???winneshaw
+	 * ????????????????:
+	 *  ?????????????1????????????2?????
+	 *  ???????a???????????a??????
+	 */
+
+
+	public static int Main()
+	{
+		int n;
+		n = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+		int[] a = new int[20];
+		a[0] = 1;
+		a[1] = 1;
+		int i = 2;
+		int c = 1;
+		int d = 1;
+		do
+		{
+			a[i] = c + d;
+			c = d;
+			d = a[i];
+			i++;
+		}while (i < 20);
+		int[] b = {-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+		int istep = 0;
+		do
+		{
+			b[istep] = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+			istep++;
+		}while (istep < n);
+		int m = 0;
+			do
+			{
+				int e = b[m] - 1;
+				System.out.print(a[e]);
+				System.out.print("\n");
+				m++;
+			}while (m < n);
+		return 0;
+	}
+
+}
+

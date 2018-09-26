@@ -1,0 +1,46 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	//***************************************************
+	//*                           ???????        *
+	//*                       2010.11.19                *
+	//***************************************************
+	public static int Main()
+	{
+		String a = new String(new char[100]); //????a?
+		int i;
+		int j;
+		int k;
+		int n;
+		cin.get(a,100,'\n'); //???????
+		n = a.length(); //n???????
+		for (i = 0;i < n;i++)
+		{
+			if (a.charAt(i) == ' ') //??????
+			{
+				for (j = 1;;j++) //????????????????????????????????
+				{
+				 if (a.charAt(j + i) != ' ')
+				 {
+					 break;
+				 }
+				}
+				for (k = i;k < n;k++) //??????????????????????
+				{
+					a = tangible.StringFunctions.changeCharacter(a, k + 1, a.charAt(k + j));
+				}
+			}
+
+
+		}
+		System.out.print(a);
+
+
+
+
+		return 0;
+	}
+
+}
+

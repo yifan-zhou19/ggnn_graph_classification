@@ -1,0 +1,62 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	public static int Main()
+	{
+		int n;
+		int i;
+
+		double a;
+		double b;
+		double c;
+		double e;
+		double d;
+		String tempVar = ConsoleInput.scanfRead();
+		if (tempVar != null)
+		{
+			n = Integer.parseInt(tempVar);
+		}
+
+		for (i = 0;i < n;i++)
+
+		{
+			String tempVar2 = ConsoleInput.scanfRead();
+			if (tempVar2 != null)
+			{
+				a = Double.parseDouble(tempVar2);
+			}
+			String tempVar3 = ConsoleInput.scanfRead();
+			if (tempVar3 != null)
+			{
+				b = Double.parseDouble(tempVar3);
+			}
+			String tempVar4 = ConsoleInput.scanfRead();
+			if (tempVar4 != null)
+			{
+				c = Double.parseDouble(tempVar4);
+			}
+			e = b * b - 4 * a * c;
+			d = (-b / (2 * a));
+
+
+
+			 if (e > 0)
+			 {
+				System.out.printf("x1=%.5lf;x2=%.5lf\n",d + Math.sqrt(e) / (2 * a),d - Math.sqrt(e) / (2 * a));
+			 }
+			 else if (e == 0)
+			 {
+				System.out.printf("x1=x2=%.5lf\n",d);
+			 }
+			 else
+			 {
+				System.out.printf("x1=%.5lf+%.5lfi;x2=%.5lf-%.5lfi\n",d,Math.sqrt(-e) / (2 * a),d,Math.sqrt(-e) / (2 * a));
+			 }
+		}
+		return 0;
+	}
+
+
+}
+

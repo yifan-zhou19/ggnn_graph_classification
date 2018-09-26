@@ -1,0 +1,59 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	/*
+	 * ????10.20.cpp
+	 * ?????
+	 * ????: 2011-10-20
+	 * ???????????
+	 */
+	public static int Main()
+	{
+		int n; //????????????????????
+		int i = 0;
+		int j;
+		int k;
+		int t;
+		n = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+		t = n; //???????n
+		int[] a = new int[100000]; //????
+		for (i = 0;i < n;i++)
+		{
+			a[i] = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+		}
+		int m; //???????
+		m = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+		i = 0;
+		while (i <= t)
+		{
+			j = i;
+			while (a[j] == m) //??????????
+			{
+				j++;
+				t--;
+			} //????1
+			if (j - i != 0)
+			{
+				for (k = i;k < n - (j - i);k++)
+				{
+				a[k] = a[k + j - i]; //?????m?????k?
+				}
+				i = j;
+			}
+			else
+			{
+				i++; //?????
+			}
+		}
+		for (i = 0;i < t - 1;i++)
+		{
+			System.out.print(a[i]);
+			System.out.print(' ');
+		}
+		System.out.print(a[t - 1]);
+		return 0; //????
+	}
+
+}
+

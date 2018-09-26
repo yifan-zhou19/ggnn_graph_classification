@@ -1,0 +1,101 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	public static int isRunNian(int year)
+	{
+		int result;
+		if (year % 400 == 0 || (year % 4 == 0 && year % 100 != 0))
+		{
+			result = 1;
+		}
+		else
+		{
+			result = 0;
+		}
+		  return result;
+	}
+
+	public static int Main()
+	{
+		int year;
+		int month;
+		int day;
+		int total;
+		String tempVar = ConsoleInput.scanfRead();
+		if (tempVar != null)
+		{
+			year = Integer.parseInt(tempVar);
+		}
+		String tempVar2 = ConsoleInput.scanfRead(" ");
+		if (tempVar2 != null)
+		{
+			month = Integer.parseInt(tempVar2);
+		}
+		String tempVar3 = ConsoleInput.scanfRead(" ");
+		if (tempVar3 != null)
+		{
+			day = Integer.parseInt(tempVar3);
+		}
+		total = 0;
+		for (int i = 1; i < month; i++)
+		{
+			if (i == 1 || i == 3 || i == 5 || i == 7 || i == 8 || i == 10 || i == 12)
+			{
+				total += 31;
+			}
+			else if (i == 4 || i == 6 || i == 9 || i == 11)
+			{
+				total += 30;
+			}
+			else if (i == 2)
+			{
+				if (isRunNian(year) != 0)
+				{
+					total += 29;
+				}
+				else
+				{
+
+					total += 28;
+
+				}
+			}
+		}
+		total += day - 1;
+		total += (year - 1) * 365 + year / 4 - year / 100 + year / 400;
+	total = total % 7;
+	if (total == 0)
+	{
+		System.out.print("Sat.");
+	}
+	else if (total == 1)
+	{
+		System.out.print("Mon.");
+	}
+	else if (total == 2)
+	{
+		System.out.print("Tue.");
+	}
+	else if (total == 3)
+	{
+		System.out.print("Wed.");
+	}
+	else if (total == 4)
+	{
+		System.out.print("Fri.");
+	}
+	else if (total == 5)
+	{
+		System.out.print("Sat.");
+	}
+	else if (total == 6)
+	{
+		System.out.print("Fri.");
+	}
+	return 0;
+	}
+
+
+}
+

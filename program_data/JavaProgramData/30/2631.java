@@ -1,0 +1,38 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	public static int Main()
+	{
+		int n;
+		int i;
+		int s = 0;
+		int k;
+		n = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+		for (i = 1;i <= n;i++)
+		{
+			if (i % 7 == 0)
+			{
+				continue; //??????????????????
+			}
+			k = i;
+			while (k != 0)
+			{
+				if (k % 10 == 7)
+				{
+					s -= i * i; //????????????????????????
+					break;
+				}
+				else
+				{
+					k = k / 10;
+				}
+			}
+			s += i * i; //????????????
+		}
+		System.out.print(s);
+		System.out.print("\n");
+	return 0;
+	}
+}
+

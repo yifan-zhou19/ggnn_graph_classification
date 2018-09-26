@@ -1,0 +1,86 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	//***************************
+	//?????????        *
+	//?    ?????	        *
+	//?    ??2010.11.06      *
+	//?    ??1000012856	    *
+	//***************************
+	public static int Main()
+	{
+		//????i???,j?,hang????????lie????num???????h????????l?????
+		int i;
+		int j;
+		int[] h = new int[5];
+		int[] l = new int[5];
+		int hang = 0;
+		int lie;
+		int num;
+		int[][] a = new int[5][5];
+		for (i = 0; i < 5; i++)
+		{
+			for (j = 0; j < 5; j++)
+			{
+				a[i][j] = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+			}
+		}
+		for (i = 0; i < 5; i++)
+		{
+			h[i] = a[i][0]; //???????????????
+			for (j = 0; j < 5; j++)
+			{
+				if (a[i][j] > h[i])
+				{
+					h[i] = a[i][j]; //??????h?????
+				}
+			}
+		}
+		for (j = 0; j < 5; j++)
+		{
+				l[j] = a[0][j];
+				for (i = 0; i < 5; i++)
+				{
+					if (a[i][j] < l[j])
+					{
+						l[j] = a[i][j]; //???l
+					}
+				}
+		}
+		for (i = 0; i < 5; i++)
+		{
+			for (j = 0; j < 5; j++) //??????
+			{
+				//??????????????????
+				if ((a[i][j] == h[i]) && (a[i][j] == l[j]))
+				{
+					hang = i + 1; //hang?i??,??hang????0
+					lie = j + 1; //lie?j??
+					num = a[i][j]; //???a[i][j]
+				}
+			}
+		}
+		if (hang == 0) //??hang??0????????????
+		{
+			System.out.print("not found");
+			System.out.print("\n");
+		}
+		else
+		{
+			//??????
+			System.out.print(hang);
+			System.out.print(" ");
+			System.out.print(lie);
+			System.out.print(" ");
+			System.out.print(num);
+			System.out.print("\n");
+		}
+
+		return 0;
+	}
+
+
+
+}
+

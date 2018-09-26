@@ -1,0 +1,47 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	//****************************************************** 
+	//* ? ? ?   ?? ? ? ?                           *
+	//* ? ?      ?? ? ?                              *
+	//* ? ? ? ??2010 ? 12 ? 2 ?                    * 
+	//* ? ? ? ??? ? ? ?                           *
+	//* ? ?      ?1000010439                            *
+	//******************************************************
+	public static void jiaogu(int n) //??????????,????,???n
+	{
+		 if (n == 1) //?n?1???End?????
+		 {
+		 System.out.print("End");
+		 }
+		 else
+		 {
+			 if (n % 2 == 0) //?n????,????????????n
+			 {
+				System.out.print(n);
+				System.out.print("/2=");
+				n = n / 2;
+				System.out.print(n);
+				System.out.print("\n");
+			 }
+			 else //?n????, ????????????n
+			 {
+				 System.out.print(n);
+				 System.out.print("*3+1=");
+				 n = n * 3 + 1;
+				 System.out.print(n);
+				 System.out.print("\n");
+			 }
+			 jiaogu(n); //????
+		 }
+	}
+	public static int Main()
+	{
+		int n; //n????????
+		n = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+		jiaogu(n); //????
+		return 0;
+	}
+}
+

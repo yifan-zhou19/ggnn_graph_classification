@@ -1,0 +1,82 @@
+//************************************************************************
+//????????
+//???  ???
+//???  12-4
+//************************************************************************
+
+
+int[][] a = new int[9][9]; //?????????
+
+void f(int); //???n????
+
+int main()
+{
+	int m; //????????????
+	int n;
+	int i;
+	int j;
+
+	m = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+	n = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+
+	a[4][4] = m;
+
+	f(n); //?????????n??????
+
+	for (i = 0; i < 9; i++) //????????
+	{
+		System.out.print(a[i][0]);
+
+		for (j = 1; j < 9; j++)
+		{
+			System.out.print(" ");
+			System.out.print(a[i][j]);
+		}
+
+		System.out.print("\n");
+	}
+
+
+	return 0;
+}
+
+void f(int n)
+{
+	int i;
+	int j;
+	int k;
+	int l;
+
+	while (n -- != 0) //???n???
+	{
+		int[][] b = new int[9][9]; //????????????????
+
+		for (i = 0; i < 9; i++)
+		{
+		for (j = 0; j < 9; j++)
+		{
+			if (a[i][j] != 0) //????????????????????????
+			{
+				for (k = i - 1; k <= i + 1; k++)
+				{
+				for (l = j - 1; l <= j + 1; l++)
+				{
+					b[k][l] += a[i][j];
+				}
+				}
+				b[i][j] += a[i][j];
+			}
+		}
+		}
+
+		for (i = 0; i < 9; i++) //????????????a
+		{
+		for (j = 0; j < 9; j++)
+		{
+			a[i][j] = b[i][j];
+		}
+		}
+	}
+
+}
+
