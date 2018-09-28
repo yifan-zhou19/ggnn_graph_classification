@@ -271,7 +271,7 @@ def ggnn2txt(graph, train, test):
             out = test
         unit = graph.Unit(i)
         p = unit.Filename()
-        print("====%d %s %d" % (i, p, i % 3 != 0))
+        # print("====%d %s %d" % (i, p, i % 3 != 0))
         t = os.path.dirname(p);
         t = os.path.dirname(t);
         if t in algorithms:
