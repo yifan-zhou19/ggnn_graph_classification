@@ -26,3 +26,4 @@ docker build -t progress progress
 chmod a+w model
 # the traning command
 /usr/bin/time -f %e nvidia-docker run -v $(pwd):/e -w /e --shm-size $mem --rm -it progress python main.py --training --cuda --lr $lr --n_steps $n_steps --niter $niter --n_classes $n_classes --state_dim $state_dim --n_hidden $n_hidden --train_batch_size $train_batch_size --test_batch_size $test_batch_size --manualSeed $manualSeed --model_path model/$lang-model-$n_classes.cpkl --directory program_data/"$lang"_babi_format --workers $workers --size_vocabulary $size_vocabulary | tee $lang-log-$n_classes.txt
+/usr/bin/time -f %e nvidia-docker run -v $(pwd):/e -w /e --shm-size $mem --rm -it progress python3 main_ggnn.py --training --cuda --n_classes 104

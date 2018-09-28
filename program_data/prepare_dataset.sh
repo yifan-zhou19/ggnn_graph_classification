@@ -1,7 +1,10 @@
 #/bin/bash
-for dataset in cpp java github_cpp github_java; do
+export MAPS=--maps
+#for dataset in cpp java github_cpp github_java; do
+for dataset in cpp; do
 	./generate_"$dataset"_babi_format.sh
 done
+exit 0
 for dataset in java github_java; do
 	align "$dataset"_babi_format cll_"$dataset"_babi_format
 done
