@@ -1,12 +1,11 @@
 input=CppProgramData
 in=cpp_protobuf_format
-out=cpp_babi_format_10
-
+out=cpp_babi_format
 mkdir -p $out/train $out/test
 mkdir -p $in
 chmod a+wx $in $out/train $out/test
 rm -f maps.cpp.pkl
-for index in {1..10}; do
+for index in {1..104}; do
     if [ ! -f $in/$index.fbs ]; then
 	    fast -S -G $input/$index $in/$index.fbs
     fi
