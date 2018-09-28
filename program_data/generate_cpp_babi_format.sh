@@ -1,6 +1,6 @@
 input=CppProgramData
-in=cpp_protobuf_format_ten
-out=cpp_babi_format_ten
+in=cpp_protobuf_format_localmap_10
+out=cpp_babi_format_localmap_10
 mkdir -p $out/train $out/test
 mkdir -p $in
 chmod a+wx $in $out/train $out/test
