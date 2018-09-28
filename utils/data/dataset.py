@@ -137,23 +137,6 @@ def split_set_by_percentage(data_list,percentage):
     val = idx[train_num:n_examples]
     return np.array(data_list)[train],np.array(data_list)[val]
 
-def data_convert(data_list, n_annotation_dim):
-    n_nodes = find_max_node_id(data_list)
-    n_tasks = find_max_task_id(data_list)
-    task_data_list = []
-    for i in range(n_tasks):
-        task_data_list.append([])
-
-    for item in data_list:
-        edge_list = item[0]
-        target_list = item[1]
-        for target in target_list:
-            task_type = target[0]
-            task_output = target[-1]
-            annotation = np.zeros([n_nodes, n_annotation_dim])
-            annotation[target[1]-1][0] = 0
-            task_data_list[task_type-1].append([edge_list, annotation, task_output])
-    return task_data_list
 
 def convert_program_data(data_list, n_annotation_dim, n_nodes):
     # n_nodes = find_max_node_id(data_list)
@@ -207,58 +190,14 @@ def create_adjacency_matrix(edges, n_nodes, n_edge_types):
         a[src_idx-1][(e_type - 1 + n_edge_types) * n_nodes + tgt_idx - 1] =  1
     return a
 
-
-class bAbIDataset():
-    """
-    Load bAbI tasks for GGNN
-
-    Example data:
-        1 1 2
-        2 1 3
-        ? 1 2 1
-    Explaination of last line : ? 1 2 1 
-    ==> question_types = 2
-    ==> task_type = 1
-    ==> task_output = 1
-    """
-
-    def __init__(self, path, question_types, is_train):
-       
-        all_data = load_graphs_from_file(path)
-      
-        self.n_edge_types =  find_max_edge_id(all_data)
-        self.n_tasks = find_max_task_id(all_data)
-        self.n_node = find_max_node_id(all_data)
-        all_task_train_data, all_task_val_data = split_set(all_data,50)
-       
-        if is_train:
-            all_task_train_data = data_convert(all_task_train_data, 1)
-
-            self.data = all_task_train_data[question_types]
-
-        else:
-            all_task_val_data = data_convert(all_task_val_data, 1)
-            self.data = all_task_val_data[question_types]
-
-    def __getitem__(self, index):
-        # print(self.data[index])
-        
-        am = create_adjacency_matrix(self.data[index][0], self.n_node, self.n_edge_types)
-        annotation = self.data[index][1]
-        target = self.data[index][2] - 1
-        return am, annotation, target
-
-    def __len__(self):
-        return len(self.data)
-
-class bAbIDataset2():
+class MonoLanguageProgramData():
    
-    def __init__(self, opt, path, is_train, n_classes=3,data_percentage=1):
-       
+    def __init__(self, size_vocabulary, path, is_train, n_classes=3,data_percentage=1):
+        
         if is_train:
-           saved_input_filename = "%s-%d-train.pkl" % (path, opt.n_classes)
+           saved_input_filename = "%s-%d-train.pkl" % (path, n_classes)
         else:
-           saved_input_filename = "%s-%d-test.pkl" % (path, opt.n_classes)
+           saved_input_filename = "%s-%d-test.pkl" % (path, n_classes)
         if os.path.exists(saved_input_filename): 
            input_file = open(saved_input_filename, 'rb')
            buf = input_file.read()
@@ -278,9 +217,9 @@ class bAbIDataset2():
             print("Number of all testing data : " + str(len(all_data)))
         self.n_edge_types =  find_max_edge_id(all_data)
         # print("Edge types : " + str(self.n_edge_types))
-        self.n_tasks = find_max_task_id(all_data)
-        # self.n_node = find_max_node_id(all_data)
-        self.n_node = opt.size_vocabulary
+        max_node = find_max_node_id(all_data)
+        print("Max node id : " + str(max_node))
+        self.n_node = size_vocabulary
         
         all_data = convert_program_data(all_data,1, self.n_node)
 
@@ -288,16 +227,10 @@ class bAbIDataset2():
         self.data = all_data
      
     def __getitem__(self, index):
-        # print(index)
-        # print(self.data)
-        # print(self.data[index])
-        # print(self.data[index][0])
-        # print(self.data[index][1])
-        # print(self.data[index])
+        
         am = create_adjacency_matrix(self.data[index][0], self.n_node, self.n_edge_types)
         annotation = self.data[index][1]
         target = self.data[index][2] - 1
-        # print("Target : " + str(target))
         return am, annotation, target
 
     def __len__(self):
@@ -306,8 +239,9 @@ class bAbIDataset2():
 
 class CrossLingualProgramData():
    
-    def __init__(self, left_path, right_path, is_train, n_classes=3, data_percentage=1):
-       
+    def __init__(self, size_vocabulary, left_path, right_path, is_train, loss, n_classes=3, data_percentage=1):
+        
+        self.loss = loss
         left_all_data = load_program_graphs_from_directory(left_path,is_train,n_classes,data_percentage)
         right_all_data = load_program_graphs_from_directory(right_path,is_train,n_classes,data_percentage)
 
@@ -322,11 +256,10 @@ class CrossLingualProgramData():
             print("Number of all right testing data : " + str(len(right_all_data)))
 
         self.n_edge_types =  find_max_edge_id(left_all_data)
-
-        # self.n_node = find_max_node_id(all_data)
-        self.n_node = 63
+        self.n_node = size_vocabulary
         max_left_node = find_max_node_id(left_all_data)
         max_right_node = find_max_node_id(right_all_data)
+
         print("Left max node id : " + str(max_left_node))
         print("Right max node id : " + str(max_right_node))
 
@@ -378,6 +311,9 @@ class CrossLingualProgramData():
             target = 1.0
         else:
             target = 0.0
+
+        if self.loss == 0:
+            target = int(target)
 
         return (left_am,right_am), (left_annotation,right_annotation), target
 

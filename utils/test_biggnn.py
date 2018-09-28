@@ -1,5 +1,6 @@
 import torch
 from torch.autograd import Variable
+import torch.nn.functional as F
 
 def test(dataloader, net, criterion, optimizer, opt):
     # net.train()
@@ -42,16 +43,26 @@ def test(dataloader, net, criterion, optimizer, opt):
         right_annotation = Variable(right_annotation)
 
         target = Variable(target)
-     
-        output = net(left_init_input, left_annotation, left_adj_matrix, right_init_input, right_annotation, right_adj_matrix)
+        
+        if opt.loss == 1:
+            left_output, right_output = net(left_init_input, left_annotation, left_adj_matrix, right_init_input, right_annotation, right_adj_matrix)
+            loss = criterion(left_output,right_output, target) 
+
+            euclidean_distance = F.pairwise_distance(left_output, right_output)   
+            
+            pred = output.data.max(1, keepdim=True)[1]
+            correct += pred.eq(target.data.view_as(pred)).cpu().sum()
+
+    
+        else:
+            output = net(left_init_input, left_annotation, left_adj_matrix, right_init_input, right_annotation, right_adj_matrix)
+            loss = criterion(output, target)
+
+
        
-        test_loss += criterion(output, target).data[0]
+        test_loss += loss.data[0]
 
-        pred = output.data.max(1, keepdim=True)[1]
-        # print(pred)
-
-        correct += pred.eq(target.data.view_as(pred)).cpu().sum()
-
+       
     test_loss /= len(dataloader.dataset)
     print('Test set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)'.format(
         test_loss, correct, len(dataloader.dataset),

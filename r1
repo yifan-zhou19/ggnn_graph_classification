@@ -1,0 +1,17 @@
+lang=cpp
+directory=program_data/"$lang"_babi_format_correct_dedup
+
+docker build -t progress progress
+n=$1
+/usr/bin/time -f %e \
+  nvidia-docker run -v $(pwd):/e -w /e --shm-size 8G --rm -it progress \
+  python main_ggnn.py \
+	--cuda \
+	--training \
+	--model_path model/$(basename $directory)-$n.cpkl --directory $directory \
+	--n_classes $n \
+	--n_steps 10 \
+	--n_hidden 50 \
+	--size_vocabulary 57 \
+	--train_batch_size 32 \
+  | tee $(basename $directory)-log-$n.txt

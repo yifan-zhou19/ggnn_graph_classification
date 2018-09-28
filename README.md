@@ -21,7 +21,7 @@ We took the dataset of 104 programming problems, which comprises of 52000 cpp fi
 ## Run 
 Train and test the GGNN:
 ```
-python3 main.py --cuda (use GPUs or not)
+python3 main_ggnn.py --training --cuda (use GPUs or not)
 ```
 
 ## References

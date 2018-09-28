@@ -24,7 +24,7 @@ def train(epoch, dataloader, net, criterion, optimizer, opt):
         output = net(init_input, annotation, adj_matrix)
 
         loss = criterion(output, target)
-
+       
         loss.backward()
         optimizer.step()
 

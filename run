@@ -1,21 +1,22 @@
 # these parameters choose different dataset
-n_classes=10
 n_classes=1
+n_classes=20
 n_classes=104
 lang=cpp
 # these parameters can be changed on every training session
 manualSeed=0
 ## make sure it is a constant larger than the number of used node types
-lr=0.05
+lr=0.01
 size_vocabulary=57
 n_hidden=100
+n_hidden=50
 train_batch_size=32
 test_batch_size=32
-n_steps=8
-niter=100
+n_steps=10
+niter=150
 mem=8G
 verbal=False
-workers=16
+workers=2
 # these parameters cannot be changed after restoring the saved model
 state_dim=5
 # a few more python packages are needed by the program on top of pytorch
@@ -24,6 +25,13 @@ docker build -t progress progress
 # docker run --rm -v $(pwd):/e --shm-size 8G --rm --entrypoint bash -it progress -c 'rm -f /e/model/*'
 # make sure the folder is writable by the docker process
 chmod a+w model
+directory=program_data/"$lang"_babi_format_correct
+directory=program_data/new_babi_format
+directory=program_data/"$lang"_babi_format
 # the traning command
+<<<<<<< HEAD
 /usr/bin/time -f %e nvidia-docker run -v $(pwd):/e -w /e --shm-size $mem --rm -it progress python main.py --training --cuda --lr $lr --n_steps $n_steps --niter $niter --n_classes $n_classes --state_dim $state_dim --n_hidden $n_hidden --train_batch_size $train_batch_size --test_batch_size $test_batch_size --manualSeed $manualSeed --model_path model/$lang-model-$n_classes.cpkl --directory program_data/"$lang"_babi_format --workers $workers --size_vocabulary $size_vocabulary | tee $lang-log-$n_classes.txt
 /usr/bin/time -f %e nvidia-docker run -v $(pwd):/e -w /e --shm-size $mem --rm -it progress python3 main_ggnn.py --training --cuda --n_classes 104
+=======
+/usr/bin/time -f %e nvidia-docker run -v $(pwd):/e -w /e --shm-size $mem --rm -it progress python main_ggnn.py --training --cuda --lr $lr --n_steps $n_steps --niter $niter --n_classes $n_classes --state_dim $state_dim --n_hidden $n_hidden --train_batch_size $train_batch_size --test_batch_size $test_batch_size --manualSeed $manualSeed --model_path model/$lang-model-$n_classes.cpkl --directory $directory --workers $workers --size_vocabulary $size_vocabulary | tee $lang-log-$n_classes.txt
+>>>>>>> 8194f5a58412850b059d846f82c9e1cbfe931118
