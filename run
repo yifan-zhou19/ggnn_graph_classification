@@ -1,0 +1,41 @@
+# $1 - the dataset folder containing training/testing samples
+# $2 - the size of vocabulary, start with a small number and increase it if you get errors
+lang=cpp
+directory=$1
+
+# derive the number of classes depending on the number of files in the training folder
+n=$(ls $directory/train | wc -l | cut -f1 -d" ")
+
+# the cached dataset
+cache=$directory-$n.pkl
+# comment out if you want to resume computation
+rm -f $cache
+
+# the model file
+model=model/$(basename $directory)-$n.cpkl
+# comment out if you want to resume computation
+rm -f $model
+
+# the log file
+log=$(basename $directory)-log-$n.txt
+# comment out if you want to reset the log
+rm -f $log
+
+# use the docker to run training
+docker build -t progress progress
+/usr/bin/time -f %e \
+  nvidia-docker run -v $(pwd):/e -w /e --shm-size 8G --rm -it progress \
+  python main_ggnn.py \
+	--cuda \
+	--training \
+	--model_path $model --directory $directory \
+	--n_classes $n \
+	--n_steps 10 \
+	--n_hidden 50 \
+	--niter 1 \
+	--size_vocabulary $2 \
+	--train_batch_size 32 \
+  | tee $log
+
+# extract the accuracy performance from the log
+grep Test $log | cut -f8 -d" " | sort -n
