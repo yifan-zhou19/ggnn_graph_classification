@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.init as init
 import torch.nn.functional as F
+from tensorboardX import SummaryWriter
 
 class AttrProxy(object):
     """
@@ -51,6 +52,7 @@ class Propogator(nn.Module):
 
         r = self.reset_gate(a)
         z = self.update_gate(a)
+        
         joined_input = torch.cat((a_in, a_out, r * state_cur), 2)
         h_hat = self.tansform(joined_input)
 
@@ -87,12 +89,12 @@ class ClassPrediction(nn.Module):
         return loss
 
 class ContrastiveLoss(nn.Module):
-    def __init__(self, margin=1.0):
+    def __init__(self, margin=0.5):
         super(ContrastiveLoss, self).__init__()
         self.margin = margin
 
     def forward(self, output1, output2, label):
-        euclidean_distance = F.pairwise_distance(output1, output2)   
+        euclidean_distance = F.pairwise_distance(output1, output2)
         loss_contrastive = torch.mean((1.0 - label) * torch.pow(euclidean_distance, 2) + (label) * torch.pow(torch.clamp(self.margin - euclidean_distance, min=0.0), 2))
         return loss_contrastive
 
@@ -108,7 +110,6 @@ class GGNN(nn.Module):
         # assert (opt.state_dim >= opt.annotation_dim, 'state_dim must be no less than annotation_dim')
         self.is_training_ggnn = opt.is_training_ggnn
         self.state_dim = opt.state_dim
-        self.annotation_dim = opt.annotation_dim
         self.n_edge_types = opt.n_edge_types
         self.n_node = opt.n_node
         self.n_steps = opt.n_steps
@@ -160,23 +161,24 @@ class GGNN(nn.Module):
                 if m.bias is not None:
                     init.normal_(m.bias.data)
 
-    def forward(self, prop_state, annotation, A):
+    def forward(self, prop_state, A):
+        # print(prop_state.shape)
         for i_step in range(self.n_steps):
             in_states = []
             out_states = []
             for i in range(self.n_edge_types):
                 in_states.append(self.in_fcs[i](prop_state))
                 out_states.append(self.out_fcs[i](prop_state))
+    
             in_states = torch.stack(in_states).transpose(0, 1).contiguous()
             in_states = in_states.view(-1, self.n_node*self.n_edge_types, self.state_dim)
+
             out_states = torch.stack(out_states).transpose(0, 1).contiguous()
             out_states = out_states.view(-1, self.n_node*self.n_edge_types, self.state_dim)
 
             prop_state = self.propogator(in_states, out_states, prop_state, A)
 
-       
         output = self.out(prop_state)
-
 
         soft_attention_ouput = self.soft_attention(prop_state)
         # Element wise hadamard product to get the graph representation, check Equation 7 in GGNN paper for more details
@@ -205,7 +207,7 @@ class BiGGNN(nn.Module):
             nn.Softmax(dim=1)
         )
 
-        self.feature_representation = nn.Sequential(
+        self.feature_extraction = nn.Sequential(
             nn.Linear(self.n_node, 50),
             nn.ReLU(),
             nn.Linear(50, 20)  
@@ -227,18 +229,14 @@ class BiGGNN(nn.Module):
         left_output = self.ggnn(left_prop_state, left_annotation, left_A)
         right_output = self.ggnn(right_prop_state, right_annotation, right_A)
 
-        left_output = self.feature_representation(left_output)
-        right_output = self.feature_representation(right_output)
+        left_output = self.feature_extraction(left_output)
+        right_output = self.feature_extraction(right_output)
 
-        # concat_layer = torch.cat((left_output, right_output),1)
-        # output = self.fc_output(concat_layer)
-        
         if self.opt.loss == 1:
             return left_output, right_output
         else:
             concat_layer = torch.cat((left_output, right_output),1)
             output = self.fc_output(concat_layer)
-            print(output)
             return output
 
 

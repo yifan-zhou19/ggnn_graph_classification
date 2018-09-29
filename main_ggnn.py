@@ -14,8 +14,6 @@ from utils.data.dataloader import bAbIDataloader
 import os
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--task_id', type=int, default=4, help='bAbI task id')
-parser.add_argument('--question_id', type=int, default=0, help='question types')
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=2)
 parser.add_argument('--train_batch_size', type=int, default=32, help='input batch size')
 parser.add_argument('--test_batch_size', type=int, default=32, help='input batch size')
@@ -27,15 +25,15 @@ parser.add_argument('--cuda', action='store_true', help='enables cuda')
 parser.add_argument('--verbal', type=bool, default=True, help='print training info or not')
 parser.add_argument('--manualSeed', type=int, help='manual seed')
 parser.add_argument('--n_classes', type=int, default=104, help='manual seed')
-parser.add_argument('--directory', default="program_data/cpp_babi_format", help='program data')
+parser.add_argument('--directory', default="program_data/cpp_babi_format_3", help='program data')
 parser.add_argument('--model_path', default="model/model.ckpt", help='path to save the model')
 parser.add_argument('--n_hidden', type=int, default=50, help='number of hidden layers')
 parser.add_argument('--size_vocabulary', type=int, default=59, help='maximum number of node types')
 parser.add_argument('--is_training_ggnn', type=bool, default=True, help='Training GGNN or BiGGNN')
 parser.add_argument('--training', action="store_true",help='is training')
 parser.add_argument('--testing', action="store_true",help='is testing')
-
-
+parser.add_argument('--training_percentage', type=float, default=1.0 ,help='percentage of data use for training')
+parser.add_argument('--log_path', default="logs/ggnn" ,help='percentage of data use for training')
 
 opt = parser.parse_args()
 print(opt)
@@ -49,15 +47,12 @@ print("Random Seed: ", opt.manualSeed)
 random.seed(opt.manualSeed)
 torch.manual_seed(opt.manualSeed)
 
-opt.dataroot = 'babi_data/processed_1/train/%d_graphs.txt' % opt.task_id
-
 if opt.cuda:
     torch.cuda.manual_seed_all(opt.manualSeed)
 
 # This part is the implementation to illustrate Graph-Level output from program data
 def main(opt):
-    opt.data_percentage = 1
-    train_dataset = MonoLanguageProgramData(opt.size_vocabulary, opt.directory, True, opt.n_classes, opt.data_percentage)
+    train_dataset = MonoLanguageProgramData(opt.size_vocabulary, opt.directory, True, opt.n_classes, opt.training_percentage)
     train_dataloader = bAbIDataloader(train_dataset, batch_size=opt.train_batch_size, \
                                       shuffle=True, num_workers=2)
 
@@ -89,6 +84,7 @@ def main(opt):
         for epoch in range(0, opt.niter):
             train(epoch, train_dataloader, net, criterion, optimizer, opt)
             test(test_dataloader, net, criterion, optimizer, opt)
+
     if opt.testing:
         test(test_dataloader, net, criterion, optimizer, opt)
 
