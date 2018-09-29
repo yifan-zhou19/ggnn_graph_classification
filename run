@@ -1,32 +1,41 @@
-# these parameters choose different dataset
-n_classes=1
-n_classes=20
-n_classes=104
+# $1 - the dataset folder containing training/testing samples
+# $2 - the size of vocabulary, start with a small number and increase it if you get errors
 lang=cpp
-# these parameters can be changed on every training session
-manualSeed=0
-## make sure it is a constant larger than the number of used node types
-lr=0.01
-size_vocabulary=57
-n_hidden=100
-n_hidden=50
-train_batch_size=32
-test_batch_size=32
-n_steps=10
-niter=150
-mem=8G
-verbal=False
-workers=2
-# these parameters cannot be changed after restoring the saved model
-state_dim=5
-# a few more python packages are needed by the program on top of pytorch
+directory=$1
+
+# derive the number of classes depending on the number of files in the training folder
+n=$(ls $directory/train | wc -l | cut -f1 -d" ")
+
+# the cached dataset
+cache=$directory-$n.pkl
+# comment out if you want to resume computation
+rm -f $cache
+
+# the model file
+model=model/$(basename $directory)-$n.cpkl
+# comment out if you want to resume computation
+rm -f $model
+
+# the log file
+log=$(basename $directory)-log-$n.txt
+# comment out if you want to reset the log
+rm -f $log
+
+# use the docker to run training
 docker build -t progress progress
-# uncomment to remove the previously created models
-# docker run --rm -v $(pwd):/e --shm-size 8G --rm --entrypoint bash -it progress -c 'rm -f /e/model/*'
-# make sure the folder is writable by the docker process
-chmod a+w model
-directory=program_data/"$lang"_babi_format_correct
-directory=program_data/new_babi_format
-directory=program_data/"$lang"_babi_format
-# the traning command
-/usr/bin/time -f %e nvidia-docker run -v $(pwd):/e -w /e --shm-size $mem --rm -it progress python main_ggnn.py --training --cuda --lr $lr --n_steps $n_steps --niter $niter --n_classes $n_classes --state_dim $state_dim --n_hidden $n_hidden --train_batch_size $train_batch_size --test_batch_size $test_batch_size --manualSeed $manualSeed --model_path model/$lang-model-$n_classes.cpkl --directory $directory --workers $workers --size_vocabulary $size_vocabulary | tee $lang-log-$n_classes.txt
+/usr/bin/time -f %e \
+  nvidia-docker run -v $(pwd):/e -w /e --shm-size 8G --rm -it progress \
+  python main_ggnn.py \
+	--cuda \
+	--training \
+	--model_path $model --directory $directory \
+	--n_classes $n \
+	--n_steps 10 \
+	--n_hidden 50 \
+	--niter 1 \
+	--size_vocabulary $2 \
+	--train_batch_size 32 \
+  | tee $log
+
+# extract the accuracy performance from the log
+grep Test $log | cut -f8 -d" " | sort -n
