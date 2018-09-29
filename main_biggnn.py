@@ -16,8 +16,6 @@ from utils.data.dataloader import bAbIDataloader
 import os
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--task_id', type=int, default=4, help='bAbI task id')
-parser.add_argument('--question_id', type=int, default=0, help='question types')
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=2)
 parser.add_argument('--train_batch_size', type=int, default=32, help='input batch size')
 parser.add_argument('--test_batch_size', type=int, default=32, help='input batch size')
@@ -49,6 +47,10 @@ print("Random Seed: ", opt.manualSeed)
 random.seed(opt.manualSeed)
 torch.manual_seed(opt.manualSeed)
 
+if opt.loss == 1:
+    print("Training Bi-GGNN with contrastive loss................")
+if opt.loss == 0:
+    print("Training Bi-GGNN with cross entropy loss................")
 # model_path = "model/bi_ggnn_%s-%s-%d.ckpt" % (opt.left_directory, opt.right_directory, opt.n_classes)
 # opt.model_path = model_path
 
@@ -57,6 +59,7 @@ if opt.cuda:
 
 def main(opt):
     opt.data_percentage = 1
+    print("Loading data...............")
     train_dataset = CrossLingualProgramData(opt.size_vocabulary, opt.left_directory,opt.right_directory, True, opt.loss, opt.n_classes,opt.data_percentage)
     train_dataloader = bAbIDataloader(train_dataset, batch_size=opt.train_batch_size, \
                                       shuffle=True, num_workers=2)
@@ -75,10 +78,6 @@ def main(opt):
         print("Using the saved model....")
         net = torch.load(opt.model_path)
     else:
-        # left_net = GGNN(opt)
-        # left_net.double()
-        # right_net = GGNN(opt)
-        # right_net.double()
         net = BiGGNN(opt)
         net.double()
 
@@ -91,15 +90,6 @@ def main(opt):
         net.cuda()
         criterion.cuda()
         
-    # fc_output = nn.Sequential(
-    #         nn.Linear(104*2, 50),
-    #         nn.ReLU(),
-    #         nn.Linear(50, 2),
-    #         nn.Softmax(dim=1)
-    #     )
-    # fc_output.double()
-    # fc_output.cuda()
-
     optimizer = optim.Adam(net.parameters(), lr=opt.lr)
 
     if opt.training:
