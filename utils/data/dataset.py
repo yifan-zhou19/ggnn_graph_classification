@@ -38,7 +38,7 @@ def load_graphs_from_file(file_name):
     # print(data_list)
     return data_list
 
-def load_program_graphs_from_directory(directory,is_train=True,n_classes=3, data_percentage=1):
+def load_program_graphs_from_directory(directory,is_train=True,n_classes=3, data_percentage=1.0):
     data_list = []
     if is_train == True:
             dir_path =  os.path.join(directory,"train")
@@ -83,8 +83,10 @@ def load_program_graphs_from_directory(directory,is_train=True,n_classes=3, data
                             digits.append(int(line_tokens[j]))
                         edge_list_class_i.append(digits)
 
-        if data_percentage != 1:
+        if data_percentage < 1.0:
+            print("Cutting down " + str(data_percentage) + " of all data......")
             slicing = int(len(data_list_class_i)*data_percentage)
+            print("Remaining data : " + str(slicing) + "......")
             data_list_class_i = data_list_class_i[:slicing]
 
         data_list.extend(data_list_class_i)
@@ -192,8 +194,7 @@ def create_adjacency_matrix(edges, n_nodes, n_edge_types):
 
 class MonoLanguageProgramData():
    
-    def __init__(self, size_vocabulary, path, is_train, n_classes=3,data_percentage=1):
-        
+    def __init__(self, size_vocabulary, path, is_train, n_classes=3,data_percentage=1.0):
         if is_train:
            saved_input_filename = "%s-%d-train.pkl" % (path, n_classes)
         else:
@@ -229,9 +230,9 @@ class MonoLanguageProgramData():
     def __getitem__(self, index):
         
         am = create_adjacency_matrix(self.data[index][0], self.n_node, self.n_edge_types)
-        annotation = self.data[index][1]
+        # annotation = self.data[index][1]
         target = self.data[index][2] - 1
-        return am, annotation, target
+        return am, target
 
     def __len__(self):
         return len(self.data)

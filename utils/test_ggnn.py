@@ -5,23 +5,23 @@ def test(dataloader, net, criterion, optimizer, opt):
     test_loss = 0
     correct = 0
     net.eval()
-    for i, (adj_matrix, annotation, target) in enumerate(dataloader, 0):
-        # print("Testing....")
-        padding = torch.zeros(len(annotation), opt.n_node, opt.state_dim - opt.annotation_dim).double()
-        # print(padding.shape)
-        init_input = torch.cat((annotation, padding), 2)
+    for i, (adj_matrix, target) in enumerate(dataloader, 0):
+        
+        # padding = torch.zeros(len(annotation), opt.n_node, opt.state_dim - opt.annotation_dim).double()
+        # init_input = torch.cat((annotation, padding), 2)
+        init_input = torch.zeros(len(adj_matrix), opt.n_node, opt.state_dim).double()
         if opt.cuda:
             init_input = init_input.cuda()
             adj_matrix = adj_matrix.cuda()
-            annotation = annotation.cuda()
+            # annotation = annotation.cuda()
             target = target.cuda()
 
         init_input = Variable(init_input)
         adj_matrix = Variable(adj_matrix)
-        annotation = Variable(annotation)
+        # annotation = Variable(annotation)
         target = Variable(target)
         # print(target)
-        output = net(init_input, annotation, adj_matrix)
+        output = net(init_input, adj_matrix)
         # print(output)
         #test_loss += criterion(output, target).data[0]
         test_loss += criterion(output, target).item()
