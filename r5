@@ -1,4 +1,6 @@
 for f in program_data/cpp_babi_format*; do
+  if [ ! -f $f/run.sh ]; then
    echo ./run $f 51 > $f/run.sh
    ./run $f 51
+  fi
 done

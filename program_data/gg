@@ -1,3 +1,4 @@
+rm -f gg.log
 for f in ggnn/ggnn-*.py; do
   cp $f ggnn/ggnn.py
   g=${f/*-/}
