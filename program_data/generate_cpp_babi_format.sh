@@ -3,14 +3,15 @@ in=${1:-cpp_protobuf_format_correct}
 out=${in/protobuf/babi}$2
 mkdir -p $out/train $out/test
 mkdir -p $in
-chmod a+wx $in $out/train $out/test
+chmod -R a+w $in $out
 rm -f maps.cpp.pkl
 rm -f maps.pkl
-for index in {1..10}; do
+for index in {1..5}; do
     if [ ! -f $in/$index.fbs ]; then
 	    fast -S -G $input/$index $in/$index.fbs
     fi
-    ggnn $in/$index.fbs $out/train/train_$index.txt $out/test/test_$index.txt # > $index.log
+    ggnn $in/$index.fbs $out/train/train_$index.txt $out/test/test_$index.txt > $out/$index.log
+    ggnn $in/$index.fbs $out/$index.json >> $out/$index.log
 done
 mv maps.cpp.pkl $out
 mv maps.pkl $out

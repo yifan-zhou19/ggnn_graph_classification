@@ -1,3 +1,4 @@
 for f in program_data/cpp_babi_format*; do
-   echo "./run $f 51 > $f/run.sh"
+   echo ./run $f 51 > $f/run.sh
+   ./run $f 51
 done

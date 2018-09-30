@@ -5,11 +5,12 @@ directory=$1
 
 # derive the number of classes depending on the number of files in the training folder
 n=$(ls $directory/train | wc -l | cut -f1 -d" ")
+n=3
 
 # the cached dataset
-cache=$directory/$(basename directory)-$n.pkl
+cache=$directory/$(basename $directory)-$n
 # comment out if you want to resume computation
-rm -f $cache
+rm -f $cache-*.pkl
 
 # the model file
 model=$directory/$(basename $directory)-$n.cpkl
@@ -20,9 +21,12 @@ rm -f $model
 log=$directory/$(basename $directory)-log-$n.txt
 # comment out if you want to reset the log
 rm -f $log
+mkdir -p $directory/logs
+
+chmod -R a+w $directory
 
 # use the docker to run training
-docker build -t progress progress
+docker build --build-arg http_proxy=http://wwwcache.open.ac.uk:80 --build-arg https_proxy=http://wwwcache.open.ac.uk:80 -t progress progress
 /usr/bin/time -f %e \
   nvidia-docker run -v $(pwd):/e -w /e --shm-size 8G --rm -it progress \
   python main_ggnn.py \
@@ -35,7 +39,9 @@ docker build -t progress progress
 	--niter 3 \
 	--size_vocabulary $2 \
 	--train_batch_size 32 \
+	--log_path $directory/logs \
   | tee $log
 
+mv $cache-*.pkl $directory
 # extract the accuracy performance from the log
 grep Test $log | cut -f8 -d" " | sort -n | tee >> $log
