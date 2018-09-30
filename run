@@ -5,7 +5,6 @@ directory=$1
 
 # derive the number of classes depending on the number of files in the training folder
 n=$(ls $directory/train | wc -l | cut -f1 -d" ")
-n=3
 
 # the cached dataset
 cache=$directory/$(basename $directory)-$n
@@ -36,7 +35,7 @@ docker build --build-arg http_proxy=http://wwwcache.open.ac.uk:80 --build-arg ht
 	--n_classes $n \
 	--n_steps 10 \
 	--n_hidden 50 \
-	--niter 3 \
+	--niter 1 \
 	--size_vocabulary $2 \
 	--train_batch_size 32 \
 	--log_path $directory/logs \
