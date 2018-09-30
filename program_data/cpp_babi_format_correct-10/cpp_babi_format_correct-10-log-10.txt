@@ -1,0 +1,66 @@
+Namespace(cuda=True, directory='program_data/cpp_babi_format_correct-10', is_training_ggnn=True, log_path='program_data/cpp_babi_format_correct-10/logs', lr=0.01, manualSeed=None, model_path='program_data/cpp_babi_format_correct-10/cpp_babi_format_correct-10-10.cpkl', n_classes=10, n_hidden=50, n_steps=10, niter=3, size_vocabulary=50, state_dim=5, test_batch_size=32, testing=False, train_batch_size=32, training=True, training_percentage=1.0, verbal=True, workers=2)
+Random Seed:  2170
+  0% 0/10 [00:00<?, ?it/s] 10% 1/10 [00:00<00:01,  5.97it/s] 20% 2/10 [00:00<00:01,  4.35it/s] 30% 3/10 [00:00<00:01,  4.67it/s] 40% 4/10 [00:00<00:01,  4.47it/s] 50% 5/10 [00:01<00:01,  4.18it/s] 60% 6/10 [00:01<00:01,  3.94it/s] 70% 7/10 [00:01<00:00,  3.79it/s] 80% 8/10 [00:02<00:00,  3.24it/s] 90% 9/10 [00:02<00:00,  3.22it/s]100% 10/10 [00:02<00:00,  3.22it/s]
+Number of all training data : 3330
+Max node id : 46
+  0% 0/10 [00:00<?, ?it/s] 20% 2/10 [00:00<00:00,  8.63it/s] 40% 4/10 [00:00<00:00,  9.39it/s] 50% 5/10 [00:00<00:00,  6.40it/s] 60% 6/10 [00:00<00:00,  7.02it/s] 70% 7/10 [00:00<00:00,  7.60it/s] 80% 8/10 [00:01<00:00,  7.18it/s] 90% 9/10 [00:01<00:00,  6.87it/s]100% 10/10 [00:01<00:00,  7.68it/s]
+Number of all testing data : 1670
+Max node id : 44
+/opt/conda/lib/python3.6/site-packages/torch/onnx/utils.py:365: UserWarning: ONNX export failed on ATen operator stack because torch.onnx.symbolic.stack does not exist
+  .format(op_name, op_name))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %98 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %161 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %224 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %287 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %350 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %413 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %476 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %539 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %602 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %665 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+[0/3][0/105] Loss: 2.3168
+[0/3][11/105] Loss: 2.2004
+[0/3][22/105] Loss: 1.8263
+[0/3][33/105] Loss: 1.4887
+[0/3][44/105] Loss: 1.4779
+[0/3][55/105] Loss: 1.4661
+[0/3][66/105] Loss: 1.4625
+[0/3][77/105] Loss: 1.4620
+[0/3][88/105] Loss: 1.4619
+[0/3][99/105] Loss: 1.4622
+Test set: Average loss: 0.0464, Accuracy: 1670/1670 (100%)
+[1/3][0/105] Loss: 1.4618
+[1/3][11/105] Loss: 1.4617
+[1/3][22/105] Loss: 1.4615
+[1/3][33/105] Loss: 1.4615
+^A^A    [1/3][44/105] Loss: 1.4616
+[1/3][55/105] Loss: 1.4616
+[1/3][66/105] Loss: 1.4616
+[1/3][77/105] Loss: 1.4614
+[1/3][88/105] Loss: 1.4619
+[1/3][99/105] Loss: 1.4614
+Test set: Average loss: 0.0464, Accuracy: 1670/1670 (100%)
+[2/3][0/105] Loss: 1.4614
+[2/3][11/105] Loss: 1.4614
+[2/3][22/105] Loss: 1.4620
+[2/3][33/105] Loss: 1.4616
+[2/3][44/105] Loss: 1.4614
+[2/3][55/105] Loss: 1.4613
+[2/3][66/105] Loss: 1.4613
+[2/3][77/105] Loss: 1.4613
+[2/3][88/105] Loss: 1.4613
+[2/3][99/105] Loss: 1.4613
+Test set: Average loss: 0.0464, Accuracy: 1670/1670 (100%)
+(100%)
+(100%)
+(100%)

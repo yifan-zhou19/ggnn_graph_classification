@@ -1,0 +1,8 @@
+tag=${1:-104}
+for f in program_data/cpp_babi_format_Sep-29-2018-$tag-*; do
+  if [ -f $f/run.sh ]; then
+     p1=$(tail -2 $f/cpp_babi_format*log-$tag.txt | head -1)
+     p2=$(tail -1 $f/cpp_babi_format*log-$tag.txt | head -1)
+     echo $f $p1 $p2
+  fi
+done | sort -n
