@@ -6,7 +6,7 @@ mkdir -p $in
 chmod -R a+w $in
 for ((i=1;i<=$n;i++)); do
     if [ ! -f $in/$i.fbs ]; then
-	fast > $in/fast.version
+	fast -v > $in/fast.version
 	fast -S -G $input/$i $in/$i.fbs
     fi
 done

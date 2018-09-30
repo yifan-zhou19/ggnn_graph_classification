@@ -1,8 +1,0 @@
-rm -f gg.log
-for f in ggnn/ggnn-*.py; do
-  cp $f ggnn/ggnn.py
-  g=${f/*-/}
-  g=${g/.py/}
-  echo generate_cpp_babi_format.sh cpp_protobuf_format_new -$g | tee >> gg.log
-  generate_cpp_babi_format.sh cpp_protobuf_format_new -$g | tee >> gg.log
-done
