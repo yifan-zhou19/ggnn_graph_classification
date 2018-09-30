@@ -33,7 +33,7 @@ parser.add_argument('--is_training_ggnn', type=bool, default=True, help='Trainin
 parser.add_argument('--training', action="store_true",help='is training')
 parser.add_argument('--testing', action="store_true",help='is testing')
 parser.add_argument('--training_percentage', type=float, default=1.0 ,help='percentage of data use for training')
-parser.add_argument('--log_path', default="logs/ggnn" ,help='percentage of data use for training')
+parser.add_argument('--log_path', default="logs/ggnn" ,help='log path for tensorboard')
 
 opt = parser.parse_args()
 print(opt)
