@@ -1,8 +1,1 @@
-<<<<<<< HEAD
-docker pull yijun/fast
-docker run -v $(pwd):/e --entrypoint bash --rm -it yijun/fast -c "./prepare_dataset.sh"
-=======
-#docker pull yijun/fast
-#docker run -v $(pwd):/e -w /e --entrypoint bash --rm -it yijun/fast -c "MAPS=--maps ./prepare_dataset.sh"
 ./prepare_dataset.sh
->>>>>>> 8194f5a58412850b059d846f82c9e1cbfe931118

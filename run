@@ -7,17 +7,17 @@ directory=$1
 n=$(ls $directory/train | wc -l | cut -f1 -d" ")
 
 # the cached dataset
-cache=$directory-$n.pkl
+cache=$directory/$(basename directory)-$n.pkl
 # comment out if you want to resume computation
 rm -f $cache
 
 # the model file
-model=model/$(basename $directory)-$n.cpkl
+model=$directory/$(basename $directory)-$n.cpkl
 # comment out if you want to resume computation
 rm -f $model
 
 # the log file
-log=$(basename $directory)-log-$n.txt
+log=$directory/$(basename $directory)-log-$n.txt
 # comment out if you want to reset the log
 rm -f $log
 
@@ -32,10 +32,10 @@ docker build -t progress progress
 	--n_classes $n \
 	--n_steps 10 \
 	--n_hidden 50 \
-	--niter 1 \
+	--niter 3 \
 	--size_vocabulary $2 \
 	--train_batch_size 32 \
   | tee $log
 
 # extract the accuracy performance from the log
-grep Test $log | cut -f8 -d" " | sort -n
+grep Test $log | cut -f8 -d" " | sort -n | tee >> $log
