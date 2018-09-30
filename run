@@ -35,7 +35,7 @@ docker build --build-arg http_proxy=http://wwwcache.open.ac.uk:80 --build-arg ht
 	--n_classes $n \
 	--n_steps 10 \
 	--n_hidden 50 \
-	--niter 1 \
+	--niter 2 \
 	--size_vocabulary $2 \
 	--train_batch_size 32 \
 	--log_path $directory/logs \
