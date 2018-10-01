@@ -31,6 +31,7 @@ docker build --build-arg http_proxy=http://wwwcache.open.ac.uk:80 --build-arg ht
   python main_ggnn.py \
 	--cuda \
 	--training \
+        --manualSeed 0 \
 	--model_path $model --directory $directory \
 	--n_classes $n \
 	--n_steps 10 \

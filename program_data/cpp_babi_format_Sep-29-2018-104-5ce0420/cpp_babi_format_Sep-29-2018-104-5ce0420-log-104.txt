@@ -1,0 +1,54 @@
+Namespace(cuda=True, directory='program_data/cpp_babi_format_Sep-29-2018-104-5ce0420', is_training_ggnn=True, log_path='program_data/cpp_babi_format_Sep-29-2018-104-5ce0420/logs', lr=0.01, manualSeed=None, model_path='program_data/cpp_babi_format_Sep-29-2018-104-5ce0420/cpp_babi_format_Sep-29-2018-104-5ce0420-104.cpkl', n_classes=104, n_hidden=50, n_steps=10, niter=2, size_vocabulary=57, state_dim=5, test_batch_size=32, testing=False, train_batch_size=32, training=True, training_percentage=1.0, verbal=True, workers=2)
+Random Seed:  1682
+  0% 0/104 [00:00<?, ?it/s]  4% 4/104 [00:00<00:03, 27.54it/s]  8% 8/104 [00:00<00:03, 26.91it/s] 12% 12/104 [00:00<00:03, 25.81it/s] 15% 16/104 [00:00<00:03, 25.13it/s] 18% 19/104 [00:00<00:03, 26.17it/s] 21% 22/104 [00:00<00:03, 23.36it/s] 25% 26/104 [00:01<00:03, 22.03it/s] 29% 30/104 [00:01<00:03, 24.38it/s] 32% 33/104 [00:01<00:03, 20.53it/s] 36% 37/104 [00:01<00:02, 23.07it/s] 39% 41/104 [00:01<00:02, 25.34it/s] 42% 44/104 [00:01<00:02, 20.15it/s] 46% 48/104 [00:02<00:02, 22.53it/s] 49% 51/104 [00:02<00:02, 24.20it/s] 52% 54/104 [00:02<00:02, 18.56it/s] 56% 58/104 [00:02<00:02, 21.11it/s] 60% 62/104 [00:02<00:01, 23.54it/s] 63% 66/104 [00:02<00:01, 25.20it/s] 66% 69/104 [00:03<00:01, 17.66it/s] 70% 73/104 [00:03<00:01, 20.28it/s] 73% 76/104 [00:03<00:01, 22.12it/s] 77% 80/104 [00:03<00:00, 24.19it/s] 81% 84/104 [00:03<00:01, 17.73it/s] 85% 88/104 [00:03<00:00, 20.35it/s] 88% 92/104 [00:04<00:00, 22.52it/s] 92% 96/104 [00:04<00:00, 24.94it/s] 96% 100/104 [00:04<00:00, 27.04it/s]100% 104/104 [00:04<00:00, 28.50it/s]
+Number of all training data : 34627
+Max node id : 52
+  0% 0/104 [00:00<?, ?it/s]  6% 6/104 [00:00<00:01, 52.48it/s] 12% 13/104 [00:00<00:01, 55.34it/s] 19% 20/104 [00:00<00:01, 57.34it/s] 26% 27/104 [00:00<00:01, 58.98it/s] 33% 34/104 [00:00<00:01, 60.57it/s] 39% 41/104 [00:00<00:01, 61.33it/s] 46% 48/104 [00:00<00:00, 62.61it/s] 52% 54/104 [00:01<00:01, 29.19it/s] 59% 61/104 [00:01<00:01, 34.77it/s] 65% 68/104 [00:01<00:00, 40.08it/s] 71% 74/104 [00:01<00:00, 44.33it/s] 77% 80/104 [00:01<00:00, 47.63it/s] 84% 87/104 [00:01<00:00, 51.32it/s] 90% 94/104 [00:01<00:00, 54.39it/s] 97% 101/104 [00:01<00:00, 56.94it/s]100% 104/104 [00:02<00:00, 50.85it/s]
+Number of all testing data : 17367
+Max node id : 55
+/opt/conda/lib/python3.6/site-packages/torch/onnx/utils.py:365: UserWarning: ONNX export failed on ATen operator stack because torch.onnx.symbolic.stack does not exist
+  .format(op_name, op_name))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %98 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %161 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %224 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %287 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %350 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %413 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %476 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %539 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %602 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %665 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+[0/2][0/1083] Loss: 4.6468
+[0/2][109/1083] Loss: 4.6547
+[0/2][218/1083] Loss: 4.6014
+[0/2][327/1083] Loss: 4.6045
+[0/2][436/1083] Loss: 4.5595
+[0/2][545/1083] Loss: 4.5937
+[0/2][654/1083] Loss: 4.5677
+[0/2][763/1083] Loss: 4.5655
+[0/2][872/1083] Loss: 4.5307
+[0/2][981/1083] Loss: 4.5254
+Test set: Average loss: 0.1417, Accuracy: 2291/17367 (13%)
+[1/2][0/1083] Loss: 4.4334
+[1/2][109/1083] Loss: 4.4737
+[1/2][218/1083] Loss: 4.4825
+[1/2][327/1083] Loss: 4.4295
+[1/2][436/1083] Loss: 4.5710
+[1/2][545/1083] Loss: 4.4782
+[1/2][654/1083] Loss: 4.4277
+[1/2][763/1083] Loss: 4.5383
+[1/2][872/1083] Loss: 4.4068
+[1/2][981/1083] Loss: 4.5240
+Test set: Average loss: 0.1412, Accuracy: 2494/17367 (14%)
+(13%)
+(14%)
