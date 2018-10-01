@@ -2,7 +2,7 @@ import torch
 from torch.autograd import Variable
 from tensorboardX import SummaryWriter
 
-def train(epoch, dataloader, net, criterion, optimizer, opt):
+def train(epoch, dataloader, net, criterion, optimizer, opt, writer):
     # net.train()
     
     for i, (adj_matrix, target) in enumerate(dataloader, 0):
@@ -23,16 +23,15 @@ def train(epoch, dataloader, net, criterion, optimizer, opt):
         # annotation = Variable(annotation)
         target = Variable(target)
         output = net(init_input, adj_matrix)
-        with SummaryWriter(opt.log_path, comment='Net2') as w:
-            w.add_graph(net, (init_input, adj_matrix), verbose=False)
+        
+        writer.add_graph(net, (init_input, adj_matrix), verbose=False)
 
         loss = criterion(output, target)
        
         loss.backward()
         optimizer.step()
 
-        with SummaryWriter(opt.log_path, comment='Net2') as w:
-            w.add_scalar('loss', loss.data.item(), epoch)
+        writer.add_scalar('loss', loss.data.item(), epoch)
        
         
         if i % int(len(dataloader) / 10 + 1) == 0 and opt.verbal:
