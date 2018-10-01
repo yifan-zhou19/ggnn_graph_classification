@@ -8,10 +8,10 @@ nn=$(ls $directory/train | wc -l | cut -f1 -d" ")
 n=${3:-$nn}
 
 # the cached dataset
-cache=$directory/$(basename $directory)-$n
+cache=$(dirname $directory)/$(basename $directory)-$n
 # comment out if you want to resume computation
-rm -f $cache-$n-train.pkl
-rm -f $cache-$n-test.pkl
+rm -f $cache-train.pkl
+rm -f $cache-test.pkl
 
 # the model file
 model=$directory/$(basename $directory)-$n.cpkl
