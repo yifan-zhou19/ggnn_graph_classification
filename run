@@ -4,17 +4,19 @@ lang=cpp
 directory=$1
 
 # derive the number of classes depending on the number of files in the training folder
-n=$(ls $directory/train | wc -l | cut -f1 -d" ")
+nn=$(ls $directory/train | wc -l | cut -f1 -d" ")
+n=${3:-$nn}
 
 # the cached dataset
 cache=$directory/$(basename $directory)-$n
 # comment out if you want to resume computation
-rm -f $cache-*.pkl
+rm -f $cache-$n-train.pkl
+rm -f $cache-$n-test.pkl
 
 # the model file
 model=$directory/$(basename $directory)-$n.cpkl
 # comment out if you want to resume computation
-rm -f $model
+#rm -f $model
 
 # the log file
 log=$directory/$(basename $directory)-log-$n.txt
@@ -36,12 +38,13 @@ docker build --build-arg http_proxy=http://wwwcache.open.ac.uk:80 --build-arg ht
 	--n_classes $n \
 	--n_steps 10 \
 	--n_hidden 50 \
-	--niter 150 \
+	--niter 2 \
 	--size_vocabulary $2 \
 	--train_batch_size 32 \
 	--log_path $directory/logs \
   | tee $log
 
-mv $cache-*.pkl $directory
+mv $cache-train.pkl $directory
+mv $cache-test.pkl $directory
 # extract the accuracy performance from the log
 grep Test $log | cut -f8 -d" " | sort -n | tee >> $log

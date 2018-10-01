@@ -1,0 +1,12 @@
+Namespace(cuda=True, directory='program_data/cpp_babi_format_Sep-29-2018-104-0043dd7', is_training_ggnn=True, log_path='program_data/cpp_babi_format_Sep-29-2018-104-0043dd7/logs', lr=0.01, manualSeed=0, model_path='program_data/cpp_babi_format_Sep-29-2018-104-0043dd7/cpp_babi_format_Sep-29-2018-104-0043dd7-0.cpkl', n_classes=0, n_hidden=50, n_steps=10, niter=150, size_vocabulary=57, state_dim=5, test_batch_size=32, testing=False, train_batch_size=32, training=True, training_percentage=1.0, verbal=True, workers=2)
+Random Seed:  0
+Traceback (most recent call last):
+  File "main_ggnn.py", line 93, in <module>
+    main(opt)
+  File "main_ggnn.py", line 55, in main
+    train_dataset = MonoLanguageProgramData(opt.size_vocabulary, opt.directory, True, opt.n_classes, opt.training_percentage)
+  File "/e/utils/data/dataset.py", line 208, in __init__
+    all_data = load_program_graphs_from_directory(path,is_train,n_classes,data_percentage)
+  File "/e/utils/data/dataset.py", line 48, in load_program_graphs_from_directory
+    for f in listdir(dir_path):
+FileNotFoundError: [Errno 2] No such file or directory: 'program_data/cpp_babi_format_Sep-29-2018-104-0043dd7/train'

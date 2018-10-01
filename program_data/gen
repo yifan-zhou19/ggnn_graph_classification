@@ -1,11 +1,11 @@
 rm -f $0.log
 tag=${1:-Sep-29-2018}
 n=${2:-104}
-fbs cpp_protobuf_format_$tag-$n $n | tee $0.log
+fbs cpp_protobuf_format_$tag $n | tee $0.log
 for f in ggnn/ggnn-*.py; do
   cp $f ggnn/ggnn.py
   g=${f/*-/}
   g=${g/.py/}
   echo $g
-  babi cpp_protobuf_format_$tag-$n -$g $n | tee $0.log
+  babi cpp_protobuf_format_$tag -$g $n | tee $0.log
 done

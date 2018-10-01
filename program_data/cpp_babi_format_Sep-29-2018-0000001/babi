@@ -1,0 +1,28 @@
+input=CppProgramData
+in=${1:-cpp_protobuf_format_correct}
+out=${in/protobuf/babi}$2
+n=${3:-3}
+mkdir -p $out/train $out/test
+chmod -R a+w $out
+rm -f maps.cpp.pkl
+rm -f maps.pkl
+for ((i=1;i<=$n;i++)); do
+  echo $i
+  if [ ! -f $out/train/train_$i.txt -o ! -f $out/test/test_$i.txt ]; then
+    ggnn $in/$i.fbs $out/train/train_$i.txt $out/test/test_$i.txt 
+  fi
+  #if [ ! -f $out/$i.json ]; then
+  #  ggnn $in/$i.fbs $out/$i.json
+  #fi
+done
+if [ -f maps.cpp.pkl ]; then
+	mv maps.cpp.pkl $out
+fi
+if [ -f maps.pkl ]; then
+	mv maps.pkl $out
+fi
+docker run -v $(pwd)/$out:/e --entrypoint bash -it ggnn -c "cp /usr/local/bin/ggnn /e/ggnn.py"
+cp $0 $out
+cd ..
+run program_data/$out 57
+cd -

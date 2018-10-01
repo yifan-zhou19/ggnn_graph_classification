@@ -1,0 +1,221 @@
+Namespace(cuda=True, directory='program_data/cpp_babi_format_Sep-29-2018-104-1740415', is_training_ggnn=True, log_path='program_data/cpp_babi_format_Sep-29-2018-104-1740415/logs', lr=0.01, manualSeed=0, model_path='program_data/cpp_babi_format_Sep-29-2018-104-1740415/cpp_babi_format_Sep-29-2018-104-1740415-104.cpkl', n_classes=104, n_hidden=50, n_steps=10, niter=150, size_vocabulary=57, state_dim=5, test_batch_size=32, testing=False, train_batch_size=32, training=True, training_percentage=1.0, verbal=True, workers=2)
+Random Seed:  0
+Number of all training data : 34627
+Max node id : 54
+Number of all testing data : 17367
+Max node id : 57
+Using the saved model....
+/opt/conda/lib/python3.6/site-packages/torch/onnx/utils.py:365: UserWarning: ONNX export failed on ATen operator stack because torch.onnx.symbolic.stack does not exist
+  .format(op_name, op_name))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %98 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %161 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %224 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %287 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %350 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %413 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %476 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %539 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %602 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %665 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+[0/150][0/1083] Loss: 4.3946
+[0/150][109/1083] Loss: 4.3758
+[0/150][218/1083] Loss: 4.3834
+[0/150][327/1083] Loss: 4.4736
+[0/150][436/1083] Loss: 4.4498
+[0/150][545/1083] Loss: 4.3985
+[0/150][654/1083] Loss: 4.3997
+[0/150][763/1083] Loss: 4.4714
+[0/150][872/1083] Loss: 4.3955
+[0/150][981/1083] Loss: 4.5125
+Test set: Average loss: 0.1372, Accuracy: 4771/17367 (27%)
+[1/150][0/1083] Loss: 4.4371
+[1/150][109/1083] Loss: 4.3093
+[1/150][218/1083] Loss: 4.4719
+[1/150][327/1083] Loss: 4.3774
+[1/150][436/1083] Loss: 4.5669
+[1/150][545/1083] Loss: 4.3893
+[1/150][654/1083] Loss: 4.4708
+[1/150][763/1083] Loss: 4.4598
+[1/150][872/1083] Loss: 4.3211
+[1/150][981/1083] Loss: 4.3436
+Test set: Average loss: 0.1372, Accuracy: 4762/17367 (27%)
+[2/150][0/1083] Loss: 4.4371
+[2/150][109/1083] Loss: 4.3751
+[2/150][218/1083] Loss: 4.2743
+[2/150][327/1083] Loss: 4.3777
+[2/150][436/1083] Loss: 4.4034
+[2/150][545/1083] Loss: 4.3758
+[2/150][654/1083] Loss: 4.4142
+[2/150][763/1083] Loss: 4.1646
+[2/150][872/1083] Loss: 4.3378
+[2/150][981/1083] Loss: 4.2810
+Test set: Average loss: 0.1372, Accuracy: 4786/17367 (27%)
+[3/150][0/1083] Loss: 4.3789
+[3/150][109/1083] Loss: 4.4712
+[3/150][218/1083] Loss: 4.4286
+[3/150][327/1083] Loss: 4.2710
+[3/150][436/1083] Loss: 4.3996
+[3/150][545/1083] Loss: 4.3861
+[3/150][654/1083] Loss: 4.2928
+[3/150][763/1083] Loss: 4.3465
+[3/150][872/1083] Loss: 4.3551
+[3/150][981/1083] Loss: 4.5274
+Test set: Average loss: 0.1375, Accuracy: 4592/17367 (26%)
+[4/150][0/1083] Loss: 4.5400
+[4/150][109/1083] Loss: 4.3283
+[4/150][218/1083] Loss: 4.2848
+[4/150][327/1083] Loss: 4.4463
+[4/150][436/1083] Loss: 4.3639
+[4/150][545/1083] Loss: 4.2913
+[4/150][654/1083] Loss: 4.5024
+[4/150][763/1083] Loss: 4.4318
+[4/150][872/1083] Loss: 4.2933
+[4/150][981/1083] Loss: 4.3159
+Test set: Average loss: 0.1369, Accuracy: 4928/17367 (28%)
+[5/150][0/1083] Loss: 4.3706
+[5/150][109/1083] Loss: 4.2380
+[5/150][218/1083] Loss: 4.5649
+[5/150][327/1083] Loss: 4.4375
+[5/150][436/1083] Loss: 4.2389
+[5/150][545/1083] Loss: 4.3171
+[5/150][654/1083] Loss: 4.2693
+[5/150][763/1083] Loss: 4.2882
+[5/150][872/1083] Loss: 4.3896
+[5/150][981/1083] Loss: 4.3360
+Test set: Average loss: 0.1370, Accuracy: 4862/17367 (27%)
+[6/150][0/1083] Loss: 4.4046
+[6/150][109/1083] Loss: 4.2578
+[6/150][218/1083] Loss: 4.3044
+[6/150][327/1083] Loss: 4.2261
+[6/150][436/1083] Loss: 4.4407
+[6/150][545/1083] Loss: 4.3261
+[6/150][654/1083] Loss: 4.4413
+[6/150][763/1083] Loss: 4.3233
+[6/150][872/1083] Loss: 4.1855
+[6/150][981/1083] Loss: 4.3552
+Test set: Average loss: 0.1370, Accuracy: 4873/17367 (28%)
+[7/150][0/1083] Loss: 4.3347
+[7/150][109/1083] Loss: 4.4197
+[7/150][218/1083] Loss: 4.3283
+[7/150][327/1083] Loss: 4.4211
+[7/150][436/1083] Loss: 4.2579
+[7/150][545/1083] Loss: 4.3932
+[7/150][654/1083] Loss: 4.2845
+[7/150][763/1083] Loss: 4.2869
+[7/150][872/1083] Loss: 4.3208
+[7/150][981/1083] Loss: 4.3802
+Test set: Average loss: 0.1370, Accuracy: 4877/17367 (28%)
+[8/150][0/1083] Loss: 4.4338
+[8/150][109/1083] Loss: 4.3912
+[8/150][218/1083] Loss: 4.3374
+[8/150][327/1083] Loss: 4.4472
+[8/150][436/1083] Loss: 4.2891
+[8/150][545/1083] Loss: 4.3159
+[8/150][654/1083] Loss: 4.3376
+[8/150][763/1083] Loss: 4.3181
+[8/150][872/1083] Loss: 4.2715
+[8/150][981/1083] Loss: 4.4404
+Test set: Average loss: 0.1366, Accuracy: 5080/17367 (29%)
+[9/150][0/1083] Loss: 4.3151
+[9/150][109/1083] Loss: 4.3514
+[9/150][218/1083] Loss: 4.2520
+[9/150][327/1083] Loss: 4.4222
+[9/150][436/1083] Loss: 4.2676
+[9/150][545/1083] Loss: 4.4724
+[9/150][654/1083] Loss: 4.4384
+[9/150][763/1083] Loss: 4.4146
+[9/150][872/1083] Loss: 4.3042
+[9/150][981/1083] Loss: 4.3384
+Test set: Average loss: 0.1367, Accuracy: 5055/17367 (29%)
+[10/150][0/1083] Loss: 4.4346
+[10/150][109/1083] Loss: 4.4668
+[10/150][218/1083] Loss: 4.3472
+[10/150][327/1083] Loss: 4.4212
+[10/150][436/1083] Loss: 4.4869
+[10/150][545/1083] Loss: 4.4668
+[10/150][654/1083] Loss: 4.3727
+[10/150][763/1083] Loss: 4.3522
+[10/150][872/1083] Loss: 4.3556
+[10/150][981/1083] Loss: 4.2817
+Test set: Average loss: 0.1367, Accuracy: 5037/17367 (29%)
+[11/150][0/1083] Loss: 4.5357
+[11/150][109/1083] Loss: 4.1689
+[11/150][218/1083] Loss: 4.2935
+[11/150][327/1083] Loss: 4.3788
+[11/150][436/1083] Loss: 4.3176
+[11/150][545/1083] Loss: 4.3452
+[11/150][654/1083] Loss: 4.3696
+[11/150][763/1083] Loss: 4.3530
+[11/150][872/1083] Loss: 4.4192
+[11/150][981/1083] Loss: 4.4142
+Test set: Average loss: 0.1369, Accuracy: 4928/17367 (28%)
+[12/150][0/1083] Loss: 4.4386
+[12/150][109/1083] Loss: 4.3165
+[12/150][218/1083] Loss: 4.3785
+[12/150][327/1083] Loss: 4.3230
+[12/150][436/1083] Loss: 4.3373
+[12/150][545/1083] Loss: 4.5131
+[12/150][654/1083] Loss: 4.2857
+[12/150][763/1083] Loss: 4.3103
+[12/150][872/1083] Loss: 4.3382
+[12/150][981/1083] Loss: 4.4098
+Test set: Average loss: 0.1368, Accuracy: 4981/17367 (28%)
+[13/150][0/1083] Loss: 4.5663
+[13/150][109/1083] Loss: 4.4172
+[13/150][218/1083] Loss: 4.4094
+[13/150][327/1083] Loss: 4.2631
+[13/150][436/1083] Loss: 4.3063
+[13/150][545/1083] Loss: 4.3833
+[13/150][654/1083] Loss: 4.4419
+[13/150][763/1083] Loss: 4.4003
+[13/150][872/1083] Loss: 4.3144
+[13/150][981/1083] Loss: 4.3168
+Test set: Average loss: 0.1365, Accuracy: 5135/17367 (29%)
+[14/150][0/1083] Loss: 4.2811
+[14/150][109/1083] Loss: 4.3137
+[14/150][218/1083] Loss: 4.2429
+[14/150][327/1083] Loss: 4.2228
+[14/150][436/1083] Loss: 4.2506
+[14/150][545/1083] Loss: 4.3476
+[14/150][654/1083] Loss: 4.4731
+[14/150][763/1083] Loss: 4.2849
+Traceback (most recent call last):
+  File "main_ggnn.py", line 93, in <module>
+    main(opt)
+  File "main_ggnn.py", line 85, in main
+    train(epoch, train_dataloader, net, criterion, optimizer, opt)
+  File "/e/utils/train_ggnn.py", line 26, in train
+    with SummaryWriter(opt.log_path, comment='Net2') as w:
+  File "/opt/conda/lib/python3.6/site-packages/tensorboardX/writer.py", line 274, in __init__
+    self.file_writer = FileWriter(logdir=log_dir, **kwargs)
+  File "/opt/conda/lib/python3.6/site-packages/tensorboardX/writer.py", line 199, in __init__
+    event_writer = EventFileWriter(logdir, max_queue, flush_secs, filename_suffix)
+  File "/opt/conda/lib/python3.6/site-packages/tensorboardX/event_file_writer.py", line 126, in __init__
+    self._worker.start()
+  File "/opt/conda/lib/python3.6/threading.py", line 846, in start
+    _start_new_thread(self._bootstrap, ())
+RuntimeError: can't start new thread
+(26%)
+(27%)
+(27%)
+(27%)
+(27%)
+(28%)
+(28%)
+(28%)
+(28%)
+(28%)
+(29%)
+(29%)
+(29%)
+(29%)

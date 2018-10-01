@@ -1,0 +1,18 @@
+Namespace(cuda=True, directory='program_data/cpp_babi_format_Sep-29-2018-10-0000001', is_training_ggnn=True, log_path='program_data/cpp_babi_format_Sep-29-2018-10-0000001/logs', lr=0.01, manualSeed=0, model_path='program_data/cpp_babi_format_Sep-29-2018-10-0000001/cpp_babi_format_Sep-29-2018-10-0000001-0.cpkl', n_classes=0, n_hidden=50, n_steps=10, niter=2, size_vocabulary=57, state_dim=5, test_batch_size=32, testing=False, train_batch_size=32, training=True, training_percentage=1.0, verbal=True, workers=2)
+Random Seed:  0
+Number of all training data : 0
+Max node id : 0
+Number of all testing data : 0
+Max node id : 0
+Traceback (most recent call last):
+  File "main_ggnn.py", line 93, in <module>
+    main(opt)
+  File "main_ggnn.py", line 71, in main
+    net = GGNN(opt)
+  File "/e/utils/model.py", line 151, in __init__
+    nn.Linear(opt.n_hidden, opt.n_classes),
+  File "/opt/conda/lib/python3.6/site-packages/torch/nn/modules/linear.py", line 46, in __init__
+    self.reset_parameters()
+  File "/opt/conda/lib/python3.6/site-packages/torch/nn/modules/linear.py", line 49, in reset_parameters
+    stdv = 1. / math.sqrt(self.weight.size(1))
+RuntimeError: dimension out of range (expected to be in range of [-1, 0], but got 1)
