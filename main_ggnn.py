@@ -11,6 +11,7 @@ from utils.train_ggnn import train
 from utils.test_ggnn import test
 from utils.data.dataset import MonoLanguageProgramData
 from utils.data.dataloader import bAbIDataloader
+from tensorboardX import SummaryWriter
 import os
 
 parser = argparse.ArgumentParser()
@@ -37,6 +38,8 @@ parser.add_argument('--log_path', default="logs/ggnn" ,help='log path for tensor
 
 opt = parser.parse_args()
 print(opt)
+
+writer = SummaryWriter(opt.log_path)
 
 if not os.path.isdir("model"):
     os.mkdir("model")
@@ -82,8 +85,9 @@ def main(opt):
 
     if opt.training:
         for epoch in range(0, opt.niter):
-            train(epoch, train_dataloader, net, criterion, optimizer, opt)
+            train(epoch, train_dataloader, net, criterion, optimizer, opt, writer)
             test(test_dataloader, net, criterion, optimizer, opt)
+        writer.close()
 
     if opt.testing:
         test(test_dataloader, net, criterion, optimizer, opt)
