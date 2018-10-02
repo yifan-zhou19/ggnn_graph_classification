@@ -39,7 +39,12 @@ parser.add_argument('--log_path', default="logs/ggnn" ,help='log path for tensor
 opt = parser.parse_args()
 print(opt)
 
-writer = SummaryWriter(opt.log_path)
+previous_runs = os.listdir(opt.log_path)
+if len(previous_runs) == 0:
+    run_number = 1
+else:
+    run_number = max([int(s.split('run-')[1]) for s in previous_runs]) + 1
+writer = SummaryWriter("%s/run-%03d" % (opt.log_path, run_number))
 
 if not os.path.isdir("model"):
     os.mkdir("model")

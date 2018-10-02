@@ -1,6 +1,6 @@
 input=CppProgramData
-in=${1:-cpp_protobuf_format_correct}
-out=${in/protobuf/babi}$2
+in=${1:-cpp_protobuf_format_Sep-29-2018}
+out=${in/protobuf/babi}-$2
 n=${3:-3}
 mkdir -p $out/train $out/test
 chmod -R a+w $out
@@ -23,3 +23,6 @@ if [ -f maps.pkl ]; then
 fi
 docker run -v $(pwd)/$out:/e --entrypoint bash -it ggnn -c "cp /usr/local/bin/ggnn /e/ggnn.py"
 cp $0 $out
+cd ..
+run program_data/$out 57 $n 150 1
+cd -

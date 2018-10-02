@@ -107,3 +107,4 @@ vec/
 old/
 .keras/keras.json
 fast-node-encoding/logs/algorithm
+logs
