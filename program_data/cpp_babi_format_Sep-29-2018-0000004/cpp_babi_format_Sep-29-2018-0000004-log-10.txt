@@ -1,0 +1,184 @@
+Namespace(cuda=True, directory='program_data/cpp_babi_format_Sep-29-2018-0000004', is_training_ggnn=True, log_path='program_data/cpp_babi_format_Sep-29-2018-0000004/logs', lr=0.01, manualSeed=0, model_path='program_data/cpp_babi_format_Sep-29-2018-0000004/cpp_babi_format_Sep-29-2018-0000004-10.cpkl', n_classes=10, n_hidden=50, n_steps=5, niter=150, size_vocabulary=218, state_dim=5, test_batch_size=32, testing=False, train_batch_size=32, training=True, training_percentage=1.0, verbal=True, workers=0)
+Random Seed:  0
+  0% 0/10 [00:00<?, ?it/s] 10% 1/10 [00:00<00:01,  5.83it/s] 20% 2/10 [00:00<00:01,  5.20it/s] 30% 3/10 [00:00<00:01,  5.05it/s] 40% 4/10 [00:00<00:01,  4.99it/s] 50% 5/10 [00:01<00:01,  4.72it/s] 60% 6/10 [00:01<00:00,  5.02it/s] 70% 7/10 [00:01<00:00,  4.71it/s] 80% 8/10 [00:01<00:00,  4.16it/s] 90% 9/10 [00:01<00:00,  4.32it/s]100% 10/10 [00:02<00:00,  4.14it/s]
+Number of all training data : 3330
+Max node id : 217
+  0% 0/10 [00:00<?, ?it/s] 20% 2/10 [00:00<00:00, 10.80it/s] 40% 4/10 [00:00<00:00, 11.46it/s] 50% 5/10 [00:00<00:00,  7.76it/s] 70% 7/10 [00:00<00:00,  8.53it/s] 80% 8/10 [00:00<00:00,  8.57it/s] 90% 9/10 [00:00<00:00,  8.80it/s]100% 10/10 [00:01<00:00,  9.53it/s]
+Number of all testing data : 1670
+Max node id : 210
+/opt/conda/lib/python3.6/site-packages/torch/onnx/utils.py:365: UserWarning: ONNX export failed on ATen operator stack because torch.onnx.symbolic.stack does not exist
+  .format(op_name, op_name))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %118 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %193 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %268 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %343 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %418 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+[0/150][0/105] Loss: 2.2752
+[0/150][11/105] Loss: 2.2979
+[0/150][22/105] Loss: 2.3102
+[0/150][33/105] Loss: 2.2212
+[0/150][44/105] Loss: 2.0082
+[0/150][55/105] Loss: 1.9652
+[0/150][66/105] Loss: 1.7996
+[0/150][77/105] Loss: 1.9492
+[0/150][88/105] Loss: 1.7968
+[0/150][99/105] Loss: 1.6982
+Test set: Average loss: 0.0549, Accuracy: 1232/1670 (73%)
+[1/150][0/105] Loss: 1.6672
+[1/150][11/105] Loss: 1.8575
+[1/150][22/105] Loss: 1.6922
+[1/150][33/105] Loss: 1.8547
+[1/150][44/105] Loss: 1.6233
+[1/150][55/105] Loss: 1.7339
+[1/150][66/105] Loss: 1.6143
+[1/150][77/105] Loss: 1.6373
+[1/150][88/105] Loss: 1.6525
+[1/150][99/105] Loss: 1.5902
+Test set: Average loss: 0.0525, Accuracy: 1378/1670 (82%)
+[2/150][0/105] Loss: 1.5817
+[2/150][11/105] Loss: 1.5587
+[2/150][22/105] Loss: 1.5724
+[2/150][33/105] Loss: 1.6649
+[2/150][44/105] Loss: 1.5880
+[2/150][55/105] Loss: 1.6109
+[2/150][66/105] Loss: 1.8086
+[2/150][77/105] Loss: 1.5757
+[2/150][88/105] Loss: 1.6253
+[2/150][99/105] Loss: 1.5955
+Test set: Average loss: 0.0514, Accuracy: 1416/1670 (84%)
+[3/150][0/105] Loss: 1.6277
+[3/150][11/105] Loss: 1.5687
+[3/150][22/105] Loss: 1.6220
+[3/150][33/105] Loss: 1.5490
+[3/150][44/105] Loss: 1.5775
+[3/150][55/105] Loss: 1.6063
+[3/150][66/105] Loss: 1.5717
+[3/150][77/105] Loss: 1.5250
+[3/150][88/105] Loss: 1.6381
+[3/150][99/105] Loss: 1.5732
+Test set: Average loss: 0.0511, Accuracy: 1438/1670 (86%)
+[4/150][0/105] Loss: 1.5279
+[4/150][11/105] Loss: 1.5617
+[4/150][22/105] Loss: 1.6182
+[4/150][33/105] Loss: 1.6018
+[4/150][44/105] Loss: 1.5747
+[4/150][55/105] Loss: 1.5804
+[4/150][66/105] Loss: 1.5923
+[4/150][77/105] Loss: 1.6142
+[4/150][88/105] Loss: 1.5275
+[4/150][99/105] Loss: 1.6411
+Test set: Average loss: 0.0506, Accuracy: 1462/1670 (87%)
+[5/150][0/105] Loss: 1.5128
+[5/150][11/105] Loss: 1.5618
+[5/150][22/105] Loss: 1.5286
+[5/150][33/105] Loss: 1.5873
+[5/150][44/105] Loss: 1.5891
+[5/150][55/105] Loss: 1.5198
+[5/150][66/105] Loss: 1.6390
+[5/150][77/105] Loss: 1.5536
+[5/150][88/105] Loss: 1.6041
+[5/150][99/105] Loss: 1.5458
+Test set: Average loss: 0.0509, Accuracy: 1447/1670 (86%)
+[6/150][0/105] Loss: 1.6216
+[6/150][11/105] Loss: 1.5311
+[6/150][22/105] Loss: 1.6104
+[6/150][33/105] Loss: 1.5010
+[6/150][44/105] Loss: 1.5300
+[6/150][55/105] Loss: 1.5141
+[6/150][66/105] Loss: 1.5244
+[6/150][77/105] Loss: 1.5335
+[6/150][88/105] Loss: 1.5314
+[6/150][99/105] Loss: 1.5750
+Test set: Average loss: 0.0500, Accuracy: 1485/1670 (88%)
+[7/150][0/105] Loss: 1.5352
+[7/150][11/105] Loss: 1.5556
+[7/150][22/105] Loss: 1.5431
+[7/150][33/105] Loss: 1.6024
+[7/150][44/105] Loss: 1.5489
+[7/150][55/105] Loss: 1.5782
+[7/150][66/105] Loss: 1.5749
+[7/150][77/105] Loss: 1.4726
+[7/150][88/105] Loss: 1.5603
+[7/150][99/105] Loss: 1.5819
+Test set: Average loss: 0.0498, Accuracy: 1500/1670 (89%)
+[8/150][0/105] Loss: 1.5153
+[8/150][11/105] Loss: 1.5001
+[8/150][22/105] Loss: 1.4767
+[8/150][33/105] Loss: 1.5352
+[8/150][44/105] Loss: 1.5573
+[8/150][55/105] Loss: 1.4872
+[8/150][66/105] Loss: 1.4834
+[8/150][77/105] Loss: 1.5197
+[8/150][88/105] Loss: 1.4812
+[8/150][99/105] Loss: 1.6328
+Test set: Average loss: 0.0499, Accuracy: 1488/1670 (89%)
+[9/150][0/105] Loss: 1.5390
+[9/150][11/105] Loss: 1.5094
+[9/150][22/105] Loss: 1.5474
+[9/150][33/105] Loss: 1.5205
+[9/150][44/105] Loss: 1.5802
+[9/150][55/105] Loss: 1.4723
+[9/150][66/105] Loss: 1.5455
+[9/150][77/105] Loss: 1.5400
+[9/150][88/105] Loss: 1.4914
+[9/150][99/105] Loss: 1.4712
+Test set: Average loss: 0.0502, Accuracy: 1473/1670 (88%)
+[10/150][0/105] Loss: 1.5697
+[10/150][11/105] Loss: 1.4830
+[10/150][22/105] Loss: 1.5495
+[10/150][33/105] Loss: 1.4979
+^CProcess Process-42:
+Traceback (most recent call last):
+  File "/opt/conda/lib/python3.6/multiprocessing/process.py", line 258, in _bootstrap
+    self.run()
+  File "/opt/conda/lib/python3.6/multiprocessing/process.py", line 93, in run
+    self._target(*self._args, **self._kwargs)
+  File "/opt/conda/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 52, in _worker_loop
+    r = index_queue.get()
+  File "/opt/conda/lib/python3.6/multiprocessing/queues.py", line 335, in get
+    res = self._reader.recv_bytes()
+  File "/opt/conda/lib/python3.6/multiprocessing/connection.py", line 216, in recv_bytes
+    buf = self._recv_bytes(maxlength)
+  File "/opt/conda/lib/python3.6/multiprocessing/connection.py", line 407, in _recv_bytes
+    buf = self._recv(4)
+  File "/opt/conda/lib/python3.6/multiprocessing/connection.py", line 379, in _recv
+    chunk = read(handle, remaining)
+KeyboardInterrupt
+Process Process-41:
+Traceback (most recent call last):
+  File "/opt/conda/lib/python3.6/multiprocessing/process.py", line 258, in _bootstrap
+    self.run()
+  File "/opt/conda/lib/python3.6/multiprocessing/process.py", line 93, in run
+    self._target(*self._args, **self._kwargs)
+  File "/opt/conda/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 57, in _worker_loop
+    samples = collate_fn([dataset[i] for i in batch_indices])
+KeyboardInterrupt
+Traceback (most recent call last):
+  File "main_ggnn.py", line 102, in <module>
+    main(opt)
+  File "main_ggnn.py", line 93, in main
+    train(epoch, train_dataloader, net, criterion, optimizer, opt, writer)
+  File "/e/utils/train_ggnn.py", line 31, in train
+    loss.backward()
+  File "/opt/conda/lib/python3.6/site-packages/torch/tensor.py", line 93, in backward
+    torch.autograd.backward(self, gradient, retain_graph, create_graph)
+  File "/opt/conda/lib/python3.6/site-packages/torch/autograd/__init__.py", line 83, in backward
+    grad_tensors = _make_grads(tensors, grad_tensors)
+  File "/opt/conda/lib/python3.6/site-packages/torch/autograd/__init__.py", line 28, in _make_grads
+    new_grads.append(torch.ones_like(out))
+KeyboardInterrupt
+(73%)
+(82%)
+(84%)
+(86%)
+(86%)
+(87%)
+(88%)
+(88%)
+(89%)
+(89%)
