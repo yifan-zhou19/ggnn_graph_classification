@@ -1,147 +1,0 @@
-Namespace(cuda=True, directory='program_data/cpp_babi_format_Sep-29-2018-0000004', is_training_ggnn=True, log_path='program_data/cpp_babi_format_Sep-29-2018-0000004/logs', lr=0.01, manualSeed=0, model_path='program_data/cpp_babi_format_Sep-29-2018-0000004/cpp_babi_format_Sep-29-2018-0000004-104.cpkl', n_classes=104, n_hidden=50, n_steps=5, niter=150, size_vocabulary=253, state_dim=5, test_batch_size=32, testing=False, train_batch_size=32, training=True, training_percentage=1.0, verbal=True, workers=0)
-Random Seed:  0
-  0% 0/104 [00:00<?, ?it/s]  1% 1/104 [00:00<00:17,  6.03it/s]  2% 2/104 [00:00<00:19,  5.34it/s]  3% 3/104 [00:00<00:19,  5.13it/s]  4% 4/104 [00:00<00:19,  5.07it/s]  5% 5/104 [00:01<00:20,  4.77it/s]  6% 6/104 [00:01<00:19,  5.05it/s]  7% 7/104 [00:01<00:20,  4.72it/s]  8% 8/104 [00:01<00:22,  4.18it/s]  9% 9/104 [00:01<00:21,  4.33it/s] 10% 10/104 [00:02<00:22,  4.14it/s] 11% 11/104 [00:02<00:19,  4.69it/s] 12% 12/104 [00:02<00:17,  5.11it/s] 12% 13/104 [00:02<00:19,  4.68it/s] 13% 14/104 [00:03<00:18,  4.80it/s] 14% 15/104 [00:03<00:17,  5.10it/s] 15% 16/104 [00:03<00:15,  5.74it/s] 16% 17/104 [00:03<00:19,  4.47it/s] 17% 18/104 [00:03<00:19,  4.43it/s] 18% 19/104 [00:04<00:18,  4.65it/s] 19% 20/104 [00:04<00:21,  3.95it/s] 20% 21/104 [00:04<00:19,  4.21it/s] 21% 22/104 [00:04<00:17,  4.57it/s] 22% 23/104 [00:04<00:16,  5.06it/s] 23% 24/104 [00:05<00:15,  5.11it/s] 24% 25/104 [00:05<00:19,  4.01it/s] 25% 26/104 [00:05<00:16,  4.74it/s] 26% 27/104 [00:05<00:15,  4.96it/s] 27% 28/104 [00:05<00:14,  5.42it/s] 28% 29/104 [00:06<00:13,  5.72it/s] 29% 30/104 [00:06<00:11,  6.43it/s] 30% 31/104 [00:06<00:11,  6.14it/s] 31% 32/104 [00:06<00:18,  3.91it/s] 32% 33/104 [00:07<00:16,  4.42it/s] 33% 34/104 [00:07<00:13,  5.18it/s] 34% 35/104 [00:07<00:13,  5.14it/s] 35% 36/104 [00:07<00:12,  5.27it/s] 36% 37/104 [00:07<00:12,  5.41it/s] 37% 38/104 [00:07<00:11,  5.60it/s] 38% 39/104 [00:08<00:12,  5.28it/s] 38% 40/104 [00:08<00:11,  5.77it/s] 39% 41/104 [00:08<00:17,  3.69it/s] 40% 42/104 [00:08<00:14,  4.27it/s] 41% 43/104 [00:08<00:12,  4.83it/s] 42% 44/104 [00:09<00:11,  5.06it/s] 43% 45/104 [00:09<00:10,  5.50it/s] 44% 46/104 [00:09<00:11,  5.24it/s] 45% 47/104 [00:09<00:09,  5.85it/s] 46% 48/104 [00:09<00:09,  5.61it/s] 47% 49/104 [00:10<00:09,  5.68it/s] 48% 50/104 [00:10<00:08,  6.12it/s] 49% 51/104 [00:10<00:16,  3.29it/s] 50% 52/104 [00:10<00:13,  3.87it/s] 51% 53/104 [00:11<00:11,  4.36it/s] 52% 54/104 [00:11<00:10,  4.98it/s] 53% 55/104 [00:11<00:10,  4.90it/s] 54% 56/104 [00:11<00:08,  5.49it/s] 55% 57/104 [00:11<00:08,  5.64it/s] 56% 58/104 [00:11<00:08,  5.69it/s] 57% 59/104 [00:12<00:08,  5.34it/s] 58% 60/104 [00:12<00:07,  5.61it/s] 59% 61/104 [00:12<00:07,  6.09it/s] 60% 62/104 [00:12<00:06,  6.62it/s] 61% 63/104 [00:12<00:06,  6.22it/s] 62% 64/104 [00:12<00:07,  5.56it/s] 62% 65/104 [00:13<00:12,  3.05it/s] 63% 66/104 [00:13<00:10,  3.52it/s] 64% 67/104 [00:13<00:08,  4.13it/s] 65% 68/104 [00:14<00:07,  4.56it/s] 66% 69/104 [00:14<00:07,  4.46it/s] 67% 70/104 [00:14<00:07,  4.82it/s] 68% 71/104 [00:14<00:06,  4.94it/s] 69% 72/104 [00:14<00:06,  5.08it/s] 70% 73/104 [00:15<00:06,  5.16it/s] 71% 74/104 [00:15<00:06,  4.97it/s] 72% 75/104 [00:15<00:05,  5.01it/s] 73% 76/104 [00:15<00:05,  4.99it/s] 74% 77/104 [00:15<00:05,  5.27it/s] 75% 78/104 [00:16<00:04,  5.48it/s] 76% 79/104 [00:16<00:04,  5.51it/s] 77% 80/104 [00:17<00:09,  2.64it/s] 78% 81/104 [00:17<00:07,  3.04it/s] 79% 82/104 [00:17<00:06,  3.57it/s] 80% 83/104 [00:17<00:05,  3.88it/s] 81% 84/104 [00:17<00:04,  4.47it/s] 82% 85/104 [00:17<00:03,  4.76it/s] 83% 86/104 [00:18<00:03,  5.04it/s] 84% 87/104 [00:18<00:03,  5.55it/s] 85% 88/104 [00:18<00:02,  6.11it/s] 86% 89/104 [00:18<00:02,  6.12it/s] 87% 90/104 [00:18<00:02,  6.15it/s] 88% 91/104 [00:18<00:01,  6.67it/s] 88% 92/104 [00:19<00:02,  5.63it/s] 89% 93/104 [00:19<00:01,  6.16it/s] 90% 94/104 [00:19<00:01,  5.94it/s] 91% 95/104 [00:19<00:01,  5.87it/s] 92% 96/104 [00:19<00:01,  5.62it/s] 93% 97/104 [00:19<00:01,  6.30it/s] 94% 98/104 [00:19<00:00,  6.34it/s] 95% 99/104 [00:20<00:00,  6.12it/s] 96% 100/104 [00:20<00:00,  5.98it/s] 97% 101/104 [00:21<00:01,  2.47it/s] 98% 102/104 [00:21<00:00,  2.83it/s] 99% 103/104 [00:21<00:00,  3.40it/s]100% 104/104 [00:21<00:00,  3.94it/s]
-Number of all training data : 34627
-Max node id : 241
-  0% 0/104 [00:00<?, ?it/s]  2% 2/104 [00:00<00:10,  9.50it/s]  4% 4/104 [00:00<00:09, 10.33it/s]  6% 6/104 [00:00<00:09, 10.56it/s]  8% 8/104 [00:00<00:09, 10.20it/s]  9% 9/104 [00:00<00:09, 10.00it/s] 11% 11/104 [00:01<00:08, 10.62it/s] 12% 13/104 [00:01<00:08, 11.33it/s] 14% 15/104 [00:01<00:07, 11.23it/s] 16% 17/104 [00:01<00:07, 11.64it/s] 18% 19/104 [00:01<00:07, 10.80it/s] 20% 21/104 [00:01<00:07, 10.78it/s] 22% 23/104 [00:02<00:07, 11.17it/s] 24% 25/104 [00:02<00:07, 11.15it/s] 26% 27/104 [00:02<00:06, 11.60it/s] 28% 29/104 [00:02<00:06, 11.99it/s] 30% 31/104 [00:02<00:05, 12.28it/s] 32% 33/104 [00:02<00:06, 11.77it/s] 34% 35/104 [00:03<00:05, 11.99it/s] 36% 37/104 [00:03<00:05, 11.84it/s] 38% 39/104 [00:03<00:05, 11.46it/s] 39% 41/104 [00:03<00:05, 11.93it/s] 41% 43/104 [00:04<00:16,  3.81it/s] 43% 45/104 [00:05<00:12,  4.81it/s] 44% 46/104 [00:05<00:10,  5.61it/s] 46% 48/104 [00:05<00:08,  6.69it/s] 48% 50/104 [00:05<00:06,  7.84it/s] 50% 52/104 [00:05<00:06,  8.41it/s] 52% 54/104 [00:05<00:05,  9.51it/s] 54% 56/104 [00:06<00:04, 10.07it/s] 56% 58/104 [00:06<00:04, 10.54it/s] 58% 60/104 [00:06<00:04, 10.58it/s] 60% 62/104 [00:06<00:03, 11.68it/s] 62% 64/104 [00:06<00:03, 10.98it/s] 63% 66/104 [00:06<00:03, 11.10it/s] 65% 68/104 [00:07<00:03, 11.58it/s] 67% 70/104 [00:07<00:03, 11.04it/s] 69% 72/104 [00:07<00:02, 10.84it/s] 71% 74/104 [00:07<00:02, 10.56it/s] 73% 76/104 [00:07<00:02, 10.41it/s] 75% 78/104 [00:08<00:02, 10.78it/s] 77% 80/104 [00:08<00:02, 10.68it/s] 79% 82/104 [00:08<00:02, 10.78it/s] 81% 84/104 [00:08<00:01, 11.07it/s] 83% 86/104 [00:08<00:01, 11.13it/s] 85% 88/104 [00:08<00:01, 12.17it/s] 87% 90/104 [00:09<00:01, 12.18it/s] 88% 92/104 [00:09<00:01, 11.80it/s] 90% 94/104 [00:09<00:00, 12.22it/s] 92% 96/104 [00:09<00:00, 11.95it/s] 94% 98/104 [00:09<00:00, 12.56it/s] 96% 100/104 [00:09<00:00, 12.14it/s] 98% 102/104 [00:10<00:00, 11.58it/s]100% 104/104 [00:10<00:00, 11.96it/s]
-Number of all testing data : 17367
-Max node id : 252
-/opt/conda/lib/python3.6/site-packages/torch/onnx/utils.py:365: UserWarning: ONNX export failed on ATen operator stack because torch.onnx.symbolic.stack does not exist
-  .format(op_name, op_name))
-/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %118 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
-  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
-/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %193 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
-  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
-/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %268 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
-  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
-/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %343 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
-  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
-/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %418 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
-  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
-[0/150][0/1083] Loss: 4.6464
-[0/150][109/1083] Loss: 4.6344
-[0/150][218/1083] Loss: 4.6567
-[0/150][327/1083] Loss: 4.6285
-[0/150][436/1083] Loss: 4.6292
-[0/150][545/1083] Loss: 4.6476
-[0/150][654/1083] Loss: 4.5642
-[0/150][763/1083] Loss: 4.6050
-[0/150][872/1083] Loss: 4.5045
-[0/150][981/1083] Loss: 4.6588
-Test set: Average loss: 0.1437, Accuracy: 1116/17367 (6%)
-[1/150][0/1083] Loss: 4.5977
-[1/150][109/1083] Loss: 4.6281
-[1/150][218/1083] Loss: 4.5965
-[1/150][327/1083] Loss: 4.6591
-[1/150][436/1083] Loss: 4.5414
-[1/150][545/1083] Loss: 4.6042
-[1/150][654/1083] Loss: 4.6233
-[1/150][763/1083] Loss: 4.6272
-[1/150][872/1083] Loss: 4.5658
-[1/150][981/1083] Loss: 4.5961
-Test set: Average loss: 0.1439, Accuracy: 954/17367 (5%)
-[2/150][0/1083] Loss: 4.6577
-[2/150][109/1083] Loss: 4.5576
-[2/150][218/1083] Loss: 4.5996
-[2/150][327/1083] Loss: 4.6344
-[2/150][436/1083] Loss: 4.5971
-[2/150][545/1083] Loss: 4.6286
-[2/150][654/1083] Loss: 4.5078
-[2/150][763/1083] Loss: 4.6582
-[2/150][872/1083] Loss: 4.5965
-[2/150][981/1083] Loss: 4.5687
-Test set: Average loss: 0.1437, Accuracy: 1117/17367 (6%)
-[3/150][0/1083] Loss: 4.5993
-[3/150][109/1083] Loss: 4.6274
-[3/150][218/1083] Loss: 4.5721
-[3/150][327/1083] Loss: 4.6586
-[3/150][436/1083] Loss: 4.6280
-[3/150][545/1083] Loss: 4.5978
-[3/150][654/1083] Loss: 4.5313
-[3/150][763/1083] Loss: 4.5653
-[3/150][872/1083] Loss: 4.6281
-[3/150][981/1083] Loss: 4.6477
-Test set: Average loss: 0.1432, Accuracy: 1383/17367 (7%)
-[4/150][0/1083] Loss: 4.6277
-[4/150][109/1083] Loss: 4.5671
-[4/150][218/1083] Loss: 4.5631
-[4/150][327/1083] Loss: 4.6329
-[4/150][436/1083] Loss: 4.5406
-[4/150][545/1083] Loss: 4.5680
-[4/150][654/1083] Loss: 4.5769
-[4/150][763/1083] Loss: 4.6293
-[4/150][872/1083] Loss: 4.6283
-[4/150][981/1083] Loss: 4.4726
-Test set: Average loss: 0.1428, Accuracy: 1692/17367 (9%)
-[5/150][0/1083] Loss: 4.5976
-[5/150][109/1083] Loss: 4.5351
-[5/150][218/1083] Loss: 4.6288
-[5/150][327/1083] Loss: 4.5366
-[5/150][436/1083] Loss: 4.4889
-[5/150][545/1083] Loss: 4.5297
-[5/150][654/1083] Loss: 4.4730
-[5/150][763/1083] Loss: 4.5867
-
-[5/150][872/1083] Loss: 4.5512
-
-[5/150][981/1083] Loss: 4.5063
-Test set: Average loss: 0.1429, Accuracy: 1545/17367 (8%)
-[6/150][0/1083] Loss: 4.5347
-[6/150][109/1083] Loss: 4.5749
-[6/150][218/1083] Loss: 4.6264
-[6/150][327/1083] Loss: 4.5356
-[6/150][436/1083] Loss: 4.5677
-[6/150][545/1083] Loss: 4.5387
-[6/150][654/1083] Loss: 4.5037
-[6/150][763/1083] Loss: 4.5971
-[6/150][872/1083] Loss: 4.4733
-[6/150][981/1083] Loss: 4.5038
-Test set: Average loss: 0.1429, Accuracy: 1612/17367 (9%)
-[7/150][0/1083] Loss: 4.5360
-[7/150][109/1083] Loss: 4.5692
-[7/150][218/1083] Loss: 4.5971
-[7/150][327/1083] Loss: 4.4780
-^CProcess Process-29:
-Traceback (most recent call last):
-  File "/opt/conda/lib/python3.6/multiprocessing/process.py", line 258, in _bootstrap
-    self.run()
-  File "/opt/conda/lib/python3.6/multiprocessing/process.py", line 93, in run
-    self._target(*self._args, **self._kwargs)
-  File "/opt/conda/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 52, in _worker_loop
-    r = index_queue.get()
-  File "/opt/conda/lib/python3.6/multiprocessing/queues.py", line 335, in get
-    res = self._reader.recv_bytes()
-  File "/opt/conda/lib/python3.6/multiprocessing/connection.py", line 216, in recv_bytes
-    buf = self._recv_bytes(maxlength)
-  File "/opt/conda/lib/python3.6/multiprocessing/connection.py", line 407, in _recv_bytes
-    buf = self._recv(4)
-  File "/opt/conda/lib/python3.6/multiprocessing/connection.py", line 379, in _recv
-    chunk = read(handle, remaining)
-KeyboardInterrupt
-Traceback (most recent call last):
-  File "main_ggnn.py", line 102, in <module>
-    main(opt)
-  File "main_ggnn.py", line 93, in main
-    train(epoch, train_dataloader, net, criterion, optimizer, opt, writer)
-  File "/e/utils/train_ggnn.py", line 27, in train
-    writer.add_graph(net, (init_input, adj_matrix), verbose=False)
-  File "/opt/conda/lib/python3.6/site-packages/tensorboardX/writer.py", line 520, in add_graph
-    self.file_writer.add_graph(graph(model, input_to_model, verbose))
-  File "/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py", line 98, in graph
-    torch.onnx._optimize_trace(trace, False)
-  File "/opt/conda/lib/python3.6/site-packages/torch/onnx/__init__.py", line 30, in _optimize_trace
-    trace.set_graph(utils._optimize_graph(trace.graph(), aten))
-  File "/opt/conda/lib/python3.6/site-packages/torch/onnx/utils.py", line 95, in _optimize_graph
-    graph = torch._C._jit_pass_onnx(graph, aten)
-  File "/opt/conda/lib/python3.6/site-packages/torch/onnx/__init__.py", line 40, in _run_symbolic_function
-    return utils._run_symbolic_function(*args, **kwargs)
-  File "/opt/conda/lib/python3.6/site-packages/torch/onnx/utils.py", line 342, in _run_symbolic_function
-    if n.kind().endswith('_'):
-KeyboardInterrupt
-(5%)
-(6%)
-(6%)
-(7%)
-(8%)
-(9%)
-(9%)

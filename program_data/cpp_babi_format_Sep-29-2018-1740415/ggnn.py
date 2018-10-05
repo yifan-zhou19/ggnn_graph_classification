@@ -22,18 +22,8 @@ from NodeLabel import *
 from NodeType import *
 import traceback
 import pdb
-import tqdm
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--maps', action='store_true', default=True, help='maps node type to a consequetive number')
-parser.add_argument('--localmaps', action='store_true', default=False, help='use local maps instead of global one')
-parser.add_argument('--dup', action='store_true', default=False, help='keep duplicated edges of the nodetypes')
-parser.add_argument('--bidirect', type=bool, default=False, help='make edges bidirectional')
-parser.add_argument('--mixing', type=bool, default=True, help='make semantic edges syntactical to allow for propagation')
-parser.add_argument('--syntaxonly', type=bool, default=False, help='output only syntactical edges')
-parser.add_argument('argv', nargs="+", help='filenames')
-opt = parser.parse_args()
-print(opt)
 
 def fbsEdges(builder, edges, type):
     typed_edges = edges[type]
@@ -219,12 +209,12 @@ def jdefault(o):
         array = {}
         for i in range(0, o.NodeLabelLength()):
             nl = o.NodeLabel(i)
-            array[nl.Node()] = nl.Label()
+            array[nl.Node()] = nl.Label().decode('ASCII')
         obj['NodeLabels'] = array
         array = {}
         for i in range(0, o.NodeTypeLength()):
             nl = o.NodeType(i)
-            array[nl.Node()] = nl.Type()
+            array[nl.Node()] = nl.Type().decode('ASCII')
         obj['NodeTypes'] = array
         return obj
     elif isinstance(o, ContextEdges):
@@ -264,8 +254,7 @@ def jdefault(o):
     return o.__dict__
 
 def ggnn2txt(graph, train, test):
-    if opt.maps:
-        maps = {}
+    maps = {}
     algorithms = []
     node2type = True
     for i in range(0, graph.UnitLength()):
@@ -275,7 +264,6 @@ def ggnn2txt(graph, train, test):
             out = test
         unit = graph.Unit(i)
         p = unit.Filename()
-        # print("====%d %s %d" % (i, p, i % 3 != 0))
         t = os.path.dirname(p);
         t = os.path.dirname(t);
         if t in algorithms:
@@ -283,28 +271,23 @@ def ggnn2txt(graph, train, test):
         else:
             i = len(algorithms)
             algorithms.append(t)
-        if opt.maps and not opt.localmaps:
-            input_basename, input_extension = os.path.splitext(p)
-            maps_filename = "maps%s.pkl" % input_extension.decode('ASCII')
-            if os.path.exists(maps_filename):
-              with open(maps_filename, 'rb') as f:
-                 maps = pickle.load(f)
+        input_basename, input_extension = os.path.splitext(p)
+        maps_filename = "maps%s.pkl" % input_extension.decode('ASCII')
+        if os.path.exists(maps_filename):
+          with open(maps_filename, 'rb') as f:
+             maps = pickle.load(f)
+
         g = unit.Graph()
         edges = g.Edges()
         array = {}
         NT = g.NodeTypeLength()
         dict = {}
-        if not opt.dup:
-            uniq_edges = {}
         for j in range(0, g.NodeTypeLength()):
             nl = g.NodeType(j)
-            dict[str(j+1)] = str(nl.Type())
-            if nl.Type().decode('ASCII') == 'POSITION' or nl.Type().decode('ASCII') == 'COMMENT' or nl.Type().decode('ASCII') == '271' or nl.Type().decode('ASCII') == '6':
-                dict[str(j+1)] = 0
-            else:
-                if opt.maps:
-                   if not str(nl.Type()) in maps:
-                      maps[str(nl.Type())] = str(1 + len(maps))
+            # print("%d %d %s\n" % (j + 1, nl.Node(), nl.Type()))
+            dict[str(j+1)] = str(nl.Type().decode('ASCII'))
+            if not str(nl.Type().decode('ASCII')) in maps:
+                maps[str(nl.Type().decode('ASCII'))] = str(1 + len(maps))
         for edgetype in range(1, 6):
             if edgetype == 1:
                 n = edges.ChildLength()
@@ -331,42 +314,17 @@ def ggnn2txt(graph, train, test):
                     e = edges.LastWrite(j)
                 elif edgetype == 6:
                     e = edges.ReturnsTo(j)
-                if dict[str(e.Node1())] != 0 and dict[str(e.Node2())] != 0:
-                    if opt.maps:
-                        s1 = maps[dict[str(e.Node1())]]
-                    else:
-                        s1 = dict[str(e.Node1())]
-                    s2 = str(edgetype)
-                    if opt.maps:
-                        s3 = maps[dict[str(e.Node2())]]
-                    else:
-                        s3 = dict[str(e.Node2())]
-                    if s2 == '1' or not opt.syntaxonly:
-                       e="%s %s %s\n" % (s1, s2, s3)
-                       if opt.dup:
-                          out.write(e)
-                       else:
-                          uniq_edges[e] = 1
-                    if opt.bidirect and s2 != "1" and not opt.syntaxonly:
-                        e2="%s %s %s\n" % (s3, s2, s1)
-                        if opt.dup:
-                           out.write(e2)
-                        else:
-                           uniq_edges[e2] = 1
-                    if opt.mixing and s2 != "1" and not opt.syntaxonly:
-                        e3="%s %s %s\n" % (s3, '1', s1)
-                        if opt.dup:
-                           out.write(e3)
-                        else:
-                           uniq_edges[e3] = 1
-        if not opt.dup:
-           for e in uniq_edges.keys():
-               out.write(e)
-        out.write("? %d %s\n\n" % (i+1, p))
-        if opt.maps and not opt.localmaps:
-            # Don't assume the files in the same dataset are of the same language
-            with open(maps_filename, 'wb') as f:
-                pickle.dump(maps, f, pickle.HIGHEST_PROTOCOL)
+                if str(e.Node1()) in dict and str(e.Node2()) in dict and dict[str(e.Node1())] != 0 and dict[str(e.Node2())] != 0:
+                    out.write(maps[dict[str(e.Node1())]])
+                    out.write(" ")
+                    out.write(str(edgetype))
+                    out.write(" ")
+                    out.write(maps[dict[str(e.Node2())]])
+                    out.write("\n")
+        out.write("? %d\n\n" % (i+1))
+        # Don't assume the files in the same dataset are of the same language
+        with open(maps_filename, 'wb') as f:
+            pickle.dump(maps, f, pickle.HIGHEST_PROTOCOL)
 
 def get_descendants(child, node):
     descendants = [node]
@@ -507,14 +465,13 @@ def generate_subgraphs(filename, graph, out):
 # generate a graph for the AST of each node
 #
 def ggnn2txt_test(graph, test):
-    if opt.maps and not opt.localmaps:
-        maps = {}
-        if os.path.exists('maps.pkl'):
-            with open('maps.pkl', 'rb') as f:
-                 maps = pickle.load(f)
+    maps = {}
+    if os.path.exists('maps.pkl'):
+        with open('maps.pkl', 'rb') as f:
+             maps = pickle.load(f)
     algorithms = []
     node2type = True
-    for i in trange(0, graph.UnitLength()):
+    for i in range(0, graph.UnitLength()):
         out = test
         unit = graph.Unit(i)
         p = unit.Filename()
@@ -533,27 +490,25 @@ def ggnn2txt_test(graph, test):
         for j in range(0, g.NodeTypeLength()):
             nl = g.NodeType(j)
             dict[str(j+1)] = str(nl.Type())
-            if opt.maps:
-                if not str(nl.Type()) in maps:
-                    maps[str(nl.Type())] = str(1 + len(maps))
+            if not str(nl.Type()) in maps:
+                maps[str(nl.Type().decode('ASCII'))] = str(1 + len(maps))
         generate_subgraphs(p, g, out)
-    if not opt.localmaps:
-        with open('maps.pkl', 'wb') as f:
-            pickle.dump(maps, f, pickle.HIGHEST_PROTOCOL)
+    with open('maps.pkl', 'wb') as f:
+        pickle.dump(maps, f, pickle.HIGHEST_PROTOCOL)
 
 if __name__ == "__main__":
     try:
-        if len(opt.argv) > 0:
-            input_basename, input_extension = os.path.splitext(opt.argv[0])
+        if len(sys.argv) > 1:
+            input_basename, input_extension = os.path.splitext(sys.argv[1])
             start = time.time()
             if input_extension == ".json":
-                with open(opt.argv[0], 'r') as f:
+                with open(sys.argv[1], 'r') as f:
                     data = json.load(f)
             elif input_extension == ".pkl" or input_extension == ".pickle":
-                with open(opt.argv[0], 'rb') as f:
+                with open(sys.argv[1], 'rb') as f:
                     data = pickle.load(f)
             elif input_extension == ".fbs":
-                with open(opt.argv[0], 'rb') as f:
+                with open(sys.argv[1], 'rb') as f:
                     buf = f.read()
                     buf = bytearray(buf)
                     data = Graph.GetRootAsGraph(buf, 0)
@@ -562,24 +517,24 @@ if __name__ == "__main__":
         else:
             print("Please provide an input file")
             sys.exit(0)
-        if len(opt.argv) > 1:
-            output_basename, output_extension = os.path.splitext(opt.argv[1])
+        if len(sys.argv) > 2:
+            output_basename, output_extension = os.path.splitext(sys.argv[2])
             start = time.time()
             if output_extension == ".pkl" or output_extension == ".pickle": 
-                with open(opt.argv[1], 'wb') as out:
+                with open(sys.argv[2], 'wb') as out:
                     pickle.dump(data, out, pickle.HIGHEST_PROTOCOL)
             elif output_extension == ".json": 
-                with open(opt.argv[1], 'w') as out:
+                with open(sys.argv[2], 'w') as out:
                     json.dump(data, out, default=jdefault)
-            elif output_extension == ".txt" and len(opt.argv) > 2: 
-                with open(opt.argv[1], 'w') as train:
-                  with open(opt.argv[2], 'w') as test:
+            elif output_extension == ".txt" and len(sys.argv) > 3: 
+                with open(sys.argv[2], 'w') as train:
+                  with open(sys.argv[3], 'w') as test:
                     ggnn2txt(data, train, test)
             elif output_extension == ".txt": 
-                with open(opt.argv[1], 'w') as test:
+                with open(sys.argv[2], 'w') as test:
                     ggnn2txt_test(data, test)
             elif output_extension == ".fbs":
-                with open(opt.argv[1], 'wb') as out:
+                with open(sys.argv[2], 'wb') as out:
                     builder = flatbuffers.Builder(0)
                     graph = fbsGatedGraph(builder, data)
                     builder.Finish(graph)

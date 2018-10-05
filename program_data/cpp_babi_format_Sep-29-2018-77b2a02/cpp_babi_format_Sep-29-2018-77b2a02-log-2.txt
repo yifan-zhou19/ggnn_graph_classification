@@ -1,30 +1,0 @@
-Namespace(cuda=True, directory='program_data/cpp_babi_format_Sep-29-2018-77b2a02', is_training_ggnn=True, log_path='program_data/cpp_babi_format_Sep-29-2018-77b2a02/logs', lr=0.01, manualSeed=0, model_path='program_data/cpp_babi_format_Sep-29-2018-77b2a02/cpp_babi_format_Sep-29-2018-77b2a02-2.cpkl', n_classes=2, n_hidden=50, n_steps=5, niter=150, size_vocabulary=3346, state_dim=5, test_batch_size=32, testing=False, train_batch_size=32, training=True, training_percentage=1.0, verbal=True, workers=0)
-Random Seed:  0
-  0% 0/2 [00:00<?, ?it/s] 50% 1/2 [00:00<00:00,  6.00it/s]100% 2/2 [00:00<00:00,  4.31it/s]
-Number of all training data : 666
-Max node id : 3192
-  0% 0/2 [00:00<?, ?it/s] 50% 1/2 [00:00<00:00,  8.55it/s]100% 2/2 [00:00<00:00,  6.64it/s]
-Number of all testing data : 334
-Max node id : 3132
-Traceback (most recent call last):
-  File "main_ggnn.py", line 102, in <module>
-    main(opt)
-  File "main_ggnn.py", line 93, in main
-    train(epoch, train_dataloader, net, criterion, optimizer, opt, writer)
-  File "/e/utils/train_ggnn.py", line 8, in train
-    for i, (adj_matrix, target) in enumerate(dataloader, 0):
-  File "/opt/conda/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 280, in __next__
-    idx, batch = self._get_batch()
-  File "/opt/conda/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 259, in _get_batch
-    return self.data_queue.get()
-  File "/opt/conda/lib/python3.6/multiprocessing/queues.py", line 335, in get
-    res = self._reader.recv_bytes()
-  File "/opt/conda/lib/python3.6/multiprocessing/connection.py", line 216, in recv_bytes
-    buf = self._recv_bytes(maxlength)
-  File "/opt/conda/lib/python3.6/multiprocessing/connection.py", line 407, in _recv_bytes
-    buf = self._recv(4)
-  File "/opt/conda/lib/python3.6/multiprocessing/connection.py", line 379, in _recv
-    chunk = read(handle, remaining)
-  File "/opt/conda/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 178, in handler
-    _error_if_any_worker_fails()
-RuntimeError: DataLoader worker (pid 16) is killed by signal: Killed.

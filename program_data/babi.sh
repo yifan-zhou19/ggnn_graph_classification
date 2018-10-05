@@ -1,0 +1,33 @@
+in=${1:-cpp_protobuf_format_Sep-29-2018}
+out=${in/protobuf/babi}-$2
+cp ggnn/ggnn-$2.py ggnn/ggnn.py
+mkdir -p $out/train $out/test
+chmod -R a+w $out
+if [ -f $out/maps.cpp.pkl ]; then
+   cp $out/maps.cpp.pkl .
+fi
+if [ -f $out/maps.pkl ]; then
+   cp $out/maps.pkl .
+fi
+for f in $in/*.fbs; do
+  i=$(basename $f)
+  i=${i/.fbs/}
+  # echo $i
+  if [ ! -f $out/train/train_$i.txt -o ! -f $out/test/test_$i.txt ]; then
+    ./ggnn.sh $in/$i.fbs $out/train/train_$i.txt $out/test/test_$i.txt 
+  fi
+done
+if [ -f maps.cpp.pkl ]; then
+	mv maps.cpp.pkl $out
+fi
+if [ -f maps.pkl ]; then
+	mv maps.pkl $out
+fi
+docker run -v $(pwd)/$out:/e --entrypoint bash -it ggnn -c "cp /usr/local/bin/ggnn /e/ggnn.py"
+cp $0 $out
+cd $out > /dev/null
+k=$(dmap | sort -n | wc -l)
+cd - > /dev/null
+cd .. > /dev/null
+run program_data/$out $k $n 150 5
+cd - > /dev/null
