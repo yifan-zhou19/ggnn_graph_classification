@@ -1,21 +1,20 @@
+input=CppProgramData
 in=${1:-cpp_protobuf_format_Sep-29-2018}
 out=${in/protobuf/babi}-$2
 cp ggnn/ggnn-$2.py ggnn/ggnn.py
+n=${3:-3}
 mkdir -p $out/train $out/test
 chmod -R a+w $out
-if [ -f $out/maps.cpp.pkl ]; then
-   cp $out/maps.cpp.pkl .
-fi
-if [ -f $out/maps.pkl ]; then
-   cp $out/maps.pkl .
-fi
-for f in $in/*.fbs; do
-  i=$(basename $f)
-  i=${i/.fbs/}
+rm -f maps.cpp.pkl
+rm -f maps.pkl
+for ((i=1;i<=$n;i++)); do
   # echo $i
   if [ ! -f $out/train/train_$i.txt -o ! -f $out/test/test_$i.txt ]; then
     ggnn $in/$i.fbs $out/train/train_$i.txt $out/test/test_$i.txt 
   fi
+  #if [ ! -f $out/$i.json ]; then
+  #  ggnn $in/$i.fbs $out/$i.json
+  #fi
 done
 if [ -f maps.cpp.pkl ]; then
 	mv maps.cpp.pkl $out

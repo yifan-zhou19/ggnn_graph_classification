@@ -297,7 +297,6 @@ def ggnn2txt(graph, train, test):
         dict = {}
         if opt.occurrence:
             occurrence = {}
-            dict_type = {}
         if not opt.dup:
             uniq_edges = {}
         for j in range(0, g.NodeTypeLength()):
@@ -310,21 +309,16 @@ def ggnn2txt(graph, train, test):
                    occurrence[t] = 1 
                else:
                    occurrence[t] = occurrence[t] + 1
-               to = "%s:%d" % (t, occurrence[t] % 4)
+               to = "%s:%d" % (t, occurrence[t])
                dict[str(j+1)] = to
-               dict_type[str(j+1)] = t
             if t == 'POSITION' or t == 'COMMENT' or t == '271' or t == '6':
                dict[str(j+1)] = 0
-               if opt.occurrence:
-                  dict_type[str(j+1)] = 0
             else:
                 if opt.maps:
-                   if not t in maps:
-                      maps[t] = str(1 + len(maps))
                    if opt.occurrence:
                       t = to
-                      if not t in maps:
-                         maps[t] = str(1 + len(maps))
+                   if not t in maps:
+                      maps[t] = str(1 + len(maps))
         for edgetype in range(1, 6):
             if edgetype == 1:
                 n = edges.ChildLength()
@@ -362,11 +356,11 @@ def ggnn2txt(graph, train, test):
                     else:
                         s3 = dict[str(e.Node2())]
                     if s2 == '1' or not opt.syntaxonly:
-                       e1="%s %s %s\n" % (s1, s2, s3)
+                       e="%s %s %s\n" % (s1, s2, s3)
                        if opt.dup:
-                          out.write(e1)
+                          out.write(e)
                        else:
-                          uniq_edges[e1] = 1
+                          uniq_edges[e] = 1
                     if opt.bidirect and s2 != "1" and not opt.syntaxonly:
                         e2="%s %s %s\n" % (s3, s2, s1)
                         if opt.dup:
@@ -374,30 +368,11 @@ def ggnn2txt(graph, train, test):
                         else:
                            uniq_edges[e2] = 1
                     if opt.mixing and s2 != "1" and not opt.syntaxonly:
-                        e3="%s %s %s\n" % (s1, '1', s3)
+                        e3="%s %s %s\n" % (s3, '1', s1)
                         if opt.dup:
                            out.write(e3)
                         else:
                            uniq_edges[e3] = 1
-                    if opt.occurrence and dict_type[str(e.Node1())] != 0 and dict_type[str(e.Node2())] != 0:
-                        if opt.maps:
-                            s4 = maps[dict_type[str(e.Node1())]]
-                        else:
-                            s4 = dict_type[str(e.Node1())]
-                        e4="%s %s %s\n" % (s1, '7', s4)
-                        if opt.dup:
-                           out.write(e4)
-                        else:
-                           uniq_edges[e4] = 1
-                        if opt.maps:
-                            s5 = maps[dict_type[str(e.Node2())]]
-                        else:
-                            s5 = dict_type[str(e.Node2())]
-                        e5="%s %s %s\n" % (s3, '7', s5)
-                        if opt.dup:
-                           out.write(e5)
-                        else:
-                           uniq_edges[e5] = 1
         if not opt.dup:
            for e in uniq_edges.keys():
                out.write(e)
