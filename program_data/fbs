@@ -1,10 +1,9 @@
-input=CppProgramData
 in=${1:-cpp_protobuf_format}
-n=${2:-3}
-
+input=${2:-CppProgramData}
 mkdir -p $in
 chmod -R a+w $in
-for ((i=1;i<=$n;i++)); do
+for f in $input/*; do
+    i=$(basename $f)
     if [ ! -f $in/$i.fbs ]; then
 	fast -v > $in/fast.version
 	fast -S -G $input/$i $in/$i.fbs

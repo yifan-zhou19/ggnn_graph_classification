@@ -17,5 +17,5 @@ for index in {1..3}; do
 done
 mv maps.cpp.pkl $out
 mv maps.pkl $out
-docker run -v $(pwd)/$out:/e --entrypoint bash -it ggnn -c "cp /usr/local/bin/ggnn /e/ggnn.py"
+docker run --rm -v $(pwd)/$out:/e --entrypoint bash -it ggnn -c "cp /usr/local/bin/ggnn /e/ggnn.py"
 cp $0 $out

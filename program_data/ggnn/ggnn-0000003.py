@@ -29,8 +29,9 @@ parser.add_argument('--maps', action='store_true', default=True, help='maps node
 parser.add_argument('--localmaps', action='store_true', default=False, help='use local maps instead of global one')
 parser.add_argument('--dup', action='store_true', default=False, help='keep duplicated edges of the nodetypes')
 parser.add_argument('--bidirect', type=bool, default=False, help='make edges bidirectional')
-parser.add_argument('--mixing', type=bool, default=True, help='make semantic edges syntactical to allow for propagation')
+parser.add_argument('--mixing', type=bool, default=False, help='make semantic edges syntactical to allow for propagation')
 parser.add_argument('--syntaxonly', type=bool, default=False, help='output only syntactical edges')
+parser.add_argument('--occurrence', type=bool, default=True, help='associate node types with node occurrence on the AST')
 parser.add_argument('argv', nargs="+", help='filenames')
 opt = parser.parse_args()
 print(opt)
@@ -294,17 +295,30 @@ def ggnn2txt(graph, train, test):
         array = {}
         NT = g.NodeTypeLength()
         dict = {}
+        if opt.occurrence:
+            occurrence = {}
         if not opt.dup:
             uniq_edges = {}
         for j in range(0, g.NodeTypeLength()):
             nl = g.NodeType(j)
-            dict[str(j+1)] = str(nl.Type())
-            if nl.Type().decode('ASCII') == 'POSITION' or nl.Type().decode('ASCII') == 'COMMENT' or nl.Type().decode('ASCII') == '271' or nl.Type().decode('ASCII') == '6':
-                dict[str(j+1)] = 0
+            t = str(nl.Type().decode('ASCII')) 
+            if not opt.occurrence:
+               dict[str(j+1)] = t
+            else:
+               if not t in occurrence.keys():
+                   occurrence[t] = 1 
+               else:
+                   occurrence[t] = occurrence[t] + 1
+               to = "%s:%d" % (t, occurrence[t] % 4)
+               dict[str(j+1)] = to
+            if t == 'POSITION' or t == 'COMMENT' or t == '271' or t == '6':
+               dict[str(j+1)] = 0
             else:
                 if opt.maps:
-                   if not str(nl.Type()) in maps:
-                      maps[str(nl.Type())] = str(1 + len(maps))
+                   if opt.occurrence:
+                      t = to
+                   if not t in maps:
+                      maps[t] = str(1 + len(maps))
         for edgetype in range(1, 6):
             if edgetype == 1:
                 n = edges.ChildLength()
@@ -362,7 +376,7 @@ def ggnn2txt(graph, train, test):
         if not opt.dup:
            for e in uniq_edges.keys():
                out.write(e)
-        out.write("? %d %s\n\n" % (i+1, p))
+        out.write("? %d %s\n\n" % (i+1, p.decode('ASCII')))
         if opt.maps and not opt.localmaps:
             # Don't assume the files in the same dataset are of the same language
             with open(maps_filename, 'wb') as f:
