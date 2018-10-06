@@ -11,7 +11,7 @@ fbs.sh github_java_protobuf_format_$tag github_java_program_data | tee $0.log
   g=${f/*-/}
   g=${g/.py/}
   echo $g
-  # babi.sh cpp_protobuf_format_$tag $g | tee $0.log
+  babi.sh cpp_protobuf_format_$tag $g | tee $0.log
   babi.sh java_protobuf_format_$tag $g | tee $0.log
   babi.sh github_cpp_protobuf_format_$tag $g | tee $0.log
   babi.sh github_java_protobuf_format_$tag $g | tee $0.log
