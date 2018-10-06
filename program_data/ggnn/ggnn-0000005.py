@@ -26,7 +26,13 @@ import tqdm
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--maps', action='store_true', default=True, help='maps node type to a consequetive number')
-parser.add_argument('--dup', action='store_true', help='keep duplicated edges of the nodetypes')
+parser.add_argument('--localmaps', action='store_true', default=False, help='use local maps instead of global one')
+parser.add_argument('--dup', action='store_true', default=False, help='keep duplicated edges of the nodetypes')
+parser.add_argument('--bidirect', type=bool, default=False, help='make edges bidirectional')
+parser.add_argument('--mixing', type=bool, default=False, help='make semantic edges syntactical to allow for propagation')
+parser.add_argument('--syntaxonly', type=bool, default=False, help='output only syntactical edges')
+parser.add_argument('--occurrence', type=bool, default=False, help='associate node types with node occurrence on the AST')
+parser.add_argument('--noedgetype', type=bool, default=True, help='associate node types with node occurrence on the AST')
 parser.add_argument('argv', nargs="+", help='filenames')
 opt = parser.parse_args()
 print(opt)
@@ -215,12 +221,12 @@ def jdefault(o):
         array = {}
         for i in range(0, o.NodeLabelLength()):
             nl = o.NodeLabel(i)
-            array[nl.Node()] = nl.Label().decode('ASCII')
+            array[nl.Node()] = nl.Label()
         obj['NodeLabels'] = array
         array = {}
         for i in range(0, o.NodeTypeLength()):
             nl = o.NodeType(i)
-            array[nl.Node()] = nl.Type().decode('ASCII')
+            array[nl.Node()] = nl.Type()
         obj['NodeTypes'] = array
         return obj
     elif isinstance(o, ContextEdges):
@@ -279,7 +285,7 @@ def ggnn2txt(graph, train, test):
         else:
             i = len(algorithms)
             algorithms.append(t)
-        if opt.maps:
+        if opt.maps and not opt.localmaps:
             input_basename, input_extension = os.path.splitext(p)
             maps_filename = "maps%s.pkl" % input_extension.decode('ASCII')
             if os.path.exists(maps_filename):
@@ -290,17 +296,36 @@ def ggnn2txt(graph, train, test):
         array = {}
         NT = g.NodeTypeLength()
         dict = {}
+        if opt.occurrence:
+            occurrence = {}
+            dict_type = {}
         if not opt.dup:
             uniq_edges = {}
         for j in range(0, g.NodeTypeLength()):
             nl = g.NodeType(j)
-            # print("%d %d %s\n" % (j + 1, nl.Node(), nl.Type()))
-            dict[str(j+1)] = str(nl.Type().decode('ASCII'))
-            if nl.Type().decode('ASCII') == 'POSITION' or nl.Type().decode('ASCII') == 'COMMENT' or nl.Type().decode('ASCII') == '271' or nl.Type().decode('ASCII') == '6':
-                dict[str(j+1)] = 0
-            elif opt.maps:
-                if not str(nl.Type().decode('ASCII')) in maps:
-                   maps[str(nl.Type().decode('ASCII'))] = str(1 + len(maps))
+            t = str(nl.Type().decode('ASCII')) 
+            if not opt.occurrence:
+               dict[str(j+1)] = t
+            else:
+               if not t in occurrence.keys():
+                   occurrence[t] = 1 
+               else:
+                   occurrence[t] = occurrence[t] + 1
+               to = "%s:%d" % (t, occurrence[t] % 4)
+               dict[str(j+1)] = to
+               dict_type[str(j+1)] = t
+            if t == 'POSITION' or t == 'COMMENT' or t == '271' or t == '6':
+               dict[str(j+1)] = 0
+               if opt.occurrence:
+                  dict_type[str(j+1)] = 0
+            else:
+                if opt.maps:
+                   if not t in maps:
+                      maps[t] = str(1 + len(maps))
+                   if opt.occurrence:
+                      t = to
+                      if not t in maps:
+                         maps[t] = str(1 + len(maps))
         for edgetype in range(1, 6):
             if edgetype == 1:
                 n = edges.ChildLength()
@@ -332,21 +357,62 @@ def ggnn2txt(graph, train, test):
                         s1 = maps[dict[str(e.Node1())]]
                     else:
                         s1 = dict[str(e.Node1())]
-                    s2 = str(edgetype)
+                    if opt.noedgetype:
+                        s2 = '1'
+                    else:
+                        s2 = str(edgetype)
                     if opt.maps:
                         s3 = maps[dict[str(e.Node2())]]
                     else:
                         s3 = dict[str(e.Node2())]
-                    e="%s %s %s\n" % (s1, s2, s3)
-                    if opt.dup:
-                        out.write(e)
-                    else:
-                        uniq_edges[e] = 1
+                    if s2 == '1' or not opt.syntaxonly:
+                       e1="%s %s %s\n" % (s1, s2, s3)
+                       if opt.dup:
+                          out.write(e1)
+                       else:
+                          uniq_edges[e1] = 1
+                    if opt.bidirect and s2 != "1" and not opt.syntaxonly:
+                        e2="%s %s %s\n" % (s3, s2, s1)
+                        if opt.dup:
+                           out.write(e2)
+                        else:
+                           uniq_edges[e2] = 1
+                    if opt.mixing and s2 != "1" and not opt.syntaxonly:
+                        e3="%s %s %s\n" % (s1, '1', s3)
+                        if opt.dup:
+                           out.write(e3)
+                        else:
+                           uniq_edges[e3] = 1
+                    if opt.occurrence and dict_type[str(e.Node1())] != 0 and dict_type[str(e.Node2())] != 0:
+                        if opt.maps:
+                            s4 = maps[dict_type[str(e.Node1())]]
+                        else:
+                            s4 = dict_type[str(e.Node1())]
+                        if opt.noedgetype:
+                            e4="%s %s %s\n" % (s1, '1', s4)
+                        else:
+                            e4="%s %s %s\n" % (s1, '7', s4)
+                        if opt.dup:
+                           out.write(e4)
+                        else:
+                           uniq_edges[e4] = 1
+                        if opt.maps:
+                            s5 = maps[dict_type[str(e.Node2())]]
+                        else:
+                            s5 = dict_type[str(e.Node2())]
+                        if opt.noedgetype:
+                            e5="%s %s %s\n" % (s1, '1', s4)
+                        else:
+                            e5="%s %s %s\n" % (s3, '7', s5)
+                        if opt.dup:
+                           out.write(e5)
+                        else:
+                           uniq_edges[e5] = 1
         if not opt.dup:
            for e in uniq_edges.keys():
                out.write(e)
-        out.write("? %d %s\n\n" % (i+1, p))
-        if opt.maps:
+        out.write("? %d %s\n\n" % (i+1, p.decode('ASCII')))
+        if opt.maps and not opt.localmaps:
             # Don't assume the files in the same dataset are of the same language
             with open(maps_filename, 'wb') as f:
                 pickle.dump(maps, f, pickle.HIGHEST_PROTOCOL)
@@ -490,7 +556,7 @@ def generate_subgraphs(filename, graph, out):
 # generate a graph for the AST of each node
 #
 def ggnn2txt_test(graph, test):
-    if opt.maps:
+    if opt.maps and not opt.localmaps:
         maps = {}
         if os.path.exists('maps.pkl'):
             with open('maps.pkl', 'rb') as f:
@@ -518,10 +584,11 @@ def ggnn2txt_test(graph, test):
             dict[str(j+1)] = str(nl.Type())
             if opt.maps:
                 if not str(nl.Type()) in maps:
-                    maps[str(nl.Type().decode('ASCII'))] = str(1 + len(maps))
+                    maps[str(nl.Type())] = str(1 + len(maps))
         generate_subgraphs(p, g, out)
-    with open('maps.pkl', 'wb') as f:
-        pickle.dump(maps, f, pickle.HIGHEST_PROTOCOL)
+    if not opt.localmaps:
+        with open('maps.pkl', 'wb') as f:
+            pickle.dump(maps, f, pickle.HIGHEST_PROTOCOL)
 
 if __name__ == "__main__":
     try:
