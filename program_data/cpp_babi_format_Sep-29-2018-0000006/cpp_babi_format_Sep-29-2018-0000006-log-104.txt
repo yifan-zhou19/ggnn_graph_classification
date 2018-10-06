@@ -1,352 +1,19 @@
-Namespace(cuda=True, directory='program_data/cpp_babi_format_Sep-29-2018-0000006', is_training_ggnn=True, log_path='program_data/cpp_babi_format_Sep-29-2018-0000006/logs', lr=0.01, manualSeed=0, model_path='program_data/cpp_babi_format_Sep-29-2018-0000006/cpp_babi_format_Sep-29-2018-0000006-104.cpkl', n_classes=104, n_hidden=50, n_steps=5, niter=150, size_vocabulary=56, state_dim=5, test_batch_size=32, testing=False, train_batch_size=32, training=True, training_percentage=1.0, verbal=True, workers=0)
+Namespace(cuda=True, directory='program_data/cpp_babi_format_Sep-29-2018-0000006', is_training_ggnn=True, log_path='program_data/cpp_babi_format_Sep-29-2018-0000006/logs', lr=0.01, manualSeed=0, model_path='program_data/cpp_babi_format_Sep-29-2018-0000006/cpp_babi_format_Sep-29-2018-0000006-104.cpkl', n_classes=104, n_hidden=58, n_steps=5, niter=150, size_vocabulary=58, state_dim=5, test_batch_size=32, testing=False, train_batch_size=8192, training=True, training_percentage=1.0, verbal=True, workers=2)
 Random Seed:  0
-  0% 0/104 [00:00<?, ?it/s]  3% 3/104 [00:00<00:03, 29.38it/s]  6% 6/104 [00:00<00:03, 28.41it/s]  9% 9/104 [00:00<00:03, 26.38it/s] 12% 12/104 [00:00<00:03, 24.96it/s] 15% 16/104 [00:00<00:03, 24.40it/s] 18% 19/104 [00:00<00:03, 25.58it/s] 21% 22/104 [00:00<00:03, 22.85it/s] 25% 26/104 [00:01<00:03, 21.62it/s] 29% 30/104 [00:01<00:03, 24.07it/s] 32% 33/104 [00:01<00:03, 20.30it/s] 36% 37/104 [00:01<00:02, 22.82it/s] 39% 41/104 [00:01<00:02, 25.18it/s] 42% 44/104 [00:01<00:02, 20.28it/s] 46% 48/104 [00:02<00:02, 22.76it/s] 50% 52/104 [00:02<00:02, 24.79it/s] 53% 55/104 [00:02<00:02, 18.71it/s] 57% 59/104 [00:02<00:02, 21.40it/s] 61% 63/104 [00:02<00:01, 23.97it/s] 63% 66/104 [00:02<00:01, 25.46it/s] 66% 69/104 [00:03<00:01, 17.72it/s] 70% 73/104 [00:03<00:01, 20.40it/s] 73% 76/104 [00:03<00:01, 22.19it/s] 77% 80/104 [00:03<00:00, 24.17it/s] 81% 84/104 [00:03<00:01, 17.76it/s] 85% 88/104 [00:03<00:00, 20.49it/s] 88% 92/104 [00:04<00:00, 22.68it/s] 92% 96/104 [00:04<00:00, 25.09it/s] 96% 100/104 [00:04<00:00, 27.11it/s]100% 104/104 [00:04<00:00, 28.53it/s]
 Number of all training data : 34627
 Max node id : 52
-  0% 0/104 [00:00<?, ?it/s]  6% 6/104 [00:00<00:01, 52.16it/s] 12% 13/104 [00:00<00:01, 54.98it/s] 19% 20/104 [00:00<00:01, 56.87it/s] 26% 27/104 [00:00<00:01, 58.51it/s] 33% 34/104 [00:00<00:01, 60.18it/s] 39% 41/104 [00:00<00:01, 61.75it/s] 46% 48/104 [00:00<00:00, 62.23it/s] 52% 54/104 [00:01<00:01, 29.06it/s] 59% 61/104 [00:01<00:01, 34.65it/s] 65% 68/104 [00:01<00:00, 40.02it/s] 71% 74/104 [00:01<00:00, 44.44it/s] 78% 81/104 [00:01<00:00, 48.29it/s] 85% 88/104 [00:01<00:00, 52.00it/s] 91% 95/104 [00:01<00:00, 54.86it/s] 98% 102/104 [00:02<00:00, 57.53it/s]100% 104/104 [00:02<00:00, 50.98it/s]
-Number of all testing data : 17367
-Max node id : 55
-/opt/conda/lib/python3.6/site-packages/torch/onnx/utils.py:365: UserWarning: ONNX export failed on ATen operator stack because torch.onnx.symbolic.stack does not exist
-  .format(op_name, op_name))
-/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %98 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
-  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
-/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %161 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
-  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
-/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %224 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
-  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
-/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %287 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
-  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
-/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %350 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
-  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
-[0/150][0/1083] Loss: 4.6444
-[0/150][109/1083] Loss: 4.6449
-[0/150][218/1083] Loss: 4.6560
-[0/150][327/1083] Loss: 4.6453
-[0/150][436/1083] Loss: 4.6485
-[0/150][545/1083] Loss: 4.6598
-[0/150][654/1083] Loss: 4.6508
-[0/150][763/1083] Loss: 4.6446
-[0/150][872/1083] Loss: 4.5877
-[0/150][981/1083] Loss: 4.5969
-Test set: Average loss: 0.1441, Accuracy: 863/17367 (4%)
-[1/150][0/1083] Loss: 4.5936
-[1/150][109/1083] Loss: 4.6058
-[1/150][218/1083] Loss: 4.5729
-[1/150][327/1083] Loss: 4.6009
-[1/150][436/1083] Loss: 4.4021
-[1/150][545/1083] Loss: 4.5878
-[1/150][654/1083] Loss: 4.5744
-[1/150][763/1083] Loss: 4.6254
-[1/150][872/1083] Loss: 4.5887
-[1/150][981/1083] Loss: 4.5978
-Test set: Average loss: 0.1428, Accuracy: 1589/17367 (9%)
-[2/150][0/1083] Loss: 4.5662
-[2/150][109/1083] Loss: 4.5662
-[2/150][218/1083] Loss: 4.5664
-[2/150][327/1083] Loss: 4.5663
-[2/150][436/1083] Loss: 4.6290
-[2/150][545/1083] Loss: 4.5347
-[2/150][654/1083] Loss: 4.5771
-[2/150][763/1083] Loss: 4.5625
-[2/150][872/1083] Loss: 4.5347
-[2/150][981/1083] Loss: 4.5665
-Test set: Average loss: 0.1428, Accuracy: 1623/17367 (9%)
-[3/150][0/1083] Loss: 4.5890
-[3/150][109/1083] Loss: 4.5036
-[3/150][218/1083] Loss: 4.5354
-[3/150][327/1083] Loss: 4.4991
-[3/150][436/1083] Loss: 4.5347
-[3/150][545/1083] Loss: 4.4865
-[3/150][654/1083] Loss: 4.5660
-[3/150][763/1083] Loss: 4.4097
-[3/150][872/1083] Loss: 4.5663
-[3/150][981/1083] Loss: 4.5649
-Test set: Average loss: 0.1425, Accuracy: 1782/17367 (10%)
-[4/150][0/1083] Loss: 4.4783
-[4/150][109/1083] Loss: 4.5983
-[4/150][218/1083] Loss: 4.6293
-[4/150][327/1083] Loss: 4.5040
-[4/150][436/1083] Loss: 4.4754
-[4/150][545/1083] Loss: 4.5343
-[4/150][654/1083] Loss: 4.6263
-[4/150][763/1083] Loss: 4.5931
-[4/150][872/1083] Loss: 4.5461
-[4/150][981/1083] Loss: 4.5039
-Test set: Average loss: 0.1424, Accuracy: 1865/17367 (10%)
-[5/150][0/1083] Loss: 4.5663
-[5/150][109/1083] Loss: 4.5927
-[5/150][218/1083] Loss: 4.5658
-[5/150][327/1083] Loss: 4.6029
-[5/150][436/1083] Loss: 4.5097
-[5/150][545/1083] Loss: 4.5869
-[5/150][654/1083] Loss: 4.5976
-[5/150][763/1083] Loss: 4.5701
-[5/150][872/1083] Loss: 4.6210
-[5/150][981/1083] Loss: 4.6009
-Test set: Average loss: 0.1424, Accuracy: 1803/17367 (10%)
-[6/150][0/1083] Loss: 4.6283
-[6/150][109/1083] Loss: 4.4384
-[6/150][218/1083] Loss: 4.5942
-[6/150][327/1083] Loss: 4.5704
-[6/150][436/1083] Loss: 4.5374
-[6/150][545/1083] Loss: 4.5645
-[6/150][654/1083] Loss: 4.6291
-[6/150][763/1083] Loss: 4.5670
-[6/150][872/1083] Loss: 4.5516
-[6/150][981/1083] Loss: 4.6292
-Test set: Average loss: 0.1423, Accuracy: 1863/17367 (10%)
-[7/150][0/1083] Loss: 4.5995
-[7/150][109/1083] Loss: 4.5995
-[7/150][218/1083] Loss: 4.5351
-[7/150][327/1083] Loss: 4.5403
-[7/150][436/1083] Loss: 4.5348
-[7/150][545/1083] Loss: 4.6275
-[7/150][654/1083] Loss: 4.6111
-[7/150][763/1083] Loss: 4.6048
-[7/150][872/1083] Loss: 4.5970
-[7/150][981/1083] Loss: 4.5333
-Test set: Average loss: 0.1421, Accuracy: 2027/17367 (11%)
-[8/150][0/1083] Loss: 4.5444
-[8/150][109/1083] Loss: 4.5078
-[8/150][218/1083] Loss: 4.5754
-[8/150][327/1083] Loss: 4.5359
-[8/150][436/1083] Loss: 4.5197
-[8/150][545/1083] Loss: 4.5396
-[8/150][654/1083] Loss: 4.4631
-[8/150][763/1083] Loss: 4.5974
-[8/150][872/1083] Loss: 4.4726
-[8/150][981/1083] Loss: 4.5081
-Test set: Average loss: 0.1418, Accuracy: 2185/17367 (12%)
-[9/150][0/1083] Loss: 4.4617
-[9/150][109/1083] Loss: 4.5976
-[9/150][218/1083] Loss: 4.5083
-[9/150][327/1083] Loss: 4.5664
-[9/150][436/1083] Loss: 4.5003
-[9/150][545/1083] Loss: 4.5359
-[9/150][654/1083] Loss: 4.5358
-[9/150][763/1083] Loss: 4.5945
-[9/150][872/1083] Loss: 4.5261
-[9/150][981/1083] Loss: 4.4102
-Test set: Average loss: 0.1418, Accuracy: 2167/17367 (12%)
-[10/150][0/1083] Loss: 4.5349
-[10/150][109/1083] Loss: 4.4587
-[10/150][218/1083] Loss: 4.5130
-[10/150][327/1083] Loss: 4.5708
-[10/150][436/1083] Loss: 4.5568
-[10/150][545/1083] Loss: 4.4684
-[10/150][654/1083] Loss: 4.4416
-[10/150][763/1083] Loss: 4.5012
-[10/150][872/1083] Loss: 4.5667
-[10/150][981/1083] Loss: 4.5875
-Test set: Average loss: 0.1415, Accuracy: 2335/17367 (13%)
-[11/150][0/1083] Loss: 4.4416
-[11/150][109/1083] Loss: 4.5331
-[11/150][218/1083] Loss: 4.5688
-[11/150][327/1083] Loss: 4.6032
-[11/150][436/1083] Loss: 4.5974
-[11/150][545/1083] Loss: 4.5391
-[11/150][654/1083] Loss: 4.4830
-[11/150][763/1083] Loss: 4.5144
-[11/150][872/1083] Loss: 4.5527
-[11/150][981/1083] Loss: 4.5348
-Test set: Average loss: 0.1412, Accuracy: 2504/17367 (14%)
-[12/150][0/1083] Loss: 4.4914
-[12/150][109/1083] Loss: 4.6278
-[12/150][218/1083] Loss: 4.5488
-[12/150][327/1083] Loss: 4.5189
-[12/150][436/1083] Loss: 4.5043
-[12/150][545/1083] Loss: 4.5647
-[12/150][654/1083] Loss: 4.4075
-[12/150][763/1083] Loss: 4.5457
-[12/150][872/1083] Loss: 4.5150
-[12/150][981/1083] Loss: 4.5445
-Test set: Average loss: 0.1410, Accuracy: 2630/17367 (15%)
-[13/150][0/1083] Loss: 4.4726
-[13/150][109/1083] Loss: 4.5813
-[13/150][218/1083] Loss: 4.4712
-[13/150][327/1083] Loss: 4.4666
-[13/150][436/1083] Loss: 4.6291
-[13/150][545/1083] Loss: 4.5313
-[13/150][654/1083] Loss: 4.4109
-[13/150][763/1083] Loss: 4.4219
-[13/150][872/1083] Loss: 4.4428
-[13/150][981/1083] Loss: 4.5662
-Test set: Average loss: 0.1408, Accuracy: 2767/17367 (15%)
-[14/150][0/1083] Loss: 4.5352
-[14/150][109/1083] Loss: 4.4202
-[14/150][218/1083] Loss: 4.3491
-[14/150][327/1083] Loss: 4.5594
-[14/150][436/1083] Loss: 4.4694
-[14/150][545/1083] Loss: 4.3441
-[14/150][654/1083] Loss: 4.4202
-[14/150][763/1083] Loss: 4.5050
-[14/150][872/1083] Loss: 4.5974
-[14/150][981/1083] Loss: 4.5286
-Test set: Average loss: 0.1407, Accuracy: 2817/17367 (16%)
-[15/150][0/1083] Loss: 4.3572
-[15/150][109/1083] Loss: 4.4782
-[15/150][218/1083] Loss: 4.4638
-[15/150][327/1083] Loss: 4.4410
-[15/150][436/1083] Loss: 4.5328
-[15/150][545/1083] Loss: 4.4504
-[15/150][654/1083] Loss: 4.5049
-[15/150][763/1083] Loss: 4.5223
-[15/150][872/1083] Loss: 4.5974
-[15/150][981/1083] Loss: 4.5366
-Test set: Average loss: 0.1406, Accuracy: 2856/17367 (16%)
-[16/150][0/1083] Loss: 4.4736
-[16/150][109/1083] Loss: 4.5065
-[16/150][218/1083] Loss: 4.5339
-[16/150][327/1083] Loss: 4.5151
-[16/150][436/1083] Loss: 4.2878
-[16/150][545/1083] Loss: 4.4426
-[16/150][654/1083] Loss: 4.5003
-[16/150][763/1083] Loss: 4.4813
-[16/150][872/1083] Loss: 4.5057
-[16/150][981/1083] Loss: 4.3220
-Test set: Average loss: 0.1408, Accuracy: 2769/17367 (15%)
-[17/150][0/1083] Loss: 4.4757
-[17/150][109/1083] Loss: 4.5041
-[17/150][218/1083] Loss: 4.4109
-[17/150][327/1083] Loss: 4.4961
-[17/150][436/1083] Loss: 4.5348
-[17/150][545/1083] Loss: 4.4983
-[17/150][654/1083] Loss: 4.4663
-[17/150][763/1083] Loss: 4.3656
-[17/150][872/1083] Loss: 4.4762
-[17/150][981/1083] Loss: 4.5034
-Test set: Average loss: 0.1406, Accuracy: 2861/17367 (16%)
-[18/150][0/1083] Loss: 4.5643
-[18/150][109/1083] Loss: 4.5640
-[18/150][218/1083] Loss: 4.6248
-[18/150][327/1083] Loss: 4.5669
-[18/150][436/1083] Loss: 4.5964
-[18/150][545/1083] Loss: 4.5546
-[18/150][654/1083] Loss: 4.5975
-[18/150][763/1083] Loss: 4.5304
-[18/150][872/1083] Loss: 4.3805
-[18/150][981/1083] Loss: 4.6155
-Test set: Average loss: 0.1411, Accuracy: 2583/17367 (14%)
-[19/150][0/1083] Loss: 4.5266
-[19/150][109/1083] Loss: 4.5378
-[19/150][218/1083] Loss: 4.4859
-[19/150][327/1083] Loss: 4.4620
-[19/150][436/1083] Loss: 4.3176
-[19/150][545/1083] Loss: 4.5974
-[19/150][654/1083] Loss: 4.5357
-[19/150][763/1083] Loss: 4.5033
-[19/150][872/1083] Loss: 4.4484
-[19/150][981/1083] Loss: 4.5041
-Test set: Average loss: 0.1406, Accuracy: 2837/17367 (16%)
-[20/150][0/1083] Loss: 4.5040
-[20/150][109/1083] Loss: 4.5607
-[20/150][218/1083] Loss: 4.4660
-[20/150][327/1083] Loss: 4.5306
-[20/150][436/1083] Loss: 4.5058
-[20/150][545/1083] Loss: 4.4991
-[20/150][654/1083] Loss: 4.5040
-[20/150][763/1083] Loss: 4.5004
-[20/150][872/1083] Loss: 4.5353
-[20/150][981/1083] Loss: 4.5354
-Test set: Average loss: 0.1406, Accuracy: 2891/17367 (16%)
-[21/150][0/1083] Loss: 4.5964
-[21/150][109/1083] Loss: 4.5680
-[21/150][218/1083] Loss: 4.5669
-[21/150][327/1083] Loss: 4.5484
-[21/150][436/1083] Loss: 4.4413
-[21/150][545/1083] Loss: 4.5035
-[21/150][654/1083] Loss: 4.5044
-[21/150][763/1083] Loss: 4.5127
-[21/150][872/1083] Loss: 4.4579
-[21/150][981/1083] Loss: 4.4449
-Test set: Average loss: 0.1405, Accuracy: 2882/17367 (16%)
-[22/150][0/1083] Loss: 4.4103
-[22/150][109/1083] Loss: 4.5667
-[22/150][218/1083] Loss: 4.5667
-[22/150][327/1083] Loss: 4.4950
-[22/150][436/1083] Loss: 4.5165
-[22/150][545/1083] Loss: 4.5373
-	[22/150][654/1083] Loss: 4.5667
-[22/150][763/1083] Loss: 4.3506
-[22/150][872/1083] Loss: 4.4727
-[22/150][981/1083] Loss: 4.4419
-^CProcess Process-91:
-Process Process-92:
-Traceback (most recent call last):
-  File "/opt/conda/lib/python3.6/multiprocessing/process.py", line 258, in _bootstrap
-    self.run()
-  File "/opt/conda/lib/python3.6/multiprocessing/process.py", line 93, in run
-    self._target(*self._args, **self._kwargs)
-  File "/opt/conda/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 57, in _worker_loop
-    samples = collate_fn([dataset[i] for i in batch_indices])
-  File "/opt/conda/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 138, in default_collate
-    return [default_collate(samples) for samples in transposed]
-  File "/opt/conda/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 138, in <listcomp>
-    return [default_collate(samples) for samples in transposed]
-  File "/opt/conda/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 124, in default_collate
-    return torch.stack([torch.from_numpy(b) for b in batch], 0)
-KeyboardInterrupt
-Traceback (most recent call last):
+^CTraceback (most recent call last):
   File "main_ggnn.py", line 102, in <module>
-Traceback (most recent call last):
-  File "/opt/conda/lib/python3.6/multiprocessing/process.py", line 258, in _bootstrap
-    self.run()
-  File "/opt/conda/lib/python3.6/multiprocessing/process.py", line 93, in run
-    self._target(*self._args, **self._kwargs)
-  File "/opt/conda/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 52, in _worker_loop
-    r = index_queue.get()
     main(opt)
-  File "/opt/conda/lib/python3.6/multiprocessing/queues.py", line 335, in get
-    res = self._reader.recv_bytes()
-  File "main_ggnn.py", line 94, in main
-  File "/opt/conda/lib/python3.6/multiprocessing/connection.py", line 216, in recv_bytes
-    buf = self._recv_bytes(maxlength)
-  File "/opt/conda/lib/python3.6/multiprocessing/connection.py", line 407, in _recv_bytes
-    buf = self._recv(4)
-  File "/opt/conda/lib/python3.6/multiprocessing/connection.py", line 379, in _recv
-    chunk = read(handle, remaining)
-    test(test_dataloader, net, criterion, optimizer, opt)
-  File "/e/utils/test_ggnn.py", line 24, in test
+  File "main_ggnn.py", line 67, in main
+    test_dataset = MonoLanguageProgramData(opt.size_vocabulary, opt.directory, False, opt.n_classes)
+  File "/e/utils/data/dataset.py", line 206, in __init__
+    all_data = pyarrow.deserialize(buf)
+  File "pyarrow/serialization.pxi", line 441, in pyarrow.lib.deserialize
+  File "pyarrow/serialization.pxi", line 404, in pyarrow.lib.deserialize_from
+  File "pyarrow/serialization.pxi", line 257, in pyarrow.lib.SerializedPyObject.deserialize
+  File "pyarrow/serialization.pxi", line 174, in pyarrow.lib.SerializationContext._deserialize_callback
+  File "/opt/conda/lib/python3.6/site-packages/pyarrow/serialization.py", line 50, in _deserialize_numpy_array_list
+    def _deserialize_numpy_array_list(data):
 KeyboardInterrupt
-    output = net(init_input, adj_matrix)
-  File "/opt/conda/lib/python3.6/site-packages/torch/nn/modules/module.py", line 491, in __call__
-    result = self.forward(*input, **kwargs)
-  File "/e/utils/model.py", line 179, in forward
-    prop_state = self.propogator(in_states, out_states, prop_state, A)
-  File "/opt/conda/lib/python3.6/site-packages/torch/nn/modules/module.py", line 491, in __call__
-    result = self.forward(*input, **kwargs)
-  File "/e/utils/model.py", line 54, in forward
-    z = self.update_gate(a)
-  File "/opt/conda/lib/python3.6/site-packages/torch/nn/modules/module.py", line 491, in __call__
-    result = self.forward(*input, **kwargs)
-  File "/opt/conda/lib/python3.6/site-packages/torch/nn/modules/container.py", line 91, in forward
-    input = module(input)
-  File "/opt/conda/lib/python3.6/site-packages/torch/nn/modules/module.py", line 491, in __call__
-    result = self.forward(*input, **kwargs)
-  File "/opt/conda/lib/python3.6/site-packages/torch/nn/modules/linear.py", line 55, in forward
-    return F.linear(input, self.weight, self.bias)
-  File "/opt/conda/lib/python3.6/site-packages/torch/nn/functional.py", line 996, in linear
-    output += bias
-KeyboardInterrupt
-(10%)
-(10%)
-(10%)
-(10%)
-(11%)
-(12%)
-(12%)
-(13%)
-(14%)
-(14%)
-(15%)
-(15%)
-(15%)
-(16%)
-(16%)
-(16%)
-(16%)
-(16%)
-(16%)
-(4%)
-(9%)
-(9%)
+^C

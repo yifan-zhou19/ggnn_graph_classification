@@ -33,6 +33,7 @@ parser.add_argument('--mixing', type=bool, default=False, help='make semantic ed
 parser.add_argument('--syntaxonly', type=bool, default=False, help='output only syntactical edges')
 parser.add_argument('--occurrence', type=bool, default=False, help='associate node types with node occurrence on the AST')
 parser.add_argument('--noedgetype', type=bool, default=False, help='associate node types with node occurrence on the AST')
+parser.add_argument('--noposition', type=bool, default=False, help='ignoring position node types')
 parser.add_argument('argv', nargs="+", help='filenames')
 opt = parser.parse_args()
 print(opt)
@@ -314,7 +315,7 @@ def ggnn2txt(graph, train, test):
                to = "%s:%d" % (t, occurrence[t] % 4)
                dict[str(j+1)] = to
                dict_type[str(j+1)] = t
-            if t == 'POSITION' or t == 'COMMENT' or t == '271' or t == '6':
+            if opt.noposition and (t == 'POSITION' or t == 'COMMENT' or t == '271' or t == '6'):
                dict[str(j+1)] = 0
                if opt.occurrence:
                   dict_type[str(j+1)] = 0
