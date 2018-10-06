@@ -29,5 +29,5 @@ cd $out > /dev/null
 k=$(dmap | sort -n | wc -l)
 cd - > /dev/null
 cd .. > /dev/null
-run program_data/$out $k $n 150 5
+run program_data/$out $k 104 150 5
 cd - > /dev/null
