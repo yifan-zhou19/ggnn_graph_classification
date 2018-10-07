@@ -300,11 +300,18 @@ def ggnn2txt(graph, train, test):
         dict = {}
         if opt.occurrence:
             occurrence = {}
-            if opt.lastuse:
-               lastindex = {}
-               lastuses = {}
         if not opt.dup:
             uniq_edges = {}
+        if opt.lastuse:
+            lastindex = {}
+            lastuses = {}
+            for j in range(0, g.NodeLabelLength()):
+                nl = g.NodeLabel(j)
+                t = nl.Label()
+                if t != b'' and t != b'int':
+                   if t in lastindex.keys():
+                      lastuses[str(j+1)] = lastindex[t]
+                   lastindex[t] = str(j + 1)
         for j in range(0, g.NodeTypeLength()):
             nl = g.NodeType(j)
             t = str(nl.Type().decode('ASCII')) 
@@ -320,13 +327,8 @@ def ggnn2txt(graph, train, test):
                if t != 'POSITION' and t != 'COMMENT' and t != '271' and t != '6':
                   if not t in occurrence.keys():
                       occurrence[t] = 1 
-                      if opt.lastuse:
-                         lastindex[t] = str(j+1)
                   else:
                       occurrence[t] = occurrence[t] + 1
-                      if opt.lastuse:
-                         lastuses[str(j+1)] = lastindex[t]
-                         lastindex[t] = str(j+1)
                   to = "%s:%d" % (t, occurrence[t] % 4)
                   dict[str(j+1)] = to
                   t = to
