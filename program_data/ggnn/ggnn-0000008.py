@@ -33,7 +33,7 @@ parser.add_argument('--mixing', type=bool, default=False, help='make semantic ed
 parser.add_argument('--syntaxonly', type=bool, default=False, help='output only syntactical edges')
 parser.add_argument('--occurrence', type=bool, default=True, help='associate node types with node occurrence on the AST')
 parser.add_argument('--noedgetype', type=bool, default=False, help='associate node types with node occurrence on the AST')
-parser.add_argument('--noposition', type=bool, default=False, help='ignoring position node types')
+parser.add_argument('--noposition', type=bool, default=True, help='ignoring position node types')
 parser.add_argument('argv', nargs="+", help='filenames')
 opt = parser.parse_args()
 print(opt)
@@ -306,27 +306,29 @@ def ggnn2txt(graph, train, test):
             nl = g.NodeType(j)
             t = str(nl.Type().decode('ASCII')) 
             if not opt.occurrence:
-               dict[str(j+1)] = t
-            else:
-               if not t in occurrence.keys():
-                   occurrence[t] = 1 
-               else:
-                   occurrence[t] = occurrence[t] + 1
-               to = "%s:%d" % (t, occurrence[t] % 4)
-               dict[str(j+1)] = to
-               dict_type[str(j+1)] = t
-            if opt.noposition and (t == 'POSITION' or t == 'COMMENT' or t == '271' or t == '6'):
-               dict[str(j+1)] = 0
-               if opt.occurrence:
-                  dict_type[str(j+1)] = 0
-            else:
-                if opt.maps:
-                   if not t in maps:
-                      maps[t] = str(1 + len(maps))
-                   if opt.occurrence:
-                      t = to
+               if t != 'POSITION' and t != 'COMMENT' and t != '271' and t != '6':
+                  dict[str(j+1)] = t
+                  if opt.maps:
                       if not t in maps:
                          maps[t] = str(1 + len(maps))
+               else:
+                  dict[str(j+1)] = 0
+            else:
+               if t != 'POSITION' and t != 'COMMENT' and t != '271' and t != '6':
+                  if not t in occurrence.keys():
+                      occurrence[t] = 1 
+                  else:
+                      occurrence[t] = occurrence[t] + 1
+                  to = "%s:%d" % (t, occurrence[t] % 4)
+                  dict[str(j+1)] = to
+                  dict_type[str(j+1)] = t
+                  t = to
+                  if opt.maps:
+                     if not t in maps:
+                        maps[t] = str(1 + len(maps))
+               else:
+                  dict[str(j+1)] = 0
+                  dict_type[str(j+1)] = 0
         for edgetype in range(1, 6):
             if edgetype == 1:
                 n = edges.ChildLength()
@@ -384,11 +386,11 @@ def ggnn2txt(graph, train, test):
                            out.write(e3)
                         else:
                            uniq_edges[e3] = 1
-                    if opt.occurrence and dict_type[str(e.Node1())] != 0 and dict_type[str(e.Node2())] != 0:
+                    if opt.occurrence and dict[str(e.Node1())] != 0 and dict[str(e.Node2())] != 0:
                         if opt.maps:
-                            s4 = maps[dict_type[str(e.Node1())]]
+                            s4 = maps[dict[str(e.Node1())]]
                         else:
-                            s4 = dict_type[str(e.Node1())]
+                            s4 = dict[str(e.Node1())]
                         if opt.noedgetype:
                             e4="%s %s %s\n" % (s1, '1', s4)
                         else:
@@ -398,9 +400,9 @@ def ggnn2txt(graph, train, test):
                         else:
                            uniq_edges[e4] = 1
                         if opt.maps:
-                            s5 = maps[dict_type[str(e.Node2())]]
+                            s5 = maps[dict[str(e.Node2())]]
                         else:
-                            s5 = dict_type[str(e.Node2())]
+                            s5 = dict[str(e.Node2())]
                         if opt.noedgetype:
                             e5="%s %s %s\n" % (s1, '1', s4)
                         else:
