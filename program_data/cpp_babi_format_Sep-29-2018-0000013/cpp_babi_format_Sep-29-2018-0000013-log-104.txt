@@ -1,0 +1,149 @@
+Namespace(cuda=True, directory='program_data/cpp_babi_format_Sep-29-2018-0000013', is_training_ggnn=True, log_path='program_data/cpp_babi_format_Sep-29-2018-0000013/logs', lr=0.01, manualSeed=0, model_path='program_data/cpp_babi_format_Sep-29-2018-0000013/cpp_babi_format_Sep-29-2018-0000013-104.cpkl', n_classes=104, n_hidden=50, n_steps=5, niter=150, size_vocabulary=354, state_dim=5, test_batch_size=32, testing=False, train_batch_size=128, training=True, training_percentage=1.0, verbal=True, workers=2)
+Random Seed:  0
+Number of all training data : 34627
+Max node id : 348
+Number of all testing data : 17367
+Max node id : 353
+/opt/conda/lib/python3.6/site-packages/torch/onnx/utils.py:365: UserWarning: ONNX export failed on ATen operator stack because torch.onnx.symbolic.stack does not exist
+  .format(op_name, op_name))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %98 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %161 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %224 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %287 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %350 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+[0/150][0/271] Loss: 4.6449
+[0/150][28/271] Loss: 4.6464
+[0/150][56/271] Loss: 4.6377
+[0/150][84/271] Loss: 4.6470
+[0/150][112/271] Loss: 4.6238
+[0/150][140/271] Loss: 4.6403
+[0/150][168/271] Loss: 4.6059
+[0/150][196/271] Loss: 4.6402
+[0/150][224/271] Loss: 4.6212
+[0/150][252/271] Loss: 4.5896
+Test set: Average loss: 0.1441, Accuracy: 956/17367 (5%)
+[1/150][0/271] Loss: 4.6358
+[1/150][28/271] Loss: 4.5764
+[1/150][56/271] Loss: 4.6112
+[1/150][84/271] Loss: 4.5789
+[1/150][112/271] Loss: 4.6084
+[1/150][140/271] Loss: 4.6089
+[1/150][168/271] Loss: 4.6144
+[1/150][196/271] Loss: 4.5981
+[1/150][224/271] Loss: 4.6013
+[1/150][252/271] Loss: 4.5961
+Test set: Average loss: 0.1439, Accuracy: 1084/17367 (6%)
+[2/150][0/271] Loss: 4.6082
+[2/150][28/271] Loss: 4.6095
+[2/150][56/271] Loss: 4.5670
+[2/150][84/271] Loss: 4.6089
+[2/150][112/271] Loss: 4.5708
+[2/150][140/271] Loss: 4.5896
+[2/150][168/271] Loss: 4.5626
+[2/150][196/271] Loss: 4.5740
+[2/150][224/271] Loss: 4.5994
+[2/150][252/271] Loss: 4.5834
+Test set: Average loss: 0.1434, Accuracy: 1305/17367 (7%)
+[3/150][0/271] Loss: 4.5992
+[3/150][28/271] Loss: 4.5698
+[3/150][56/271] Loss: 4.6063
+[3/150][84/271] Loss: 4.5526
+[3/150][112/271] Loss: 4.5781
+[3/150][140/271] Loss: 4.5780
+[3/150][168/271] Loss: 4.5668
+[3/150][196/271] Loss: 4.5677
+[3/150][224/271] Loss: 4.5773
+[3/150][252/271] Loss: 4.5756
+Test set: Average loss: 0.1434, Accuracy: 1274/17367 (7%)
+[4/150][0/271] Loss: 4.5833
+[4/150][28/271] Loss: 4.5899
+[4/150][56/271] Loss: 4.5618
+[4/150][84/271] Loss: 4.5436
+[4/150][112/271] Loss: 4.6034
+[4/150][140/271] Loss: 4.5894
+[4/150][168/271] Loss: 4.5532
+[4/150][196/271] Loss: 4.5634
+[4/150][224/271] Loss: 4.5977
+[4/150][252/271] Loss: 4.5835
+Test set: Average loss: 0.1434, Accuracy: 1260/17367 (7%)
+[5/150][0/271] Loss: 4.5946
+[5/150][28/271] Loss: 4.5929
+[5/150][56/271] Loss: 4.6202
+[5/150][84/271] Loss: 4.5721
+[5/150][112/271] Loss: 4.5848
+[5/150][140/271] Loss: 4.5717
+[5/150][168/271] Loss: 4.5737
+[5/150][196/271] Loss: 4.5751
+[5/150][224/271] Loss: 4.5826
+[5/150][252/271] Loss: 4.5654
+Test set: Average loss: 0.1429, Accuracy: 1555/17367 (8%)
+[6/150][0/271] Loss: 4.5737
+[6/150][28/271] Loss: 4.5761
+[6/150][56/271] Loss: 4.6339
+[6/150][84/271] Loss: 4.6015
+[6/150][112/271] Loss: 4.5703
+[6/150][140/271] Loss: 4.5289
+[6/150][168/271] Loss: 4.5636
+[6/150][196/271] Loss: 4.5290
+[6/150][224/271] Loss: 4.5807
+[6/150][252/271] Loss: 4.5514
+Test set: Average loss: 0.1427, Accuracy: 1673/17367 (9%)
+[7/150][0/271] Loss: 4.5711
+[7/150][28/271] Loss: 4.5821
+[7/150][56/271] Loss: 4.5775
+[7/150][84/271] Loss: 4.5900
+[7/150][112/271] Loss: 4.5529
+[7/150][140/271] Loss: 4.5389
+[7/150][168/271] Loss: 4.5560
+^CProcess Process-29:
+Traceback (most recent call last):
+  File "/opt/conda/lib/python3.6/multiprocessing/process.py", line 258, in _bootstrap
+    self.run()
+  File "/opt/conda/lib/python3.6/multiprocessing/process.py", line 93, in run
+    self._target(*self._args, **self._kwargs)
+  File "/opt/conda/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 52, in _worker_loop
+    r = index_queue.get()
+  File "/opt/conda/lib/python3.6/multiprocessing/queues.py", line 335, in get
+    res = self._reader.recv_bytes()
+  File "/opt/conda/lib/python3.6/multiprocessing/connection.py", line 216, in recv_bytes
+    buf = self._recv_bytes(maxlength)
+  File "/opt/conda/lib/python3.6/multiprocessing/connection.py", line 407, in _recv_bytes
+    buf = self._recv(4)
+  File "/opt/conda/lib/python3.6/multiprocessing/connection.py", line 379, in _recv
+    chunk = read(handle, remaining)
+KeyboardInterrupt
+Process Process-30:
+Traceback (most recent call last):
+  File "/opt/conda/lib/python3.6/multiprocessing/process.py", line 258, in _bootstrap
+    self.run()
+  File "/opt/conda/lib/python3.6/multiprocessing/process.py", line 93, in run
+    self._target(*self._args, **self._kwargs)
+  File "/opt/conda/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 61, in _worker_loop
+    data_queue.put((idx, samples))
+  File "/opt/conda/lib/python3.6/multiprocessing/queues.py", line 341, in put
+    obj = _ForkingPickler.dumps(obj)
+  File "/opt/conda/lib/python3.6/multiprocessing/reduction.py", line 51, in dumps
+    cls(buf, protocol).dump(obj)
+  File "/opt/conda/lib/python3.6/site-packages/torch/multiprocessing/reductions.py", line 121, in reduce_storage
+    fd, size = storage._share_fd_()
+KeyboardInterrupt
+Traceback (most recent call last):
+  File "main_ggnn.py", line 102, in <module>
+    main(opt)
+  File "main_ggnn.py", line 93, in main
+    train(epoch, train_dataloader, net, criterion, optimizer, opt, writer)
+  File "/e/utils/train_ggnn.py", line 34, in train
+    writer.add_scalar('loss', loss.data.item(), epoch)
+KeyboardInterrupt
+(5%)
+(6%)
+(7%)
+(7%)
+(7%)
+(8%)
+(9%)
