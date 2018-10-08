@@ -268,7 +268,7 @@ def jdefault(o):
         return o
     return o.__dict__
 
-def ggnn2txt(graph, train, test):
+def ggnn2txt(graph, train, test, maps_folder='.'):
     if opt.maps:
         maps = {}
     algorithms = []
@@ -290,7 +290,7 @@ def ggnn2txt(graph, train, test):
             algorithms.append(t)
         if opt.maps and not opt.localmaps:
             input_basename, input_extension = os.path.splitext(p)
-            maps_filename = "maps%s.pkl" % input_extension.decode('ASCII')
+            maps_filename = "%s/maps%s.pkl" % (maps_folder, input_extension.decode('ASCII'))
             if os.path.exists(maps_filename):
               with open(maps_filename, 'rb') as f:
                  maps = pickle.load(f)
@@ -645,7 +645,10 @@ if __name__ == "__main__":
             elif output_extension == ".txt" and len(opt.argv) > 2: 
                 with open(opt.argv[1], 'w') as train:
                   with open(opt.argv[2], 'w') as test:
-                    ggnn2txt(data, train, test)
+                     if len(opt.argv)>3:
+                        ggnn2txt(data, train, test, opt.argv[3])
+                     else:
+                        ggnn2txt(data, train, test)
             elif output_extension == ".txt": 
                 with open(opt.argv[1], 'w') as test:
                     ggnn2txt_test(data, test)

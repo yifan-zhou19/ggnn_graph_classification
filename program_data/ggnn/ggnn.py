@@ -30,11 +30,11 @@ parser.add_argument('--localmaps', action='store_true', default=False, help='use
 parser.add_argument('--dup', action='store_true', default=False, help='keep duplicated edges of the nodetypes')
 parser.add_argument('--bidirect', type=bool, default=False, help='make edges bidirectional')
 parser.add_argument('--mixing', type=bool, default=False, help='make semantic edges syntactical to allow for propagation')
-parser.add_argument('--syntaxonly', type=bool, default=True, help='output only syntactical edges')
+parser.add_argument('--syntaxonly', type=bool, default=False, help='output only syntactical edges')
 parser.add_argument('--occurrence', type=bool, default=True, help='associate node types with node occurrence on the AST')
 parser.add_argument('--noedgetype', type=bool, default=False, help='associate node types with node occurrence on the AST')
 parser.add_argument('--noposition', type=bool, default=True, help='ignoring position node types')
-parser.add_argument('--lastuse', type=bool, default=True, help='add lastuse edges from node occurrences of the same node type')
+parser.add_argument('--lastuse', type=bool, default=False, help='add lastuse edges from node occurrences of the same node type')
 parser.add_argument('--mod', type=int, default=8, help='add lastuse edges from node occurrences of the same node type')
 parser.add_argument('argv', nargs="+", help='filenames')
 opt = parser.parse_args()
@@ -268,7 +268,7 @@ def jdefault(o):
         return o
     return o.__dict__
 
-def ggnn2txt(graph, train, test):
+def ggnn2txt(graph, train, test, maps_folder='.'):
     if opt.maps:
         maps = {}
     algorithms = []
@@ -290,7 +290,7 @@ def ggnn2txt(graph, train, test):
             algorithms.append(t)
         if opt.maps and not opt.localmaps:
             input_basename, input_extension = os.path.splitext(p)
-            maps_filename = "maps%s.pkl" % input_extension.decode('ASCII')
+            maps_filename = "%s/maps%s.pkl" % (maps_folder, input_extension.decode('ASCII'))
             if os.path.exists(maps_filename):
               with open(maps_filename, 'rb') as f:
                  maps = pickle.load(f)
@@ -645,7 +645,10 @@ if __name__ == "__main__":
             elif output_extension == ".txt" and len(opt.argv) > 2: 
                 with open(opt.argv[1], 'w') as train:
                   with open(opt.argv[2], 'w') as test:
-                    ggnn2txt(data, train, test)
+                     if len(opt.argv)>3:
+                        ggnn2txt(data, train, test, opt.argv[3])
+                     else:
+                        ggnn2txt(data, train, test)
             elif output_extension == ".txt": 
                 with open(opt.argv[1], 'w') as test:
                     ggnn2txt_test(data, test)
