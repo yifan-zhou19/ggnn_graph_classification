@@ -30,11 +30,11 @@ parser.add_argument('--localmaps', action='store_true', default=False, help='use
 parser.add_argument('--dup', action='store_true', default=False, help='keep duplicated edges of the nodetypes')
 parser.add_argument('--bidirect', type=bool, default=False, help='make edges bidirectional')
 parser.add_argument('--mixing', type=bool, default=False, help='make semantic edges syntactical to allow for propagation')
-parser.add_argument('--syntaxonly', type=bool, default=True, help='output only syntactical edges')
+parser.add_argument('--syntaxonly', type=bool, default=False, help='output only syntactical edges')
 parser.add_argument('--occurrence', type=bool, default=True, help='associate node types with node occurrence on the AST')
 parser.add_argument('--noedgetype', type=bool, default=False, help='associate node types with node occurrence on the AST')
 parser.add_argument('--noposition', type=bool, default=True, help='ignoring position node types')
-parser.add_argument('--lastuse', type=bool, default=False, help='add lastuse edges from node occurrences of the same node type')
+parser.add_argument('--lastuse', type=bool, default=True, help='add lastuse edges from node occurrences of the same node type')
 parser.add_argument('--mod', type=int, default=8, help='add lastuse edges from node occurrences of the same node type')
 parser.add_argument('argv', nargs="+", help='filenames')
 opt = parser.parse_args()
@@ -377,25 +377,25 @@ def ggnn2txt(graph, train, test):
                         s3 = maps[dict[str(e.Node2())]]
                     else:
                         s3 = dict[str(e.Node2())]
-                    if (s2 == '1' or s2 == '2') or not opt.syntaxonly:
+                    if s2 == '1' or not opt.syntaxonly:
                        e1="%s %s %s\n" % (s1, s2, s3)
                        if opt.dup:
                           out.write(e1)
                        else:
                           uniq_edges[e1] = 1
-                    if opt.bidirect and (s2 != "1" or s2 !='2' or not opt.syntaxonly):
+                    if opt.bidirect and s2 != "1" and not opt.syntaxonly:
                         e2="%s %s %s\n" % (s3, s2, s1)
                         if opt.dup:
                            out.write(e2)
                         else:
                            uniq_edges[e2] = 1
-                    if opt.mixing and (s2 != "1" or s2 !='2' or not opt.syntaxonly):
+                    if opt.mixing and s2 != "1" and not opt.syntaxonly:
                         e3="%s %s %s\n" % (s1, '1', s3)
                         if opt.dup:
                            out.write(e3)
                         else:
                            uniq_edges[e3] = 1
-                    if False and opt.occurrence and dict[str(e.Node1())] != 0 and dict[str(e.Node2())] != 0:
+                    if opt.occurrence and dict[str(e.Node1())] != 0 and dict[str(e.Node2())] != 0:
                         if opt.maps:
                             s4 = maps[dict[str(e.Node1())]]
                         else:
