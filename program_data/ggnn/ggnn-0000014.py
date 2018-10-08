@@ -25,17 +25,29 @@ import pdb
 import tqdm
 
 parser = argparse.ArgumentParser()
+## Use a global map to avoid sparse ids while ensuring the graph nodes across all the dataset are mapped to consistent ids 
 parser.add_argument('--maps', action='store_true', default=True, help='maps node type to a consequetive number')
-parser.add_argument('--localmaps', action='store_true', default=False, help='use local maps instead of global one')
-parser.add_argument('--dup', action='store_true', default=False, help='keep duplicated edges of the nodetypes')
+## Ignore the POSITION and COMMENT node types as noises to the input
+parser.add_argument('--noposition', type=bool, default=True, help='ignore POSITION and COMMENT node types')
+## Add label to the encoding of nodes
+parser.add_argument('--label', type=bool, default=True, help='use the <nodetype, nodelabel> representation of nodes')
+## Derive the last lexical use edges from adjacent occurrences of same node encodings
+parser.add_argument('--lastuse', type=bool, default=True, help='add lastLexicalUse edges "3" between adjacent occurrence nodes of the same node labels')
+## Use the occurrence of type instead of label to encode nodes
+parser.add_argument('--occurrence', type=bool, default=False, help='use the <nodetype, occurrence> representation of nodes')
+parser.add_argument('--mod', type=int, default=8, help='use the <nodetype, occurrence % mod> representation of nodes')
+## Generate bidirectional edges
 parser.add_argument('--bidirect', type=bool, default=False, help='make edges bidirectional')
+## Add extra semantic edges as if they are syntactical
 parser.add_argument('--mixing', type=bool, default=False, help='make semantic edges syntactical to allow for propagation')
-parser.add_argument('--syntaxonly', type=bool, default=True, help='output only syntactical edges')
-parser.add_argument('--occurrence', type=bool, default=True, help='associate node types with node occurrence on the AST')
-parser.add_argument('--noedgetype', type=bool, default=False, help='associate node types with node occurrence on the AST')
-parser.add_argument('--noposition', type=bool, default=True, help='ignoring position node types')
-parser.add_argument('--lastuse', type=bool, default=True, help='add lastuse edges from node occurrences of the same node type')
-parser.add_argument('--mod', type=int, default=8, help='add lastuse edges from node occurrences of the same node type')
+## Consider only the edge types of Child and NextToken
+parser.add_argument('--syntaxonly', type=bool, default=False, help='output only syntactical edges, i.e. type "1" and "2"')
+## Do not distinguish edge types
+parser.add_argument('--noedgetype', type=bool, default=False, help='ignore edge types by replacing all edge types with "1"')
+############ Do not remove duplicated edges, which is found irrelevant to the performance
+parser.add_argument('--dup', action='store_true', default=False, help='keep duplicated edges of the nodetypes')
+############ Reinitialise the maps per class of instances. It leads to inappropriate performance for the classification
+parser.add_argument('--localmaps', action='store_true', default=False, help='use local maps instead of global one')
 parser.add_argument('argv', nargs="+", help='filenames')
 opt = parser.parse_args()
 print(opt)
@@ -296,48 +308,40 @@ def ggnn2txt(graph, train, test):
                  maps = pickle.load(f)
         g = unit.Graph()
         edges = g.Edges()
-        array = {}
         NT = g.NodeTypeLength()
         dict = {}
         if opt.occurrence:
             occurrence = {}
         if not opt.dup:
             uniq_edges = {}
-        if opt.lastuse:
-            lastindex = {}
-            lastuses = {}
+        if opt.label:
+            labels = {}
             for j in range(0, g.NodeLabelLength()):
                 nl = g.NodeLabel(j)
                 t = nl.Label()
-                if t != b'' and t != b'int':
-                   if t in lastindex.keys():
-                      lastuses[str(j+1)] = lastindex[t]
-                   lastindex[t] = str(j + 1)
+                #labels[str(j+1)] = t.decode('ASCII')
+                labels[str(j+1)] = t
         for j in range(0, g.NodeTypeLength()):
             nl = g.NodeType(j)
             t = str(nl.Type().decode('ASCII')) 
-            if not opt.occurrence:
-               if t != 'POSITION' and t != 'COMMENT' and t != '271' and t != '6':
-                  dict[str(j+1)] = t
-                  if opt.maps:
-                      if not t in maps:
-                         maps[t] = str(1 + len(maps))
-               else:
-                  dict[str(j+1)] = 0
-            else:
-               if t != 'POSITION' and t != 'COMMENT' and t != '271' and t != '6':
+            if t != 'POSITION' and t != 'COMMENT' and t != '271' and t != '6':
+               to = t
+               if opt.label:
+                  l = labels[str(j+1)]
+                  if l != b'':
+                     to = "%s:%s" % (t, l)
+               elif opt.occurrence:
                   if not t in occurrence.keys():
-                      occurrence[t] = 1 
+                     occurrence[t] = 1 
                   else:
-                      occurrence[t] = occurrence[t] + 1
+                     occurrence[t] = occurrence[t] + 1
                   to = "%s:%d" % (t, occurrence[t] % opt.mod)
-                  dict[str(j+1)] = to
-                  t = to
-                  if opt.maps:
-                     if not t in maps:
-                        maps[t] = str(1 + len(maps))
-               else:
-                  dict[str(j+1)] = 0
+               dict[str(j+1)] = to
+               if opt.maps:
+                  if not to in maps:
+                     maps[to] = str(1 + len(maps))
+            else:
+               dict[str(j+1)] = 0
         for edgetype in range(1, 6):
             if edgetype == 1:
                 n = edges.ChildLength()
@@ -364,72 +368,56 @@ def ggnn2txt(graph, train, test):
                     e = edges.LastWrite(j)
                 elif edgetype == 6:
                     e = edges.ReturnsTo(j)
-                if dict[str(e.Node1())] != 0 and dict[str(e.Node2())] != 0:
+                src = dict[str(e.Node1())]
+                tgt = dict[str(e.Node2())] 
+                if src != 0 and tgt != 0:
                     if opt.maps:
-                        s1 = maps[dict[str(e.Node1())]]
+                        s1 = maps[src]
                     else:
-                        s1 = dict[str(e.Node1())]
+                        s1 = src
                     if opt.noedgetype:
                         s2 = '1'
                     else:
                         s2 = str(edgetype)
                     if opt.maps:
-                        s3 = maps[dict[str(e.Node2())]]
+                        s3 = maps[tgt]
                     else:
-                        s3 = dict[str(e.Node2())]
+                        s3 = tgt
                     if (s2 == '1' or s2 == '2') or not opt.syntaxonly:
                        e1="%s %s %s\n" % (s1, s2, s3)
                        if opt.dup:
                           out.write(e1)
                        else:
                           uniq_edges[e1] = 1
-                    if opt.bidirect and (s2 != "1" or s2 !='2' or not opt.syntaxonly):
-                        e2="%s %s %s\n" % (s3, s2, s1)
-                        if opt.dup:
-                           out.write(e2)
-                        else:
-                           uniq_edges[e2] = 1
-                    if opt.mixing and (s2 != "1" or s2 !='2' or not opt.syntaxonly):
-                        e3="%s %s %s\n" % (s1, '1', s3)
-                        if opt.dup:
-                           out.write(e3)
-                        else:
-                           uniq_edges[e3] = 1
-                    if False and opt.occurrence and dict[str(e.Node1())] != 0 and dict[str(e.Node2())] != 0:
-                        if opt.maps:
-                            s4 = maps[dict[str(e.Node1())]]
-                        else:
-                            s4 = dict[str(e.Node1())]
-                        if opt.noedgetype:
-                            e4="%s %s %s\n" % (s1, '1', s4)
-                        else:
-                            e4="%s %s %s\n" % (s1, '7', s4)
-                        if opt.dup:
-                           out.write(e4)
-                        else:
-                           uniq_edges[e4] = 1
-                        if opt.maps:
-                            s5 = maps[dict[str(e.Node2())]]
-                        else:
-                            s5 = dict[str(e.Node2())]
-                        if opt.noedgetype:
-                            e5="%s %s %s\n" % (s1, '1', s4)
-                        else:
-                            e5="%s %s %s\n" % (s3, '7', s5)
-                        if opt.dup:
-                           out.write(e5)
-                        else:
-                           uniq_edges[e5] = 1
+                       if opt.bidirect:
+                          e2="%s %s %s\n" % (s3, s2, s1)
+                          if opt.dup:
+                             out.write(e2)
+                          else:
+                             uniq_edges[e2] = 1
+                       if opt.mixing:
+                          e3="%s %s %s\n" % (s1, '1', s3)
+                          if opt.dup:
+                             out.write(e3)
+                          else:
+                             uniq_edges[e3] = 1
         if opt.lastuse and opt.maps:
-           for k, v in lastuses.items():
+            lastindex = {}
+            lastuses = {}
+            for j in range(0, g.NodeLabelLength()):
+                t = dict[str(j+1)]
+                if t != 0 and t in lastindex.keys():
+                   lastuses[str(j+1)] = lastindex[t]
+                lastindex[t] = str(j + 1)
+            for k, v in lastuses.items():
                t1 = dict[k]
                t2 = dict[v]
                if t1 != '0' and t2 != '0' and t1 != 0 and t2 != 0:
-                  e6 = "%s 3 %s\n" % (maps[t2], maps[t1])
+                  e3 = "%s 3 %s\n" % (maps[t2], maps[t1])
                   if opt.dup:
-                     out.write(e6)
+                     out.write(e3)
                   else:
-                     uniq_edges[e6] = 1
+                     uniq_edges[e3] = 1
         if not opt.dup:
            for e in uniq_edges.keys():
                out.write(e)
