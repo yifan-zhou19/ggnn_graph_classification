@@ -289,7 +289,7 @@ def find_descendants(id, edges):
         e = edges.Child(j)
         v1 = e.Node1()
         v2 = e.Node2()
-        if v1 == id:
+        if v1 == id and not v2 in descendants:
            subdescendants = find_descendants(v2, edges)
            descendants.extend(subdescendants)
     return descendants
@@ -388,18 +388,13 @@ def ggnn2txt(graph, train, test, map_folder='.'):
             else:
                dict[j1] = 0
         if opt.computefrom:
-           for j1, l in labels.items():
+           for j1, l in tqdm.tqdm(labels.items()):
              if l == b'=':
                if types[j1] == 'OPERATOR':
                   (lhs, rhs) = lookup_ids(j1, ids, edges)
-                  #print(len(lhs))
-                  #print(len(rhs))
                   for k1 in range(0, len(lhs)):
                       for k2 in range(0, len(rhs)):
-                          #print(lhs[k1])
-                          #print(rhs[k2])
                           compute_from_edge = "%s 7 %s\n" % (maps[lhs[k1]], maps[rhs[k2]])
-                          #print(compute_from_edge)
                           if opt.dup:
                              out.write(compute_from_edge)
                           else:

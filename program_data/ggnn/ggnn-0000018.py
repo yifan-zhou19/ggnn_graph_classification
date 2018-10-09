@@ -75,6 +75,8 @@ def fbsEdges(builder, edges, type):
         ContextEdgesStartLastUseVector(builder, N)
     elif type == "LastLexicalUse":
         ContextEdgesStartLastLexicalUseVector(builder, N)
+    elif type == "ComputeFrom":
+        ContextEdgesStartComputeFromVector(builder, N)
     for i in reversed(range(0, N)):
        builder.PrependUOffsetTRelative(fbs_edges[i])
     fbs_nodeTypes = builder.EndVector(N)
@@ -94,6 +96,8 @@ def fbsContextEdges(builder, edges):
         lastWrite = fbsEdges(builder, edges, 'LastWrite')
     if 'ReturnsTo' in edges:
         returnsTo = fbsEdges(builder, edges, 'ReturnsTo')
+    if 'ComputeFrom' in edges:
+        computeFrom = fbsEdges(builder, edges, 'ComputeFrom')
     ContextEdgesStart(builder)
     if 'NextToken' in edges:
         ContextEdgesAddNextToken(builder, nextToken)
@@ -107,6 +111,8 @@ def fbsContextEdges(builder, edges):
         ContextEdgesAddLastWrite(builder, lastWrite)
     if 'ReturnsTo' in edges:
          ContextEdgesAddReturnsTo(builder, returnsTo)
+    if 'ComputeFrom' in edges:
+         ContextEdgesAddComputeFrom(builder, computeFrom)
     return ContextEdgesEnd(builder)
 
 def fbsNodeType(builder, key, value):
@@ -272,6 +278,10 @@ def jdefault(o):
         for i in range(0, o.ReturnsToLength()):
             vec.append(jdefault(o.ReturnsTo(i)))
         obj['ReturnsTo'] = vec
+        vec = []
+        for i in range(0, o.ComputeFromLength()):
+            vec.append(jdefault(o.ComputeFrom(i)))
+        obj['ReturnsTo'] = vec
         return obj
     elif isinstance(o, Edge):
         obj = [o.Node1(), o.Node2()]
@@ -282,44 +292,44 @@ def jdefault(o):
         return o
     return o.__dict__
 
-def find_descendants(id, edges):
-    n = edges.ChildLength()
-    descendants = [id]
-    for j in range(0, n):
-        e = edges.Child(j)
-        v1 = e.Node1()
-        v2 = e.Node2()
-        if v1 == id:
-           subdescendants = find_descendants(v2, edges)
-           descendants.extend(subdescendants)
-    return descendants
+#def find_descendants(id, edges):
+#   n = edges.ChildLength()
+#   descendants = [id]
+#   for j in range(0, n):
+#       e = edges.Child(j)
+#       v1 = e.Node1()
+#       v2 = e.Node2()
+#       if v1 == id and not v2 in descendants:
+#          subdescendants = find_descendants(v2, edges)
+#          descendants.extend(subdescendants)
+#   return descendants
 
-def lookup_ids(assign_op_id, ids, edges):
-    n = edges.ChildLength()
-    lhs = []
-    rhs = []
-    expr = -1
-    for j in range(0, n):
-        e = edges.Child(j)
-        v1 = e.Node1()
-        v2 = e.Node2()
-        if v2 == int(assign_op_id):
-           expr = v1
-           #print("%d %d\n" % (v1, v2))
-           break
-    if expr != -1:
-       descendants = find_descendants(expr, edges)
-       n2 = len(descendants)
-       for j in range(0, n2):
-        j1 = str(descendants[j]+1) 
-        if j1 in ids.keys():
-              if int(j1) - 1 < int(assign_op_id):
-                 lhs.append(ids[j1])
-              else:
-                 rhs.append(ids[j1])
-       #print(lhs)
-       #print(rhs)
-    return (lhs, rhs)
+#def lookup_ids(assign_op_id, ids, edges):
+#    n = edges.ChildLength()
+#    lhs = []
+#    rhs = []
+#    expr = -1
+#    for j in range(0, n):
+#        e = edges.Child(j)
+#        v1 = e.Node1()
+#        v2 = e.Node2()
+#        if v2 == int(assign_op_id):
+#           expr = v1
+#           #print("%d %d\n" % (v1, v2))
+#           break
+#    if expr != -1:
+#       descendants = find_descendants(expr, edges)
+#       n2 = len(descendants)
+#       for j in range(0, n2):
+#        j1 = str(descendants[j]+1) 
+#        if j1 in ids.keys():
+#              if int(j1) - 1 < int(assign_op_id):
+#                 lhs.append(ids[j1])
+#              else:
+#                 rhs.append(ids[j1])
+#       #print(lhs)
+#       #print(rhs)
+#    return (lhs, rhs)
 
 def ggnn2txt(graph, train, test, map_folder='.'):
     if opt.maps:
@@ -387,23 +397,18 @@ def ggnn2txt(graph, train, test, map_folder='.'):
                   ids[j1] = dict[j1] #labels[j1]
             else:
                dict[j1] = 0
-        if opt.computefrom:
-           for j1, l in labels.items():
-             if l == b'=':
-               if types[j1] == 'OPERATOR':
-                  (lhs, rhs) = lookup_ids(j1, ids, edges)
-                  #print(len(lhs))
-                  #print(len(rhs))
-                  for k1 in range(0, len(lhs)):
-                      for k2 in range(0, len(rhs)):
-                          #print(lhs[k1])
-                          #print(rhs[k2])
-                          compute_from_edge = "%s 7 %s\n" % (maps[lhs[k1]], maps[rhs[k2]])
-                          #print(compute_from_edge)
-                          if opt.dup:
-                             out.write(compute_from_edge)
-                          else:
-                             uniq_edges[compute_from_edge] = 1
+        #if opt.computefrom:
+        #  for j1, l in tqdm.tqdm(labels.items()):
+        #    if l == b'=':
+        #      if types[j1] == 'OPERATOR':
+        #         (lhs, rhs) = lookup_ids(j1, ids, edges)
+        #         for k1 in range(0, len(lhs)):
+        #             for k2 in range(0, len(rhs)):
+        #                 compute_from_edge = "%s 7 %s\n" % (maps[lhs[k1]], maps[rhs[k2]])
+        #                 if opt.dup:
+        #                    out.write(compute_from_edge)
+        #                 else:
+        #                    uniq_edges[compute_from_edge] = 1
         for edgetype in range(1, 6):
             if edgetype == 1:
                 n = edges.ChildLength()
@@ -417,6 +422,8 @@ def ggnn2txt(graph, train, test, map_folder='.'):
                 n = edges.LastWriteLength()
             elif edgetype == 6:
                 n = edges.ReturnsToLength()
+            elif edgetype == 7:
+                n = edges.ComputeFromLength()
             for j in range(0, n):
                 if edgetype == 1:
                     e = edges.Child(j)
@@ -430,6 +437,8 @@ def ggnn2txt(graph, train, test, map_folder='.'):
                     e = edges.LastWrite(j)
                 elif edgetype == 6:
                     e = edges.ReturnsTo(j)
+                elif edgetype == 7:
+                    e = edges.ComputeFrom(j)
                 src = dict[str(e.Node1())]
                 tgt = dict[str(e.Node2())] 
                 if src != 0 and tgt != 0:
