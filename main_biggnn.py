@@ -35,7 +35,7 @@ parser.add_argument('--size_vocabulary', type=int, default=60, help='maximum num
 parser.add_argument('--is_training_ggnn', type=bool, default=False, help='Training GGNN or BiGGNN')
 parser.add_argument('--training', action="store_true",help='is training')
 parser.add_argument('--testing', action="store_true",help='is testing')
-parser.add_argument('--loss', type=int, default=1 ,help='1 is contrastive loss, 0 is cross entropy loss')
+parser.add_argument('--loss', type=int, default=0 ,help='1 is contrastive loss, 0 is cross entropy loss')
 
 
 
