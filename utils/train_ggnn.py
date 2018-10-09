@@ -31,7 +31,7 @@ def train(epoch, dataloader, net, criterion, optimizer, opt, writer):
         loss.backward()
         optimizer.step()
 
-        writer.add_scalar('loss', loss.data.item(), epoch)
+        writer.add_scalar('loss', loss.data.item(), int(epoch))
        
         
         if i % int(len(dataloader) / 10 + 1) == 0 and opt.verbal:

@@ -131,7 +131,7 @@ class GGNN(nn.Module):
         # Output Model
         self.out = nn.Sequential(
             nn.Linear(self.state_dim, self.state_dim),
-            nn.Tanh(),
+            nn.LeakyReLU(),
             nn.Linear(self.state_dim, 1),
             nn.Tanh(),   
         )
@@ -139,7 +139,7 @@ class GGNN(nn.Module):
       
         self.soft_attention = nn.Sequential(
             nn.Linear(self.state_dim, self.state_dim),
-            nn.Tanh(),
+            nn.LeakyReLU(),
             nn.Linear(self.state_dim, 1),
             nn.Sigmoid(),
            
@@ -151,6 +151,11 @@ class GGNN(nn.Module):
             nn.Linear(opt.n_hidden, opt.n_classes),
             nn.Softmax(dim=1)    
         )
+
+        # self.class_prediction = nn.Sequential(
+        #     nn.Linear(opt.n_node, opt.n_classes),
+        #     nn.Softmax(dim=1)    
+        # )
 
         self._initialization()
 
@@ -177,8 +182,11 @@ class GGNN(nn.Module):
             out_states = out_states.view(-1, self.n_node*self.n_edge_types, self.state_dim)
 
             prop_state = self.propogator(in_states, out_states, prop_state, A)
-
+       
+        # print("Prop state : " + str(prop_state.shape))
         output = self.out(prop_state)
+
+        # print("Out : " + str(output.shape))
 
         soft_attention_ouput = self.soft_attention(prop_state)
         # Element wise hadamard product to get the graph representation, check Equation 7 in GGNN paper for more details
@@ -222,12 +230,12 @@ class BiGGNN(nn.Module):
                 if m.bias is not None:
                     init.normal_(m.bias.data)
 
-    def forward(self, left_prop_state, left_annotation, left_A, right_prop_state, right_annotation, right_A):
+    def forward(self, left_prop_state, left_A, right_prop_state, right_A):
         
         # self.ggnn.zero_grad()
     
-        left_output = self.ggnn(left_prop_state, left_annotation, left_A)
-        right_output = self.ggnn(right_prop_state, right_annotation, right_A)
+        left_output = self.ggnn(left_prop_state, left_A)
+        right_output = self.ggnn(right_prop_state, right_A)
 
         left_output = self.feature_extraction(left_output)
         right_output = self.feature_extraction(right_output)

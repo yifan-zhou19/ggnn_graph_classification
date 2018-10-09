@@ -316,7 +316,7 @@ class CrossLingualProgramData():
         if self.loss == 0:
             target = int(target)
 
-        return (left_am,right_am), (left_annotation,right_annotation), target
+        return (left_am,right_am), target
 
     def __len__(self):
         return len(self.data)

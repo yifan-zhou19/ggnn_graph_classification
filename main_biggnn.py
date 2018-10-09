@@ -27,8 +27,8 @@ parser.add_argument('--cuda', action='store_true', help='enables cuda')
 parser.add_argument('--verbal', type=bool, default=True, help='print training info or not')
 parser.add_argument('--manualSeed', type=int, help='manual seed')
 parser.add_argument('--n_classes', type=int, default=104, help='manual seed')
-parser.add_argument('--left_directory', default="program_data/cll_github_cpp_babi_format", help='left encoded program data')
-parser.add_argument('--right_directory', default="program_data/cll_github_java_babi_format", help='right encoded program data')
+parser.add_argument('--left_directory', default="program_data/cll_github_cpp_babi_format_Sep-29-2018-0000006", help='left encoded program data')
+parser.add_argument('--right_directory', default="program_data/cll_github_java_babi_format_Sep-29-2018-0000006", help='right encoded program data')
 parser.add_argument('--model_path', default="model/model.ckpt", help='path to save the model')
 parser.add_argument('--n_hidden', type=int, default=50, help='number of hidden layers')
 parser.add_argument('--size_vocabulary', type=int, default=60, help='maximum number of node types')
@@ -95,7 +95,7 @@ def main(opt):
     if opt.training:
         for epoch in range(0, opt.niter):
             train(epoch, train_dataloader, net, criterion, optimizer,  opt)
-            # test(test_dataloader, net, criterion, optimizer, opt)
+            test(test_dataloader, net, criterion, optimizer, opt)
 
     if opt.testing:
         test(test_dataloader, net, criterion, optimizer, opt)
