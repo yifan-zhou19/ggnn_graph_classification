@@ -1,83 +1,17 @@
 Namespace(cuda=True, directory='program_data/cpp_babi_format_Sep-29-2018-0000008', is_training_ggnn=True, log_path='program_data/cpp_babi_format_Sep-29-2018-0000008/logs', lr=0.01, manualSeed=0, model_path='program_data/cpp_babi_format_Sep-29-2018-0000008/cpp_babi_format_Sep-29-2018-0000008-104.cpkl', n_classes=104, n_hidden=50, n_steps=5, niter=150, size_vocabulary=198, state_dim=5, test_batch_size=32, testing=False, train_batch_size=128, training=True, training_percentage=1.0, verbal=True, workers=2)
 Random Seed:  0
-Number of all training data : 34627
-Max node id : 192
-Number of all testing data : 17367
-Max node id : 197
-Using the saved model....
-/opt/conda/lib/python3.6/site-packages/torch/onnx/utils.py:365: UserWarning: ONNX export failed on ATen operator stack because torch.onnx.symbolic.stack does not exist
-  .format(op_name, op_name))
-/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %118 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
-  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
-/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %193 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
-  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
-/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %268 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
-  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
-/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %343 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
-  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
-/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %418 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
-  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
-[0/150][0/271] Loss: 4.1740
-[0/150][28/271] Loss: 4.1601
-[0/150][56/271] Loss: 4.1815
-[0/150][84/271] Loss: 4.1716
-[0/150][112/271] Loss: 4.1781
-[0/150][140/271] Loss: 4.0710
-[0/150][168/271] Loss: 4.1797
-[0/150][196/271] Loss: 4.1879
-[0/150][224/271] Loss: 4.2384
-[0/150][252/271] Loss: 4.2039
-Test set: Average loss: 0.1329, Accuracy: 7150/17367 (41%)
-[1/150][0/271] Loss: 4.1458
-^CProcess Process-6:
-Traceback (most recent call last):
-  File "/opt/conda/lib/python3.6/multiprocessing/process.py", line 258, in _bootstrap
-    self.run()
-  File "/opt/conda/lib/python3.6/multiprocessing/process.py", line 93, in run
-    self._target(*self._args, **self._kwargs)
-  File "/opt/conda/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 52, in _worker_loop
-    r = index_queue.get()
-  File "/opt/conda/lib/python3.6/multiprocessing/queues.py", line 335, in get
-    res = self._reader.recv_bytes()
-  File "/opt/conda/lib/python3.6/multiprocessing/connection.py", line 216, in recv_bytes
-    buf = self._recv_bytes(maxlength)
-  File "/opt/conda/lib/python3.6/multiprocessing/connection.py", line 407, in _recv_bytes
-    buf = self._recv(4)
-  File "/opt/conda/lib/python3.6/multiprocessing/connection.py", line 379, in _recv
-    chunk = read(handle, remaining)
-KeyboardInterrupt
-Process Process-5:
-Traceback (most recent call last):
-  File "/opt/conda/lib/python3.6/multiprocessing/process.py", line 258, in _bootstrap
-    self.run()
-  File "/opt/conda/lib/python3.6/multiprocessing/process.py", line 93, in run
-    self._target(*self._args, **self._kwargs)
-  File "/opt/conda/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 57, in _worker_loop
-    samples = collate_fn([dataset[i] for i in batch_indices])
-  File "/opt/conda/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 138, in default_collate
-    return [default_collate(samples) for samples in transposed]
-  File "/opt/conda/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 138, in <listcomp>
-    return [default_collate(samples) for samples in transposed]
-  File "/opt/conda/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 124, in default_collate
-    return torch.stack([torch.from_numpy(b) for b in batch], 0)
-KeyboardInterrupt
-Exception ignored in: <bound method _DataLoaderIter.__del__ of <torch.utils.data.dataloader._DataLoaderIter object at 0x7fe177dcb0f0>>
-Traceback (most recent call last):
-  File "/opt/conda/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 347, in __del__
-    def __del__(self):
-  File "/opt/conda/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 178, in handler
-    _error_if_any_worker_fails()
-RuntimeError: DataLoader worker (pid 36) exited unexpectedly with exit code 1.
-Traceback (most recent call last):
+^CTraceback (most recent call last):
   File "main_ggnn.py", line 102, in <module>
     main(opt)
-  File "main_ggnn.py", line 93, in main
-    train(epoch, train_dataloader, net, criterion, optimizer, opt, writer)
-  File "/e/utils/train_ggnn.py", line 31, in train
-    loss.backward()
-  File "/opt/conda/lib/python3.6/site-packages/torch/tensor.py", line 93, in backward
-    torch.autograd.backward(self, gradient, retain_graph, create_graph)
-  File "/opt/conda/lib/python3.6/site-packages/torch/autograd/__init__.py", line 89, in backward
-    allow_unreachable=True)  # allow_unreachable flag
+  File "main_ggnn.py", line 63, in main
+    train_dataset = MonoLanguageProgramData(opt.size_vocabulary, opt.directory, True, opt.n_classes, opt.training_percentage)
+  File "/e/utils/data/dataset.py", line 206, in __init__
+    all_data = pyarrow.deserialize(buf)
+  File "pyarrow/serialization.pxi", line 441, in pyarrow.lib.deserialize
+  File "pyarrow/serialization.pxi", line 404, in pyarrow.lib.deserialize_from
+  File "pyarrow/serialization.pxi", line 257, in pyarrow.lib.SerializedPyObject.deserialize
+  File "pyarrow/serialization.pxi", line 174, in pyarrow.lib.SerializationContext._deserialize_callback
+  File "/opt/conda/lib/python3.6/site-packages/pyarrow/serialization.py", line 50, in _deserialize_numpy_array_list
+    def _deserialize_numpy_array_list(data):
 KeyboardInterrupt
-(41%)
+^Z
