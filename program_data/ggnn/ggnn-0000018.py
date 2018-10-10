@@ -44,8 +44,6 @@ parser.add_argument('--syntaxonly', type=bool, default=False, help='output only 
 parser.add_argument('--noedgetype', type=bool, default=False, help='ignore edge types by replacing all edge types with "1"')
 ## Add label to the encoding of nodes
 parser.add_argument('--label', type=bool, default=False, help='use the <nodetype, nodelabel> representation of nodes')
-## Derive ComputeFrom edges from names appeared (RHS -> LHS) where LHS and RHS are left/right hand side of assignments
-parser.add_argument('--computefrom', type=bool, default=True, help='derive ComputeFrom edges from names appeared (RHS -> LHS)')
 ## Generate bidirectional edges
 parser.add_argument('--bidirect', type=bool, default=False, help='make edges bidirectional')
 ## Add extra semantic edges as if they are syntactical
@@ -75,8 +73,8 @@ def fbsEdges(builder, edges, type):
         ContextEdgesStartLastUseVector(builder, N)
     elif type == "LastLexicalUse":
         ContextEdgesStartLastLexicalUseVector(builder, N)
-    elif type == "ComputeFrom":
-        ContextEdgesStartComputeFromVector(builder, N)
+    elif type == "ComputesFrom":
+        ContextEdgesStartComputesFromVector(builder, N)
     for i in reversed(range(0, N)):
        builder.PrependUOffsetTRelative(fbs_edges[i])
     fbs_nodeTypes = builder.EndVector(N)
@@ -96,8 +94,8 @@ def fbsContextEdges(builder, edges):
         lastWrite = fbsEdges(builder, edges, 'LastWrite')
     if 'ReturnsTo' in edges:
         returnsTo = fbsEdges(builder, edges, 'ReturnsTo')
-    if 'ComputeFrom' in edges:
-        computeFrom = fbsEdges(builder, edges, 'ComputeFrom')
+    if 'ComputesFrom' in edges:
+        computesFrom = fbsEdges(builder, edges, 'ComputesFrom')
     ContextEdgesStart(builder)
     if 'NextToken' in edges:
         ContextEdgesAddNextToken(builder, nextToken)
@@ -111,8 +109,8 @@ def fbsContextEdges(builder, edges):
         ContextEdgesAddLastWrite(builder, lastWrite)
     if 'ReturnsTo' in edges:
          ContextEdgesAddReturnsTo(builder, returnsTo)
-    if 'ComputeFrom' in edges:
-         ContextEdgesAddComputeFrom(builder, computeFrom)
+    if 'ComputesFrom' in edges:
+         ContextEdgesAddComputesFrom(builder, computesFrom)
     return ContextEdgesEnd(builder)
 
 def fbsNodeType(builder, key, value):
@@ -279,9 +277,9 @@ def jdefault(o):
             vec.append(jdefault(o.ReturnsTo(i)))
         obj['ReturnsTo'] = vec
         vec = []
-        for i in range(0, o.ComputeFromLength()):
-            vec.append(jdefault(o.ComputeFrom(i)))
-        obj['ReturnsTo'] = vec
+        for i in range(0, o.ComputesFromLength()):
+            vec.append(jdefault(o.ComputesFrom(i)))
+        obj['ComputesFrom'] = vec
         return obj
     elif isinstance(o, Edge):
         obj = [o.Node1(), o.Node2()]
@@ -291,45 +289,6 @@ def jdefault(o):
     elif isinstance(o, str):
         return o
     return o.__dict__
-
-#def find_descendants(id, edges):
-#   n = edges.ChildLength()
-#   descendants = [id]
-#   for j in range(0, n):
-#       e = edges.Child(j)
-#       v1 = e.Node1()
-#       v2 = e.Node2()
-#       if v1 == id and not v2 in descendants:
-#          subdescendants = find_descendants(v2, edges)
-#          descendants.extend(subdescendants)
-#   return descendants
-
-#def lookup_ids(assign_op_id, ids, edges):
-#    n = edges.ChildLength()
-#    lhs = []
-#    rhs = []
-#    expr = -1
-#    for j in range(0, n):
-#        e = edges.Child(j)
-#        v1 = e.Node1()
-#        v2 = e.Node2()
-#        if v2 == int(assign_op_id):
-#           expr = v1
-#           #print("%d %d\n" % (v1, v2))
-#           break
-#    if expr != -1:
-#       descendants = find_descendants(expr, edges)
-#       n2 = len(descendants)
-#       for j in range(0, n2):
-#        j1 = str(descendants[j]+1) 
-#        if j1 in ids.keys():
-#              if int(j1) - 1 < int(assign_op_id):
-#                 lhs.append(ids[j1])
-#              else:
-#                 rhs.append(ids[j1])
-#       #print(lhs)
-#       #print(rhs)
-#    return (lhs, rhs)
 
 def ggnn2txt(graph, train, test, map_folder='.'):
     if opt.maps:
@@ -397,19 +356,8 @@ def ggnn2txt(graph, train, test, map_folder='.'):
                   ids[j1] = dict[j1] #labels[j1]
             else:
                dict[j1] = 0
-        #if opt.computefrom:
-        #  for j1, l in tqdm.tqdm(labels.items()):
-        #    if l == b'=':
-        #      if types[j1] == 'OPERATOR':
-        #         (lhs, rhs) = lookup_ids(j1, ids, edges)
-        #         for k1 in range(0, len(lhs)):
-        #             for k2 in range(0, len(rhs)):
-        #                 compute_from_edge = "%s 7 %s\n" % (maps[lhs[k1]], maps[rhs[k2]])
-        #                 if opt.dup:
-        #                    out.write(compute_from_edge)
-        #                 else:
-        #                    uniq_edges[compute_from_edge] = 1
-        for edgetype in range(1, 6):
+        for edgetype in range(1, 8):
+            # out.write("====== %d\n" % edgetype)
             if edgetype == 1:
                 n = edges.ChildLength()
             elif edgetype == 2:
@@ -423,7 +371,7 @@ def ggnn2txt(graph, train, test, map_folder='.'):
             elif edgetype == 6:
                 n = edges.ReturnsToLength()
             elif edgetype == 7:
-                n = edges.ComputeFromLength()
+                n = edges.ComputesFromLength()
             for j in range(0, n):
                 if edgetype == 1:
                     e = edges.Child(j)
@@ -438,7 +386,7 @@ def ggnn2txt(graph, train, test, map_folder='.'):
                 elif edgetype == 6:
                     e = edges.ReturnsTo(j)
                 elif edgetype == 7:
-                    e = edges.ComputeFrom(j)
+                    e = edges.ComputesFrom(j)
                 src = dict[str(e.Node1())]
                 tgt = dict[str(e.Node2())] 
                 if src != 0 and tgt != 0:
@@ -528,6 +476,8 @@ def get_subgraph(graph, subnodes):
     sublastwrite = []
     returnsto = edges["ReturnsTo"]
     subreturnsto = []
+    computesfrom = edges["ComputesFrom"]
+    subcomputesfrom = []
     nodetypes = graph["NodeTypes"]
     subnodetypes = {}
     nodelabels = graph["NodeLabels"]
@@ -574,6 +524,13 @@ def get_subgraph(graph, subnodes):
             subedge.append(idx[str(edge[0])])
             subedge.append(idx[str(edge[1])])
             subreturnsto.append(subedge)
+    for i in range(0, len(computesfrom)):
+        edge = computesfrom[i]
+        if str(edge[0]) in subnodes and str(edge[1]) in subnodes:
+            subedge = []
+            subedge.append(idx[str(edge[0])])
+            subedge.append(idx[str(edge[1])])
+            subcomputesfrom.append(subedge)
     for k, v in nodetypes.items():
         if k in subnodes:
             subnodetypes[str(idx[k])] = v
@@ -586,6 +543,7 @@ def get_subgraph(graph, subnodes):
     subedges["LastUse"] = sublastuse
     subedges["LastWrite"] = sublastwrite
     subedges["ReturnsTo"] = subreturnsto
+    subedges["ComputesFrom"] = subcomputesfrom
     subgraph["Edges"] = subedges
     subgraph["NodeTypes"] = subnodetypes
     subgraph["NodeLabels"] = subnodelabels

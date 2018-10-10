@@ -1,3 +1,3 @@
 #./prepare_dataset.sh
-gen.sh Sep-29-2018
-prepare_dataset.sh 0000008
+gen.sh Oct-9-2018
+prepare_dataset.sh Oct-9-2018-0000018

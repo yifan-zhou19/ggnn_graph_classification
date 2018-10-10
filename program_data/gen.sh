@@ -1,12 +1,11 @@
 rm -f $0.log
-tag=${1:-Sep-29-2018}
+tag=${1:-Oct-9-2018}
 fbs.sh cpp_protobuf_format_$tag CppProgramData | tee $0.log
 fbs.sh java_protobuf_format_$tag JavaProgramData | tee $0.log
 fbs.sh github_cpp_protobuf_format_$tag github_cpp_program_data | tee $0.log
 fbs.sh github_java_protobuf_format_$tag github_java_program_data | tee $0.log
 #for f in ggnn/ggnn-*.py; do
-#  f=ggnn/ggnn-1740415.py
-  f=ggnn/ggnn-0000008.py
+  f=ggnn/ggnn-0000018.py
   cp $f ggnn/ggnn.py
   g=${f/*-/}
   g=${g/.py/}
