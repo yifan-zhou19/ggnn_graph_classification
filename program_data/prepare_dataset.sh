@@ -1,5 +1,5 @@
 #/bin/bash
-tag=${1:-Oct-9-2018-0000018}
+tag=${1:-Oct-9-2018-0000020}
 if [ ! -f maps.cpp.pkl ]; then
    cp cpp_babi_format_$tag/maps.cpp.pkl .
 fi

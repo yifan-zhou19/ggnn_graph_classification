@@ -26,14 +26,14 @@ import tqdm
 
 parser = argparse.ArgumentParser()
 ## Use a global map to avoid sparse ids while ensuring the graph nodes across all the dataset are mapped to consistent ids 
-parser.add_argument('--maps', action='store_true', default=False, help='maps node type to a consequetive number')
+parser.add_argument('--maps', action='store_true', default=True, help='maps node type to a consequetive number')
 ############ Do not remove duplicated edges, which is found irrelevant to the performance
 parser.add_argument('--dup', action='store_true', default=False, help='keep duplicated edges of the nodetypes')
 ############ Reinitialise the maps per class of instances. It leads to inappropriate performance for the classification
 parser.add_argument('--localmaps', action='store_true', default=False, help='use local maps instead of global one')
 ## Use the occurrence of type instead of label to encode nodes
 parser.add_argument('--occurrence', type=bool, default=True, help='use the <nodetype, occurrence> representation of nodes')
-parser.add_argument('--mod', type=int, default=16, help='use the <nodetype, occurrence % mod> representation of nodes')
+parser.add_argument('--mod', type=int, default=8, help='use the <nodetype, occurrence % mod> representation of nodes')
 ## Ignore the POSITION and COMMENT node types as noises to the input
 parser.add_argument('--noposition', type=bool, default=True, help='ignore POSITION and COMMENT node types')
 ## Derive the last lexical use edges from adjacent occurrences of same node encodings
@@ -387,12 +387,8 @@ def ggnn2txt(graph, train, test, map_folder='.'):
                     e = edges.ReturnsTo(j)
                 elif edgetype == 7:
                     e = edges.ComputesFrom(j)
-                if opt.maps:
-                   src = dict[str(e.Node1())]
-                   tgt = dict[str(e.Node2())] 
-                else:
-                   src = str(e.Node1())
-                   tgt = str(e.Node2())
+                src = dict[str(e.Node1())]
+                tgt = dict[str(e.Node2())] 
                 if src != 0 and tgt != 0:
                     if opt.maps:
                         s1 = maps[src]
@@ -424,7 +420,7 @@ def ggnn2txt(graph, train, test, map_folder='.'):
                              out.write(e3)
                           else:
                              uniq_edges[e3] = 1
-        if opt.lastuse:
+        if opt.lastuse and opt.maps:
             lastindex = {}
             lastuses = {}
             for j in range(0, g.NodeLabelLength()):
@@ -436,17 +432,10 @@ def ggnn2txt(graph, train, test, map_folder='.'):
                       lastuses[j1] = lastindex[t]
                    lastindex[t] = j1
             for k, v in lastuses.items():
-               if opt.maps:
-                  t1 = dict[k]
-                  t2 = dict[v]
-               else:
-                  t1 = str(k)
-                  t2 = str(v)
+               t1 = dict[k]
+               t2 = dict[v]
                if t1 != '0' and t2 != '0' and t1 != 0 and t2 != 0:
-                  if opt.maps:
-                     e3 = "%s 3 %s\n" % (maps[t2], maps[t1])
-                  else:
-                     e3 = "%s 3 %s\n" % (t2, t1)
+                  e3 = "%s 3 %s\n" % (maps[t2], maps[t1])
                   if opt.dup:
                      out.write(e3)
                   else:

@@ -1,4 +1,5 @@
-in=ex_protobuf_format_Sep-29-2018
+in=ex_protobuf_format_Oct-9-2018
+#in=ex_protobuf_format_Sep-29-2018
 out=${in/protobuf/babi}-$1
 cp ggnn/ggnn-$1.py ggnn/ggnn.py
 docker run --rm -v $(pwd):/e --entrypoint bash yijun/fast -c "rm -rf $out"

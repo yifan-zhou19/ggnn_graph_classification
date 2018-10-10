@@ -104,13 +104,19 @@ def find_max_edge_id(data_list):
 
 def find_max_node_id(data_list):
     max_node_id = 0
+    i = 1
+    max_data_id = i
     for data in data_list:
         edges = data[0]
         for item in edges:
             if item[0] > max_node_id:
                 max_node_id = item[0]
+                max_data_id = i
             if item[2] > max_node_id:
                 max_node_id = item[2]
+                max_data_id = i
+        i = i + 1
+    print(max_data_id)
     return max_node_id
     # return 48
 

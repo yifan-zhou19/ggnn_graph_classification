@@ -16,5 +16,8 @@ cd $out > /dev/null
 k=$(dmap | sort -n | wc -l)
 cd - > /dev/null
 cd .. > /dev/null
+if [ "$k" == "1" ]; then
+  k=17331
+fi
 run program_data/$out $k 104 150 5
 cd - > /dev/null
