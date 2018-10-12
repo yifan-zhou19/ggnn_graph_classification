@@ -40,7 +40,7 @@ parser.add_argument('--noposition', type=bool, default=True, help='ignore POSITI
 ## Derive the last lexical use edges from adjacent occurrences of same node encodings
 parser.add_argument('--lastuse', type=bool, default=False, help='add lastLexicalUse edges "3" between adjacent occurrence nodes of the same node labels')
 ## Consider only the edge types of Child and NextToken
-parser.add_argument('--syntaxonly', type=bool, default=False, help='output only syntactical edges, i.e. type "1" and "2"')
+parser.add_argument('--syntaxonly', type=bool, default=True, help='output only syntactical edges, i.e. type "1" and "2"')
 ## Do not distinguish edge types
 parser.add_argument('--noedgetype', type=bool, default=False, help='ignore edge types by replacing all edge types with "1"')
 ## Add label to the encoding of nodes
