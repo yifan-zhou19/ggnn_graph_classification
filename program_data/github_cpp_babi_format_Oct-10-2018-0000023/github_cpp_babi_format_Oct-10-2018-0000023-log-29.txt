@@ -1,0 +1,48 @@
+Namespace(cuda=True, directory='program_data/github_cpp_babi_format_Oct-10-2018-0000023', is_training_ggnn=True, log_path='program_data/github_cpp_babi_format_Oct-10-2018-0000023/logs', lr=0.01, manualSeed=0, model_path='program_data/github_cpp_babi_format_Oct-10-2018-0000023/github_cpp_babi_format_Oct-10-2018-0000023-29.cpkl', n_classes=29, n_hidden=50, n_steps=8, niter=150, size_vocabulary=323, state_dim=5, test_batch_size=128, testing=False, train_batch_size=128, training=True, training_percentage=1.0, verbal=True, workers=2)
+Random Seed:  0
+Number of all training data : 2038
+578
+Max node id : 323
+Number of all testing data : 1035
+286
+Max node id : 321
+Using the saved model....
+/opt/conda/lib/python3.6/site-packages/torch/onnx/utils.py:365: UserWarning: ONNX export failed on ATen operator stack because torch.onnx.symbolic.stack does not exist
+  .format(op_name, op_name))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %188 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %305 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %422 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %539 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %656 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %773 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %890 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %1007 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
+  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
+[0/150][0/16] Loss: 3.3077
+[0/150][2/16] Loss: 3.2920
+[0/150][4/16] Loss: 3.2999
+[0/150][6/16] Loss: 3.2842
+[0/150][8/16] Loss: 3.2920
+[0/150][10/16] Loss: 3.2374
+[0/150][12/16] Loss: 3.2764
+[0/150][14/16] Loss: 3.2764
+THCudaCheck FAIL file=/opt/conda/conda-bld/pytorch_1524586445097/work/aten/src/THC/generic/THCStorage.cu line=58 error=2 : out of memory
+Traceback (most recent call last):
+  File "main_ggnn.py", line 103, in <module>
+    main(opt)
+  File "main_ggnn.py", line 95, in main
+    test(test_dataloader, net, criterion, optimizer, opt)
+  File "/e/utils/test_ggnn.py", line 24, in test
+    output = net(init_input, adj_matrix)
+  File "/opt/conda/lib/python3.6/site-packages/torch/nn/modules/module.py", line 491, in __call__
+    result = self.forward(*input, **kwargs)
+  File "/e/utils/model.py", line 173, in forward
+    in_states = torch.stack(in_states).transpose(0, 1).contiguous()
+RuntimeError: cuda runtime error (2) : out of memory at /opt/conda/conda-bld/pytorch_1524586445097/work/aten/src/THC/generic/THCStorage.cu:58
