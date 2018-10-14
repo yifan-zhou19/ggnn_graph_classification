@@ -1,126 +1,45 @@
-#include <bits/stdc++.h>
+class FordFulkerson {
+  public:
+    struct edge {
+      explicit edge(size_t t, int c, size_t r) : to(t), cap(c), rev(r) {}
+      size_t to; int cap; size_t rev;
+    };
 
-using namespace std;
+    explicit FordFulkerson(size_t v): G(v), used(v) {}
+    ~FordFulkerson() = default;
 
-typedef long long ll;
-typedef pair<int, int> ii;
-typedef pair<ll, ll> pll;
-typedef vector<int> vi;
-typedef vector<vi> vvi;
-typedef vector<ii> vii;
-
-#define pb push_back
-#define mp make_pair
-#define fi first
-#define se second
-#define FAST_IO  ios_base::sync_with_stdio(false)
-#define EPS 1e-8
-
-int N, Q;
-
-// This is azure97 (Kak Ayaz)'s implementation of SegmentTree 
-struct SegmentTree {
-    vi max_value;
-    vi min_value;
-    vi arr;
-    int n;
-
-    SegmentTree() {
+    void add_edge(size_t from, size_t to, int cap) {
+      G[from].emplace_back(to, cap, G[to].size());
+      G[to].emplace_back(from, 0, G[from].size() - 1);
     }
-
-    void set_n(int _n) {
-        n = _n;
-        arr.resize(n+5);
-        max_value.resize(n+5);
-        min_value.resize(n+5);
-    }
-
-    void build(int id, int l, int r) {
-        if (l == r) {
-            min_value[id] = arr[l];
-            max_value[id] = arr[l];
-        } else {
-            int m = (l + r) / 2;
-            int chld = id << 1;
-
-            build(chld, l, m);
-            build(chld + 1, m + 1, r);
-
-            max_value[id] = max(max_value[chld], max_value[chld+1]);
-            min_value[id] = min(min_value[chld], min_value[chld+1]);
+    int dfs(size_t v, size_t t, int f) {
+      if (v == t) return f;
+      used[v] = true;
+      for (auto &&e : G[v]) {
+        if (used[e.to] || e.cap <= 0) continue;
+        int d = dfs(e.to, t, std::min(f, e.cap));
+        if (d > 0) {
+          e.cap -= d;
+          reverse(e).cap += d;
+          return d;
         }
+      }
+      return 0;
+    }
+    int max_flow(size_t s, size_t t) {
+      int flow = 0;
+      while (true) {
+        std::fill(used.begin(), used.end(), 0);
+        int f = dfs(s, t, INF);
+        if (f == 0) return flow;
+        flow += f;
+      }
     }
 
-    void build() {
-        build(1, 1, n);
-    }
-
-    // query range(x, y)
-    int query_min(int id, int l, int r, int x, int y) {
-        if (x <= l && r <= y) {
-            cerr << "return " << min_value[id] << '\n';
-            return min_value[id];
-        } else {
-            int m = (l + r) / 2;
-            int chld = id << 1;
-
-            int ret = 1e9+1;
-            if (x <= m) ret = min(ret, query_min(chld, l, m, x, y));
-            if (y > m) ret = min(ret, query_min(chld+1, m+1, r, x ,y));
-            cerr << "return bawah " << ret<< endl;
-            return ret;
-        }
-    }
-
-    int query_min(int l, int r) {
-        int ret =  query_min(1, 1, n, l, r);
-        cerr << "query min is " << ret << endl;
-        return ret;
-    }
-
-    int query_max(int id, int l,  int r, int x, int y) {
-        if (x <= l && r <= y) {
-            cerr << "return " << max_value[id] << '\n';
-            return max_value[id];
-        } else {
-            int m = (l + r) / 2;
-            int chld = id << 1;
-
-            int ret = -1e9-1;
-            if (x <= m) ret = max(ret, query_max(chld, l, m, x, y));
-            if (y > m) ret = max(ret, query_max(chld+1, m+1, r, x, y));
-
-            return ret;
-        }
-    }
-
-    int query_max(int l, int r) {
-        return query_max(1, 1, n, l, r);
+  private:
+    std::vector<std::vector<edge>> G;
+    std::vector<bool> used;
+    edge &reverse(edge const &e) {
+      return G[e.to][e.rev];
     }
 };
-
-int main() {
-    // C++ Fast I/O
-    FAST_IO;
-
-    SegmentTree segment_tree;
-    // N elements, Q queries
-    cin >> N >> Q;
-
-    segment_tree.set_n(N);
-    
-    for (int i = 1; i <= N; ++i) {
-        cin >> segment_tree.arr[i]; 
-    }
-
-    segment_tree.build();
-    
-    for (int i = 0; i < Q; ++i) {
-        int L, R;
-        // Read Query here
-        cin >> L >> R;
-        // Do something here
-    }
-
-	return 0;
-}

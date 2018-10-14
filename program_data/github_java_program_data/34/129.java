@@ -1,30 +1,26 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-package Theory;
-
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
-
-/**
+ *  NaiveBayesC.java
+ * 
+ *  Yaoyong Li 22/03/2007
  *
- * @author Zhang
+ *  $Id: NaiveBayesC.java, v 1.0 2007-03-22 12:58:16 +0000 yaoyong $
  */
-public class List_LinkedList {
+package gate.learning.learners.weka;
 
-    public static void main(String[] args) {
-        /*
-            LINKEDLIST
-                - Là 1 class implements DQUEUE, extends AbstractSequentialList
-                - LinkedList là 1 class tuân thủ theo Linked List truyền thống: FIFO (vào trước ra trước)
-                - 
-         */
-//        Queue linkedList =new LinkedList(); khai báo ntn, hoặc như ở dưới
-        List linkedList = new LinkedList();
-//        linkedList. 
-//  Tự demo hàm 
-    }
+import weka.classifiers.bayes.NaiveBayes;
+/**
+ * Naive Nayes classifier from Weka.
+ */
+public class NaiveBayesC extends WekaLearner {
+  /** serialVersionUID for Serializable class*/
+  private static final long serialVersionUID = 1L;
+  /** Constructor.*/
+  public NaiveBayesC() {
+    wekaCl = new NaiveBayes();
+    learnerName = "NaiveBayes";
+  }
+  /** Get the parameters of the Naive Bayes (do nothing). */
+  public void getParametersFromOptionsLine(String options) {
+    
+  }
 }

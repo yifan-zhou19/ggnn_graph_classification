@@ -1,125 +1,46 @@
-package com.eeg.group31;
-
-import android.content.Context;
-import android.util.Log;
-import android.widget.TextView;
-
-import com.eeg.group31.properties.Constants;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-
-import weka.classifiers.Classifier;
-import weka.classifiers.Evaluation;
-import weka.classifiers.bayes.NaiveBayes;
-import weka.core.Attribute;
-import weka.core.DenseInstance;
-import weka.core.FastVector;
-import weka.core.Instance;
-import weka.core.Instances;
-import org.apache.commons.lang3.ArrayUtils;
+package com.liyafeng.algorithm.basic.sort;
 
 /**
- * Created by girir on 04/25/2018.
+ * Created by liyafeng on 2018/2/12.
  */
 
-public class NaiveBayesIntegration {
-    String TAG = "NAIVE BAYES IMPLEMENTATION";
-    //Attribute attribute;
-    FastVector fvClasses;
-    FastVector fvAttributes;
-    Instances trainSet,testSet;
-    //Instance dataPoint;
-    Classifier model;
-    Evaluation validation;
-    TextView result;
-    TextView t1;
-    Context context;
-    File file;
-    FileReader fileReader;
-    BufferedReader bufferedReader;
-    String line;String[] data;
+public class N_Sort_ShellSort {
 
-    long startTime;
-    long endTime;
-
-    public NaiveBayesIntegration(Context context){
-        this.context = context;
+    /**
+     * 希尔排序
+     * 时间复杂度：未得出结论，但是大约是n^4/3 或者n^5/4，达不到平方级别
+     * ============原理===============
+     * 一个变种的插入排序，因为插入排序中一个元素如果是最小的，那么它要移动到数组的最前面
+     * 就要交换很多次。我们还可以采用分治法，将数组隔开分为很多子数组，然后每个都采用插入排序
+     * -------------------
+     * 希尔排序的目的就是将后面较小的元素能少交换的移动到数组前面
+     * ==============优缺点=================
+     * 优点：能处理大型数组，而且对于任意类型的数组（比如逆序）也能有好的表现
+     *
+     * @param args
+     */
+    public static void main(String[] args) {
+        int[] array = {1, 124, 54, 34, 34, 6, 5};
+        sort(array);
+        Util.print(array);
     }
 
-
-    public String runNB(String trainFile, String testFile) {
-        try {
-            fvAttributes = new FastVector(Constants.NUM_FEATURES + 1);
-            fvClasses = new FastVector(Constants.NUM_CLASSES);
-            for (int i = 1; i <= Constants.NUM_FEATURES; i++) {
-                fvAttributes.addElement(new Attribute(Integer.toString(i)));
-            }
-            for (int i = 1; i <= Constants.NUM_CLASSES; i++) {
-                fvClasses.addElement(Integer.toString(i));
-            }
-            fvAttributes.addElement(new Attribute("Class", fvClasses));
-Log.d(TAG,"created class arrtibuted");
-            trainSet = new Instances("TrainData", fvAttributes, Constants.NUM_TRAIN_DATA);
-            testSet = new Instances("TestData", fvAttributes, Constants.NUM_TEST_DATA);
-            trainSet.setClassIndex(Constants.NUM_FEATURES);
-            testSet.setClassIndex(Constants.NUM_FEATURES);
-            Log.d(TAG, "size =" + fvAttributes.size());
-            file = new File(trainFile);
-            fileReader = new FileReader(file);
-            bufferedReader = new BufferedReader(fileReader);
-            Log.d(TAG,"start reading train file");
-int count = 0;
-            while ((line = bufferedReader.readLine()) != null) {
-                Instance dataPoint = new DenseInstance(fvAttributes.size());
-                data = line.split(" ");
-              //  Log.d(TAG,Integer.toString(count++));
-               // Log.d(TAG,line);
-                dataPoint.setValue((Attribute) fvAttributes.elementAt(Constants.NUM_FEATURES), data[0]);
-                data = ArrayUtils.remove(data,0);
-                for (int i = 0; i < Constants.NUM_FEATURES; i++) {
-                    dataPoint.setValue((Attribute) fvAttributes.elementAt(i), Float.parseFloat((data[i].split(":"))[1]));
-                }
-                trainSet.add(dataPoint);
-            }
-            Log.d(TAG,"start reading test file");
-
-
-            model = new NaiveBayes();
-            model.buildClassifier(trainSet);
-            //Log.d(TAG, "Naive Bayes Training Complete");
-            file = new File(testFile);
-            fileReader = new FileReader(file);
-            bufferedReader = new BufferedReader(fileReader);
-/*            while ((line = bufferedReader.readLine()) != null) {
-                Instance dataPoint = new DenseInstance(fvAttributes.size());
-                data = line.split(" ");
-                dataPoint.setValue((Attribute) fvAttributes.elementAt(Constants.NUM_FEATURES), data[0]);
-                data = ArrayUtils.remove(data,0);
-                for (int i = 0; i < Constants.NUM_FEATURES; i++) {
-                    dataPoint.setValue((Attribute) fvAttributes.elementAt(i), Float.parseFloat((data[i].split(":"))[1]));
-                }
-                testSet.add(dataPoint);
-            }
-*/
-            //validation = new Evaluation(trainSet);
-            //validation.evaluateModel(model, testSet);
-            //String strSummary = validation.toSummaryString("my Stats", true);
-            //Log.d(TAG, strSummary);
-            //Log.d(TAG,"my result NB ="+Double.toString(validation.pctCorrect()));
-            return "User Authenticated";
-            //result.setText("User Authenticated");
-            //t1.setText("App time = " + Long.toString(endTime - startTime) + "ms");
-            // Get the confusion matrix
-            //double[][] cmMatrix = validation.confusionMatrix();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            Log.d(TAG,"other user may be");
-            return "Invalid User";
-            //result.setText("Invalid User");
-            //t1.setText("App time = " + Long.toString(endTime - startTime) + "ms");
+    private static void sort(int[] array) {
+        int length = array.length;
+        int h = 1;
+        while (h < length / 3) {//得出一个递增序列 （1 ,4,13,40.....）
+            h = 3 * h + 1;
         }
+
+        while (h >=1) {//修改h，最终h为1，变为传统的插入排序
+            for (int i = h; i < length; i++) {//外层选中的是要插入的元素
+                //将array[i] 插入到 array[i-h] ,array[i-2h],array[i-3h]...中
+                for (int j = i; j >= h && array[j] < array[j - h]; j -= h) {//里层是选中的元素和前面的元素比较，交换
+                    Util.exchange(array, j, j - h);
+                }
+            }
+            h /= 3;
+        }
+
     }
 }

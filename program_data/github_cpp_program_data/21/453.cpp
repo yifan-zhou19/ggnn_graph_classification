@@ -1,63 +1,46 @@
-#include "stdio.h"
+#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <iterator>
 
-void swap(int &a,int &b){                  //swap a and b
-	a=a+b;
-	b=a-b;
-	a=a-b;
+using namespace std;
+
+class Solution {
+public:
+    int minDistance(string word1, string word2) {
+        int m = word1.length(), n = word2.length();
+        vector<vector<int>> d(m + 1, vector<int>(n + 1));
+        for(int i=0;i<=m;i++)
+            d[i][0] = i;
+        for(int j=0;j<=n;j++)
+            d[0][j] = j;
+
+        for(int j=1;j<=n;j++) {
+            for(int i=1;i<=m;i++) {
+                if(word1[i-1] == word2[j-1]) {
+                    d[i][j] = d[i-1][j-1];
+                }
+                else {
+                    d[i][j] = find_min({d[i-1][j], d[i][j-1], d[i-1][j-1]}) + 1;
+                }
+            }
+        }
+        /* for(auto &row:d) { */
+        /*     copy(row.begin(), row.end(), std::ostream_iterator<int>(std::cout, " ")); */
+        /*     cout << endl; */
+        /* } */
+
+        return d[m][n];
+    }
+
+    int find_min(std::initializer_list<int> ilist) {
+        std::min(ilist, [](const int &n1, const int &n2) { return n1 < n2; });
+    }
+};
+
+int main()
+{
+    Solution s;
+    cout << s.minDistance("sitting", "kitten");
 }
-
-void maxHeap(int *a,int n,int i){         //adjust heap
-	int left,right,largest;
-	left=largest=2*i;
-
-	if(left>n)
-		return;
-
-	right=2*i+1;
-
-	if(right<=n && a[left]<a[right]){
-		largest=right;
-	}
-	
-	if(a[i]<a[largest]){
-		swap(a[i],a[largest]);
-		maxHeap(a,n,largest);
-	}
-}
-
-void creatHeap(int *a,int n){
-	int i;
-	for(i=n/2;i>=1;i--){
-		maxHeap(a,n,i);
-	}
-}
-
-void HeapSort(int *a,int n){
-	creatHeap(a,n);
-	for(int i=1;i<n;i++){
-		swap(a[1],a[n-i+1]);
-		maxHeap(a,n-i,1);
-	}
-}
-
-				
-
-int main(){
-	int a[]={0,3,5,8,9,1,2};
-	HeapSort(a,6);
-	for(int i=0;i<6;i++){
-		printf("%d ",a[i+1]);
-	}
-	printf("\n");
-	int m=1;
-	int n=100;
-	printf("%d %d\n",m,n);
-	swap (m,n);
-	printf("%d %d\n",m,n);
-}
-
-
-
-	
-	
-	

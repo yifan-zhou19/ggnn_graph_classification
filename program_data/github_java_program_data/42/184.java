@@ -1,26 +1,48 @@
-package Algorithm;
+package pl.coderstrust.sort;
+
+import java.util.Arrays;
 
 /**
- * Created by tonytan on 12/1/2017.
- *
- * Bucket sort: cost most memory
+ * Created by Adam on 2018-02-13.
  */
-public class BucketSort {
+public class SelectionSortSort {
+    public static void main(String[] args) {
 
-    static int[] data = {1,2,7,4,6,3,9};//assume all data < 10
-    static int[] bucket = new int[10];
+        int[] array = {5, 4, 1, 2, 9, 2, 7};
 
-    public static void bucketSort(int[] data){
-        for (int i=0; i<data.length; i++){
-            bucket[data[i]] = data[i];
-        }
+        System.out.println(Arrays.toString(array));
+
+        SelectionSortSort myObject = new SelectionSortSort();
+        myObject.sort(array);
+
+        System.out.println(Arrays.toString(array));
+
     }
 
-    public static void main(String[] args){
-        bucketSort(data);
-        for (int i:bucket) {
-            if (i==0) continue;
-            System.out.print(i);
+    public int[] sort(int[] array) {
+        for (int j = 0; j < array.length; ++j) {
+            int minimumNumberIndex = getMinimumNumberIndex(array, j);
+            swap(array, j, minimumNumberIndex);
+
         }
+        return array;
     }
+
+    public int getMinimumNumberIndex(int[] array, int j) {
+        int minimumNumberIndex = j;
+        for (int i = j; i < array.length; ++i)
+            if (array[i] < array[minimumNumberIndex]) {
+                minimumNumberIndex = i;
+            }
+        return minimumNumberIndex;
+    }
+
+    public static void swap(int[] array, int j, int minimumNumberIndex) {
+        int temp = array[j];
+        array[j] = array[minimumNumberIndex];
+        array[minimumNumberIndex] = temp;
+    }
+
+
 }
+

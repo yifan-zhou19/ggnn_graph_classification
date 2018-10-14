@@ -1,187 +1,71 @@
-#include "QuadTree.h"
-#include "BuildingTextureInfo.h"
+#include <iostream>
+#include <list>
 
-QuadTree::QuadTree(Rectangle3D bound)
+using namespace std;
+
+//Graph class representing a directed graph using adjacency list
+class Graph
 {
-    count = 0;
-    bounds = bound;
-    topLeft = topRight = bottomLeft = bottomRight = NULL;
+	int V; //no. of vertices
+	list<int> *adj; //pointer to an array containing adjacency lists
+	void DFSUtil(int v, bool visited[]); // A function used by DFS
+public:
+	Graph(int V); //Constructor
+	void addEdge(int v, int w); //function to add an edge to the graph
+	void DFS(int v);  //DFS traversal of the vertices reachable from source		
+};
+
+Graph::Graph(int V)
+{
+	this->V = V;
+	adj = new list<int>[V];
 }
 
-bool QuadTree::Add(Building *building)
+void Graph::addEdge(int v, int w)
 {
-    // CHeck if it can go here
-    if (!bounds.Intersects(building->bounds))
-        return false;
-
-    // Try and fit it in here
-    if (count < QUAD_TREE_CAPACITY)
-    {
-        buildings[count++] = building;
-        return true;
-    }
-
-    // Else we have to split
-    if (topLeft == NULL)
-    {
-        float hW = bounds.width / 2.0f;
-        float hH = bounds.depth / 2.0f;
-        float x = bounds.topLeft.x;
-        float y = bounds.topLeft.y;
-
-        topLeft = new QuadTree(Rectangle3D(x, y, hW, hH, bounds.height));
-        topRight = new QuadTree(Rectangle3D(x + hW, y, hW, hH, bounds.height));
-        bottomLeft = new QuadTree(Rectangle3D(x, y + hH, hW, hH, bounds.height));
-        bottomRight = new QuadTree(Rectangle3D(x + hW, y + hH, hW, hH, bounds.height));
-    }
-
-    // Give it to the children
-    if (topLeft->Add(building))
-        return true;
-    if (topRight->Add(building))
-        return true;
-    if (bottomLeft->Add(building))
-        return true;
-    if (bottomRight->Add(building))
-        return true;
-
-    // Shouldn't really happen :P
-    printf("ERROR: QUAD TREE IS BROKEN\n");
-    return false;
+	adj[v].push_back(w); //Add w to v's list
 }
 
-void QuadTree::GetBuildings(Frustum *frustum, std::vector<Building*> &buildings1, std::vector<Building*> &buildings2)
+void Graph::DFSUtil(int v, bool visited[])
 {
-    // Do a depth traversal
-    std::stack<QuadTree*> stack;
-    stack.push(this);
 
-    while (!stack.size() == 0)
-    {        
-        QuadTree *node = stack.top();
-        stack.pop();
+	//Mark the current node as visited and print it
+	visited[v] = true;
+	cout << v << " ";
 
-        if (!frustum->InFrustum(node->bounds))
-            continue;
-
-        for (int i = 0; i < node->count; i++)
-        {
-            Building* building = node->buildings[i];
-            if (frustum->InFrustum(building->bounds))
-            {
-                if (building->textureIndex == 0)
-                {
-                    buildings1.push_back(building);
-                }
-                else
-                {
-                    buildings2.push_back(building);
-                }
-            }
-        }
-
-        if (node->topLeft != NULL)
-        {
-            stack.push(node->topLeft);
-            stack.push(node->topRight);
-            stack.push(node->bottomLeft);
-            stack.push(node->bottomRight);
-        }
-    }    
+	//Recur for all the vertices adjacent to this vertex
+	list<int>::iterator i;
+	for(i = adj[v].begin(); i != adj[v].end(); i++)
+		if(!visited[*i])
+			DFSUtil(*i, visited);
 }
 
-void QuadTree::DrawAll(Frustum *frustum)
+//DFS traversal of all vertices reachable from v.
+
+void Graph::DFS(int v)
 {
-    // Store the bulidings based on texture
-    std::vector<Building*> v1, v2;
+	//Mark all vertices as not visited
+	bool *visited = new bool[V];
+	for(int i = 0; i < V; i++)
+		visited[i] = false;
 
-    GetBuildings(frustum, v1, v2);    
-    
-    // Set up textures
-    int textureIndex = -1;
+	//Call the recursive function to print DFS traversal
+	DFSUtil(v, visited);
+}
 
-    if (v1.size() > 0)
-    {
-        textureIndex = 0;
-    }
+int main()
+{
+	// Create a graph
+	Graph g(4);
+	g.addEdge(0, 1);
+	g.addEdge(0, 2);
+	g.addEdge(1, 2);
+	g.addEdge(2, 0);
+	g.addEdge(2, 3);
+	g.addEdge(3, 3);
 
-    if (v2.size() > 0 && textureIndex == -1)
-    {
-        textureIndex = 1;
-    }
+	cout << "Depth First Traversal" << endl;
+	g.DFS(1);
 
-    // No buildings
-    if (textureIndex == -1)
-        return;
-
-    // Bind side windows
-    glBindTexture(GL_TEXTURE_2D, BuildingTextureInfo::buildingTextures[textureIndex]);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, BuildingTextureInfo::buildingNormalMaps[textureIndex]);
-
-    // Bind front windows
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, BuildingTextureInfo::buildingTextures[BuildingTextureInfo::buildingTextureRoofIndex]);
-    glActiveTexture(GL_TEXTURE3);
-    glBindTexture(GL_TEXTURE_2D, BuildingTextureInfo::buildingNormalMaps[BuildingTextureInfo::buildingTextureRoofIndex]);
-
-    for (int i = 0; i < 5; i++)
-    {
-        glEnableVertexAttribArray(i);
-    }
-
-    for (std::vector<Building*>::iterator it = v1.begin(); it < v1.end(); it++)
-    {
-        Building* building = *it;
-        glBindBuffer(GL_ARRAY_BUFFER, building->m_vertexBuffer);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, building->m_indexBuffer);
-        
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(BuildingVertex), NULL);        
-        glVertexAttribPointer(1, 3, GL_FLOAT, false, sizeof(BuildingVertex), (unsigned char*)NULL + (3 * sizeof(float)));        
-        glVertexAttribPointer(2, 3, GL_FLOAT, false, sizeof(BuildingVertex), (unsigned char*)NULL + (6 * sizeof(float)));        
-        glVertexAttribPointer(3, 3, GL_FLOAT, false, sizeof(BuildingVertex), (unsigned char*)NULL + (9 * sizeof(float)));        
-        glVertexAttribPointer(4, 2, GL_FLOAT, false, sizeof(BuildingVertex), (unsigned char*)NULL + (12 * sizeof(float)));
-
-        glDrawElements(GL_TRIANGLES, building->indCount, GL_UNSIGNED_INT, 0);
-    }
-
-    if (textureIndex != 1 && v2.size() > 0)
-    {
-        textureIndex = 1;
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, BuildingTextureInfo::buildingTextures[textureIndex]);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, BuildingTextureInfo::buildingNormalMaps[textureIndex]);
-    }
-
-    for (std::vector<Building*>::iterator it = v2.begin(); it < v2.end(); it++)
-    {
-        Building* building = *it;
-        glBindBuffer(GL_ARRAY_BUFFER, building->m_vertexBuffer);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, building->m_indexBuffer);
-
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(BuildingVertex), NULL);
-        glVertexAttribPointer(1, 3, GL_FLOAT, false, sizeof(BuildingVertex), (unsigned char*)NULL + (3 * sizeof(float)));
-        glVertexAttribPointer(2, 3, GL_FLOAT, false, sizeof(BuildingVertex), (unsigned char*)NULL + (6 * sizeof(float)));
-        glVertexAttribPointer(3, 3, GL_FLOAT, false, sizeof(BuildingVertex), (unsigned char*)NULL + (9 * sizeof(float)));
-        glVertexAttribPointer(4, 2, GL_FLOAT, false, sizeof(BuildingVertex), (unsigned char*)NULL + (12 * sizeof(float)));
-
-        glDrawElements(GL_TRIANGLES, building->indCount, GL_UNSIGNED_INT, 0);
-    }
-
-
-    for (int i = 0; i < 5; i++)
-    {
-        glDisableVertexAttribArray(i);
-    }
-
-    glActiveTexture(GL_TEXTURE3);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
+	return 0;
 }

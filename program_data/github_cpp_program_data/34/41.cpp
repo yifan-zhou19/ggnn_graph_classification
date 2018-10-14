@@ -1,99 +1,137 @@
-#include <cmath>
-#include <cstdio>
+#include <arrayfire.h>
+#include <stdio.h>
 #include <vector>
-#include <iostream>
-#include <algorithm>
-using namespace std;
+#include <string>
+#include <af/utils.h>
+#include <math.h>
+#include "mnist_common.h"
 
-template <class T> struct Node {
-    T key;
-    Node *prev;
-    Node *next;
-};
+using namespace af;
 
-template <class T> class LinkedList {
-private:
-    Node<T> *head;
-    Node<T> *tail;
-    int size;
+// Get accuracy of the predicted results
+float accuracy(const array& predicted, const array& target)
+{
+    return 100 * count(predicted == target) / target.elements();
+}
 
-public:
-    LinkedList() {
-        head = NULL;
-        tail = NULL;
-        size = 0;
+void naive_bayes_train(array &mu, array &sig2, const array &train_feats,
+                       const array &train_classes, int num_classes)
+{
+    int feat_len = train_feats.dims(0);
+
+    // Get mean and variance from trianing data
+    mu  = constant(0, feat_len, num_classes);
+    sig2 = constant(0, feat_len, num_classes);
+    for (int ii = 0; ii < num_classes; ii++) {
+        array idx = where(train_classes == ii);
+        array train_feats_ii = train_feats(span, idx);
+
+        mu(span, ii)  = mean(train_feats_ii, 1);
+
+        // Some pixels are always 0. Add a small variance.
+        sig2(span,ii) = var(train_feats_ii, 0, 1) + 0.01;
     }
 
-    bool empty_list() {
-        return size == 0 ? true : false;
+    mu.eval();
+    sig2.eval();
+}
+
+array naive_bayes_predict(const array &mu, const array &sig2, const array &test_feats, int num_classes)
+{
+    int num_test = test_feats.dims(1);
+
+    // Predict the probabilities for testing data
+    // Using log of probabilities to reduce rounding errors
+    array log_probs = constant(1, num_test, num_classes);
+    for (int ii = 0; ii < num_classes; ii++) {
+
+        // Tile the current mean and variance to the testing data size
+        array Mu  = tile(mu (span, ii), 1, num_test);
+        array Sig2 = tile(sig2(span, ii), 1, num_test);
+
+        array Df = test_feats - Mu;
+        array log_P =  (-(Df * Df) / (2 * Sig2))  - log(sqrt(2 * af::Pi * Sig2));
+
+        // Accumulate the probabilities
+        log_probs(span, ii) = sum(log_P).T();
     }
 
-    Node<T> *list_search(T key) {
-        Node<T> *node = head;
-        while (node != NULL && node->key != key) {
-            node = node->next;
-        }
-        return node;
+    // Get the location of the maximum value
+    array val, idx;
+    max(val, idx, log_probs, 1);
+    return idx.as(f32);
+}
+
+void benchmark_nb(const array &train_feats, const array test_feats,
+                  const array &train_labels, int num_classes)
+{
+    array mu, sig2;
+    int iter = 25;
+
+    timer::start();
+    for (int i = 0; i < iter; i++) {
+        naive_bayes_train(mu, sig2, train_feats, train_labels, num_classes);
+    }
+    af::sync();
+    printf("Training time: %4.4lf s\n", timer::stop() / iter);
+
+    timer::start();
+    for (int i = 0; i < iter; i++) {
+        naive_bayes_predict(mu, sig2, test_feats, num_classes);
+    }
+    af::sync();
+    printf("Prediction time: %4.4lf s\n", timer::stop() / iter);
+}
+
+void naive_bayes_demo(bool console, int perc)
+{
+    array train_images, train_labels;
+    array test_images, test_labels;
+    int num_train, num_test, num_classes;
+
+    // Load mnist data
+    float frac = (float)(perc) / 100.0;
+    setup_mnist<false>(&num_classes, &num_train, &num_test,
+                       train_images, test_images,
+                       train_labels, test_labels, frac);
+
+    int feature_length = train_images.elements() / num_train;
+    array train_feats = moddims(train_images, feature_length, num_train);
+    array test_feats  = moddims(test_images , feature_length, num_test );
+
+    // Get training parameters
+    array mu, sig2;
+    naive_bayes_train(mu, sig2, train_feats, train_labels, num_classes);
+
+    // Predict the classes
+    array res_labels = naive_bayes_predict(mu, sig2, test_feats, num_classes);
+
+    // Results
+    printf("Trainng samples: %4d, Testing samples: %4d\n", num_train, num_test);
+    printf("Accuracy on testing  data: %2.2f\n",
+           accuracy(res_labels , test_labels));
+
+    benchmark_nb(train_feats, test_feats, train_labels, num_classes);
+
+    if (!console) {
+        display_results<false>(test_images, res_labels, 20);
+    }
+}
+
+int main(int argc, char** argv)
+{
+    int device   = argc > 1 ? atoi(argv[1]) : 0;
+    bool console = argc > 2 ? argv[2][0] == '-' : false;
+    int perc     = argc > 3 ? atoi(argv[3]) : 60;
+
+    try {
+
+        af::deviceset(device);
+        af::info();
+        naive_bayes_demo(console, perc);
+
+    } catch (af::exception &ae) {
+        std::cout << ae.what() << std::endl;
     }
 
-    void list_insert(T x) {
-        Node<T> *node = new Node<T>;
-        node->key = x;
-        node->next = NULL;
-        if (tail == NULL) {
-            node->prev = NULL;
-    		head = tail = node;
-    	} else {
-            node->prev = tail;
-    		tail->next = node;
-    		tail = node;
-    	}
-        size++;
-    }
-
-    void list_delete(Node<T> *node) {
-        if (node->prev != NULL) {
-            node->prev->next = node->next;
-            cout << "1" << endl;
-        } else {
-            head = node->next;
-            cout << "2" << endl;
-        }
-        if (node->next != NULL) {
-            node->next->prev = node->prev;
-            cout << "3" << endl;
-        }
-        size--;
-    }
-
-    void print() {
-        Node<T> *node = head;
-        int count = 0;
-        while (count < size) {
-            cout << node->key;
-            if (count == 0) {
-                cout << "(HEAD)";
-            }
-            if (count == size - 1) {
-                cout << "(TAIL)";
-            }
-            cout << " -> ";
-            node = node->next;
-            count++;
-        }
-        cout << "(null)" << endl;
-    }
-    
-};
-
-int main(int argc, char const *argv[]) {
-    LinkedList<float> list;
-    list.list_insert(5);
-    list.list_insert(10);
-    list.list_insert(20);
-    list.print();
-    Node<float> *node = list.list_search(10);
-    list.list_delete(node);
-    list.print();
-    return 0;
 }

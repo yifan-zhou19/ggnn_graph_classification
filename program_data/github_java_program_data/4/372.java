@@ -1,86 +1,123 @@
-package tree_visualization;
+package analysis.in.java.chapter5;
 
-import meetup_21_avl_tree.AvlBinarySearchTree;
-import tree_visualization.avl.AvlInsertActionListener;
-import tree_visualization.avl.AvlRemoveActionListener;
+public class DoubleHashHashTable<AnyType> implements MyHashTable<AnyType> {
 
-import javax.swing.*;
-import java.awt.*;
+	public DoubleHashHashTable(){
+		this(DEFAULT_SIZE);
+	}
+	
+	public DoubleHashHashTable(int size){
+		allocateArray(size);
+		currentSize=0;
+	}
+	@Override
+	public boolean contains(AnyType x) {
+		int position=getPosition(x);
+		boolean contain=true;
+		if(null==array[position]||!array[position].equals(x)){
+			contain=false;
+		}
+		return contain;
+	}
 
-public class AvlTreeDemo {
-    public static boolean RIGHT_TO_LEFT = false;
+	@Override
+	public void insert(AnyType x) {
+		int position=getPosition(x);
+		if(null==array[position]){
+			array[position]=x;
+			currentSize++;
+		}
+	}
 
-    public static void addComponentsToPane(GroupLayout layout, JFrame frame) {
-        JLabel valueLabel = new JLabel("Value:");
-        JTextField valueField = new JTextField();
+	@Override
+	public void makeEmpty() {
+		currentSize=0;
+		for(int i=0;i<getTableSize();i++){
+			array[i]=null;
+		}
+	}
 
-        Insets buttonMargin = new Insets(0, 0, 0, 0);
-        JButton insertButton = new JButton("Insert");
-        insertButton.setMargin(buttonMargin);
+	@Override
+	public void remove(AnyType x) {
+		int position=getPosition(x);
+		if(null!=array[position]){
+			array[position]=null;
+			currentSize--;
+		}
+		
+	}
+	
+	private static final int DEFAULT_SIZE=11;
+	
+	private AnyType[] array;
+	private int currentSize;
+	
+	private void allocateArray(int size){
+		if(size<=0){
+			size=DEFAULT_SIZE;
+		}
+		array = (AnyType[])new Object[size]; 
+	}
+	private int getTableSize(){
+		return array.length;
+	}
+	private int myhash(AnyType x){
+		int tableSize=getTableSize();
+		int position=x.hashCode()%tableSize;
+		if(position<0){
+			position+=tableSize;
+		}
+		return position;
+	}
+	private int hash2(int x){
+		return 7-(x%7);
+	}
+	private int getPosition(AnyType element){
+		int position=myhash(element);
+		int temp=0;
+		while(null!=array[position+temp*hash2(position)]&&
+					!array[position+temp*hash2(position)].equals(element)){
+			temp++;
+		}
+		return position+temp*hash2(position);
+	}
+	
+	
+	/**
+	 * Internal method to find a prime number at least as large as n.
+	 * 
+	 * @param n
+	 *            the starting number (must be positive).
+	 * @return a prime number larger than or equal to n.
+	 */
+	private static int nextPrime(int n) {
+		if (n % 2 == 0)
+			n++;
 
-        AvlBinarySearchTree<Integer> tree = new AvlBinarySearchTree<>();
-        TreePanel treePanel = new TreePanel();
+		for (; !isPrime(n); n += 2)
+			;
+		return n;
+	}
 
-        JButton removeButton = new JButton("Remove");
-        removeButton.setMargin(buttonMargin);
-        insertButton.addActionListener(new AvlInsertActionListener(treePanel, valueField, frame, tree));
-        removeButton.addActionListener(new AvlRemoveActionListener(treePanel, valueField, frame, tree));
+	/**
+	 * Internal method to test if a number is prime. Not an efficient algorithm.
+	 * 
+	 * @param n
+	 *            the number to test.
+	 * @return the result of the test.
+	 */
+	private static boolean isPrime(int n) {
+		if (n == 2 || n == 3)
+			return true;
 
-        layout.setHorizontalGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addComponent(valueLabel)
-                                .addComponent(valueField)
-                                .addComponent(insertButton)
-                                .addComponent(removeButton))
-                        .addComponent(treePanel)));
+		if (n == 1 || n % 2 == 0)
+			return false;
 
-        layout.setVerticalGroup(layout.createSequentialGroup()
-                .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                .addComponent(valueLabel)
-                                .addComponent(valueField)
-                                .addComponent(insertButton)
-                                .addComponent(removeButton)))
-                .addComponent(treePanel));
-    }
+		for (int i = 3; i * i <= n; i += 2)
+			if (n % i == 0)
+				return false;
 
-    private static void createAndShowGUI() {
-        JFrame frame = new JFrame("AVL Binary Search Tree Demo");
-        frame.setResizable(false);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-        Container contentPane = frame.getContentPane();
-        GroupLayout layout = new GroupLayout(contentPane);
-        contentPane.setLayout(layout);
-
-        layout.setAutoCreateGaps(true);
-        layout.setAutoCreateContainerGaps(true);
-
-        addComponentsToPane(layout, frame);
-
-        frame.pack();
-        frame.setVisible(true);
-    }
-
-    public static void main(String[] args) {
-        /* Use an appropriate Look and Feel */
-        try {
-            //UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
-            UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
-        } catch (UnsupportedLookAndFeelException ex) {
-            ex.printStackTrace();
-        } catch (IllegalAccessException ex) {
-            ex.printStackTrace();
-        } catch (InstantiationException ex) {
-            ex.printStackTrace();
-        } catch (ClassNotFoundException ex) {
-            ex.printStackTrace();
-        }
-
-        //Schedule a job for the event dispatch thread:
-        //creating and showing this application's GUI.
-        SwingUtilities.invokeLater(() -> createAndShowGUI());
-    }
+		return true;
+	}
 
 }

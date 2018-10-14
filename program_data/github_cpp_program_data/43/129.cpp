@@ -1,70 +1,31 @@
-#include <iostream>
-#include <deque>
-#include <queue>
-
-class Stack {
+class Solution {
 public:
-    // Push element x onto stack.
-	void push(int x) {
-		m_q1.push(x);
-	}
-
-    // Removes the element on top of the stack.
-	void pop() {
-		while (m_q1.size() != 1)
-		{
-			m_q2.push(m_q1.front());
-			m_q1.pop();
-		}
-		m_q1.pop();
-		while (!m_q2.empty())
-		{
-			m_q1.push(m_q2.front());
-			m_q2.pop();
-		}
-	}
-
-    // Get the top element.
-	int top() {
-		while (m_q1.size() != 1)
-		{
-			m_q2.push(m_q1.front());
-			m_q1.pop();
-		}
-		int ret = m_q1.front();
-		m_q2.push(ret);
-		m_q1.pop();
-		while (!m_q2.empty())
-		{
-			m_q1.push(m_q2.front());
-			m_q2.pop();
-		}
-		return ret;
-	}
-
-    // Return whether the stack is empty.
-	bool empty() {
-		return m_q1.empty();
-	}
-
-private:
-	//std::deque<int> m_q1;
-	std::queue<int> m_q1;
-	std::queue<int> m_q2;
+    int maximumGap(vector<int>& nums) {
+        int max_elem = INT_MIN, min_elem = INT_MAX, l = nums.size(), res = 0;
+        if (l < 2) return res;
+        for (int n : nums) {
+            max_elem = max(max_elem, n);
+            min_elem = min(min_elem, n);
+        }
+        if (max_elem == min_elem) return res;
+        int bucket_size = (max_elem - min_elem) / l + 1;
+        vector<vector<int>> gaps(l + 1, vector<int>(0));
+        for (int n : nums) {
+            int bucket_index = (n - min_elem) / bucket_size;
+            if (gaps[bucket_index].size() == 0) {
+                gaps[bucket_index].push_back(n);
+                gaps[bucket_index].push_back(n);
+            } else {
+                gaps[bucket_index][0] = min(n, gaps[bucket_index][0]);
+                gaps[bucket_index][1] = max(n, gaps[bucket_index][1]);
+            }
+        }
+        int pre = 0;
+        for (int i = 1; i < l + 1; i++) {
+            if (gaps[i].size() == 0) continue;
+            res = max(res, gaps[i][0] - gaps[pre][1]);
+            pre = i;
+        }
+        return res;
+    }
 };
-
-int main(void)
-{
-	Stack stk;
-	stk.push(1);
-	stk.push(2);
-	stk.push(3);
-	stk.push(4);
-	stk.push(5);
-	std::cout << stk.top() << std::endl;
-	stk.pop();
-	stk.pop();
-	stk.pop();
-	std::cout << stk.top() << std::endl;
-	return 0;
-}

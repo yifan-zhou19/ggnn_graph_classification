@@ -1,88 +1,113 @@
-在segment tree里面找index.
-找到就update it with value.
-每次下一层以后，很可能（要么左手，要么右手）max就变了。所以每次都left.max and right.max compare一下。
-最后轮回到头顶，头顶一下包括头顶，就全部都是max了。
-```
-/*
-For a Maximum Segment Tree, which each node has an extra value max to store the maximum value in this node's interval.
+import java.util.*;
+import java.lang.*;
+import java.io.*;
+import java.util.LinkedList;
 
-Implement a modify function with three parameter root, index and value to change the node's value with [start, end] = [index, index] to the new given value. Make sure after this change, every node in segment tree still has the max attribute with the correct value.
+class MaxFlow
+{
+    static final int V = 6; //Number of vertices in graph
 
-Example
-For segment tree:
+    /* Returns true if there is a path from source 's' to sink
+      't' in residual graph. Also fills parent[] to store the
+      path */
+    boolean bfs(int rGraph[][], int s, int t, int parent[])
+    {
 
-                      [1, 4, max=3]
-                    /                \
-        [1, 2, max=2]                [3, 4, max=3]
-       /              \             /             \
-[1, 1, max=2], [2, 2, max=1], [3, 3, max=0], [4, 4, max=3]
+        boolean visited[] = new boolean[V];
+        for(int i=0; i<V; ++i)
+            visited[i]=false;
 
-if call modify(root, 2, 4), we can get:
+        LinkedList<Integer> queue = new LinkedList<Integer>();
+        queue.add(s);
+        visited[s] = true;
+        parent[s]=-1;
 
-                      [1, 4, max=4]
-                    /                \
-        [1, 2, max=4]                [3, 4, max=3]
-       /              \             /             \
-[1, 1, max=2], [2, 2, max=4], [3, 3, max=0], [4, 4, max=3]
 
-or call modify(root, 4, 0), we can get:
+        while (queue.size()!=0)
+        {
+            int u = queue.poll();
 
-                      [1, 4, max=2]
-                    /                \
-        [1, 2, max=2]                [3, 4, max=0]
-       /              \             /             \
-[1, 1, max=2], [2, 2, max=1], [3, 3, max=0], [4, 4, max=0]
-Note
-We suggest you finish problem Segment Tree Build and Segment Tree Query first.
+            for (int v=0; v<V; v++)
+            {
+                if (visited[v]==false && rGraph[u][v] > 0)
+                {
+                    queue.add(v);
+                    parent[v] = u;
+                    visited[v] = true;
+                }
+            }
+        }
 
-Challenge
-Do it in O(h) time, h is the height of the segment tree.
 
-Tags Expand 
-LintCode Copyright Binary Tree Segment Tree
-*/
+        return (visited[t] == true);
+    }
 
-/*
-  Thought:
-  Renew index x with new value, and update the max value alone the way.
-  1. Use segmenttree property to find that leaf, which is node.start == node.end == index.
-  2. Along the way, whenever going to one segment/interval, compare left.max and right.max again, and update max.
-*/
 
-/**
- * Definition of SegmentTreeNode:
- * public class SegmentTreeNode {
- *     public int start, end, max;
- *     public SegmentTreeNode left, right;
- *     public SegmentTreeNode(int start, int end, int max) {
- *         this.start = start;
- *         this.end = end;
- *         this.max = max
- *         this.left = this.right = null;
- *     }
- * }
- */
-public class Solution {
-    /**
-     *@param root, index, value: The root of segment tree and 
-     *@ change the node's value with [index, index] to the new given value
-     *@return: void
-     */
-    public void modify(SegmentTreeNode root, int index, int value) {
-      if (root.start == root.end && root.start == index) {
-        root.max = value;
-        return;
-      }
+    int fordFulkerson(int graph[][], int s, int t)
+    {
+        int u, v;
 
-      //Divide and seawrch
-      int mid = (root.start + root.end)/2;
-      if (index <= mid) {
-        modify(root.left, index, value);
-      } else {
-        modify(root.right, index, value);
-      }
-      root.max = Math.max(root.left.max, root.right.max);
+        int rGraph[][] = new int[V][V];
+
+        for (u = 0; u < V; u++)
+            for (v = 0; v < V; v++)
+                rGraph[u][v] = graph[u][v];
+
+
+        int parent[] = new int[V];
+
+        int max_flow = 0;
+
+
+        while (bfs(rGraph, s, t, parent))
+        {
+
+            int path_flow = Integer.MAX_VALUE;
+            for (v=t; v!=s; v=parent[v])
+            {
+                u = parent[v];
+                path_flow = Math.min(path_flow, rGraph[u][v]);
+            }
+
+
+            for (v=t; v != s; v=parent[v])
+            {
+                u = parent[v];
+                rGraph[u][v] -= path_flow;
+                rGraph[v][u] += path_flow;
+            }
+
+
+            max_flow += path_flow;
+        }
+
+
+        return max_flow;
+    }
+
+
+    public static void main (String[] args) throws java.lang.Exception
+    {
+
+              Scanner sc=new Scanner(System.in);
+        System.out.println("enter the number of vertices");
+
+       int s=sc.nextInt();
+       int graph[][]=new int[s][s];
+       for(int i=0;i<s;i++)
+       {
+          for( int j=0;j<s;j++)
+          {
+              graph[i][j]=sc.nextInt();
+          }
+       }
+       MaxFlow m=new MaxFlow();
+       System.out.println("enter the source and the sink");
+
+ int k=sc.nextInt();
+ int l=sc.nextInt();
+        System.out.println("The maximum possible flow is " +
+                           m.fordFulkerson(graph, k, l));
+
     }
 }
-
-```

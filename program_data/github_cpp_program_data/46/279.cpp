@@ -1,48 +1,85 @@
-struct BIT{
-	LL d[maxn];
-	inline int lowbit(int x){return x&-x;}
-	LL get(int x){
-		LL ans=0;
-		while(x)ans+=d[x],x-=lowbit(x);
-		return ans;
-	}
-	void updata(int x,LL f){
-		while(x<=m)d[x]+=f,x+=lowbit(x);
-	}
-	void add(int l,int r,LL f){
-		updata(l,f);
-		updata(r+1,-f);
-	}
-}T,T2;
-int anss[maxn],wana[maxn];
-struct qes{
-	LL x,y,z;
-	qes(LL _x=0,LL _y=0,LL _z=0):
-		x(_x),y(_y),z(_z){}
-}q[maxn],p[maxn];
-bool part(qes &q){
-	if(q.y+q.z>=wana[q.x])return 1;
-	q.z+=q.y;q.y=0;return 0;
-}
-void solve(int lef,int rig,int l,int r){
-	if(l==r){
-		for(int i=lef;i<=rig;i++)if(anss[p[i].x]!=-1)
-		anss[p[i].x]=l;return;
-	}int mid=(l+r)>>1;
-	for(int i=l;i<=mid;i++){
-		if(q[i].x<=q[i].y)T.add(q[i].x,q[i].y,q[i].z);
-		else T.add(1,q[i].y,q[i].z),T.add(q[i].x,m,q[i].z);
-	}for(int i=lef;i<=rig;i++){
-		p[i].y=0;
-		for(int j=0;j<O[p[i].x].size()&&p[i].y<=int(1e9)+1;j++)
-		p[i].y+=T.get(O[p[i].x][j]);
-	}for(int i=l;i<=mid;i++){
-		if(q[i].x<=q[i].y)T.add(q[i].x,q[i].y,-q[i].z);
-		else T.add(1,q[i].y,-q[i].z),T.add(q[i].x,m,-q[i].z);
-	}int dv=stable_partition(p+lef,p+rig+1,part)-p-1;		
-	if(lef<=dv)
-	solve(lef,dv,l,mid);
-	if(dv+1<=rig)
-	solve(dv+1,rig,mid+1,r);
-}
+#include <bits/stdc++.h>
+using namespace std;
+typedef vector<int> vi;
 
+// Example of SegmentTree for rmq (range minimum query)
+// Note: instead of storing the minimum value, each node will store 
+//  the index of the leftmost position of the range in which the minimum
+//  value of that range is found
+
+struct SegmentTreeRMQ {
+    vi arr; // store original array values
+    vi tree; // store nodes of segment tree
+    vi leaf; // store index of leaf nodes in segment tree
+    int n; // number of leaf nodes (length of arr)
+    inline int left (int u) { return u << 1; } // index of left child
+    inline int right(int u) { return (u << 1) + 1; } // index of right child
+
+    void build(int u, int i, int j) {
+        if (i == j) { // base case: a leaf node
+            tree[u] = i;
+            leaf[i] = u;
+        } else { // recursive case
+            int lu = left(u), ru = right(u), m = (i+j)/2;
+            build(lu, i, m);
+            build(ru, m+1, j);
+            // store the index of the minimum value,
+            // in case of draw choose the leftmost
+            int ii = tree[lu], jj = tree[ru];
+            tree[u] = (arr[ii] <= arr[jj]) ? ii : jj;
+        }        
+    }
+
+    // update arr[i] with new_val, and propagate updates in the tree
+    // from leaf[i] upwards
+    void update(int i, int new_val) {
+        arr[i] = new_val;
+        int u = leaf[i] >> 1;
+        while (u) {
+            int lu = left(u), ru = right(u);
+            int min_i = (arr[tree[lu]] <= arr[tree[ru]]) ? tree[lu] : tree[ru];
+            if (min_i == tree[u]) break; // optimization: no changes, interrupt updates
+            // update and move to next parent
+            tree[u] = min_i;
+            u >>= 1;
+        }
+    }
+
+    // query for range [a,b], considering that we are at node u
+    // which is in charge of range [i, j]
+    int query(int a, int b, int u, int i, int j) {
+        // case 1: no overlap -> return some neutral / invalid value
+        if (j < a or b < i) return -1;
+        // case 2: full overlap -> return cached answer
+        if (a <= i and j <= b) return tree[u];
+
+        // case 3: partial overlap -> need recursion and merge of answers
+        int lu = left(u), ru = right(u), m = (i+j)/2;
+        int ii = query(a, b, lu, i, m);
+        int jj = query(a, b, ru, m+1, j);
+        if (ii == -1) return jj;
+        if (jj == -1) return ii;
+        return (arr[ii] <= arr[jj]) ? ii : jj; 
+    }
+
+    // overloading for easier use
+    int query(int a, int b) { return query(a, b, 1, 0, n - 1); }
+
+    SegmentTreeRMQ(const vi& _arr) {
+        arr = _arr; // copy content for local usage
+        n = arr.size();
+        leaf.resize(n);
+        tree.resize(4 * n + 5); // reserve enough space for the worst case
+        build(1, 0, n - 1); // recursive build from root
+    }
+    
+};
+  
+// usage
+int main() {
+    vi arr = { 18, 17, 13, 19, 15, 11, 20 };
+    SegmentTreeRMQ st(arr);
+    st.query(1, 3);
+    st.update(5, 100);
+    return 0;
+}

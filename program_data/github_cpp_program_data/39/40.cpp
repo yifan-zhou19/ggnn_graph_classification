@@ -1,57 +1,32 @@
-#include <iostream>
-#include <vector>
-#include <algorithm>
-
-using namespace std;
-
-class Solution {
-public:
-	void sortIntegers2(vector<int> & A) {
-		quick_sort(A);
-	}
-private:
-	void quick_sort(vector<int> & A) {
-		partial_sort(A, 0, A.size());
-	}
-	void partial_sort(vector<int> & A, int begin, int end) {
-		if (end - begin <= 1) {
-			return;
+//水平序凸包
+inline bool turn_left(const point &a, const point &b, const point &c) {
+	return det(b - a, c - a) > EPS;
+}
+inline bool turn_right(const point &a, const point &b, const point &c) {
+	return det(b - a, c - a) < -EPS;
+}
+inline vector<point> convex_hull(vector<point> a) {
+	int n = (int)a.size(), cnt = 0;
+	sort(a.begin(), a.end());
+	vector<point> ret;
+	for (int i = 0; i < n; ++i) {
+		while (cnt > 1 && turn_left(ret[cnt - 2], a[i], ret[cnt - 1])) {
+			--cnt;
+			ret.pop_back();
 		}
-		int partition = quick_select(A, begin, end);
-		partial_sort(A, begin, partition);
-		partial_sort(A, partition + 1, end);
+		ret.push_back(a[i]);
+		++cnt;
 	}
-	int quick_select(vector<int> & A, int begin, int end) {
-		int pivot = A[begin];
-		int i = begin + 1;
-		int j = end - 1;
-		while (i <= j) {
-			if (A[i] <= pivot) {
-				++i;
-			}
-			else if (pivot <= A[j]) {
-				--j;
-			}
-			else {
-				swap(A[i], A[j]);
-			}
+	int fixed = cnt;
+	for (int i = n - 1; i >= 0; --i) {
+		while (cnt > fixed && turn_left(ret[cnt - 2], a[i], ret[cnt - 1])) {
+			--cnt;
+			ret.pop_back();
 		}
-		--i;
-		swap(A[begin], A[i]);
-		return i;
+		ret.push_back(a[i]);
+		++cnt;
 	}
-};
-
-int main(void) {
-    Solution solution;
-    vector<int> A;
-
-    A = {3, 2, 1, 4, 5};
-    solution.sortIntegers2(A);
-    for (const auto & i : A) {
-        cout << i << '\t';
-    }
-    cout << '\n';
-
-    return 0;
+	// this algorithm will preserve the points which are collineation
+	// the lowest point will occur twice , i.e. ret.front () == ret.back ()
+	return ret;
 }

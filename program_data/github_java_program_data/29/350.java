@@ -1,94 +1,81 @@
+/*
+ * Created on 29-Apr-2005
+ * Created by Paul Gardner
+ * Copyright (C) 2005, 2006 Aelitis, All Rights Reserved.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * 
+ * AELITIS, SAS au capital de 46,603.30 euros
+ * 8 Allee Lenotre, La Grille Royale, 78600 Le Mesnil le Roi, France.
+ *
+ */
 
-import java.util.*;
+package com.aelitis.azureus.core.util.bloom;
 
-class Element implements Comparable<Element> {
-	private int index;
-	private int distance;
+import java.util.Map;
 
-	Element(int index, int distance) {
-		this.index = index;
-		this.distance = distance;
+import com.aelitis.azureus.core.util.bloom.impl.*;
+
+public class 
+BloomFilterFactory 
+{
+		/**
+		 * Creates a new bloom filter. 
+		 * @param max_entries The filter size.
+		 * 	a size of 10 * expected entries gives a false-positive of around 0.01%
+		 *  17* -> 0.001
+		 *  29* -> 0.0001
+		 * Each entry takes 1, 4 or 8 bits depending on type  
+		 * So, if 0.01% is acceptable and expected max entries is 100, use a filter
+		 * size of 1000.
+		 * @return
+		 */
+	
+	public static BloomFilter
+	createAddRemove4Bit(
+		int		filter_size )
+	{
+		return( new BloomFilterAddRemove4Bit( filter_size ));
 	}
-
-	public int getIndex() {
-		return index;
+	
+	public static BloomFilter
+	createAddRemove8Bit(
+		int		filter_size )
+	{
+		return( new BloomFilterAddRemove8Bit( filter_size ));
 	}
-
-	public int getDistance() {
-		return distance;
+	
+	public static BloomFilter
+	createAddOnly(
+		int		filter_size )
+	{
+		return( new BloomFilterAddOnly( filter_size ));
 	}
-
-	@Override
-	public int compareTo(Element o) {
-		// TODO Auto-generated method stub
-		return distance <= o.distance ? -1 : 1;
-	}
-
-}
-
-public class Dijkstra {
-
-	static int[] dist;
-	static ArrayList<ArrayList<Integer>> ad = new ArrayList<ArrayList<Integer>>();
-	static int nE, nV;
-	static final int inf = 100000;
-
-	public static void ssp(int start) {
-		PriorityQueue<Element> q = new <Element>PriorityQueue();
-		dist[start] = 0;
-		q.offer(new Element(start, dist[start]));
-
-		while (!q.isEmpty()) {
-			int cost = q.peek().getDistance();
-			int here = q.peek().getIndex();
-			q.poll();
-
-			if (cost > dist[here])
-				continue;
-
-			for (int i :ad.get(here)) {
-				int node=i/11;
-				int weight=i%11;
-				
-				if (dist[node] > dist[here] + weight) {
-					dist[node] = dist[here] + weight;
-					q.offer(new Element(node, dist[node]));
-				}
-			}
-
+	
+	public static BloomFilter
+	createRotating(
+		BloomFilter		basis,
+		int				number )
+	{
+		{
+			return( new BloomFilterRotator( basis, number ));
 		}
-		for (int i = 1; i <= nV; i++) {
-			if (dist[i] == inf)
-				System.out.println("INF");
-			else
-				System.out.println(dist[i]);
-		}
 	}
-
-	public static void main(String[] args) {
-		Scanner scan = new Scanner(System.in);
-		int start;
-
-		nV = scan.nextInt();
-		nE = scan.nextInt();
-		start = scan.nextInt();
-		dist = new int[nV + 1];
-
-		for (int i = 0; i <= nV; i++) {
-			dist[i] = inf;
-			ad.add(new ArrayList<>());
-		}
-		
-		for (int i = 0; i < nE; i++) {
-			int t1 = scan.nextInt();
-			int t2 = scan.nextInt();
-			int t3 = scan.nextInt();
-
-			ad.get(t1).add(t2*11+t3);
-
-		}
-
-		 ssp(start);
-
+	
+	public static BloomFilter
+	deserialiseFromMap(
+		Map<String,Object>	map )
+	{
+		return( BloomFilterImpl.deserialiseFromMap(map));
 	}
 }

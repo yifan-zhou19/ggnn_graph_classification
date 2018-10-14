@@ -1,137 +1,123 @@
-//===--- examples/Fibonacci/fibonacci.cpp - An example use of the JIT -----===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-// This small program provides an example of how to build quickly a small module
-// with function Fibonacci and execute it with the JIT.
-//
-// The goal of this snippet is to create in the memory the LLVM module
-// consisting of one function as follow:
-//
-//   int fib(int x) {
-//     if(x<=2) return 1;
-//     return fib(x-1)+fib(x-2);
-//   }
-//
-// Once we have this, we compile the module via JIT, then execute the `fib'
-// function and return result to a driver, i.e. to a "host program".
-//
-//===----------------------------------------------------------------------===//
-
-#include "llvm/Analysis/Verifier.h"
-#include "llvm/ExecutionEngine/GenericValue.h"
-#include "llvm/ExecutionEngine/Interpreter.h"
-#include "llvm/ExecutionEngine/JIT.h"
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/DerivedTypes.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/Module.h"
-#include "llvm/Support/TargetSelect.h"
-#include "llvm/Support/raw_ostream.h"
-using namespace llvm;
-
-static Function *CreateFibFunction(Module *M, LLVMContext &Context) {
-  // Create the fib function and insert it into module M. This function is said
-  // to return an int and take an int parameter.
-  Function *FibF =
-    cast<Function>(M->getOrInsertFunction("fib", Type::getInt32Ty(Context),
-                                          Type::getInt32Ty(Context),
-                                          (Type *)0));
-
-  // Add a basic block to the function.
-  BasicBlock *BB = BasicBlock::Create(Context, "EntryBlock", FibF);
-
-  // Get pointers to the constants.
-  Value *One = ConstantInt::get(Type::getInt32Ty(Context), 1);
-  Value *Two = ConstantInt::get(Type::getInt32Ty(Context), 2);
-
-  // Get pointer to the integer argument of the add1 function...
-  Argument *ArgX = FibF->arg_begin();   // Get the arg.
-  ArgX->setName("AnArg");            // Give it a nice symbolic name for fun.
-
-  // Create the true_block.
-  BasicBlock *RetBB = BasicBlock::Create(Context, "return", FibF);
-  // Create an exit block.
-  BasicBlock* RecurseBB = BasicBlock::Create(Context, "recurse", FibF);
-
-  // Create the "if (arg <= 2) goto exitbb"
-  Value *CondInst = new ICmpInst(*BB, ICmpInst::ICMP_SLE, ArgX, Two, "cond");
-  BranchInst::Create(RetBB, RecurseBB, CondInst, BB);
-
-  // Create: ret int 1
-  ReturnInst::Create(Context, One, RetBB);
-
-  // create fib(x-1)
-  Value *Sub = BinaryOperator::CreateSub(ArgX, One, "arg", RecurseBB);
-  CallInst *CallFibX1 = CallInst::Create(FibF, Sub, "fibx1", RecurseBB);
-  CallFibX1->setTailCall();
-
-  // create fib(x-2)
-  Sub = BinaryOperator::CreateSub(ArgX, Two, "arg", RecurseBB);
-  CallInst *CallFibX2 = CallInst::Create(FibF, Sub, "fibx2", RecurseBB);
-  CallFibX2->setTailCall();
-
-
-  // fib(x-1)+fib(x-2)
-  Value *Sum = BinaryOperator::CreateAdd(CallFibX1, CallFibX2,
-                                         "addresult", RecurseBB);
-
-  // Create the return instruction and add it to the basic block
-  ReturnInst::Create(Context, Sum, RecurseBB);
-
-  return FibF;
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+#include <limits.h>
+struct Stack
+{
+   unsigned capacity;
+   int top;
+   int *array;
+};
+void moveDisk(char fromPeg, char toPeg, int disk)
+{
+    printf("Move the disk %d from \'%c\' to \'%c\'\n",
+           disk, fromPeg, toPeg);
 }
 
+struct Stack* createStack(unsigned capacity)
+{
+    struct Stack* stack =
+        (struct Stack*) malloc(sizeof(struct Stack));
+    stack -> capacity = capacity;
+    stack -> top = -1;
+    stack -> array =
+        (int*) malloc(stack -> capacity * sizeof(int));
+    return stack;
+}
 
-int main(int argc, char **argv) {
-  int n = argc > 1 ? atol(argv[1]) : 24;
+int isFull(struct Stack* stack)
+{
+   return (stack->top == stack->capacity - 1);
+}
 
-  InitializeNativeTarget();
-  LLVMContext Context;
+int isEmpty(struct Stack* stack)
+{
+   return (stack->top == -1);
+}
 
-  // Create some module to put our function into it.
-  OwningPtr<Module> M(new Module("test", Context));
+void push(struct Stack *stack, int item)
+{
+    if (isFull(stack))
+        return;
+    stack -> array[++stack -> top] = item;
+}
 
-  // We are about to create the "fib" function:
-  Function *FibF = CreateFibFunction(M.get(), Context);
+int pop(struct Stack* stack)
+{
+    if (isEmpty(stack))
+        return INT_MIN;
+    return stack -> array[stack -> top--];
+}
 
-  // Now we going to create JIT
-  std::string errStr;
-  ExecutionEngine *EE =
-    EngineBuilder(M.get())
-    .setErrorStr(&errStr)
-    .setEngineKind(EngineKind::JIT)
-    .create();
+void moveDisksBetweenTwoPoles(struct Stack *src,
+            struct Stack *dest, char s, char d)
+{
+    int pole1TopDisk = pop(src);
+    int pole2TopDisk = pop(dest);
 
-  if (!EE) {
-    errs() << argv[0] << ": Failed to construct ExecutionEngine: " << errStr
-           << "\n";
-    return 1;
-  }
+    if (pole1TopDisk == INT_MIN)
+    {
+        push(src, pole2TopDisk);
+        moveDisk(d, s, pole2TopDisk);
+    }
 
-  errs() << "verifying... ";
-  if (verifyModule(*M)) {
-    errs() << argv[0] << ": Error constructing function!\n";
-    return 1;
-  }
+    else if (pole2TopDisk == INT_MIN)
+    {
+        push(dest, pole1TopDisk);
+        moveDisk(s, d, pole1TopDisk);
+    }
 
-  errs() << "OK\n";
-  errs() << "We just constructed this LLVM module:\n\n---------\n" << *M;
-  errs() << "---------\nstarting fibonacci(" << n << ") with JIT...\n";
+    else if (pole1TopDisk > pole2TopDisk)
+    {
+        push(src, pole1TopDisk);
+        push(src, pole2TopDisk);
+        moveDisk(d, s, pole2TopDisk);
+    }
+    else
+    {
+        push(dest, pole2TopDisk);
+        push(dest, pole1TopDisk);
+        moveDisk(s, d, pole1TopDisk);
+    }
+}
 
-  // Call the Fibonacci function with argument n:
-  std::vector<GenericValue> Args(1);
-  Args[0].IntVal = APInt(32, n);
-  GenericValue GV = EE->runFunction(FibF, Args);
+void tohIterative(int num_of_disks, struct Stack
+             *src, struct Stack *aux,
+             struct Stack *dest)
+{
+    int i, total_num_of_moves;
+    char s = 'S', d = 'D', a = 'A';
 
-  // import result of execution
-  outs() << "Result: " << GV.IntVal << "\n";
+    if (num_of_disks % 2 == 0)
+    {
+        char temp = d;
+        d = a;
+        a  = temp;
+    }
+    total_num_of_moves = pow(2, num_of_disks) - 1;
 
-  return 0;
+    for (i = num_of_disks; i >= 1; i--)
+        push(src, i);
+
+    for (i = 1; i <= total_num_of_moves; i++)
+    {
+        if (i % 3 == 1)
+          moveDisksBetweenTwoPoles(src, dest, s, d);
+
+        else if (i % 3 == 2)
+          moveDisksBetweenTwoPoles(src, aux, s, a);
+
+        else if (i % 3 == 0)
+          moveDisksBetweenTwoPoles(aux, dest, a, d);
+    }
+}
+int main()
+{
+    unsigned num_of_disks = 3;
+    struct Stack *src, *dest, *aux;
+    src = createStack(num_of_disks);
+    aux = createStack(num_of_disks);
+    dest = createStack(num_of_disks);
+
+    tohIterative(num_of_disks, src, aux, dest);
 }

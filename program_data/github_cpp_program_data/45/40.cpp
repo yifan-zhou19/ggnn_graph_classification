@@ -1,119 +1,206 @@
-#include <cstdio>
+#include <stdio.h>
 #include <iostream>
-#include <vector>
-#include <cmath>
-
+#include <stdlib.h>
+#include <queue>
+#include <fstream>
+#include <string>
 using namespace std;
 
-typedef vector<int> vi;
+struct node {
+    int v;
+    node *next;
+    int c, f, cf;
+    node (int j, node *t, int temp_c) {
+        v = j; 
+        next = t;
+        c = temp_c;
+        f = 0;
+        cf = c - f;
+    }
+};
+typedef node *linkSt;
 
-int approxTwo(int n) {
-  n = n - 1;
-  n |= n >> 1;
-  n |= n >> 2;
-  n |= n >> 4;
-  n |= n >> 8;
-  n |= n >> 16;
-  return n + 1;
+void Print_list (linkSt);
+void Print_residual_network (vector<linkSt>, int);
+bool Find_adj_vertex (int, int, vector<linkSt>);
+bool Augmenting_path (vector<linkSt>, int, int, int, int*);
+
+void Print_list (linkSt head) {
+    while (head != NULL) {
+        cout << "link with: " << head->v << " c = " << head->c << " f = " << head->f << " cf = " << head->cf << "; ";
+        head = head->next;
+    }
+    cout << "\n";
 }
 
-struct SegmentTree {
-  vi tree;
-  vi lazy;
-  int N;
-  int H;
-
-  SegmentTree(vi &values) {
-    N = approxTwo(values.size());
-    H = 8 * sizeof(int) - __builtin_clz(N);
-
-    tree.resize(N << 1);
-    lazy.resize(N);
-    for(int i = 0; i < values.size(); ++i) {
-      tree[i+N] = values[i];
+void Print_residual_network(vector<linkSt> adj, int v) {
+    for (int i = 0; i < v; i++) {
+        cout << i << ": "; 
+        Print_list(adj[i]);
+        cout << "\n";
     }
+}
 
-    for(int i = N - 1; i >= 1; --i) {
-      tree[i] = merge(tree[i<<1], tree[i<<1|1]);
-    }
-  }
-
-  int merge(int a, int b) {
-    return a + b;
-  }
-
-  void apply(int p, int value, int k) {
-    tree[p] += value * k;
-    if(p < N) lazy[p] += value;
-  }
-
-  void build(int p) {
-    for(p >>= 1; p >= 1; p >>= 1) {
-      tree[p] = merge(merge(tree[p<<1], tree[p<<1|1]), lazy[p]);
-    }
-  }
-
-  void push(int p) {
-    int k = N;
-    for(int s = H; s > 0; --s, k >>= 1) {
-      int i = p >> s;
-      if(lazy[i]) {
-        apply(i>>1,   lazy[i], k);
-        apply(i>>1|1, lazy[i], k);
-        lazy[i] = 0;
-      }
-    }
-  }
-
-  // update interval [l, r)
-  void update(int l, int r, int value) {
-    int l0 = (l += N);
-    int r0 = (r += N);
-
-    push(l0);
-    push(r0-1);
+bool Find_adj_vertex(int i, int j, vector<linkSt> *adj) {
+    linkSt vertex_view = (*adj)[j];
     
-    for(int k = 1; r > l; l >>= 1, r >>= 1, k <<= 1) {
-      // l is the right child of the parent, so include l but not the parent
-      if(l&1) {
-        apply(l++, value, k);
-      }
-      // r is the right child of the parent, so include the left child but not the parent
-      if(r&1) {
-        apply(--r, value, k);
-      }
+    while (vertex_view != NULL) {           // прохожусь по списку для вершины j и ищу связь с вершиной i
+        if (vertex_view->v == i)
+            return true;
+        vertex_view = vertex_view->next;
     }
+    
+    return false;
+}
 
-    build(l0);
-    build(r0-1);
-  }
-
-  // query interval [l, r)
-  int query(int l, int r) {
-    push(l+N);
-    push(r+N-1);
-
-    int res = 0;
-    for(l += N, r += N; r > l; l >>= 1, r >>= 1) {
-      // l is the right child of the parent, so include l but not the parent
-      if(l&1) {
-        res = merge(res, tree[l++]);
-      }
-      // r is the right child of the parent, so include the left child but not the parent
-      if(r&1) {
-        res = merge(res, tree[--r]);
-      }
+bool Augmenting_path (vector<linkSt> adj, int v, int source, int sink, vector<int> *way) {
+    // Готовим граф к поиску в глубинну
+    queue<int> myqueue;
+    vector<string> color;   // цвет вершин
+    vector<int> distance;   // длина пути до вершины из начальной
+    vector<int> min_way;    // сам путь
+    int u;
+    
+    for (int i = 0; i < v; i++) {
+        color.push_back("White");
+        distance.push_back(-1);
+        min_way.push_back(-1);
     }
-    return res;
-  }
-};
+    color[source] = "Gray";
+    distance[source] = 0;
+    myqueue.push(source);
+    
+    // Граф готов!
+    
+    while (!myqueue.empty()) {
+        u = myqueue.front();
+        myqueue.pop();
+        for (linkSt t = adj[u]; t != NULL; t = t->next) {
+            if ((color[t->v] == "White") && (t->cf > 0)) {
+                color[t->v] = "Gray";
+                distance[t->v] = distance[u] + 1;
+                min_way[t->v] = u;
+                myqueue.push(t->v);
+            }
+        }
+        color[u] = "BLACK";
+    }
+    
+    u = min_way[sink];
+    way->push_back(sink);
+    while (u != -1) {
+        way->push_back(u);
+        u = min_way[u];
+    }
+    int temp_swap;
+    for (size_t i = 0; i < way->size() / 2; i++) {
+        temp_swap = (*way)[i];
+        (*way)[i] = (*way)[way->size() - i - 1];
+        (*way)[way->size() - i - 1] = temp_swap;
+    }
+    
+    if (distance[sink] != -1)
+        return true;
+    else
+        return false;
+}
+    
 
 int main() {
-  vi test({1, 2, 3, 4, 5, 6});
-  SegmentTree tree(test);
-
-  tree.update(1, 3, 2);
-  cout << tree.query(2, 5) << endl;
-
-  return 0;
+    const int MAXFLOW = 10000;
+    ifstream File("GrafExKormen.txt");
+    int j, i, c;
+    int v;                      // кол-во вершин
+    vector<linkSt> adj;         // список смежности графа
+    File >> v; 
+    for (i = 0; i < v; i++)
+        adj.push_back(NULL);    
+    
+    // Создание исходного графа
+    while (true) {
+        File >> i >> j >> c;    // вершина i соединена с j ребром с пропускной способностью c
+        if (i == -1)            // условие окончания считывания информации из файла
+            break;
+        adj[i] = new node (j, adj[i], c);
+    }
+    
+    // Модификация графа - создание остаточной сети
+    
+    for (i = 0; i < v; i++) {               // проход по всем вершинам
+        linkSt vertex_view = adj[i];        // взял вершину, например, 1, смотрю с кем она связана, и прохожусь по связанным вершинам         
+        while (vertex_view != NULL) {       
+            if (Find_adj_vertex(i, vertex_view->v, &adj) == false)              // проверяю есть ли обратная связь
+                adj[vertex_view->v] = new node (i, adj[vertex_view->v], 0);     // если нет, то создаю обратную дугу с пропускной способностью 0
+            vertex_view = vertex_view->next;
+        }
+    }
+    
+    // Остаточная сеть создана. Граф готов к работе!
+    
+    int source, sink;
+    File >> source >> sink;
+    
+    
+    vector<int> way;                        // хранит увеличивающий путь из истока в сток
+    int cf_min = MAXFLOW;
+    linkSt list_f = NULL, list_back = NULL; // list_forvard - список смежности для вершины way[i] на увеличивающем пути
+                                            // list_back - список смежности для вершины way[i+1] на увеличивающем пути, нужен чтобы при 
+                                            // увеличении потока на ребре (i, j) на cf_min, пустить по ребру (j, i) поток -cf_min
+    int max_flow = 0;
+    
+    while (Augmenting_path(adj, v, source, sink, &way) == true) {
+        cout << "way : ";
+        for (size_t i = 0; i < way.size(); i++)
+            cout << way[i] << "  ";
+        printf("\n");
+        
+        // ищу на увеличивающем пути min(cf, принадлежащих увел пути) 
+        for (size_t i = 0; i + 1 < way.size(); i++) {
+            list_f= adj[way[i]];
+            while (list_f != NULL) {
+                if (list_f->v == way[i+1]) {
+                    if (list_f->cf < cf_min)
+                        cf_min = list_f->cf;
+                    break;
+                }
+                list_f = list_f->next;
+            }
+        }
+        // нашел, теперь пускаю по этому пути поток
+        printf("cf_min = %d\n\n", cf_min);
+        max_flow += cf_min;
+        list_f = NULL;
+        list_back = NULL;
+        for (size_t i = 0; i + 1 < way.size(); i++) {           //прохожусь по всем ребрам увел пути и обновляю поток
+            list_f = adj[way[i]];
+            while (list_f != NULL) {                            //ищу в списке смежности для вершины way[i] ребро,связывающее ее с way[i+1]
+                if (list_f->v == way[i+1]) {
+                    list_f->f += cf_min;
+                    list_f->cf = list_f->c - list_f->f;
+                    
+                    list_back = adj[way[i+1]];                  //список смежности для вершины way[i+1]
+                    
+                    while (list_back != NULL) {                     //ищу в списке смежности для вершины way[i+1] ребро,связывающее ее с way[i]
+                        if (list_back->v == way[i]) {
+                            list_back->f += (-1) * cf_min;
+                            list_back->cf = list_back->c - list_back->f;
+                            break;
+                        }
+                        list_back = list_back->next;
+                    }
+                    break;
+                }
+                list_f = list_f->next;
+            }
+        }
+        
+        Print_residual_network(adj, v);         // вывод остаточной сети
+        printf("--------------------------------------------------------------------------------\n\n");
+        way.clear();
+        cf_min = MAXFLOW;
+    }
+    
+    printf("RESULT: max fow = %d\n", max_flow);
+    
+    return 0;
 }

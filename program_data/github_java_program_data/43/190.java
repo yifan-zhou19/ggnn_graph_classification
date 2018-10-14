@@ -1,49 +1,73 @@
-package idv.workshop.homework;
+public class RadixSort {
 
-import java.util.ArrayDeque;
-import java.util.Deque;
+	//Key-indexed counting(a[].key is an int in [0, R))
+	//O(N) time
+	public static void keyIndexCounting(String[] a) {
+		int N = a.length;
+		String[] aux = new String[N];
+		int[] count = new [R + 1];
 
-public class Stack {
-    private Deque elems = new ArrayDeque();
-    private int capacity;
+		//Count the each key's frenquency
+		for(int i = 0; i < N; i++) {
+			count[a[i].key() + 1]++;
+		}
 
-    public Stack(int capacity) {
-        this.capacity = capacity;
-    }
+		//Transform frequency to indices
+		for(int r = 0; r < R; r++) {
+			count[r + 1] += count[r];
+		}
 
-    public boolean push(Object elem) {
-        if(isFull()) {
-            return false;
-        }
-        return elems.offerLast(elem);
-    }
+		//Distribute data into aux
+		for(int i = 0; i < N; i++) {
+			aux[count[a[i].key()]++] = a[i];
+		}
 
-    private boolean isFull() {
-        return elems.size() + 1 > capacity;
-    }
+		//Copy back
+		for(int i = 0; i < N; i++) {
+			a[i] = aux[i];
+		}
+	}
 
-    public Object pop() {
-        return elems.pollLast();
-    }
+	
+	//LSD sort for same length strings, sort a[] on leading W characters
+	//LSDstringsortuses~7WN􏰄3WRarrayaccessesand extra space proportional to N􏰄R to sort N items whose keys are W-character strings taken from an R-character alphabet.
+	public static void sortLSD(String[] a, int W) {
+		int N = a.length;
+		int R = 256;
+		String[] aux = new String[N];
 
-    public Object peek() {
-        return elems.peekLast();
-    }
+		for(int d = W - 1; d >= 0; d--) {
+			int[] count = new int[R + 1];
+			for(int i = 0; i < N; i++) 
+				count[a[i].charAt(d) + 1]++;
 
-    public int size() {
-        return elems.size();
-    }
+			for(int r = 0; r < R; r++)
+				count[r + 1] += count[r];
 
-    public static void main(String[] args) {
-        Stack stack = new Stack(5);
-        stack.push("Kiyomitsu");
-        stack.push("Yasusada");
-        stack.push("Okita");
+			for(int i = 0; i < N; i++)
+				aux[count[a[i].charAt(d)]++] = a[i];
 
-        System.out.println(stack.pop());
-        System.out.println(stack.pop());
-        System.out.println(stack.pop());
+			for(int i = 0; i < N; i++)
+				a[i] = aux[i];
+		}
+	}
 
-        //從最後進去的開始取出
-    }
+	//LSD for number for positive numbers
+	public static void sort(int[] a) {
+		int N = a.length;
+		int R = 256;
+		int[] aux = new int[N];
+		for(int d = 0; d < 4; d++) {
+			int mask = 255 << (8 * d);
+			int[] count = new int[R + 1];
+			for(int i = 0; i < N; i++) 
+				count[(a[i] & mask) + 1]++;
+			for(int r = 0; r < R; r++)
+				count[r + 1] += count[r];
+			for(int i = 0; i < N; i++) 
+				aux[count[a[i] & mask]++] = a[i];
+			for(int i = 0; i < N; i++)
+				a[i] = aux[i];
+		}
+	}
 }

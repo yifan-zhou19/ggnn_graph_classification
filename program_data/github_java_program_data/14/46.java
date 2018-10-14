@@ -1,113 +1,162 @@
-/*************************************************************************
- *  Compilation:  javac Heap.java
- *  Execution:    java Heap < input.txt
- *  Dependencies: StdOut.java StdIn.java
- *  Data files:   http://algs4.cs.princeton.edu/24pq/tiny.txt
- *                http://algs4.cs.princeton.edu/24pq/words3.txt
- *  
- *  Sorts a sequence of strings from standard input using heapsort.
- *
- *  % more tiny.txt
- *  S O R T E X A M P L E
- *
- *  % java Heap < tiny.txt
- *  A E E L M O P R S T X                 [ one string per line ]
- *
- *  % more words3.txt
- *  bed bug dad yes zoo ... all bad yet
- *
- *  % java Heap < words3.txt
- *  all bad bed bug dad ... yes yet zoo   [ one string per line ]
- *
- *************************************************************************/
+package classification;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
+import lib.Matrix;
 
 /**
- *  The <tt>Heap</tt> class provides a static methods for heapsorting
- *  an array.
- *  <p>
- *  For additional documentation, see <a href="http://algs4.cs.princeton.edu/24pq">Section 2.4</a> of
- *  <i>Algorithms, 4th Edition</i> by Robert Sedgewick and Kevin Wayne.
- *
- *  @author Robert Sedgewick
- *  @author Kevin Wayne
+ * @author YutaTomomatsu
+ * @version 1.0
+ * @since 2016/07/27
  */
-public class Heap {
+public class LogisticRegression {
+	//↓フィールド群
+	//内部のデータ構造は全てカプセル化されていて外部から変更されることはない。
+	/**
+	 * データ群の特徴量を保持するMatrix型の変数
+	 */
+	private Matrix x;
+	/**
+	 * データ群の正解ラベルを保持するMatrix型の変数
+	 */
+	private Matrix t;
+	/**
+	 * ロジスティック回帰によって求める重みを保持する変数
+	 */
+	private Matrix w;
+	/**
+	 * 学習率の初期値を保持する変数
+	 */
+	private double init_eta;
+	/**
+	 * 学習率の更新幅を保持する変数
+	 */
+	private double etaStep;
+	/**
+	 * イテレーション回数を保持する変数。
+	 */
+	private int iteration;
 
-    // This class should not be instantiated.
-    private Heap() { }
+	//↓コンストラクタ
+	/**
+	 * 主要コンストラクタ
+	 * @param x 特徴量
+	 * @param t 正解ラベル
+	 * @param iteration イテレーション回数
+	 * @param init_eta 学習率の初期値
+	 * @param etaStep 学習率の更新幅
+	 */
+	public LogisticRegression(double[][] x, double[][] t, int iteration,double init_eta,double etaStep){
+		this.x = new Matrix(x);
+		this.t = new Matrix(t);
+		this.iteration = iteration;
+		
+		double[][] w_array = new double[this.x.col_n()+1][1];
+		Random rnd = new Random();
+		for(int i = 0; i < w_array.length;i++){
+			w_array[i][0]=rnd.nextGaussian();
+		}
+		this.w = new Matrix(w_array);
+		this.init_eta = init_eta;
+		this.etaStep = etaStep;
+	}
+	
+	/**
+	 * コンストラクタ。イテレーションと学習率はデフォルトで設定される。(iteration = 300,学習率の初期値 = 0.1,学習率の更新幅=0.9)
+	 * @param x 特徴量
+	 * @param t 正解ラベル
+	 */
+	public LogisticRegression(double[][] x, double[][] t){
+		this(x,t,300,0.1,0.9);
+	}
+	
+	//↓学習を行うメソッド
+	/**
+	 * 学習を行う。
+	 */
+	public void cal(){
+		//学習率を初期化
+		double eta = init_eta;
+		
+		//データの学習する順序をシャッフルするためのリスト。
+		List<Integer> list = new ArrayList<>();
+		for(int i= 0; i < x.row_n(); i++)
+			list.add(i);
+		for(int i = 0; i < iteration; i++){
+			//学習順序のシャッフル
+			Collections.shuffle(list);
+			for(int n:list){//データを1つずつ取り出して学習。
+				//n番目のデータの正解ラベルを取り出す。
+				double t_n = t.getCell(n,0);
+				//n番目の特徴量を基底関数に入れる。
+				Matrix feature = phi(x.getRow(n).toArray()[0]);
+				//n番目データの正解ラベルへの所属確率の予測値を計算
+				double predict = sigmoid(feature.mul(w).toArray()[0][0]);
+				//重みwの更新
+				w = w.sub(feature.scalar(eta*(predict-t_n)).t());
+			}
+			//学習率の更新
+			eta*=etaStep;
+		}
+	}
+	
+	
+	//↓汎化を行うためのメソッド群
+	//calメソッドを呼び出したあとに実行しないと正しい挙動をしない。
+	/**
+	 * 新しいデータに汎化させる。
+	 * 新しい特徴量を入れた時のそのデータの正解ラベルへの所属確率を返す。
+	 * calメソッド実行後に呼び出す。
+	 * @param feature 特徴量
+	 * @return 正解確率
+	 */
+	public double fit(double[] feature){
+		return sigmoid((phi(feature).mul(w)).toArray()[0][0]);
+	}
+	
+	/**
+	 * ロジスティック回帰によって求めた重みwをdoubleの1次元配列にて返す。
+	 * @return 重みwの1次元配列
+	 * calメソッド実行後に呼び出す。
+	 */
+	public double[] getWeight(){
+		return ((w.t()).getRow(0)).toArray()[0];
+	}
+	
+	
+	
+	
+	//↓privateメソッド群
+	/**
+	 * シグモイド関数
+	 * sigmoid(x) = 1/1+exp(-x)
+	 * となる。
+	 * @param x 入力
+	 * @return sigmoid(x)の値。
+	 */
+	private double sigmoid(double x){
+		return 1.0/(1.0+Math.exp(-x));
+	}
 
-    /**
-     * Rearranges the array in ascending order, using the natural order.
-     * @param pq the array to be sorted
-     */
-    public static void sort(Comparable[] pq) {
-        int N = pq.length;
-        for (int k = N/2; k >= 1; k--)
-            sink(pq, k, N);
-        while (N > 1) {
-            exch(pq, 1, N--);
-            sink(pq, 1, N);
-        }
-    }
-
-   /***********************************************************************
-    * Helper functions to restore the heap invariant.
-    **********************************************************************/
-
-    private static void sink(Comparable[] pq, int k, int N) {
-        while (2*k <= N) {
-            int j = 2*k;
-            if (j < N && less(pq, j, j+1)) j++;
-            if (!less(pq, k, j)) break;
-            exch(pq, k, j);
-            k = j;
-        }
-    }
-
-   /***********************************************************************
-    * Helper functions for comparisons and swaps.
-    * Indices are "off-by-one" to support 1-based indexing.
-    **********************************************************************/
-    private static boolean less(Comparable[] pq, int i, int j) {
-        return pq[i-1].compareTo(pq[j-1]) < 0;
-    }
-
-    private static void exch(Object[] pq, int i, int j) {
-        Object swap = pq[i-1];
-        pq[i-1] = pq[j-1];
-        pq[j-1] = swap;
-    }
-
-    // is v < w ?
-    private static boolean less(Comparable v, Comparable w) {
-        return (v.compareTo(w) < 0);
-    }
-        
-
-   /***********************************************************************
-    *  Check if array is sorted - useful for debugging
-    ***********************************************************************/
-    private static boolean isSorted(Comparable[] a) {
-        for (int i = 1; i < a.length; i++)
-            if (less(a[i], a[i-1])) return false;
-        return true;
-    }
+	
+	/**
+	 * 基底関数。
+	 * Φ(x) = ΣΦ(xi)= 1 + x1 + x2 +...+ xn
+	 * となるような基底関数。
+	 * @param x_i
+	 * @return
+	 */
+	private Matrix phi(double[] x_i){
+		double[][] phi = new double[1][x_i.length+1];
+		for(int i = 0; i < x_i.length; i++)
+			phi[0][i] = x_i[i];
+		phi[0][phi[0].length-1] = 1.0;		
+		return new Matrix(phi);
+	}
 
 
-    // print array to standard output
-    private static void show(Comparable[] a) {
-        for (int i = 0; i < a.length; i++) {
-            StdOut.println(a[i]);
-        }
-    }
+	
 
-    /**
-     * Reads in a sequence of strings from standard input; heapsorts them; 
-     * and prints them to standard output in ascending order. 
-     */
-    public static void main(String[] args) {
-        String[] a = StdIn.readAllStrings();
-        Heap.sort(a);
-        show(a);
-    }
 }
+

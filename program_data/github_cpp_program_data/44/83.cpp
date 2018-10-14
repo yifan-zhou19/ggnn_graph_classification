@@ -1,81 +1,71 @@
-#include <cstdio>
-#include <algorithm>
-#include <vector>
-#define MAXM 212345
-#define MAXN 112345
-using namespace std;
-typedef vector<int> vi;
-typedef vector<vi> graph;
+//stack.cpp
 
-const int INF = 0x3f3f3f3f;
+#include<iostream>
 
-struct edge{
-    int to, f, c;
-}  e[MAXM];
+struct Node {
+	Node* next = NULL;
+	int data;
+};
 
-graph g;
+class Stack {
+	Node* top = NULL;
 
-int TC=0, cur = 0, seen[MAXN];
-void addge(int a , int b, int cp, int rc)
+public:
+	~Stack(){
+		while (top!=NULL){
+			pop();
+		}
+	};
+
+	void push(int number){
+		Node* temp = new Node;
+		temp -> data = number;
+		temp -> next = top;
+		top = temp;
+	}
+	void pop(){
+		if(top != NULL){
+			Node* temp = top;
+			top = top -> next;
+			delete temp;
+		} else {
+			std::cout << "Cannot pop, stack is empty." << std::endl;
+		}
+	}
+	void peek(){
+		if (top != NULL){
+			std::cout << top -> data << std::endl;
+		} else {
+			std::cout << "Empty Stack" << std::endl;
+		}
+	}
+};
+
+class stack
 {
-    e[cur].to = b, e[cur].f  = 0, e[cur].c = cp;
-    g[a].push_back(cur++);
-    e[cur].to = a, e[cur].f = 0, e[cur].c = rc;
-    g[b].push_back(cur++);
-}
+public:
+	stack();
+	~stack(){};
 
-int dfs(int s, int t, int flow)
+	/* data */
+};
+int main(int argc, char const *argv[])
 {
-    if(s==t) return flow;
-
-    seen[s] = TC;
-    int resf, v;
-    for(int i : g[s])
-    {
-        v = e[i].to;
-        resf = e[i].c-e[i].f;
-        if(seen[v]<TC && resf>0)
-        {
-            if(resf = dfs(v,t, min(resf, flow)))
-            {
-                e[i].f+=resf;
-                e[i^1].f-=resf;
-                return resf;
-            }
-        }
-    }
-
-    return 0;
-}
-
-int maxflow(int s, int t)
-{
-    int flow = 0, a;
-    ++TC;
-    while(a = dfs(s,t,INF))
-    {
-        flow+=a;
-        ++TC;
-    }
-
-    return flow;
-}
-
-
-int main()
-{
-    int n, m,u,v,w,s,t;
-    scanf("%d %d", &n, &m);
-    g.assign(n+1, vi());
-
-    while(m--)
-    {
-        scanf("%d %d %d", &u, &v, &w);
-        addge(u,v,w, 0);
-    }
-    scanf("%d %d", &s, &t);
-
-    m = maxflow(s,t);
-
-    printf("%d\n", m);
+	Stack myStack;
+	myStack.peek();
+	myStack.push(1);
+	myStack.peek();
+	myStack.push(2);
+	myStack.peek();
+	myStack.push(3);
+	myStack.peek();
+	myStack.pop();
+	myStack.peek();
+	myStack.pop();
+	myStack.peek();
+	myStack.pop();
+	myStack.peek();
+	myStack.pop();
+	myStack.peek();
+	return 0;
 }

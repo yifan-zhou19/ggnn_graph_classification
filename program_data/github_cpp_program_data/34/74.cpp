@@ -1,269 +1,206 @@
-#include <iostream>
+/*******************************************************************************
+* The MASH Framework contains the source code of all the servers in the
+* "computation farm" of the MASH project (http://www.mash-project.eu),
+* developed at the Idiap Research Institute (http://www.idiap.ch).
+*
+* Copyright (c) 2016 Idiap Research Institute, http://www.idiap.ch/
+* Written by Charles Dubout (charles.dubout@idiap.ch)
+*
+* This file is part of the MASH Framework.
+*
+* The MASH Framework is free software: you can redistribute it and/or modify
+* it under the terms of either the GNU General Public License version 2 or
+* the GNU General Public License version 3 as published by the Free
+* Software Foundation, whichever suits the most your needs.
+*
+* The MASH Framework is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public Licenses
+* along with the MASH Framework. If not, see <http://www.gnu.org/licenses/>.
+*******************************************************************************/
 
-using namespace std;
 
-class Node {
-public:
-    int value;
-    Node* next;
-    Node(int value) {
-        this->value = value;
-        next = NULL;
-    }
-} *root;
+//------------------------------------------------------------------------------
+/// @file classifier/NaiveBayes.cpp
+/// @author Charles Dubout (charles.dubout@idiap.ch)
+/// @date 2010.01.26
+/// @version 1.7
+//------------------------------------------------------------------------------
 
-void printList() {
-    Node *tmp = root;
-    cout<<"The list is: ";
-    while(tmp) {
-        cout<<tmp->value<<" ";
-        tmp = tmp->next;
-    }
-    cout<<endl;
+#include "NaiveBayes.h"
+
+#include <cmath>
+#include <functional>
+#include <iomanip>
+#include <numeric>
+#include <sstream>
+
+using namespace ML;
+
+Classifier* NaiveBayes::clone() const {
+	return new NaiveBayes(*this);
 }
 
-void deleteNthFromList(int pos) {
-    //considering list as 1 indexed, so pos equals 1 means first element ie. root
-    int counter = 1;
-    Node *tmp = root;
-    Node *prev;
-    if(pos == counter) {
-        root = root->next;
-        delete(tmp);
-    } else {
-        while(counter != pos) {
-            prev = tmp;
-            tmp = tmp->next;
-            ++counter;
-        }
-        prev->next = tmp->next;
-        tmp->next = NULL;
-        delete(tmp);
-    }
+void NaiveBayes::train(InputSet& inputSet) {
+	// Get the number of samples, features and labels
+	const unsigned int nbSamples = inputSet.nbSamples();
+	const unsigned int nbFeatures = inputSet.nbFeatures();
+	const unsigned int nbLabels = inputSet.nbLabels();
+
+	// Calculate the means, standard deviations, and class priors
+	means_.clear();
+	stds_.clear();
+	priors_.clear();
+
+	means_.resize(nbLabels * nbFeatures);
+	stds_.resize(nbLabels * nbFeatures);
+	priors_.resize(nbLabels);
+
+	// Weighted calculation (http://en.wikipedia.org/wiki/Standard_deviation)
+	unsigned int nonZero = 0;
+
+	for(unsigned int s = 0; s < nbSamples; ++s) {
+		const scalar_t* features = inputSet.features(s);
+		const unsigned int label = inputSet.label(s);
+		const scalar_t weight = inputSet.weight(s);
+
+		if(weight > 0) {
+			priors_[label] += weight;
+
+			for(unsigned int f = 0; f < nbFeatures; ++f) {
+				const scalar_t value = features[f];
+				const unsigned int index = label * nbFeatures + f;
+				const scalar_t mean = means_[index];
+
+				means_[index] += weight * (value - mean) / priors_[label];
+				stds_[index] += weight * (value - mean) * (value - means_[index]);
+			}
+
+			++nonZero;
+		}
+	}
+
+	assert(nonZero);
+
+	// Final division
+	scalar_t norm = 0;
+
+	for(unsigned int l = 0; l < nbLabels; ++l) {
+		assert(priors_[l]);
+
+		for(unsigned int f = 0; f < nbFeatures; ++f) {
+			const unsigned int index = l * nbFeatures + f;
+
+			stds_[index] = std::sqrt((nonZero * stds_[index]) /
+									 ((nonZero - 1) * priors_[l]));
+		}
+
+		norm += priors_[l];
+	}
+
+	// Normalize the priors
+	std::transform(priors_.begin(), priors_.end(), priors_.begin(),
+				   std::bind2nd(std::divides<scalar_t>(), norm));
+
+	// Remove a feature as soon as its standard deviation is 0 for one of the
+	// label
+	unsigned int nbZeros = 0;
+
+	for(unsigned int f = 0; f < nbFeatures; ++f) {
+		bool zero = false;
+
+		for(unsigned int l = 0; l < nbLabels; ++l) {
+			zero |= stds_[l * nbFeatures + f] <= 0;
+		}
+
+		if(zero) {
+			for(unsigned int l = 0; l < nbLabels; ++l) {
+				stds_[l * nbFeatures + f] = 0;
+			}
+
+			++nbZeros;
+		}
+	}
+
+	// Make sure that there is still some features left
+	assert(nbZeros < nbFeatures);
 }
 
-void deleteFromList(int value) {
-    //delete from list in O(n), deletes the first occurance of that number
-    Node *tmp = root, *prev;
-    if(tmp->value == value) {
-        root = root->next;
-        delete(tmp);
-        return;
-    }
-    prev = tmp;
-    tmp = tmp->next;
-    while(tmp) {
-        if(tmp->value == value) {
-            prev->next = tmp->next;
-            delete(tmp);
-            return;
-        }
-        prev = tmp;
-        tmp = tmp->next;
-    }
-    cout<<"Can't find desired value to delete...\n";
+void NaiveBayes::distribution(InputSet& inputSet,
+							  unsigned int sample,
+				  			  scalar_t* distr) const {
+	// Get the number of features and labels
+	const unsigned int nbFeatures = inputSet.nbFeatures();
+	const unsigned int nbLabels = inputSet.nbLabels();
+
+	// Get the features of the sample to classify
+	const scalar_t* features = inputSet.features(sample);
+
+	// Fill distr with the probabilities that the sample is of every class
+	const scalar_t sqrt2 = std::sqrt(scalar_t(2));
+
+	for(unsigned int l = 0; l < nbLabels; ++l) {
+		for(unsigned int f = 0; f < nbFeatures; ++f) {
+			const unsigned int index = l * nbFeatures + f;
+
+			if(stds_[index]) {
+				scalar_t normVal = (features[f] - means_[index]) / stds_[index];
+				distr[l] += std::log(priors_[l] / (sqrt2 * stds_[index])) -
+							normVal * normVal / 2;
+			}
+		}
+	}
 }
 
-void deleteAllFromList(int value) {
-    //delete from list in O(n), deletes the all occurances of that number
-    Node *tmp, *dummy, *prev;
-    bool found = false;
-    while(root!= NULL && root->value == value) {
-        tmp = root;
-        root = root->next;
-        delete(tmp);
-    }
-    prev = root;
-    tmp = prev->next;
-    while(tmp) {
-        if(tmp->value == value) {
-            prev->next = tmp->next;
-            dummy = tmp;
-            delete(dummy);
-            found = true;
-        }
-        prev = tmp;
-        tmp = tmp->next;
-    }
-    if(!found)
-        cout<<"Can't find desired value to delete...\n";
+void NaiveBayes::print(std::ostream& out) const {
+	const unsigned int nbFeatures = stds_.size() / priors_.size();
+	const unsigned int nbLabels = priors_.size();
+
+	out << "Naive Bayes' classifier:" << std::endl;
+
+	out << "Label         ";
+
+	for(unsigned int l = 0; l < nbLabels; ++l) {
+		out << " | " << std::setw(22) << l;
+	}
+
+	out << std::endl << "Prior         ";
+
+	for(unsigned int l = 0; l < nbLabels; ++l) {
+		out << " | " << std::setw(22) << priors_[l];
+	}
+
+	out << std::endl;
+
+	for(unsigned int f = 0; f < nbFeatures; ++f) {
+		if(stds_[f]) {
+			out << "Feature " << std::setw(6) << f;
+
+			for(unsigned int l = 0; l < nbLabels; ++l) {
+				std::ostringstream oss;
+
+				oss.precision(4);
+
+				oss << means_[l * nbFeatures + f] << " +- "
+					<< stds_[l * nbFeatures + f];
+
+				out << " | " << std::setw(22) << oss.str();
+			}
+
+			out << std::endl;
+		}
+	}
 }
 
-int listLength() {
-    int len = 0;
-    Node* tmp = root;
-    while(tmp) {
-        tmp = tmp->next;
-        ++len;
-    }
-    return len;
-}
+void NaiveBayes::report(std::vector<unsigned int>& features) const {
+	const unsigned int nbFeatures = stds_.size() / priors_.size();
 
-void insertAt(int val, int pos) {
-    //Lets make 1 indexed list, so pos = 1 means first value ie. root
-    int i = 1;
-    Node *tmp = root;
-    
-    if(pos < 1 || pos > listLength()) {
-        cout<<"Invalid position..\n";
-        return;
-    }
-    
-    if(pos == 1) {
-        //insert at root place
-        Node *node = new Node(val);
-        node->next = root;
-        root = node;
-        return;
-    }
-    while(i < pos-1) {
-        tmp = tmp->next;
-        ++i;
-    }
-    Node *node = new Node(val);
-    node->next = tmp->next;
-    tmp->next = node;
-}
-
-Node* kReverse(Node* root, int k) {
-    Node *prev = NULL;
-    Node *curr = root;
-    Node *next;
-    int counter = 0;
-    
-    while(curr && counter < k) {
-        next = curr->next;
-        curr->next = prev;
-        prev = curr;
-        curr = next;
-        ++counter;
-    }
-    
-    if(next != NULL) {
-        root->next = kReverse(next, k);
-    }
-    
-    return prev;
-}
-
-Node* reverseInPlace() {
-    Node *prev = NULL;
-    Node *curr = root;
-    Node *next;
-    
-    while(curr) {
-        next = curr->next;
-        curr->next = prev;
-        prev = curr;
-        curr = next;
-    }
-    
-    return prev;
-}
-
-Node* reverseSublist(int start, int end) {
-    Node *prev = NULL;
-    Node *curr = root;
-    Node *next, *store;
-    int counter = 1;
-    
-    while(counter < start) {
-        store = curr;
-        curr = curr->next;
-        ++counter;
-    }
-    
-    while(curr && counter <= end) {
-        next = curr->next;
-        curr->next = prev;
-        prev = curr;
-        curr = next;
-        ++counter;
-    }
-    
-    if(store) {
-        store->next->next = next;
-        store->next = prev;
-    } else {
-        return prev;
-    }
-    
-    return root;
-}
-
-bool findLoop() {
-    if(root == NULL) {
-        return root;
-    }
-    Node *slow = root;
-    Node *fast = root;
-    Node *faster = root;
-
-    while(slow && (fast = faster->next) && (faster = fast->next)) {
-        if(slow == fast || slow == faster) {
-            return true;
-        }
-        slow = slow->next;
-    }
-    return false;
-}
-
-int main() {
-    int i, n, input;
-    Node *prev;
-    cout<<"Input n: ";
-    cin>>n;
-    for(i = 0; i < n; ++i) {
-        cin>>input;
-        Node *node = new Node(input);
-        if(root == NULL) {
-            root = node;
-        }
-        else {
-            prev->next = node;
-        }
-        prev = node;
-    }
-
-    printList();
-    
-    //cout<<"Delete value: ";
-    //cin>>input;
-    //deleteFromList(input);
-    //deleteAllFromList(input);
-    //printList();
-    
-    //cout<<"Insert value: ";
-    //cin>>input;
-    //cout<<"Position (1 indexed): ";
-    //cin>>n;
-    //insertAt(input, n);
-    //printList();
-    
-    // cout<<"After reverse, ";
-    // root = reverseInPlace();
-    // printList();
-
-    // cout<<"Loop exists: " << findLoop() << endl;
-    
-    // cout<<"Enter position to delete (1 indexed): ";
-    // cin>>input;
-    // deleteNthFromList(input);
-    // printList();
-    
-    // cout<<"Enter k value for k-Reverse: ";
-    // cin>>input;
-    // cout<<"After "<<input<<"-reverse, ";
-    // root = kReverse(root, input);
-    // printList();
-    
-    int start, end;
-    
-    cout<<"Enter start and end values for sublist to be reversed: ";
-    cin>>start>>end;
-    cout<<"After reversing Sublist: ";
-    root = reverseSublist(start, end);
-    printList();
-
-    return 0;
+	for(unsigned int f = 0; f < nbFeatures; ++f) {
+		if(stds_[f]) {
+			features.push_back(f);
+		}
+	}
 }

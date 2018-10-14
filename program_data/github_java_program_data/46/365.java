@@ -1,59 +1,91 @@
-/**
-* Problem Statement: 
-*
-* For a given sorted array (ascending order) and a target number, find the first index of this number in O(log n) time complexity.
-* If the target number does not exist in the array, return -1.
+M
+
+给了segment Tree, node里面有Max value, 找[start,end]里面的max
+
+[start,end]跟mid相比，可能：   
+全在mid左   
+全在mid右   
+包含了mid： 这里要特别break into 2 query method   
+
+按定义：   
+mid = (root.start + root.end)/2
+
+```
+/*
+For an integer array (index from 0 to n-1, where n is the size of this array), 
+in the corresponding SegmentTree, each node stores an extra attribute max to denote 
+the maximum number in the interval of the array (index from start to end).
+
+Design a query method with three parameters root, start and end,
+ find the maximum number in the interval [start, end] by the given root of segment tree.
+
+Example
+For array [1, 4, 2, 3], the corresponding Segment Tree is:
+
+                  [0, 3, max=4]
+                 /             \
+          [0,1,max=4]        [2,3,max=3]
+          /         \        /         \
+   [0,0,max=1] [1,1,max=4] [2,2,max=2], [3,3,max=3]
+query(root, 1, 1), return 4
+
+query(root, 1, 2), return 4
+
+query(root, 2, 3), return 3
+
+query(root, 0, 2), return 4
+
+Note
+It is much easier to understand this problem if you finished Segment Tree Build first.
+
+Tags Expand 
+LintCode Copyright Binary Tree Segment Tree
 */
 
-class Solution {
+/*
+	Thoughts:
+	Search the segment tree, and find the node that matches the interval (start, end)
+	if (start == root.start && right == root.end) return max;
+	if end <= (root.left + root.right) / 2 : go left;
+	if start> (root.left + root.right): go right
+	However if start <= mid < end, break it into 2 segments and meger afterwards.
+*/
+/**
+ * Definition of SegmentTreeNode:
+ * public class SegmentTreeNode {
+ *     public int start, end, max;
+ *     public SegmentTreeNode left, right;
+ *     public SegmentTreeNode(int start, int end, int max) {
+ *         this.start = start;
+ *         this.end = end;
+ *         this.max = max
+ *         this.left = this.right = null;
+ *     }
+ * }
+ */
+public class Solution {
     /**
-     * @param nums: The integer array.
-     * @param target: Target to find.
-     * @return: The first position of target. Position starts from 0.
+     *@param root, start, end: The root of segment tree and 
+     *                         an segment / interval
+     *@return: The maximum number in the interval [start, end]
      */
-    public int binarySearch(int[] nums, int target) {
-        //write your code here
-        int idx1 = help(nums, target-1,  0, nums.length-1);
-        int idx2 = help(nums, target, 0, nums.length-1);
-        if(idx1 == idx2) return -1;
-        else return idx1;
-    }
-    
-    //return (index+1) of the right most of the target value
-    public int help(int[] nums, int target, int left, int right){
-        if(left > right) return left;
-        int mid = (left + right)/2;
-        
-        if(nums[mid] <= target)
-            return help(nums, target, mid+1, right);
-        else return help(nums, target, left, mid-1);
+    public int query(SegmentTreeNode root, int start, int end) {
+    	if (start == root.start && end == root.end) {
+    		return root.max;
+    	}
+    	int mid = (root.start + root.end)/2;
+    	if (end <= mid) {
+    		return query(root.left, start, end);
+    	}
+    	if (start > mid) {
+    		return query(root.right, start, end);
+    	}
+    	//start <= mid && end > mid
+    	int maxLeft = query(root.left, start, root.left.end);
+    	int maxRight = query(root.right, root.right.start, end);
+
+    	return Math.max(maxLeft, maxRight);
     }
 }
 
-//////////////////////////////////////////////////////
-//Approach 2: when num[mid] == target, then let high=mid unless left==mid
-class Solution {
-    /**
-     * @param nums: The integer array.
-     * @param target: Target to find.
-     * @return: The first position of target. Position starts from 0.
-     */
-    public int binarySearch(int[] nums, int target) {
-        //write your code here
-        return help(nums, target, 0, nums.length-1);
-    }
-    
-   
-    public int help(int[] nums, int target, int left, int right){
-        if(left > right) return -1;
-        int mid = (left + right)/2;
-        
-        if(nums[mid] < target)
-            return help(nums, target, mid+1, right);
-        else if(nums[mid] > target)
-            return help(nums, target, left, mid-1);
-        else if(left != mid)
-            return help(nums, target, left, mid);
-        else return left;
-    }
-}
+```

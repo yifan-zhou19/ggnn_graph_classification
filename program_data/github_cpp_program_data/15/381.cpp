@@ -1,68 +1,63 @@
+//Implemented as min-heap
+//TODO: pop implmentation is almost there, but does not delete popped nodes
+//and leaves '0' as empty placeholders
+#include <vector>
 #include <iostream>
-#include <list>
-#include <stack>
+#include <climits>
+struct Node {
+    int val;
+    Node* left, *right;
 
-using namespace std;
-
-class graph
-{
-	private:
-		list<int>* adj;
-		int V;
-		void topologicalSortUtil(int s,bool visited[],stack<int>& S)
-		{
-			visited[s] = true;
-			list<int>::iterator itr;
-			for(itr = adj[s].begin(); itr != adj[s].end();itr++)
-			{
-				if(visited[*itr] == false)
-				{
-					topologicalSortUtil(*itr, visited, S);
-				}
-			}
-			S.push(s);
-		}
-	public:
-		graph(int V)
-		{
-			this->V = V;
-			adj = new list<int>[V];
-		}
-		void addEdge(int u,int v)
-		{
-			adj[u].push_back(v);
-		}
-		void topologicalSort()
-		{
-			stack<int> S;
-			bool *visited = new bool[V];
-			for (int i = 0; i < V; ++i)
-			{
-				visited[i] = false;
-			}
-			
-			for (int i = 0; i < V; ++i)
-			{
-				if(visited[i] == false)
-				{
-					topologicalSortUtil(i,visited, S);
-				}
-			}
-			while(S.empty() == false){
-				cout<<S.top()<<" ";
-				S.pop();
-			}
-		}
-
+    Node(int val) : val(val), left(nullptr), right(nullptr){}
 };
-int main(){
-	graph g(6);
-    g.addEdge(5, 2);
-    g.addEdge(5, 0);
-    g.addEdge(4, 0);
-    g.addEdge(4, 1);
-    g.addEdge(2, 3);
-    g.addEdge(3, 1);
-    g.topologicalSort();
-	return 0;
+class Heap {
+    std::vector<Node> vec;
+
+    public:
+    Heap() {}
+
+    void swap(int& a, int& b) {
+        int temp = a;
+        a = b;
+        b = temp;
+    }
+    void insert(int val) {
+        vec.push_back(Node(val));
+        int currIndex = vec.size() - 1;
+        int parentIndex = (vec.size() - 1) / 2;
+        while (vec[currIndex].val < vec[parentIndex].val) {
+            swap(vec[currIndex].val, vec[parentIndex].val);
+
+            currIndex = parentIndex;
+            parentIndex = (currIndex - 1) / 2;
+        }
+    }
+    int pop() {
+        int currValue = vec[0].val;
+
+        return currValue;
+    }
+    int peek() {return vec[0].val;}
+    //Prints breadth-first
+    void print() {
+        for (Node node : vec)
+            std::cout << node.val << ' ';
+        std::cout << '\n';
+    }
+};
+
+int main() {
+    Heap heap;
+    heap.insert(3);
+    heap.insert(1);
+    heap.insert(2);
+    heap.insert(4);
+    heap.insert(10);
+    heap.insert(9);
+    heap.insert(7);
+    heap.insert(23);
+    for (int i = 0; i < 5; i++){
+        std::cout << heap.pop() << '\n';
+        heap.print();
+    }
 }

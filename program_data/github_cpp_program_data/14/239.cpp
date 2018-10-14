@@ -1,193 +1,143 @@
-#include "Heap.hpp"
+#include <iostream>
+#include <cmath>
+#include <cassert>
+#include <fstream>
+#include <vector>
+#include "armadillo.hpp"
 
-#define CHANGUI 0x100
 
-// To do
-// [ ] Use an internal variable to mantain time. When time is set to 0, make time == order of call
-// [ ] check for overlapping chunks (when alloc() is called)
-// [ ] make two different calls per function:
-//     [ ] malloc_enter(), malloc_return()
-//     [ ] free_enter(), free_return()
-//     [ ] realloc_enter(), realloc_return(), 
-//     [ ] etc.
-//
+arma::Col<double> gradient(arma::Mat<double> x, arma::Col<short> y, arma::Col<double> w);
+arma::Col<double> new_w(arma::Col<double> w, double alpha, arma::Mat<double> x, arma::Col<short> y);
+arma::Col<double> regression(arma::Col<double> w, double alpha, arma::Mat<double> x, arma::Col<short> y);
 
-bool operator<(const HeapChunk &t, const HeapChunk &other) {
-	return ((t.base<other.base) || (t.base==other.base && t.allocTime<other.allocTime));
-}
+int main()
+{
+	std::vector <double> dataX;
+	std::vector <double> dataY;
+	std::vector <double> test;
+	double storage;
+	short storagei;
 
-bool operator<(const HeapRegion &t, const HeapRegion &other) {
-	return ((t.base<other.base) || (t.base==other.base && t.allocTime<other.allocTime));
-}
+	// reading dataX
+	std::ifstream read_file("dataX.dat");
+	assert(read_file.is_open());
+	while (!read_file.eof())
+	{
+		read_file >> storage;
+		dataX.push_back(storage);
+	}
+	read_file.close();
 
-void HeapRegion::alloc(unsigned int base, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapChunk toFind(base, base+size, time, caller, pid);
+	// reading dataY
+	read_file.open("dataY.dat");
+	assert(read_file.is_open());
+	while (!read_file.eof())
+	{
+		read_file >> storagei;
+		dataY.push_back(storagei);
+	}
+	read_file.close();
 
-    if (top < toFind.top) {
-        top = toFind.top + CHANGUI;
-        verprintf(3,("Readjusting base to 0x%08x\n", top));
-    }
-	chunks.insert(toFind);
-}
+	// reading dataXtest
+	read_file.open("dataXtest.dat");
+	assert(read_file.is_open());
+	while (!read_file.eof())
+	{
+		read_file >> storage;
+		test.push_back(storage);
+	}
+	read_file.close();
 
-void HeapRegion::free(unsigned int base, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapChunk toFind(base, 0, time, caller, pid);
+	int lenX;
+	lenX = dataX.end() - dataX.begin() - 1;
+	int lenY;
+	lenY = dataY.end() - dataY.begin() - 1;
+	int lenTest;
+	lenTest = test.end() - test.begin() - 1;
+	int XY;
+	XY = lenX / lenY;
 
-    if (!chunks.size()) return;
-	set<HeapChunk>::iterator a=chunks.lower_bound(toFind);
-	a--;
-
-	if (a->base == toFind.base) {
-		// --a;    verprintf(3,("free found -1: %d 0x%08x %lu %lu\n", a->freeTime == 0.0, a->base, a->allocTime, a->freeTime));    a++;
-		        verprintf(2,("free found  0: %d 0x%08x %lu %lu\n", a->freeTime == 0.0, a->base, a->allocTime, a->freeTime));
-		// ++a;    verprintf(3,("free found +1: %d 0x%08x %lu %lu\n", a->freeTime == 0.0, a->base, a->allocTime, a->freeTime));    a--;
-		if (a->freeTime != 0.0) {
-			qprintf(("Freeing a chunk that's already free: 0x%08x\n", toFind.base));
-		} else {
-			((HeapChunk*)&*a)->setFreeTime(toFind.allocTime);
-			((HeapChunk*)&*a)->setFreeCaller(toFind.allocCaller);
+	// Converting dataX to arma matrix
+	arma::mat X(lenY, XY, arma::fill::none);
+	for (int i = 0; i < lenY; i++)
+	{
+		for (int j = 0; j < XY; j++)
+		{
+			X(i, j) = dataX[XY*i + j];
 		}
-	} else {
-		verprintf(2,("Found: 0x%08x %lf\n", a->base, a->allocTime));
-		qprintf(("Freeing a not allocated chunk: 0x%08x\n", toFind.base));
-	}
-}
-
-void HeapRegion::realloc(unsigned int base, unsigned int newBase, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller) {
-    free(base, time, pid, caller);
-    alloc(newBase, size, time, pid, caller);
-}
-
-void HeapRegion::setLimits() {
-
-	set<HeapChunk>::iterator i=chunks.begin();
-
-	minAddr = i->base;
-	maxAddr = i->top;
-	minTime = i->allocTime;
-	maxTime = i->freeTime;
-
-    if (i == chunks.end()) return;
-	for (i++;i != chunks.end(); i++) {
-		if (minAddr > i->base) minAddr = i->base;
-
-		if (maxAddr < i->top) maxAddr = i->top;
-
-		if (minTime > i->allocTime) minTime = i->allocTime;
-
-		if (maxTime < i->allocTime) maxTime = i->allocTime;
-		if (maxTime < i->freeTime) maxTime = i->freeTime;
 	}
 
-	for (i=chunks.begin();i != chunks.end(); i++)
-		if (i->freeTime == 0) 
-			((HeapChunk*)&*i)->setFreeTime(maxTime);
+	int test_rows = lenTest / XY;
+
+	// Converting test to arma matrix
+	arma::mat Xtest(test_rows, XY, arma::fill::none);
+	for (int i = 0; i < test_rows; i++)
+	{
+		for (int j = 0; j < XY; j++)
+		{
+			Xtest(i, j) = test[XY*i + j];
+		}
+	}
+
+	// Converting dataY to arma vector
+	arma::Col<short> Y(lenY);
+	for (int i = 0; i < lenY; i++)
+	{
+		Y(i) = dataY[i];
+	}
+	
+	arma::Col<double> w = arma::zeros(X.n_cols);
+	// sign
+	arma::Col<double> y(Xtest.n_rows);
+	arma::Col<int> out(Xtest.n_rows);
+	y = Xtest*regression(w, 0.9, X, Y);
+
+	for (int i = 0; i < Xtest.n_rows; i++)
+	{
+		if (y(i) > 0)
+		{
+			out(i) = 1;
+		}
+		else
+		{
+			out(i) = -1;
+		}
+	}
+	//out.print();
+
+	std::ofstream write_file("LogReg.dat");
+	for (int h = 0; h < Xtest.n_rows; h++)
+	{
+		write_file << out[h] << "\n";
+	}
+	return 0;
 }
 
-void Heap::mmap(unsigned int base, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapRegion toFind(base, base+size, time, caller, pid);
 
-    if (autoRegions) return;
-    _mmap(base, size, time, pid, caller);
+arma::Col<double> gradient(arma::Mat<double> x, arma::Col<short> y, arma::Col<double> w)
+{
+	arma::vec out(x.n_cols);
+	out.fill(0);
+	for (int i = 0; i < x.n_rows; i++)
+	{
+		out -= (y[i] * x.row(i).t()/(1+exp(y[i] *x.row(i)*w)[0]));
+	}
+	return out/x.n_rows;
 }
 
-void Heap::_mmap(unsigned int base, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapRegion toFind(base, base+size, time, caller, pid);
-
-    verprintf(1,("[%d] mmap(0x%08x, 0x%08x) [%lu]\n", regions.size(), base, size, time));
-    if (!size) return;
-
-	set<HeapRegion>::iterator a=regions.lower_bound(toFind);
-
-    if (a != regions.end()) {
-        --a;
-
-        // --a; verprintf(3,("mmap found -1: 0x%08x-0x%08x %lu %lu\n", a->base, a->top, a->allocTime, a->freeTime)); a++;
-             verprintf(2,("mmap found  0: 0x%08x-0x%08x %lu %lu\n", a->base, a->top, a->allocTime, a->freeTime));
-        // ++a; verprintf(3,("mmap found +1: 0x%08x-0x%08x %lu %lu\n", a->base, a->top, a->allocTime, a->freeTime)); a--;
-
-        if (a->contains(base-1)) {
-            // new starts inside old
-            if (a->contains(base+size-1)) {
-                // new contained in old, just return
-                verprintf(2,("Old Region included new region: 0x%08x-0x%08x [%lu]\n", a->base, a->top, a->allocTime));
-                return;
-            }
-            if (a->top < base+size) {
-                // new extends old
-                verprintf(2,("Extending up region at 0x%08x-0x%08x [%lu]\n", a->base, a->top, a->allocTime));
-                ((HeapRegion*)&*a)->setTop(base+size);
-                return;
-            }
-        } else if (a->contains(base+size)) {
-            if (a->contains(base)) {
-                // new contained in old, just return
-                verprintf(2,("Old Region included new region: 0x%08x-0x%08x [%lu]\n", a->base, a->top, a->allocTime));
-                return;
-            }
-            if (a->base > base) {
-                // new is right before old (new extends old to lower memory)
-                verprintf(2,("Extending down region at 0x%08x-0x%08x [%lu]\n", a->base, a->top, a->allocTime));
-                ((HeapRegion*)&*a)->setBase(base);
-                return;
-            }
-        }
-    }
-    regions.insert(toFind);
+arma::Col<double> new_w(arma::Col<double> w, double alpha, arma::Mat<double> x, arma::Col<short> y)
+{
+	return w - alpha*gradient(x, y, w);
 }
 
-void Heap::munmap(unsigned int base, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapRegion toFind(base, 0, time, caller, pid);
-
-    if (autoRegions) return;
-	verprintf(1,("[%d] munmap(0x%08x) [%lu]\n", pid, base, time));
-
+arma::Col<double> regression(arma::Col<double> w, double alpha, arma::Mat<double> x, arma::Col<short> y)
+{
+	int count = 0;
+	while (norm(gradient(x,y,w)) > pow(10,-7) & count <100000)
+	{
+		w = new_w(w, alpha, x, y);
+		count++;
+	}
+	return w;
 }
 
-void Heap::realloc(unsigned int base, unsigned int newBase, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller) {
-	verprintf(1,("[%d] realloc(0x%08x,0x%08x,0x%08x) [%lu]\n", pid, base, newBase, size, time));
-
-    free(base, time, pid, caller);
-    alloc(newBase, size, time, pid, caller);
-}
-
-void Heap::alloc(unsigned int base, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller, unsigned int dontRecurse) {
-    HeapRegion toFind(base, base+size, time, caller, pid);
-
-	verprintf(1,("[%d] alloc(%d) [%lu] = 0x%08x\n", pid, size, time, base));
-
-	set<HeapRegion>::iterator a=regions.lower_bound(toFind);
-
-    if (a != regions.end() && (--a)->contains(base)) {
-
-        // a--; verprintf(3,("region alloc found -1 (%d): 0x%08x-0x%08x %lu %lu\n", a->contains(base), a->base, a->top, a->allocTime, a->freeTime)); a++;
-             verprintf(2,("region alloc found  0 (%d): 0x%08x-0x%08x %lu %lu\n", a->contains(base), a->base, a->top, a->allocTime, a->freeTime));
-        // a++; verprintf(3,("region alloc found +1 (%d): 0x%08x-0x%08x %lu %lu\n", a->contains(base), a->base, a->top, a->allocTime, a->freeTime)); a--;
-
-        ((HeapRegion)(*a)).alloc(base, size, time, pid, caller);
-    } else {
-        if (autoRegions && !dontRecurse) {
-            _mmap(base-CHANGUI,(size+CHANGUI-1+CHANGUI)&~(CHANGUI-1),time,pid,caller);
-            alloc(base, size, time, pid, caller, 1);
-        } else {
-            verprintf(2,("alloc(0x%08x, 0x%08x) in loose region\n", base, size));
-            loose.alloc(base,size,time,pid,caller);
-        }
-    }
-}
-
-void Heap::free(unsigned int base, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapRegion toFind(base, 0, time, caller, pid);
-
-	verprintf(1,("[%d] free(0x%08x) [%lu]\n", toFind.pid, toFind.base,toFind.allocTime));
-
-	set<HeapRegion>::iterator a=regions.lower_bound(toFind);
-
-    if (a != regions.end() && (a--, a->contains(base))) {
-        verprintf(3,("region free found (%d): 0x%08x-0x%08x %lu %lu\n", a->contains(base), a->base, a->top, a->allocTime, a->freeTime));
-        ((HeapRegion)(*a)).free(base, time, pid, caller);
-    } else {
-        verprintf(2,("free(0x%08x) in loose region\n", base));
-        loose.free(base, time, pid, caller);
-    }
-}

@@ -1,148 +1,81 @@
-/*++
-Copyright (c) 2007 Microsoft Corporation
+#include <assert.h>
+#include <limits.h>
+#include <time.h>
 
-Module Name:
+#include <algorithm>
+#include <iostream>
+#include <vector>
 
-    stack.cpp
+class Node {
+public:
+	int value;
+	Node *next = NULL;
+};
 
-Abstract:
-    Low level stack (aka stack-based allocator).
+void bucket_sort(int array[], int sorted[], int len)
+{
+	const int BUCKET_NUM = 10;
+	Node *bucket = new Node[BUCKET_NUM];
+	// 1. determain number range for every bucket.
+	int max = INT_MIN;
+	for (int i = 0; i < len; i ++) {
+		if (array[i] > max) {
+			max = array[i];
+		}
+	}
 
-Author:
+	// 2. insert every input number into the right bucket and the right place of the number serial chain.
+	const int BUCKET_SIZE = max / BUCKET_NUM;
+	for (int i = 0; i < len; i ++) {
+		int bucket_index = array[i] / BUCKET_SIZE;
+		if (bucket_index >= BUCKET_NUM) {
+			bucket_index = BUCKET_NUM - 1;
+		}
+		Node *new_node = new Node();
+		new_node->value = array[i];
+		Node *insert_pos = bucket + bucket_index;
+		while (insert_pos->next != NULL && insert_pos->next->value < array[i]) {
+			insert_pos = insert_pos->next;
+		}
+		Node *next = insert_pos->next;
+		insert_pos->next = new_node;
+		new_node->next = next;
+	}
 
-    Leonardo (leonardo) 2011-02-27
-
-Notes:
-
---*/
-#include"stack.h"
-#include"page.h"
-#include"tptr.h"
-
-inline void stack::store_mark(size_t m) {
-    reinterpret_cast<size_t*>(m_curr_ptr)[0] = m;
-    m_curr_ptr += sizeof(size_t);
+	// 3. draw out the result iteratally into the 'sorted' array.
+	int cursor = 0;
+	for (int i = 0; i < BUCKET_NUM; i ++) {
+		Node *node = bucket + i;
+		while (node->next != NULL) {
+			sorted[cursor] = node->next->value;
+			cursor ++;
+			node = node->next;
+		}
+	}
 }
 
-inline size_t stack::top_mark() const {
-    return reinterpret_cast<size_t*>(m_curr_ptr)[-1];
+int main()
+{
+	srand(time(NULL));
+	const int ARRAY_LEN = 1000;
+	const int INT_RANGE = 100000;
+	int *array = new int[ARRAY_LEN];
+	int *sorted = new int[ARRAY_LEN];
+	for (int i = 0; i < ARRAY_LEN; i ++) {
+		array[i] = rand() % INT_RANGE;
+	}
+
+	// Sort in standard way
+	std::vector<int> v(array, array + ARRAY_LEN);
+	std::sort(v.begin(), v.end());
+
+	// Sort in our way
+	bucket_sort(array, sorted, ARRAY_LEN);
+
+	// Compare them
+	for (int i = 0; i < ARRAY_LEN; i ++)
+	{
+		//	std::cout << array[i] << ", ";
+		assert(v[i] == sorted[i]);
+	}
 }
-
-inline size_t ptr2mark(void * ptr, bool external) {
-    return reinterpret_cast<size_t>(ptr) | static_cast<size_t>(external);
-}
-
-#define MASK (static_cast<size_t>(-1) - 1)
-
-inline char * mark2ptr(size_t m) {
-    return reinterpret_cast<char *>(m & MASK);
-}
-
-inline bool external_ptr(size_t m) {
-    return static_cast<bool>(m & 1);
-}
-
-inline void stack::allocate_page(size_t m) {
-    m_curr_page     = allocate_default_page(m_curr_page, m_free_pages);
-    m_curr_ptr      = m_curr_page;
-    m_curr_end_ptr  = end_of_default_page(m_curr_page);
-    store_mark(m);
-}
-
-inline void stack::store_mark(void * ptr, bool external) {
-    SASSERT(m_curr_ptr < m_curr_end_ptr || m_curr_ptr == m_curr_end_ptr); // mem is aligned
-    if (m_curr_ptr + sizeof(size_t) > m_curr_end_ptr) {
-        SASSERT(m_curr_ptr == m_curr_end_ptr);
-        // doesn't fit in the current page
-        allocate_page(ptr2mark(ptr, external));
-    }
-    else {
-        store_mark(ptr2mark(ptr, external));
-    }
-}
-
-stack::stack() {
-    m_curr_page    = 0;
-    m_curr_ptr     = 0;
-    m_curr_end_ptr = 0;
-    m_free_pages   = 0;
-    allocate_page(0);
-    SASSERT(empty());
-}
-
-stack::~stack() {
-    reset();
-    del_pages(m_curr_page);
-    del_pages(m_free_pages);
-}
-
-void stack::reset() {
-    while(!empty())
-        deallocate();
-}
-
-void * stack::top() const {
-    SASSERT(!empty());
-    size_t m = top_mark();
-    void * r = mark2ptr(m);
-    if (external_ptr(m)) 
-        r = reinterpret_cast<void**>(r)[0];
-    return r;
-}
-
-void * stack::allocate_small(size_t size, bool external) {
-    SASSERT(size < DEFAULT_PAGE_SIZE);
-    char * new_curr_ptr = m_curr_ptr + size;
-    char * result;
-    if (new_curr_ptr < m_curr_end_ptr) {
-        result = m_curr_ptr;
-        m_curr_ptr = ALIGN(char *, new_curr_ptr);
-    }
-    else {
-        allocate_page(top_mark()); 
-        result = m_curr_ptr;
-        m_curr_ptr += size;
-        m_curr_ptr = ALIGN(char *, m_curr_ptr);
-    }
-    store_mark(result, external);
-    SASSERT(m_curr_ptr > m_curr_page);
-    SASSERT(m_curr_ptr <= m_curr_end_ptr);
-    return result;
-}
-
-void * stack::allocate_big(size_t size) {
-    char * r   = alloc_svect(char, size);
-    void * mem = allocate_small(sizeof(char*), true);
-    reinterpret_cast<char**>(mem)[0] = r;
-    SASSERT(m_curr_ptr > m_curr_page);
-    SASSERT(m_curr_ptr <= m_curr_end_ptr);
-    return r;
-}
-    
-void stack::deallocate() {
-    SASSERT(m_curr_ptr > m_curr_page);
-    SASSERT(m_curr_ptr <= m_curr_end_ptr);
-    size_t m = top_mark();
-    SASSERT(m != 0);
-    if (m_curr_ptr == m_curr_page + sizeof(size_t)) {
-        // mark is in the beginning of the page
-        char * prev = prev_page(m_curr_page);
-        recycle_page(m_curr_page, m_free_pages);
-        m_curr_page    = prev;
-        m_curr_ptr     = mark2ptr(m);
-        m_curr_end_ptr = end_of_default_page(m_curr_page);
-        SASSERT(m_curr_ptr >  m_curr_page);
-        SASSERT(m_curr_ptr <= m_curr_end_ptr);
-    }
-    else {
-        // mark is in the middle of the page
-        m_curr_ptr = mark2ptr(m);
-        SASSERT(m_curr_ptr < m_curr_end_ptr);
-    }
-    if (external_ptr(m)) {
-        dealloc_svect(reinterpret_cast<char**>(m_curr_ptr)[0]);
-    }
-    SASSERT(m_curr_ptr > m_curr_page);
-}
-
-

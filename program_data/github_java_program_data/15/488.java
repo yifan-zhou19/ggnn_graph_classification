@@ -1,208 +1,113 @@
-/*
- * Minecraft Forge
- * Copyright (c) 2016-2018.
+/*************************************************************************
+ *  Compilation:  javac Heap.java
+ *  Execution:    java Heap < input.txt
+ *  Dependencies: StdOut.java StdIn.java
+ *  Data files:   http://algs4.cs.princeton.edu/24pq/tiny.txt
+ *                http://algs4.cs.princeton.edu/24pq/words3.txt
+ *  
+ *  Sorts a sequence of strings from standard input using heapsort.
  *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation version 2.1
- * of the License.
+ *  % more tiny.txt
+ *  S O R T E X A M P L E
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
+ *  % java Heap < tiny.txt
+ *  A E E L M O P R S T X                 [ one string per line ]
  *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- */
-
-package net.minecraftforge.fml.common.toposort;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
-
-import net.minecraftforge.fml.common.FMLLog;
-
-import com.google.common.collect.Sets;
-import com.google.common.collect.Sets.SetView;
+ *  % more words3.txt
+ *  bed bug dad yes zoo ... all bad yet
+ *
+ *  % java Heap < words3.txt
+ *  all bad bed bug dad ... yes yet zoo   [ one string per line ]
+ *
+ *************************************************************************/
 
 /**
- * Topological sort for mod loading
+ *  The <tt>Heap</tt> class provides a static methods for heapsorting
+ *  an array.
+ *  <p>
+ *  For additional documentation, see <a href="http://algs4.cs.princeton.edu/24pq">Section 2.4</a> of
+ *  <i>Algorithms, 4th Edition</i> by Robert Sedgewick and Kevin Wayne.
  *
- * Based on a variety of sources, including http://keithschwarz.com/interesting/code/?dir=topological-sort
- * @author cpw
- *
+ *  @author Robert Sedgewick
+ *  @author Kevin Wayne
  */
-public class TopologicalSort
-{
-    public static class DirectedGraph<T> implements Iterable<T>
-    {
-        private final Map<T, SortedSet<T>> graph = new HashMap<T, SortedSet<T>>();
-        private List<T> orderedNodes = new ArrayList<T>();
+public class Heap {
 
-        public boolean addNode(T node)
-        {
-            // Ignore nodes already added
-            if (graph.containsKey(node))
-            {
-                return false;
-            }
+    // This class should not be instantiated.
+    private Heap() { }
 
-            orderedNodes.add(node);
-            graph.put(node, new TreeSet<T>(Comparator.comparingInt(o -> orderedNodes.indexOf(o))));
-            return true;
+    /**
+     * Rearranges the array in ascending order, using the natural order.
+     * @param pq the array to be sorted
+     */
+    public static void sort(Comparable[] pq) {
+        int N = pq.length;
+        for (int k = N/2; k >= 1; k--)
+            sink(pq, k, N);
+        while (N > 1) {
+            exch(pq, 1, N--);
+            sink(pq, 1, N);
         }
+    }
 
-        public void addEdge(T from, T to)
-        {
-            if (!(graph.containsKey(from) && graph.containsKey(to)))
-            {
-                throw new NoSuchElementException("Missing nodes from graph");
-            }
+   /***********************************************************************
+    * Helper functions to restore the heap invariant.
+    **********************************************************************/
 
-            graph.get(from).add(to);
+    private static void sink(Comparable[] pq, int k, int N) {
+        while (2*k <= N) {
+            int j = 2*k;
+            if (j < N && less(pq, j, j+1)) j++;
+            if (!less(pq, k, j)) break;
+            exch(pq, k, j);
+            k = j;
         }
+    }
 
-        public void removeEdge(T from, T to)
-        {
-            if (!(graph.containsKey(from) && graph.containsKey(to)))
-            {
-                throw new NoSuchElementException("Missing nodes from graph");
-            }
+   /***********************************************************************
+    * Helper functions for comparisons and swaps.
+    * Indices are "off-by-one" to support 1-based indexing.
+    **********************************************************************/
+    private static boolean less(Comparable[] pq, int i, int j) {
+        return pq[i-1].compareTo(pq[j-1]) < 0;
+    }
 
-            graph.get(from).remove(to);
-        }
+    private static void exch(Object[] pq, int i, int j) {
+        Object swap = pq[i-1];
+        pq[i-1] = pq[j-1];
+        pq[j-1] = swap;
+    }
 
-        public boolean edgeExists(T from, T to)
-        {
-            if (!(graph.containsKey(from) && graph.containsKey(to)))
-            {
-                throw new NoSuchElementException("Missing nodes from graph");
-            }
+    // is v < w ?
+    private static boolean less(Comparable v, Comparable w) {
+        return (v.compareTo(w) < 0);
+    }
+        
 
-            return graph.get(from).contains(to);
-        }
+   /***********************************************************************
+    *  Check if array is sorted - useful for debugging
+    ***********************************************************************/
+    private static boolean isSorted(Comparable[] a) {
+        for (int i = 1; i < a.length; i++)
+            if (less(a[i], a[i-1])) return false;
+        return true;
+    }
 
-        public Set<T> edgesFrom(T from)
-        {
-            if (!graph.containsKey(from))
-            {
-                throw new NoSuchElementException("Missing node from graph");
-            }
 
-            return Collections.unmodifiableSortedSet(graph.get(from));
-        }
-        @Override
-        public Iterator<T> iterator()
-        {
-            return orderedNodes.iterator();
-        }
-
-        public int size()
-        {
-            return graph.size();
-        }
-
-        public boolean isEmpty()
-        {
-            return graph.isEmpty();
-        }
-
-        @Override
-        public String toString()
-        {
-            return graph.toString();
+    // print array to standard output
+    private static void show(Comparable[] a) {
+        for (int i = 0; i < a.length; i++) {
+            StdOut.println(a[i]);
         }
     }
 
     /**
-     * Sort the input graph into a topologically sorted list
-     *
-     * Uses the reverse depth first search as outlined in ...
-     * @param graph
-     * @return The sorted mods list.
+     * Reads in a sequence of strings from standard input; heapsorts them; 
+     * and prints them to standard output in ascending order. 
      */
-    public static <T> List<T> topologicalSort(DirectedGraph<T> graph)
-    {
-        DirectedGraph<T> rGraph = reverse(graph);
-        List<T> sortedResult = new ArrayList<T>();
-        Set<T> visitedNodes = new HashSet<T>();
-        // A list of "fully explored" nodes. Leftovers in here indicate cycles in the graph
-        Set<T> expandedNodes = new HashSet<T>();
-
-        for (T node : rGraph)
-        {
-            explore(node, rGraph, sortedResult, visitedNodes, expandedNodes);
-        }
-
-        return sortedResult;
-    }
-
-    public static <T> DirectedGraph<T> reverse(DirectedGraph<T> graph)
-    {
-        DirectedGraph<T> result = new DirectedGraph<T>();
-
-        for (T node : graph)
-        {
-            result.addNode(node);
-        }
-
-        for (T from : graph)
-        {
-            for (T to : graph.edgesFrom(from))
-            {
-                result.addEdge(to, from);
-            }
-        }
-
-        return result;
-    }
-
-    public static <T> void explore(T node, DirectedGraph<T> graph, List<T> sortedResult, Set<T> visitedNodes, Set<T> expandedNodes)
-    {
-        // Have we been here before?
-        if (visitedNodes.contains(node))
-        {
-            // And have completed this node before
-            if (expandedNodes.contains(node))
-            {
-                // Then we're fine
-                return;
-            }
-
-            FMLLog.log.fatal("Mod Sorting failed.");
-            FMLLog.log.fatal("Visiting node {}", node);
-            FMLLog.log.fatal("Current sorted list : {}", sortedResult);
-            FMLLog.log.fatal("Visited set for this node : {}", visitedNodes);
-            FMLLog.log.fatal("Explored node set : {}", expandedNodes);
-            SetView<T> cycleList = Sets.difference(visitedNodes, expandedNodes);
-            FMLLog.log.fatal("Likely cycle is in : {}", cycleList);
-            throw new ModSortingException("There was a cycle detected in the input graph, sorting is not possible", node, cycleList);
-        }
-
-        // Visit this node
-        visitedNodes.add(node);
-
-        // Recursively explore inbound edges
-        for (T inbound : graph.edgesFrom(node))
-        {
-            explore(inbound, graph, sortedResult, visitedNodes, expandedNodes);
-        }
-
-        // Add ourselves now
-        sortedResult.add(node);
-        // And mark ourselves as explored
-        expandedNodes.add(node);
+    public static void main(String[] args) {
+        String[] a = StdIn.readAllStrings();
+        Heap.sort(a);
+        show(a);
     }
 }

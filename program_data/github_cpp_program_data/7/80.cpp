@@ -1,66 +1,35 @@
-// RUN: %clang_cc1 -fsyntax-only %s
+//Pranav Sharma//
+//“You don't have to be great to start, but you have to start to be great.”
+//The Tower of Hanoi is a mathematical game or puzzle. It consists of three rods and a number of disks of different sizes, which can slide onto any rod. The puzzle starts with the disks in a neat stack in ascending order of size on one rod, the smallest at the top, thus making a conical shape.
+// The objective of the puzzle is to move the entire stack to another rod, obeying the following simple rules:
+// Only one disk can be moved at a time.
+// Each move consists of taking the upper disk from one of the stacks and placing it on top of another stack or on an empty rod.
+// No disk may be placed on top of a smaller disk.
+#include <iostream>
+#include <conio.h>
+using namespace std;
 
-template<unsigned I>
-struct FibonacciEval;
+void TowerOfHanoi(int n, char src,char help, char dest){
+	if(n==0){
+		return;
+	}
+	TowerOfHanoi(n-1, src,dest,help);
+	cout<<"Move disk "<<n<<" from "<<src<<" to "<<dest<<endl;
+	TowerOfHanoi(n-1,help,src,dest);
+}
 
-template<unsigned I>
-struct Fibonacci {
-  enum { value = FibonacciEval<I-1>::value + FibonacciEval<I-2>::value };
-};
-
-template<unsigned I>
-struct FibonacciEval {
-  enum { value = Fibonacci<I>::value };
-};
-
-template<> struct Fibonacci<0> {
-  enum { value = 0 };
-};
-
-template<> struct Fibonacci<1> {
-  enum { value = 1 };
-};
-
-int array5[Fibonacci<5>::value == 5? 1 : -1];
-int array10[Fibonacci<10>::value == 55? 1 : -1];
-
-template<unsigned I>
-struct FibonacciEval2;
-
-template<unsigned I>
-struct Fibonacci2 {
-  static const unsigned value 
-    = FibonacciEval2<I-1>::value + FibonacciEval2<I-2>::value;
-};
-
-template<unsigned I>
-struct FibonacciEval2 {
-  static const unsigned value = Fibonacci2<I>::value;
-};
-
-template<> struct Fibonacci2<0> {
-  static const unsigned value = 0;
-};
-
-template<> struct Fibonacci2<1> {
-  static const unsigned value = 1;
-};
-
-int array5_2[Fibonacci2<5>::value == 5? 1 : -1];
-int array10_2[Fibonacci2<10>::value == 55? 1 : -1];
-
-template<unsigned I>
-struct Fibonacci3 {
-  static const unsigned value = Fibonacci3<I-1>::value + Fibonacci3<I-2>::value;
-};
-
-template<> struct Fibonacci3<0> {
-  static const unsigned value = 0;
-};
-
-template<> struct Fibonacci3<1> {
-  static const unsigned value = 1;
-};
-
-int array5_3[Fibonacci3<5>::value == 5? 1 : -1];
-int array10_3[Fibonacci3<10>::value == 55? 1 : -1];
+int steps(int n){
+	if(n==0){
+		return 0;
+	}
+	return 2*steps(n-1)+1;
+}
+int main(){
+	int n;
+	cin>>n;
+	TowerOfHanoi(3, 'A' , 'B' , 'C');
+	cout<<steps(n)<<endl;
+//Your code comes here.
+	getch();
+	return 0;
+}

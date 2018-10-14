@@ -1,88 +1,98 @@
-/* 
- * File:   LinearRegression.cpp
- * Author: rodrigo
- * 
- * Created on 4 de Novembro de 2015, 10:42
- */
+#include <iostream>
+#include <vector>
+#include <list>
+#include <map>
+#include <cassert>
+#include <stack>
+#include <cstdio>
+#include <climits>
+#include <algorithm>
+#include <set>
 
-#include <string>
-#include "LinearRegression.h"
-#include "Logger.h"
+using namespace std;
 
-LinearRegression::LinearRegression(float learning_rate, float regularization_factor, int hash_size) 
+#define DEBUG 10
+
+#define REP(i, a, b) for (long long i = (ll)a; i < (ll)b; i++)
+#define REPE(i, a, b) for (long long i = (ll)a; i <= (ll)b; i++)
+#define REPD(i, a, b) for (long long i = (ll)a; i >= (ll)b; i--)
+#define ll long long
+#define vl vector<long long>
+#define vll vector<vector<long long>>
+#define vi vector<int>
+#define vii vector<vector<int>>
+
+int main(void)
 {
-    alpha = learning_rate;
-    lambda = regularization_factor;
-    hash_space = hash_size;
-    helper_sum = new float[hash_space];
-    weights = new float[hash_space];
-}
+    std::ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    long long testcases = 1;
+    // cin >> testcases;
+    REP(testcase, 0, testcases)
+    {
+#if DEBUG == 1
+        cout << "*********testcase " << testcase << " ************" << endl;
+#endif
+        int n;
+        cin>>n;
+        string s, t;
+        cin >> s;
+        t = s;
+        int m = INT_MIN;
+        n = s.length();
+        reverse(t.begin(), t.end());
+        vii dp(2, vi(n, 0));
+// cout << s << "\t" << t << endl;
+// REP(i, 0, n)
+// dp[i][0] = s[0] == t[i] ? 1 : 0;
+// REP(i, 0, n)
+// dp[0][i] = t[0] == s[i] ? 1 : 0;
 
-void LinearRegression::train(int epochs, training_data * x)
-{
-    int rows = x->length;
-    float cost_function = 0;
-    for(int epoch =1; epoch<= epochs; epoch++)
-    {        
-        for(int row = 0; row< rows; row++)
+#if DEBUG == 1
+
+#endif
+        REP(i, 0, n)
         {
-            training_instance * instance = x->instances + row;
-            float y = *(x->values + row);
-            float prediction = predict(instance);
-            float instance_error = prediction - y;
-            
-            cost_function += instance_error * instance_error;
-            
-            update(instance, instance_error);
+            dp[1][0] = max(dp[0][0],s[0] == t[i] ? 1 :0);
+            REP(j, 1, n)
+            {
+
+                if (s[j] == t[i])
+                {
+                    // cout<<s[j]<<" ";
+                    dp[1][j] = dp[0][j - 1] + 1;
+                }
+                else
+                    dp[1][j] = max(dp[0][j], dp[1][j - 1]);
+                m = max(dp[1][j], m);
+            }
+            dp[0] = dp[1];
+            fill(dp[1].begin(), dp[1].end(), 0);
+            // dp[1][0] = max(dp[0][0],s[i+1]==t[;
+            // dp[1][0] = dp[0][0];
+
+#if DEBUG == 1
+
+            REP(j, 0, n)
+                cout << dp[0][j] << "\t";
+            cout << endl;
+#endif
         }
-        
-        weights[0] = weights[0] - (alpha/rows*helper_sum[0]); //biased term
-        
-        float weights_cost = 0;
-        for(auto iterator = used_indices.begin(); iterator != used_indices.end(); iterator ++)
-        {
-            int index = * iterator;            
-            weights_cost += weights[index] * weights[index];
-            weights[index] = weights[index] * (1-alpha*lambda/rows) - (alpha*helper_sum[index]/rows);            
-        }  
-        
-        cost_function += lambda * weights_cost;
-        cost_function = cost_function/(2*rows);
-        
-        char text[80];
-        sprintf(text, "Epoch = %d ; Cost Function = %f",epoch,cost_function);
-        
-        Logger::Log(std::string(text));
-        helper_sum = new float[hash_space];        
-    }
-}
+        // cout<<endl;
+        cout << n - m << endl;
 
-void LinearRegression::update(training_instance * instance, float instance_prediction_error)
-{
-    helper_sum[0] = instance_prediction_error;//biased term
-    for(int i = 0; i < instance->features->size(); i++ )
-    {
-        int index = hash_trick(instance->features[i]);
-        helper_sum[index] += instance_prediction_error * instance->feature_values[index];
-        used_indices.insert(index);
-    }
-}
+#if DEBUG == 1
+        // cout << s << endl;
+        // REP(i, 0, n)
+        // {
+        //     REP(j, 0, n)
+        //     cout << dp[0][j] << "\t";
+        //     cout << endl;
+        // }
 
-float LinearRegression::predict(training_instance * x)
-{
-    float result = weights[0];//biased term
-    for(int i = 0; i < x->features->size(); i++ )
-    {
-        int index = hash_trick(x->features[i]);
-        result += weights[index] * x->feature_values[index];
+        // cout << endl;
+#endif
     }
-    return result;
-}
-int LinearRegression::hash_trick(std::string feature)
-{
-    return std::hash<std::string>()(feature) % hash_space;
-}
-LinearRegression::~LinearRegression() 
-{
-}
 
+    return 0;
+}

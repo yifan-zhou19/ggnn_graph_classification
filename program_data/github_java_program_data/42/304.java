@@ -1,113 +1,82 @@
-package com.curioustake.sftm.activity;
-
-import com.curioustake.sftm.utils.DataValidator;
-import com.curioustake.sftm.utils.RandomDataGenerator;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-
 /**
- * Purpose : Sort a given input
+ * Laura Davis CIS 260 903
+ * This program demonstrates the selection sort algorithm for an array.
  *
- * Details: Non-Comparison sort "MOSTLY"
- *
- * Complexity (Time): O(n log (n))
- * */
+ */
+public class JavaSelectionSort 
+{
+	public static void main(String[] args)
+	{
+		int[] values = {5, 7, 2, 8, 9, 1};
+		
+		//print the unsorted array
+		System.out.println("The unsorted values: ");
+		for (int i = 0; i < values.length; i++)
+		{
+			System.out.print(values[i] + " ");
+		}
+		System.out.println();
+		
+		//sort the array
+		selectionSort(values);
+		
+		//print the sorted array
+		System.out.println("The sorted values: ");
+		for (int i = 0; i < values.length; i++)
+		{
+			System.out.print(values[i] + " ");
+		}
+		System.out.println();
+		
+		lowest(values);
+		
+	}//end of main
+	
+	/**
+	 * The selectionSort method finds the lowest value in the nested for loop 
+	 * and then sorts them with each iteration or the main for loop. 
+	 * @param array
+	 */
+	public static void selectionSort(int[] array)
+	{
+		int startScan, index, minIndex, minValue;
+		
+		for (startScan = 0; startScan < (array.length-1); startScan++)
+			{
+				minIndex = startScan;
+				minValue = array[startScan];
+				
+				for (index = startScan + 1; index < array.length; index++)
+				{			
+					if (array[index] < minValue)
+					{
+						minValue = array[index];
+						minIndex = index;
+					}//end if
+					
+				}//end nested for
+	
+				//reset minIndex to startScan (0) and sets minValue to the first box in the array
+				array[minIndex] = array[startScan];
+				array[startScan] = minValue;
+				
+			}//end main for
+		
+	}//end of selectionSort
+	
+	public static void lowest(int[] values)
+	{
+		int lowest = values[0];
 
-public class P23_BucketSort implements Activity {
+		for (int i = 1; i < values.length; i++)
+		{
+			if (values[i] < lowest)
+			{
+				lowest = values[i];
+			}
+		}
+		System.out.println("The lowest value is: " + lowest);
+	}
 
-    enum SORT_ORDER { ASCENDING, DESCENDING}
-
-    public void invoke(String[] args) {
-        System.out.println( "Execute => " + Arrays.toString(args) );
-
-        final int count = Integer.parseInt(args[1]);
-        final int max = Integer.parseInt(args[2]);
-        final boolean printResults = Boolean.parseBoolean(args[3]);
-
-        Integer[] original = RandomDataGenerator.getRandomIntegerArray(count, max, printResults);
-
-        if(count <= 1) {
-            System.out.println("INPUT SIZE TO SMALL ");
-            return;
-        }
-
-        // BUCKET SORT ASCENDING
-        Integer[] inputAsc = original.clone();
-        Integer[] outputAsc = sort(inputAsc, SORT_ORDER.ASCENDING);
-        System.out.println("\n###################### BUCKET SORT validateSortAscending ##############################");
-        System.out.println("\nBUCKET SORT ASCENDING SUCCESSFUL? [" + DataValidator.validateSortAscending(original, outputAsc, printResults) + "]\n");
-        System.out.println("############################################################################################\n");
-
-        // BUCKET SORT DESCENDING
-        Integer[] inputDesc = original.clone();
-        Integer[] outputDesc = sort(inputDesc, SORT_ORDER.DESCENDING);
-        System.out.println("\n###################### BUCKET SORT validateSortDescending #############################");
-        System.out.println("\nBUCKET SORT DESCENDING SUCCESSFUL? [" + DataValidator.validateSortDescending(original, outputDesc, printResults) + "]\n");
-        System.out.println("############################################################################################\n");
-    }
-
-    private Integer[] sort(Integer[] input, SORT_ORDER sortOrder) {
-
-        if(input.length <= 1)
-            return input;
-
-        final Integer max = Arrays.stream(input).max(Integer::compareTo).get();
-
-        final int maxFactor = getMaxFactor(max);
-
-        final List<List<Integer>> buckets = new ArrayList<>();
-
-        final int maxBucketSize = max/maxFactor;
-
-        for(int i=0; i<=maxBucketSize; i++)
-            buckets.add(new ArrayList<>());
-
-        for(int i=0; i<input.length; i++) {
-            int bucketId = input[i]/maxFactor;
-            buckets.get(bucketId).add(input[i]);
-        }
-
-        for(int i=0; i<buckets.size(); i++) {
-            if(input.length == buckets.get(i).size()) {
-                if(sortOrder.equals(SORT_ORDER.ASCENDING))
-                    Arrays.sort(input);
-                else
-                    Arrays.sort(input, Comparator.reverseOrder());
-                return input;
-            }
-
-            buckets.set(i, Arrays.asList(sort(buckets.get(i).stream().toArray(Integer[]::new), sortOrder)));
-        }
-        return order(buckets, sortOrder);
-    }
-
-    private int getMaxFactor(Integer max) {
-        int maxFactor = 10;
-        while((max/maxFactor) > 10)
-            maxFactor*=10;
-        return maxFactor;
-    }
-
-    private Integer[] order(final List<List<Integer>> sortedBuckets , SORT_ORDER sortOrder) {
-        List<Integer> output = new ArrayList<>();
-        switch (sortOrder) {
-            case ASCENDING:
-                sortedBuckets.stream().forEach(b -> output.addAll(b));
-                break;
-            case DESCENDING:
-                int index = 0;
-                for(int i=sortedBuckets.size()-1; i>=0; i--) {
-                    output.addAll(index, sortedBuckets.get(i));
-                    index = index + sortedBuckets.get(i).size();
-                }
-                break;
-            default:
-                throw new RuntimeException("Invalid sort Order");
-        }
-        return output.toArray(new Integer[output.size()]);
-    }
-}
+}//end of class
 

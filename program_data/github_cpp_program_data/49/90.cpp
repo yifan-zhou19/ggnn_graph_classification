@@ -1,226 +1,110 @@
 /*
- * author: Moenika Chowdhury
- * date: December 4th, 2017
- * pledge: I pledge my honor that I've abided by the Stevens honor system.
- * -moenika chowdhury
+ * Copyright 2012, The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
-#include <iostream>
-#include <sstream>
-#include <vector>
-#include <string>
-#include <fstream>
+#define LOG_NDEBUG 1
+#define LOG_TAG "LinearRegression"
+#include <utils/Log.h>
 
-using namespace std;
+#include <wifidisplay/LinearRegression.h>
 
-//Using structs to make this readable per instructions
+#include <math.h>
+#include <string.h>
 
-struct Item { //in the instructions
-	unsigned int item_number, weight, value;
-	string description;
+namespace android {
 
-	explicit Item(const unsigned int item_number, const unsigned int weight,
-			const unsigned int value, const string &description) :
-		item_number(item_number), weight(weight), value(value),
-				description(description) {
-	}
-
-	friend std::ostream& operator<<(std::ostream& os, const Item &item) {
-		os << "Item " << item.item_number << ": " << item.description << " ("
-				<< item.weight << (item.weight == 1 ? " pound" : " pounds")
-				<< ", $" << item.value << ")";
-		os.flush();
-		return os;
-	}
-};
-
-void print_used(vector<Item> used) { //this function gets the items going inside the inventory
-	unsigned int weight = 0;
-	unsigned int value = 0;
-
-	cout << "Items to place in knapsack:"; //output
-	if (used.size() < 1) { //if there are less than one in size then no items go in knap
-
-		cout << " None" << endl;
-	} else {
-
-		cout << endl;
-	}
-	for (int i = used.size() - 1; i >= 0; i--) { //assigning weight and value arrays
-		weight = weight + used[i].weight;
-		value = value + used[i].value;
-		cout << "   " << used[i] << endl;
-	}
-	cout << "Total weight: " << weight;
-	if (weight == 1) { //outputting correctly due to "s"
-		cout << " pound";
-	} else {
-		cout << " pounds";
-	}
-	cout << endl;
-	cout << "Total value : $" << value << endl;
+LinearRegression::LinearRegression(size_t historySize)
+    : mHistorySize(historySize),
+      mCount(0),
+      mHistory(new Point[mHistorySize]),
+      mSumX(0.0),
+      mSumY(0.0) {
 }
 
-void search_used(int capacity, vector<Item> inv, int** arr) { //this searches for items already in the inventory
-	int i = inv.size();
-	int j = capacity;
-
-	vector<Item> used; //this needs to be a vector for adding elements
-	while (i > 0 && j > 0) {
-		if (arr[i][j] != arr[i - 1][j]) {
-			used.push_back(inv[i - 1]); //adds element to the end of vector used
-			j -= inv[i - 1].weight;
-			i--;
-
-		} else {
-			i--;
-		}
-	}
-
-	print_used(used); //need to call print used to check for duplicates
+LinearRegression::~LinearRegression() {
+    delete[] mHistory;
+    mHistory = NULL;
 }
 
-void print_inventory(int capacity, vector<Item> inv) { //formatting the print
-	cout << "Candidate items to place in knapsack:" << endl;
-	for (unsigned int i = 0; i < inv.size(); i++) {
-		cout << "   " << inv[i] << endl;
-	}
-	cout << "Capacity: " << capacity;
-	if (capacity == 1) {
-		cout << " pound";
-	} else {
-		cout << " pounds";
-	}
-	cout << endl;
+void LinearRegression::addPoint(float x, float y) {
+    if (mCount == mHistorySize) {
+        const Point &oldest = mHistory[0];
+
+        mSumX -= oldest.mX;
+        mSumY -= oldest.mY;
+
+        memmove(&mHistory[0], &mHistory[1], (mHistorySize - 1) * sizeof(Point));
+        --mCount;
+    }
+
+    Point *newest = &mHistory[mCount++];
+    newest->mX = x;
+    newest->mY = y;
+
+    mSumX += x;
+    mSumY += y;
 }
 
-void knapsack(int capacity, vector<Item> inv) { //knapsack alg
-	unsigned int cap = capacity;
-	int **arr = new int*[inv.size() + 1]; //building the table to go through the inventory
-	for (unsigned int i = 0; i < inv.size() + 1; i++) {
-		arr[i] = new int[capacity + 1];
+bool LinearRegression::approxLine(float *n1, float *n2, float *b) const {
+    static const float kEpsilon = 1.0E-4;
 
-		for (unsigned int j = 0; j < cap + 1; j++) { //first base case
-			if (j == 0 || i == 0) {
-				arr[i][j] = 0;
-			} else { //the item isn't included if the weight of the nth item > knapsack capacity
-				if (j < inv[i - 1].weight) {
-					arr[i][j] = arr[i - 1][j];
-				} else {
+    if (mCount < 2) {
+        return false;
+    }
 
-					//implementing useit and loseit
-					int useit = inv[i - 1].value + arr[i - 1][j
-							- inv[i - 1].weight];//with nth item
-					int loseit = arr[i - 1][j]; //without nth item
+    float sumX2 = 0.0f;
+    float sumY2 = 0.0f;
+    float sumXY = 0.0f;
 
-					if (useit > loseit) { //gets the max of both
-						arr[i][j] = useit;
-					} else {
-						arr[i][j] = loseit;
-					}
-				}
-			}
-		}
-	}
+    float meanX = mSumX / (float)mCount;
+    float meanY = mSumY / (float)mCount;
 
-	search_used(capacity, inv, arr); //calling search_used to make sure of no dupes
+    for (size_t i = 0; i < mCount; ++i) {
+        const Point &p = mHistory[i];
 
-	for (unsigned int k = 0; k < inv.size() + 1; k++) {
-		delete[] arr[k];
-	}
+        float x = p.mX - meanX;
+        float y = p.mY - meanY;
 
-	delete[] arr;
+        sumX2 += x * x;
+        sumY2 += y * y;
+        sumXY += x * y;
+    }
+
+    float T = sumX2 + sumY2;
+    float D = sumX2 * sumY2 - sumXY * sumXY;
+    float root = sqrt(T * T * 0.25 - D);
+
+    float L1 = T * 0.5 - root;
+
+    if (fabs(sumXY) > kEpsilon) {
+        *n1 = 1.0;
+        *n2 = (2.0 * L1 - sumX2) / sumXY;
+
+        float mag = sqrt((*n1) * (*n1) + (*n2) * (*n2));
+
+        *n1 /= mag;
+        *n2 /= mag;
+    } else {
+        *n1 = 0.0;
+        *n2 = 1.0;
+    }
+
+    *b = (*n1) * meanX + (*n2) * meanY;
+
+    return true;
 }
 
-int main(int argc, char * const argv[]) { //error checking
-
-	if (argc != 3) { //error checking if there are no arguments
-		cerr << "Usage: ./knapsack <capacity> <filename>" << endl;
-		return 1;
-	}
-
-	istringstream iss(argv[1]);
-	int cap;
-
-	if (!(iss >> cap)) { //checking if the capacity is valid
-		cerr << "Error: Bad value '" << argv[1] << "' for capacity." << endl;
-		return 1;
-	}
-
-	if (cap < 0) { //checking for negative numbers
-		cerr << "Error: Bad value '" << cap << "' for capacity." << endl;
-		return 1;
-	}
-
-	ifstream file(argv[2]); //checking if there is a file to open
-	if (!(file.is_open())) {
-		cerr << "Error: Cannot open file '" << argv[2] << "'." << endl;
-		return 1;
-	}
-
-	vector<Item> inv;
-	string curr, description, temp;
-	stringstream ss;
-	int i = 1, weight, value, pos = 0;
-
-	while (getline(file, curr)) {
-
-		temp = curr;
-		if ((pos = temp.find(",")) == -1) {
-			cerr << "Error: Line number " << i << " does not contain 3 fields."
-					<< endl;
-			return 1;
-		}
-		temp = curr;
-		temp.erase(0, pos + 1);
-
-		if ((pos = temp.find(",")) == -1) {
-			cerr << "Error: Line number " << i << " does not contain 3 fields."
-					<< endl;
-			return 1;
-		}
-
-		temp.erase(0, pos + 1);
-
-		if ((pos = temp.find(",")) > -1) {
-			cerr << "Error: Line number " << i << " does not contain 3 fields."
-					<< endl;
-			return 1;
-		}
-
-		pos = curr.find(",");
-		description = curr.substr(0, pos);
-		curr.erase(0, pos + 1);
-		pos = curr.find(",");
-		temp = curr.substr(0, pos);
-		ss << temp;
-
-		if (!(ss >> weight) || weight <= 0) {
-			cerr << "Error: Invalid weight '" << temp << "' on line number "
-					<< i << "." << endl;
-			return 1;
-		}
-
-		curr.erase(0, pos + 1);
-		ss.clear();
-		temp = curr;
-		ss << temp;
-
-		if (!(ss >> value) || value < 0) {
-			cerr << "Error: Invalid value '" << temp << "' on line number "
-					<< i << "." << endl;
-			return 1;
-		}
-
-		Item item(i, weight, value, description);
-		inv.push_back(item);
-		ss.clear();
-		i++;
-	}
-
-	//prints inventory with calling the knapsack function
-	print_inventory(cap, inv);
-	knapsack(cap, inv);
-	return 0;
-}
+}  // namespace android
 

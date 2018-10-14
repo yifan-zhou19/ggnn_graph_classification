@@ -1,24 +1,42 @@
-//============================================================================
-// Name        : insertion-sort.cpp
-// Author      : Benjamin Sullivan
-// Date        :
-// Copyright   : 
-// Description : Implementation of insertion sort in C++
-//============================================================================
 
-#include "sort.h"
+//          Copyright Oliver Kowalke 2009.
+// Distributed under the Boost Software License, Version 1.0.
+//    (See accompanying file LICENSE_1_0.txt or copy at
+//          http://www.boost.org/LICENSE_1_0.txt)
 
-void InsertionSort::sort(int A[], int size){
-	for (int k = 1; k < size; k++ ){
-		int tmp = A[k], j = k;
-		if(tmp >= A[j-1])
-			++num_cmps;
-		for( ; j > 0 && tmp < A[j-1]; j--)
-		{
-			++num_cmps;
-			A[j] = A[j-1];	//<-Add ++num_cmps; here?
-		}
-		A[j] = tmp;
-	}
+#include <cstdlib>
+#include <iostream>
+
+#include <boost/range.hpp>
+#include <boost/coroutine/all.hpp>
+
+void fibonacci( boost::coroutines::asymmetric_coroutine< int >::push_type & sink)
+{
+    int first = 1, second = 1;
+    sink( first);     
+    sink( second);     
+    while ( true)
+    {
+        int third = first + second;
+        first = second;
+        second = third;
+        sink( third);     
+    }
 }
-/*Added Algorithm*/
+
+int main()
+{
+    boost::coroutines::asymmetric_coroutine< int >::pull_type source( fibonacci);
+    boost::range_iterator<
+       boost::coroutines::asymmetric_coroutine< int >::pull_type
+    >::type   it( boost::begin( source) );
+    for ( int i = 0; i < 10; ++i)
+    {
+        std::cout << * it <<  " ";
+        ++it;
+    }
+
+    std::cout << "\nDone" << std::endl;
+
+    return EXIT_SUCCESS;
+}

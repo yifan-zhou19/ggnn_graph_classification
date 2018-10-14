@@ -1,45 +1,35 @@
-package homework10;
+class selection-sort{
+public static int findMin(int[] array, int index)
+{
+    int min = index - 1;
+    if (index < array.length - 1)
+        min = findMin(array, index + 1);
+    if (array[index] < array[min])
+        min = index;
+    return min;
+}
 
-import java.util.Arrays;
+public static void selectionSort(int[] array)
+{
+    selectionSort(array, 0);
+}
 
-public class BucketSort {
+public static void selectionSort(int[] array, int left)
+{
+    if (left < array.length - 1)
+    {
+        swap(array, left, findMin(array, left));
+        selectionSort(array, left+1);
+    }
+}
 
-	public static void sort(int[] arr) {
-		int maxVal = getMaxVal(arr);
-		int[] bucket = new int[maxVal + 1];
+public static void swap(int[] array, int index1, int index2)
+{
+    int temp = array[index1];
+    array[index1] = array[index2];
+    array[index2] = temp;
+}
 
-		for (int i = 0; i < bucket.length; i++) {
-			bucket[i] = 0;
-		}
 
-		for (int i = 0; i < arr.length; i++) {
-			bucket[arr[i]]++;
-		}
-
-		int outPos = 0;
-		for (int i = 0; i < bucket.length; i++) {
-			for (int j = 0; j < bucket[i]; j++) {
-				arr[outPos++] = i;
-			}
-		}
-	}
-
-	private static int getMaxVal(int[] arr) {
-		int maxVal = arr[0];
-		for (int i = 1; i < arr.length; i++) {
-			if (arr[i] > maxVal) {
-				maxVal += arr[i];
-			}
-		}
-		return maxVal;
-	}
-	
-	public static void main(String[] args) {
-		int[] arr = { 10, 25, 31, 25, 44, 25, 26, 0, 10, 1, 25 };
-
-		System.out.println("Before: " + Arrays.toString(arr));
-		sort(arr);
-		System.out.println("After:  " + Arrays.toString(arr));
-	}
 
 }

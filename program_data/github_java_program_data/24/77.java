@@ -1,34 +1,76 @@
-public class Permutation {
-	
-	public char chiffrer(char c, String key){
-		return key.charAt(c-97);	
-	}
+package com.vivek.graph;
 
-	public char dechiffrer(char c, String key){
-		return (char) (key.indexOf(c)+97);	
-	}
+import java.util.*;
 
-	public String chiffrer(String s, String key){
-		String s2 = "";
+public class MinimumSpanningTree {
 
-		for(int i=0, l=s.length();i<l;i++){
-			if(s.charAt(i) >= 97 && s.charAt(i) <= 122)
-				s2 += chiffrer(s.charAt(i),key);
-			else
-				s2 += s.charAt(i);
-		}
-		return s2;
-	}
+    public static void main(String[] args) {
 
-	public String dechiffrer(String s, String key){
-		String s2 = "";
+        try (Scanner in = new Scanner(System.in)) {
+            int n = in.nextInt();
+            int m = in.nextInt();
 
-		for(int i=0, l=s.length();i<l;i++){
-			if(s.charAt(i) >= 97 && s.charAt(i) <= 122)
-				s2 += dechiffrer(s.charAt(i),key);
-			else
-				s2 += s.charAt(i);
-		}
-		return s2;
-	}
+            List<Graph.Vertex> vertices = new ArrayList<>();
+            List<Graph.Edge> edges = new ArrayList<>();
+
+            for (int i = 1; i <= n; i++) {
+                vertices.add(new Graph.Vertex(i));
+            }
+
+            for (int i = 0; i < m; i++) {
+                Graph.Vertex u = vertices.get(in.nextInt() - 1);
+                Graph.Vertex v = vertices.get(in.nextInt() - 1);
+                int w = in.nextInt();
+                Graph.Edge e = new Graph.Edge(u, v, w);
+                u.addAdjacentEdge(v, e);
+                v.addAdjacentEdge(u, e);
+                edges.add(e);
+            }
+
+            Graph graph = new Graph(vertices, edges);
+            System.out.println(getMst(graph, vertices.get(in.nextInt() - 1)));
+
+        }
+
+    }
+
+
+    static int getMst(Graph graph, Graph.Vertex start) {
+        int cost = 0;
+
+        final Set<Graph.Vertex> unvisited = new HashSet<>();
+        unvisited.addAll(graph.getVertices());
+        unvisited.remove(start);
+
+        final Queue<Graph.Edge> edgesAvailable = new PriorityQueue<>();
+
+        Graph.Vertex vertex = start;
+
+        while (!unvisited.isEmpty()) {
+            // Add all edges to unvisited vertices
+            for (Graph.Edge e : vertex.getAdjacencyMap().values()) {
+                if (unvisited.contains(e.getDest()) ||
+                        unvisited.contains(e.getSrc()))
+                    edgesAvailable.add(e);
+            }
+
+            // Remove the lowest cost edge
+            Graph.Edge e = edgesAvailable.remove();
+            while (!unvisited.contains(e.getDest()) && !unvisited.contains(e.getSrc())) {
+                e = edgesAvailable.remove();
+            }
+            cost += e.getWeight();
+
+            vertex = vertex != e.getDest() ? e.getDest() : e.getSrc();
+            if (!unvisited.contains(vertex)) {
+                for (Graph.Vertex v : unvisited) {
+                    vertex = v;
+                    break;
+                }
+            }
+            unvisited.remove(vertex);
+        }
+        return cost;
+    }
+
 }

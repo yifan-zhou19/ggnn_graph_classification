@@ -1,73 +1,82 @@
-package kuvaldis.algorithm.geometry;
+package boyer01261512.queue;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import battlecode.common.GameActionException;
+import boyer01261512.broadcaster.*;
 
-public class JarvisConvexHull {
+public class Queue {
+	
+	private final int countOffset = 0;
+	private final int queueOffset = 1;
+	private final int queueIndex = 2;
 
-    private final List<Point> points;
+	public Broadcaster broadcaster;
+	public int startingIndex = 10000;
+	
+	public Queue() {
+		
+		
+		
+	}
+	
+	// MARK: Manipulation
+	
+	public void enqueue(int value) throws GameActionException {
+		
+		this.broadcaster.broadcast(this.nextQueueIndex(), value);
+		this.setCount(this.count() + 1);
+		this.incrementQueueOffset();
+		
+	}
+	
+	public int dequeue() throws GameActionException {
+		
+		if (this.count() <= 0) return Integer.MAX_VALUE;
 
-    public JarvisConvexHull(final Point... points) {
-        this.points = Stream.of(points).collect(Collectors.toList());
-    }
+		int value = this.peek();
+		this.setCount(this.count() - 1);
+		return value;
+		
+	}
+	
+	public int peek() throws GameActionException {
 
-    public List<Point> build() {
-        // 0. It's possible to create a convex hull only out of 3 or more points
-        if (points.size() < 3) {
-            return Collections.emptyList();
-        }
+		if (this.count() <= 0) return Integer.MAX_VALUE;
+		return this.broadcaster.readBroadcast(this.nextQueueIndex() - this.count());
+		
+	}
+	
+	// MARK: Offsets
+	
+	private void incrementQueueOffset() throws GameActionException {
 
-        // 1. Pick p0, the point with lowest y coordinate.
-        // If there are two or more points with lowest coordinate, pick one with lowest x coordinate.
-        final Point p0 = points.stream()
-                .min(Comparator.comparingInt(Point::getY)
-                        .thenComparingInt(Point::getX))
-                .orElseThrow(IllegalStateException::new);
+		this.broadcaster.broadcast(this.startingIndex + this.queueOffset, this.broadcaster.readBroadcast(this.startingIndex + this.queueOffset) + 1);
+		
+	}
+	
+	private int queueOffset() throws GameActionException {
+		
+		return this.broadcaster.readBroadcast(this.startingIndex + this.queueOffset);
+		
+	}
+	
+	private int nextQueueIndex() throws GameActionException {
 
-        // 2. The idea is to "wrap" points. Thus, we look for a point having smallest polar angle relatively to the current one.
-        // That is, the angle between vectors, both are starting from the current point, but one is directed strictly to the right,
-        // i.e. a horizontal, the other one is to the next point.
-        // If there are several points with the same lowest angle, then we pick farthest.
-        // We do it until we reach a point with highest y value.
-        // Then we do quite the same, but this time we search lowest angle from upside down point of view,
-        // that is, between horizontal vector directed to the left and vector constituted by current point and a potential one.
+		return this.startingIndex + this.queueIndex + this.queueOffset();
+		
+	}
+	
+	// MARK: Getters & Setters
+	
+	private void setCount(int count) throws GameActionException {
 
-        final int maxY = points.stream()
-                .mapToInt(Point::getY)
-                .max()
-                .orElse(Integer.MAX_VALUE);
+		this.broadcaster.broadcast(this.startingIndex + this.countOffset, count);
+		
+	}
+	
+	public int count() throws GameActionException {
+		
+		return this.broadcaster.readBroadcast(this.startingIndex + this.countOffset);
+		
+	}
 
-        final LinkedList<Point> result = new LinkedList<>();
-        result.add(p0);
-        Point current = p0;
-        int direction = 1;
-        while (true) {
-            final Vector horizontalVector = new Vector(current, new Point(current.getX() + direction, current.getY()));
-            final Point p1 = current;
-            final int sign = direction;
-            current = points.stream()
-                    .filter(point -> !p1.equals(point))
-                    // take into account only those having y higher or equal to current for right chain
-                    // and lower or equal for left chain
-                    .filter(point -> Integer.compare(point.getY(), p1.getY()) * sign >= 0)
-                    .map(p2 -> new Vector(p1, p2))
-                    .max(Comparator.comparingDouble(horizontalVector::cos)
-                            .thenComparingDouble(Vector::magnitude))
-                    .map(Vector::getTo)
-                    .orElseThrow(IllegalStateException::new);
-            if (current.getY() == maxY) {
-                direction = -1;
-            }
-            if (p0.equals(current)) {
-                break;
-            }
-            result.add(current);
-        }
-
-        return result;
-    }
 }

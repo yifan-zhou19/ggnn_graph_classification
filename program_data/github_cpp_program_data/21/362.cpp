@@ -1,66 +1,49 @@
-#include <iostream>
+#include<iostream>
+#include<string>
+#include<map>
+#include<vector>
+#include<algorithm>
+#include<cmath>
+#include<set>
+#include<stdio.h>
+#include<stdlib.h>
+#include<queue>
+#define MAX 100001
+#define ll long long int
+#define eps 1e-7
+using namespace std;
 
-template <typename T>
-inline void
-swap(T& a, T& b)
-{
-    if (a != b) {
-        T tmp = a;
-        a = b;
-        b = tmp;
-    }
-}
-
-template <typename T>
-void
-ajust_heap(T list[], int root, int tail, bool is_ascending)
-{
-    while (root * 2 + 1 <= tail) {
-        int lch = root * 2 + 1;
-        size_t to_swap = root;
-        if ((is_ascending && list[to_swap] < list[lch]) ||
-            (!is_ascending && list[to_swap] > list[lch])) {
-            to_swap = lch;
+class Solution {
+public:
+    int minDistance(string word1, string word2) {
+      int n = word1.size();
+      int m = word2.size();
+      int dp[n+1][m+1];
+      for(int i=0;i<m;i++){
+        dp[0][i] = i;
+      }
+      for(int i=0;i<n;i++){
+        dp[i][0] = i;
+      }
+      for(int i=1;i<n;i++){
+        for(int j=1;j<m;j++){
+          if(word1[i-1]==word2[j-1]){
+            dp[i][j] = dp[i-1][j-1];
+          }
+          else {
+            dp[i][j] = min(min(dp[i-1][j],dp[i][j-1]),dp[i-1][j-1])+1;
+          }
         }
-        int rch = lch + 1;
-        if (rch <= tail && ((is_ascending && list[to_swap] < list[rch]) ||
-                           (!is_ascending && list[to_swap] > list[rch]))) {
-            to_swap = rch;
-        }
-        if (to_swap != root) {
-            swap(list[root], list[to_swap]);
-            root = to_swap;
-        } else {
-            return;
-        }
+      }
+      return dp[n-1][m-1];
     }
-}
+};
 
-template <typename T>
-inline void
-build_heap(T list[], size_t size, bool is_ascending)
-{
-    int start = (size - 2) / 2;
-
-    while (start >= 0) {
-        ajust_heap(list, start, size - 1, is_ascending);
-        --start;
-    }
-}
-
-template <typename T>
-void
-heap_sort(T list[], size_t size, bool is_ascending=true)
-{
-    if (list == NULL || size <= 1) {
-        return;
-    }
-    build_heap(list, size, is_ascending);
-
-    int tail = size - 1;
-    while (tail > 0) {
-        swap(list[tail], list[0]);
-        --tail;
-        ajust_heap(list, 0, tail, is_ascending);
-    }
+string word1,word2;
+int main(){
+  Solution sol;
+  cin>>word1;
+  cin>>word2;
+  cout<<sol.minDistance(word1,word2)<<endl;
+  return 0;
 }

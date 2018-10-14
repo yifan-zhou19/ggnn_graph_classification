@@ -1,25 +1,28 @@
-package generics;// : generics/Fibonacci.java
+package org.teachingkidsprogramming.section05recursion.Kata_and_Variation;
 
-// Generate a Fibonacci sequence.
-import net.mindview.util.*;
-
-public class Fibonacci implements Generator<Integer> {
-    private int count = 0;
-
-    public Integer next() {
-        return fib(count++);
+public class TowerOfHanoi
+{
+  //fields
+  public static int index;
+  public static void main(String[] args)
+  {
+    //create some constant variables (final means they can't change after initialization)
+    final int MUN_DISCS = 5; // number of disc to move
+    final int FROM_PEG = 1; // initial 'from' peg
+    final int TO_PEG = 3; // initial 'to' peg
+    final int TEMP_PEG = 2; // initial 'temp'peg
+    //play game
+    moveDiscs(MUN_DISCS, FROM_PEG, TO_PEG, TEMP_PEG);
+    System.out.println("\nAll the discs are moved!");
+  }
+  private static void moveDiscs(int num, int fromPeg, int toPeg, int tempPeg)
+  {
+    if (num > 0)
+    {
+      moveDiscs(num - 1, fromPeg, tempPeg, toPeg);
+      index++;
+      System.out.println(index + ".Move a disc from peg " + fromPeg + "to peg" + toPeg);
+      moveDiscs(num - 1, tempPeg, toPeg, fromPeg);
     }
-
-    private int fib(int n) {
-        if (n < 2) return 1;
-        return fib(n - 2) + fib(n - 1);
-    }
-
-    public static void main(String[] args) {
-        Fibonacci gen = new Fibonacci();
-        for (int i = 0; i < 18; i++)
-            System.out.print(gen.next() + " ");
-    }
-} /*
-   * Output: 1 1 2 3 5 8 13 21 34 55 89 144 233 377 610 987 1597 2584
-   */// :~
+  }
+}

@@ -1,148 +1,58 @@
-/*++
-Copyright (c) 2007 Microsoft Corporation
+#include <cmath>
+#include <cstdio>
+#include <vector>
+#include <iostream>
+#include <algorithm>
+using namespace std;
 
-Module Name:
+void bucket_sort(vector<double>&);
+void insertion_sort(vector<double>&);
+void print_vector(const vector<double>&);
 
-    stack.cpp
-
-Abstract:
-    Low level stack (aka stack-based allocator).
-
-Author:
-
-    Leonardo (leonardo) 2011-02-27
-
-Notes:
-
---*/
-#include"stack.h"
-#include"page.h"
-#include"tptr.h"
-
-inline void stack::store_mark(size_t m) {
-    reinterpret_cast<size_t*>(m_curr_ptr)[0] = m;
-    m_curr_ptr += sizeof(size_t);
+int main(int argc, char const *argv[]) {
+    double arr[] = {0.78, 0.17, 0.39, 0.26, 0.72, 0.94, 0.21, 0.12, 0.23, 0.68};
+    vector<double> vec(arr, arr + sizeof(arr)/sizeof(arr[0]));
+    bucket_sort(vec);
+    print_vector(vec);
+    return 0;
 }
 
-inline size_t stack::top_mark() const {
-    return reinterpret_cast<size_t*>(m_curr_ptr)[-1];
-}
-
-inline size_t ptr2mark(void * ptr, bool external) {
-    return reinterpret_cast<size_t>(ptr) | static_cast<size_t>(external);
-}
-
-#define MASK (static_cast<size_t>(-1) - 1)
-
-inline char * mark2ptr(size_t m) {
-    return reinterpret_cast<char *>(m & MASK);
-}
-
-inline bool external_ptr(size_t m) {
-    return static_cast<bool>(m & 1);
-}
-
-inline void stack::allocate_page(size_t m) {
-    m_curr_page     = allocate_default_page(m_curr_page, m_free_pages);
-    m_curr_ptr      = m_curr_page;
-    m_curr_end_ptr  = end_of_default_page(m_curr_page);
-    store_mark(m);
-}
-
-inline void stack::store_mark(void * ptr, bool external) {
-    SASSERT(m_curr_ptr < m_curr_end_ptr || m_curr_ptr == m_curr_end_ptr); // mem is aligned
-    if (m_curr_ptr + sizeof(size_t) > m_curr_end_ptr) {
-        SASSERT(m_curr_ptr == m_curr_end_ptr);
-        // doesn't fit in the current page
-        allocate_page(ptr2mark(ptr, external));
+void print_vector(const vector<double> &vec) {
+    cout << "[";
+    for (int i = 0; i < vec.size(); i++) {
+        cout << vec[i];
+        if (i != vec.size() - 1) {
+            cout << ", ";
+        }
     }
-    else {
-        store_mark(ptr2mark(ptr, external));
+    cout << "]" << endl;
+}
+
+void insertion_sort(vector<double> &vec) {
+    for (int j = 1; j < vec.size(); j++) {
+        double key = vec[j];
+        int i = j - 1;
+        while (i >= 0 && vec[i] > key) {
+            vec[i + 1] = vec[i];
+            i--;
+        }
+        vec[i + 1] = key;
     }
 }
 
-stack::stack() {
-    m_curr_page    = 0;
-    m_curr_ptr     = 0;
-    m_curr_end_ptr = 0;
-    m_free_pages   = 0;
-    allocate_page(0);
-    SASSERT(empty());
-}
-
-stack::~stack() {
-    reset();
-    del_pages(m_curr_page);
-    del_pages(m_free_pages);
-}
-
-void stack::reset() {
-    while(!empty())
-        deallocate();
-}
-
-void * stack::top() const {
-    SASSERT(!empty());
-    size_t m = top_mark();
-    void * r = mark2ptr(m);
-    if (external_ptr(m)) 
-        r = reinterpret_cast<void**>(r)[0];
-    return r;
-}
-
-void * stack::allocate_small(size_t size, bool external) {
-    SASSERT(size < DEFAULT_PAGE_SIZE);
-    char * new_curr_ptr = m_curr_ptr + size;
-    char * result;
-    if (new_curr_ptr < m_curr_end_ptr) {
-        result = m_curr_ptr;
-        m_curr_ptr = ALIGN(char *, new_curr_ptr);
+void bucket_sort(vector<double> &vec) {
+    int n = vec.size();
+    vector<vector<double>> bucket(n);
+    for (int i = 0; i < n; i++) {
+        bucket[(int)floor(n * vec[i])].push_back(vec[i]);
     }
-    else {
-        allocate_page(top_mark()); 
-        result = m_curr_ptr;
-        m_curr_ptr += size;
-        m_curr_ptr = ALIGN(char *, m_curr_ptr);
+    for (int i = 0; i < n; i++) {
+        insertion_sort(bucket[i]);
     }
-    store_mark(result, external);
-    SASSERT(m_curr_ptr > m_curr_page);
-    SASSERT(m_curr_ptr <= m_curr_end_ptr);
-    return result;
+    int k = 0;
+    for (int i = 0; i < bucket.size(); i++) {
+        for (int j = 0; j < bucket[i].size(); j++) {
+            vec[k++] = bucket[i][j];
+        }
+    }
 }
-
-void * stack::allocate_big(size_t size) {
-    char * r   = alloc_svect(char, size);
-    void * mem = allocate_small(sizeof(char*), true);
-    reinterpret_cast<char**>(mem)[0] = r;
-    SASSERT(m_curr_ptr > m_curr_page);
-    SASSERT(m_curr_ptr <= m_curr_end_ptr);
-    return r;
-}
-    
-void stack::deallocate() {
-    SASSERT(m_curr_ptr > m_curr_page);
-    SASSERT(m_curr_ptr <= m_curr_end_ptr);
-    size_t m = top_mark();
-    SASSERT(m != 0);
-    if (m_curr_ptr == m_curr_page + sizeof(size_t)) {
-        // mark is in the beginning of the page
-        char * prev = prev_page(m_curr_page);
-        recycle_page(m_curr_page, m_free_pages);
-        m_curr_page    = prev;
-        m_curr_ptr     = mark2ptr(m);
-        m_curr_end_ptr = end_of_default_page(m_curr_page);
-        SASSERT(m_curr_ptr >  m_curr_page);
-        SASSERT(m_curr_ptr <= m_curr_end_ptr);
-    }
-    else {
-        // mark is in the middle of the page
-        m_curr_ptr = mark2ptr(m);
-        SASSERT(m_curr_ptr < m_curr_end_ptr);
-    }
-    if (external_ptr(m)) {
-        dealloc_svect(reinterpret_cast<char**>(m_curr_ptr)[0]);
-    }
-    SASSERT(m_curr_ptr > m_curr_page);
-}
-
-

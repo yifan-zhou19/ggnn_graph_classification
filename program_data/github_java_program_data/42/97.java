@@ -1,34 +1,48 @@
-package wit.lk.algorithm.ch03;
+package pl.coderstrust.sort;
 
-public class BucketSort {
-	private int[] buckets;
-	private int[] array;
-	
-	public BucketSort(int range,int[] array){
-		buckets = new int[range];
-		this.array = array;
-	}
-	
-	/**
-	 * ����
-	 */
-	public void sort(){
-		if(array != null && array.length > 1){
-			for(int i = 0; i < array.length; i++){
-				buckets[array[i]]++;
-			}
-		}
-	}
-	
-	/**
-	 * �Ӵ�С����
-	 */
-	public void print(){
-		//�����������
-		for(int i = buckets.length - 1; i >= 0; i--){
-			for(int j = 0; j < buckets[i]; j++){
-				System.out.println(i);
-			}
-		}
-	}
+import java.util.Arrays;
+
+/**
+ * Created by Adam on 2018-02-13.
+ */
+public class SelectionSortSort {
+    public static void main(String[] args) {
+
+        int[] array = {5, 4, 1, 2, 9, 2, 7};
+
+        System.out.println(Arrays.toString(array));
+
+        SelectionSortSort myObject = new SelectionSortSort();
+        myObject.sort(array);
+
+        System.out.println(Arrays.toString(array));
+
+    }
+
+    public int[] sort(int[] array) {
+        for (int j = 0; j < array.length; ++j) {
+            int minimumNumberIndex = getMinimumNumberIndex(array, j);
+            swap(array, j, minimumNumberIndex);
+
+        }
+        return array;
+    }
+
+    public int getMinimumNumberIndex(int[] array, int j) {
+        int minimumNumberIndex = j;
+        for (int i = j; i < array.length; ++i)
+            if (array[i] < array[minimumNumberIndex]) {
+                minimumNumberIndex = i;
+            }
+        return minimumNumberIndex;
+    }
+
+    public static void swap(int[] array, int j, int minimumNumberIndex) {
+        int temp = array[j];
+        array[j] = array[minimumNumberIndex];
+        array[minimumNumberIndex] = temp;
+    }
+
+
 }
+

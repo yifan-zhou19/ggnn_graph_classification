@@ -1,125 +1,161 @@
-#include <bits/stdc++.h>
+//C++ Code :  Max Flow
+
+#include<cstdio>
+#include<cmath>
+#include<cstring>
+#include<string>
+#include<iostream>
+#include<queue>
+#include<algorithm>
+#include<fstream>
 using namespace std;
 
-#define rep(i, a, b) for(int i = a; i < int(b); ++i)
-#define trav(a, v) for(auto& a : v)
-#define all(x) x.begin(), x.end()
-#define sz(x) (int)(x).size()
+#define START -1
+#define UNUSED -2
 
-typedef long long ll;
-typedef pair<int, int> pii;
-typedef vector<int> vi;
 
-static unsigned RA = 1231231;
-int ra() {
-	RA *= 574841;
-	RA += 14;
-	return RA >> 1;
+
+/***************** Max Flow Algorithm***************
+****************************************************/
+const int maxINDX=102;
+int flow[maxINDX][maxINDX],originalcap[maxINDX][maxINDX], cap[maxINDX][maxINDX];
+int path[maxINDX]; // stores parent of each node
+int src,dest;
+
+/* BFS using a matrix */
+int BFS(int node) {
+	int i,item,cf;
+	queue<int> q;
+	for(i=1;i<=node;i++) path[i]=UNUSED;
+	q.push(src);
+	path[src]=START;
+	while(!q.empty()) {
+		item=q.front();
+		q.pop();
+
+
+		if(item==dest) {
+			/* crawl back through the path to find min cost */
+			i=dest;
+			cf=INT_MAX;
+			while(path[i]!=START) {
+				if(cf>cap[path[i]][i]) cf=cap[path[i]][i];
+
+				i=path[i];
+			}
+			return cf;
+		}
+
+
+		for(i=1;i<=node;i++) {
+			if(cap[item][i]!=0 && path[i]==UNUSED) {
+				q.push(i);
+				path[i]=item;
+			}
+		}
+	} // end of while loop
+	return 0;
 }
 
-namespace maximum {
+void computeCap(int node){
+	for(int i = 0; i < node; i++) {
+		for(int j = 0; j < node; j++) {
+			cap[i][j] = originalcap[i][j] - flow[i][j] + flow[j][i];
+		}
+	}
+}
 
-#include "../content/data-structures/SegmentTree.h"
+int maxflow(int node) {
+	int i,cf,totalflow=0;
+	while(true) {
+		cf = BFS(node);
+		if (cf == 0) break;
+		
+
+		totalflow+=cf;
+		i=dest;
+
+		while(path[i]!=START) {
+			flow[path[i]][i]+=cf;
+
+			if(flow[path[i]][i] > 0 && flow[i][path[i]] > 0) {
+				cout << "in here " << endl;
+				if(flow[path[i]][i] > flow[i][path[i]]) {
+					flow[path[i]][i] -= flow[i][path[i]];
+					flow[i][path[i]] = 0;
+				} else {
+					flow[i][path[i]] -= flow[path[i]][i];
+					flow[path[i]][i] = 0;
+				}
+			}
+
+			i=path[i];
+		}
+
+		computeCap(node);
+	}
+
+
+	return totalflow;
+}
+
+void graph_initial(int node){
+	int i,j;
+	for(i=1;i<=node;i++){
+		for(j=1;j<=node;j++) {
+			originalcap[i][j]=0;
+			cap[i][j]=0;
+			flow[i][j]=0;
+		}
+	}
 
 }
 
-namespace nonabelian {
 
-// https://en.wikipedia.org/wiki/Dihedral_group_of_order_6
-const int lut[6][6] = {
-	{0, 1, 2, 3, 4, 5},
-	{1, 0, 4, 5, 2, 3},
-	{2, 5, 0, 4, 3, 1},
-	{3, 4, 5, 0, 1, 2},
-	{4, 3, 1, 2, 5, 0},
-	{5, 2, 3, 1, 0, 4}
-};
+int main()
+{
+	ifstream inFile("input2.txt");
+	ofstream outFile1("output2.txt");
 
-struct Tree {
-	typedef int T;
-	const T LOW = 0;
-	T f(T a, T b) { return lut[a][b]; }
-	vector<T> s; int n;
-	Tree(int n = 0, T def = 0) : s(2*n, def), n(n) {}
-	void update(int pos, T val) {
-		for (s[pos += n] = val; pos > 1; pos /= 2)
-			s[pos / 2] = f(s[pos & ~1], s[pos | 1]);
+	//freopen("out.txt","wt",stdout);
+
+	int node,edge,a,b,c,resultedFlow;
+
+	inFile >> src >> dest >> node >> edge;
+
+	graph_initial(node);
+
+	for(int i = 0; i < edge; i++) {
+		inFile >> a >> b >> c;
+		originalcap[a][b]=c;
 	}
-	T query(int b, int e) { // query [b, e)
-		T ra = LOW, rb = LOW;
-		for (b += n, e += n; b < e; b /= 2, e /= 2) {
-			if (b % 2) ra = f(ra, s[b++]);
-			if (e % 2) rb = f(s[--e], rb);
+
+	computeCap(node);
+
+	inFile.close();
+	
+	resultedFlow=maxflow(node);
+
+	outFile1 << "  |\t" << 0 << "\t";
+	for (int i = 1; i < node; i++) outFile1 << i << "\t";
+	outFile1 << endl << " ---------------------------------------------" << endl;
+
+	for (int i = 0; i < node; i++) {
+		outFile1 << i << " |\t";
+		for(int j = 0; j < node; j++) {
+			outFile1 << flow[i][j] << "\t";
 		}
-		return f(ra, rb);
-	}
-};
-
-}
-
-int main() {
-	{
-		maximum::Tree t(0);
-		assert(t.query(0, 0) == t.LOW);
+		outFile1 << endl;
 	}
 
-	if (1) {
-		const int N = 10000;
-		maximum::Tree tr(N);
-		ll sum = 0;
-		rep(it,0,1000000) {
-			tr.update(ra() % N, ra());
-			int i = ra() % N;
-			int j = ra() % N;
-			if (i > j) swap(i, j);
-			int v = tr.query(i, j+1);
-			sum += v;
-		}
-		cout << sum << endl;
-		// return 0;
-	}
+	outFile1 << endl << "maxFlow: " << resultedFlow << endl;
+	
+	outFile1.close();
 
-	rep(n,1,10) {
-		maximum::Tree tr(n);
-		vi v(n);
-		rep(it,0,1000000) {
-			int i = rand() % (n+1), j = rand() % (n+1);
-			int x = rand() % (n+2);
-
-			int r = rand() % 100;
-			if (r < 30) {
-				int ma = tr.LOW;
-				rep(k,i,j) ma = max(ma, v[k]);
-				assert(ma == tr.query(i,j));
-			}
-			else {
-				i = min(i, n-1);
-				tr.update(i, x);
-				v[i] = x;
-			}
-		}
-	}
-
-	rep(n,1,10) {
-		nonabelian::Tree tr(n);
-		vi v(n);
-		rep(it,0,1000000) {
-			int i = rand() % (n+1), j = rand() % (n+1);
-			int x = rand() % 6;
-
-			int r = rand() % 100;
-			if (r < 30) {
-				int ma = tr.LOW;
-				rep(k,i,j) ma = nonabelian::lut[ma][v[k]];
-				assert(ma == tr.query(i,j));
-			}
-			else {
-				i = min(i, n-1);
-				tr.update(i, x);
-				v[i] = x;
-			}
-		}
-	}
-
-	exit(0);
+	cout << "finished" << endl;
+	 int blah;
+	 cin >> blah;
+	 return 0;
+// End of main function........
+return 0;
 }

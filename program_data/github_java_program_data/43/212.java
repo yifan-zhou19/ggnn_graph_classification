@@ -1,32 +1,26 @@
-/*******************************************************************************
- * Copyright (c) 2011 BestSolution.at and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+package Algorithm;
+
+/**
+ * Created by tonytan on 12/1/2017.
  *
- * Contributors:
- *     Tom Schindl<tom.schindl@bestsolution.at> - initial API and implementation
- *******************************************************************************/
-package at.bestsolution.efxclipse.tooling.css.jfx.scene.layout;
+ * Bucket sort: cost most memory
+ */
+public class BucketSort {
 
-import static at.bestsolution.efxclipse.tooling.css.CssDialectExtension.Util.createEnumProperties;
-import static at.bestsolution.efxclipse.tooling.css.CssDialectExtension.Util.createReflective;
+    static int[] data = {1,2,7,4,6,3,9};//assume all data < 10
+    static int[] bucket = new int[10];
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+    public static void bucketSort(int[] data){
+        for (int i=0; i<data.length; i++){
+            bucket[data[i]] = data[i];
+        }
+    }
 
-import at.bestsolution.efxclipse.tooling.css.CssDialectExtension.Property;
-import at.bestsolution.efxclipse.tooling.css.jfx.JFXDialectExtension.Size4TimesProperty;
-
-public class Stack {
-	public static List<Property> init() {
-		List<Property> properties = new ArrayList<Property>();
-		properties.addAll(createEnumProperties(Arrays.asList("left","center","right","leading","trailing"), "-fx-node-hpos"));
-		properties.addAll(createEnumProperties(Arrays.asList("top","center","baseline","bottom","page-end","page-start"), "-fx-node-vpos"));
-		properties.addAll(createReflective(Size4TimesProperty.class, "-fx-padding"));
-		
-		return properties;
-	}
+    public static void main(String[] args){
+        bucketSort(data);
+        for (int i:bucket) {
+            if (i==0) continue;
+            System.out.print(i);
+        }
+    }
 }

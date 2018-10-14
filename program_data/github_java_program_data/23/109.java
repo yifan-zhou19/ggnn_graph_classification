@@ -1,30 +1,52 @@
-package sedgewick_algo.course2.week2_mst;
+package algotithm;
 
-import edu.princeton.cs.algs4.In;
-import edu.princeton.cs.algs4.StdOut;
+import org.apache.poi.ss.formula.functions.T;
 
-public class MinimumSpanningTree {
-    MinimumSpanningTree(EdgeWeightedGraph graph){
+/**
+ * DESCRIPTION：跳表
+ *
+ * @author zhangyang 2018/3/7 13:53
+ */
+public class SkipList<T> {
 
-    }
 
-    public Iterable<Edge> edges(){
-        return null;
-    }
+}
 
-    public double weight(){
-        return 0.0;
-    }
-
-    public static void main(String args[]){
-        In in = new In(args[0]);
-        EdgeWeightedGraph graph = new EdgeWeightedGraph(in);
-        MinimumSpanningTree mst = new MinimumSpanningTree(graph);
-
-        for(Edge e : mst.edges()){
-            StdOut.print(e);
-        }
-
-        StdOut.printf("%.2f\n", mst.weight());
-    }
+class Node{
+	T value;
+	int level;
+	Node right;
+	Node down;
+	
+	public int getLevel() {
+		return level;
+	}
+	
+	public void setLevel(int level) {
+		this.level = level;
+	}
+	
+	public T getValue() {
+		return value;
+	}
+	
+	public void setValue(T value) {
+		this.value = value;
+	}
+	
+	public Node getRight() {
+		return right;
+	}
+	
+	public void setRight(Node right) {
+		this.right = right;
+	}
+	
+	public Node getDown() {
+		return down;
+	}
+	
+	public void setDown(Node down) {
+		this.down = down;
+	}
 }

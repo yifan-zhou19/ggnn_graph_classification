@@ -1,105 +1,82 @@
-/*******************************************************************************
- * Copyright (c) 2013, Daniel Murphy
- * All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- * 	* Redistributions of source code must retain the above copyright notice,
- * 	  this list of conditions and the following disclaimer.
- * 	* Redistributions in binary form must reproduce the above copyright notice,
- * 	  this list of conditions and the following disclaimer in the documentation
- * 	  and/or other materials provided with the distribution.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- ******************************************************************************/
-package org.jbox2d.testbed.tests;
+package team170.queue;
 
-import org.jbox2d.collision.shapes.PolygonShape;
-import org.jbox2d.common.Color3f;
-import org.jbox2d.common.MathUtils;
-import org.jbox2d.common.Settings;
-import org.jbox2d.common.Vec2;
-import org.jbox2d.testbed.framework.TestbedSettings;
-import org.jbox2d.testbed.framework.TestbedTest;
+import battlecode.common.GameActionException;
+import team170.broadcaster.*;
 
-public class ConvexHull extends TestbedTest {
+public class Queue {
+	
+	private final int countOffset = 0;
+	private final int queueOffset = 1;
+	private final int queueIndex = 2;
 
-  private final int e_count = Settings.maxPolygonVertices;
+	public Broadcaster broadcaster;
+	public int startingIndex = 10000;
+	
+	public Queue() {
+		
+		
+		
+	}
+	
+	// MARK: Manipulation
+	
+	public void enqueue(int value) throws GameActionException {
+		
+		this.broadcaster.broadcast(this.nextQueueIndex(), value);
+		this.setCount(this.count() + 1);
+		this.incrementQueueOffset();
+		
+	}
+	
+	public int dequeue() throws GameActionException {
+		
+		if (this.count() <= 0) return Integer.MAX_VALUE;
 
-  private boolean m_auto = false;
-  private Vec2[] m_points = new Vec2[Settings.maxPolygonVertices];
-  private int m_count;
+		int value = this.peek();
+		this.setCount(this.count() - 1);
+		return value;
+		
+	}
+	
+	public int peek() throws GameActionException {
 
-  @Override
-  public void initTest(boolean deserialized) {
-    if (deserialized) {
-      return;
-    }
-    generate();
-  }
+		if (this.count() <= 0) return Integer.MAX_VALUE;
+		return this.broadcaster.readBroadcast(this.nextQueueIndex() - this.count());
+		
+	}
+	
+	// MARK: Offsets
+	
+	private void incrementQueueOffset() throws GameActionException {
 
-  void generate() {
-    Vec2 lowerBound = new Vec2(-8f, -8f);
-    Vec2 upperBound = new Vec2(8f, 8f);
+		this.broadcaster.broadcast(this.startingIndex + this.queueOffset, this.broadcaster.readBroadcast(this.startingIndex + this.queueOffset) + 1);
+		
+	}
+	
+	private int queueOffset() throws GameActionException {
+		
+		return this.broadcaster.readBroadcast(this.startingIndex + this.queueOffset);
+		
+	}
+	
+	private int nextQueueIndex() throws GameActionException {
 
-    for (int i = 0; i < e_count; i++) {
-      float x = MathUtils.randomFloat(-8, 8);
-      float y = MathUtils.randomFloat(-8, 8);
+		return this.startingIndex + this.queueIndex + this.queueOffset();
+		
+	}
+	
+	// MARK: Getters & Setters
+	
+	private void setCount(int count) throws GameActionException {
 
-      Vec2 v = new Vec2(x, y);
-      MathUtils.clampToOut(v, lowerBound, upperBound, v);
-      m_points[i] = v;
-    }
-    m_count = e_count;
-  }
-
-  public void keyPressed(char argKeyChar, int argKeyCode) {
-    if (argKeyChar == 'g') {
-      generate();
-    } else if (argKeyChar == 'a') {
-      m_auto = !m_auto;
-    }
-  }
-
-  PolygonShape shape = new PolygonShape();
-  Color3f color = new Color3f(.9f, .9f, .9f);
-  Color3f color2 = new Color3f(.9f, .5f, .5f);
-
-  @Override
-  public synchronized void step(TestbedSettings settings) {
-    super.step(settings);
-
-    shape.set(m_points, m_count);
-
-    addTextLine("Press g to generate a new random convex hull");
-
-    getDebugDraw().drawPolygon(shape.m_vertices, shape.m_count, color);
-
-    for (int i = 0; i < m_count; ++i) {
-      getDebugDraw().drawPoint(m_points[i], 2.0f, color2);
-      getDebugDraw().drawString(m_points[i].add(new Vec2(0.05f, 0.05f)), i + "", Color3f.WHITE);
-    }
-
-    assert (shape.validate());
-
-
-    if (m_auto) {
-      generate();
-    }
-  }
-
-  @Override
-  public String getTestName() {
-    return "Convex Hull";
-  }
+		this.broadcaster.broadcast(this.startingIndex + this.countOffset, count);
+		
+	}
+	
+	public int count() throws GameActionException {
+		
+		return this.broadcaster.readBroadcast(this.startingIndex + this.countOffset);
+		
+	}
 
 }

@@ -1,47 +1,85 @@
-package com.baeldung.algorithms.ga.jenetics;
+package org.apache.pig.builtin;
 
-import static org.jenetics.engine.EvolutionResult.toBestPhenotype;
-import static org.jenetics.engine.limit.bySteadyFitness;
+/**
+ * A RegressionModel that fits a straight line to a data set
+ */
+public class LinearRegressionModel extends RegressionModel {
 
-import java.util.stream.Stream;
+  /** The y intercept of the straight line */
+  private double a;
 
-import org.jenetics.BitChromosome;
-import org.jenetics.BitGene;
-import org.jenetics.Mutator;
-import org.jenetics.Phenotype;
-import org.jenetics.RouletteWheelSelector;
-import org.jenetics.SinglePointCrossover;
-import org.jenetics.TournamentSelector;
-import org.jenetics.engine.Engine;
-import org.jenetics.engine.EvolutionStatistics;
+  /** The gradient of the line */
+  private double b;
+  
+  /** The type of g(x) */
+  private int tp = 0;
 
-//The main class.
-public class Knapsack {
+  /**
+   * Construct a new LinearRegressionModel with the supplied data set
+   * 
+   * @param x
+   *          The x data points
+   * @param y
+   *          The y data points
+   */
+  public LinearRegressionModel(double[] x, double[] y, int type) {
+    super(x, y, type);
+    a = b = 0;
+    tp = type;
+  }
 
-    public static void main(String[] args) {
-        int nItems = 15;
-        double ksSize = nItems * 100.0 / 3.0;
+  /**
+   * Get the coefficents of the fitted straight line
+   * 
+   * @return An array of coefficients {intercept, gradient}
+   * 
+   * @see RegressionModel#getCoefficients()
+   */
+  @Override
+  public double[] getCoefficients() {
+    if (!computed)
+      throw new IllegalStateException("Model has not yet computed");
 
-        KnapsackFF ff = new KnapsackFF(Stream.generate(KnapsackItem::random)
-            .limit(nItems)
-            .toArray(KnapsackItem[]::new), ksSize);
+    return new double[] { a, b };
+  }
 
-        Engine<BitGene, Double> engine = Engine.builder(ff, BitChromosome.of(nItems, 0.5))
-            .populationSize(500)
-            .survivorsSelector(new TournamentSelector<>(5))
-            .offspringSelector(new RouletteWheelSelector<>())
-            .alterers(new Mutator<>(0.115), new SinglePointCrossover<>(0.16))
-            .build();
+  /**
+   * Compute the coefficients of a straight line the best fits the data set
+   * 
+   * @see RegressionModel#compute()
+   */
+  @Override
+  public void compute() {
 
-        EvolutionStatistics<Double, ?> statistics = EvolutionStatistics.ofNumber();
-
-        Phenotype<BitGene, Double> best = engine.stream()
-            .limit(bySteadyFitness(7))
-            .limit(100)
-            .peek(statistics)
-            .collect(toBestPhenotype());
-
-        System.out.println(statistics);
-        System.out.println(best);
+    // throws exception if regression can not be performed
+    if (xValues.length < 2 | yValues.length < 2) {
+      throw new IllegalArgumentException("Must have more than two values");
     }
+
+    // get the value of the gradient using the formula b = cov[x,y] / var[x]
+    b = MathUtils.covariance(xValues, yValues) / MathUtils.variance(xValues);
+
+    // get the value of the y-intercept using the formula a = ybar + b * xbar
+    a = MathUtils.mean(yValues) - b * MathUtils.mean(xValues);
+
+    // set the computed flag to true after we have calculated the coefficients
+    computed = true;
+  }
+
+  /**
+   * Evaluate the computed model at a certain point
+   * 
+   * @param x
+   *          The point to evaluate at
+   * @return The value of the fitted straight line at the point x
+   * 
+   * @see RegressionModel#evaluateAt(double)
+   */
+  @Override
+  public double evaluateAt(double x) {
+    if (!computed)
+      throw new IllegalStateException("Model has not yet computed");
+
+    return a + b * x;
+  }
 }

@@ -1,39 +1,49 @@
-//============================================================================
-// Name        : shell-sort.cpp
-// Author      : 
-// Date        :
-// Copyright   : 
-// Description : Implementation of shell sort in C++
-//============================================================================
+#include "template.cpp"
+#include "unionfind.cpp"
 
-#include "sort.h"
-#include <iostream>
-using namespace std;
 
-void
-ShellSort::sort(int A[], int size)
+
+/* unionfindを使います */
+
+class kruskal
 {
-cout << "shell sort!" << endl;
-int temp = 0;
- num_cmps = 0;
- int step = size/2;
- while(step > 0)
- {
-	++num_cmps;
-	for(int i = step; i < size; ++i)
-	{
-		++num_cmps;
-		for(int j = i; j >= step && A[j] < A[j-step]; j -= step)
-		{
-			num_cmps += 2;
-			temp = A[j];
-			A[j] = A[j-step];
-			A[j - step] = temp;
-		}
-		num_cmps += 2;
-	}
-	++num_cmps;
-	step /= 2;
+private:
+    struct edge{
+        long long cost, u, v;
+        
+        bool operator<(const edge& e1) const {
+            return cost < e1.cost;
+        }
+    };
+    vector<edge> es;
+    long long vertex;    // vertexは頂点の数
+public:
+    kruskal(long long n);   // nは頂点数
+    void add_edge(long long u, long long v, long long cost);    // 頂点uから頂点vにコストcostの辺を貼る
+    long long run();
+};
+
+kruskal::kruskal(long long n){
+    vertex = n;
 }
-++num_cmps;
+
+void kruskal::add_edge(long long u, long long v, long long cost){
+    es.push_back({cost, u, v});
+    es.push_back({cost, v, u});
+}
+
+long long kruskal::run(){
+    sort(es.begin(), es.end());
+    
+    unionfind uni(vertex);
+    long long res = 0;
+    
+    for(auto e : es){
+        if(!uni.same(e.u, e.v)){
+            uni.unite(e.u, e.v);
+            res += e.cost;
+        }
+    }
+    
+    return res;
 }

@@ -1,47 +1,27 @@
-#include "NaiveBayes.h"
+#include <iostream>
 
-NaiveBayes::NaiveBayes() {
-    this->model = new Model*[0];
-    this->modelSize = 0;
-}
-
-NaiveBayes::~NaiveBayes() {
-  for (int i = this->modelSize-1; i > 0; i--) {
-    delete this->model[i];
-  }
-  delete this->model;
-}
-
-
-NaiveBayes* NaiveBayes::addModel(const uint8_t id, const double mean, const double standardDeviation) {
-    int n = this->modelSize;
-    Model** temp = new Model*[n+1];
-    this->modelSize++;
-    for(int i = 0; i < n; i++) {
-        temp[i] = this->model[i];
+template <typename T>
+void
+shell_sort(T list[], const int& size, bool is_ascending=true)
+{
+    if (list == NULL || size <= 1) {
+        return;
     }
-    temp[n] = new Model();
-    temp[n]->id = id;
-    temp[n]->mean = mean;
-    temp[n]->standardDeviation = standardDeviation;
-
-    Model** oldModel = this->model;
-    this->model = temp;
-    delete oldModel;
-    
-    return this;
-}
-
-
-void NaiveBayes::classify(Category categories[], const int numCategories, const double observations[], const int numObservations) {
-    int n = this->modelSize;
-    if(n != numCategories || n == 0) return;
-    for(int i = 0; i < n; i++) {
-        Model* category = this->model[i];
-        categories[i].probability = 1.0 / n;
-        for(int observationIndex = 0; observationIndex < numObservations; observationIndex++) {
-            double value = observations[observationIndex];
-            categories[i].probability *= (1.0/sqrt(2.0 * M_PI * category->standardDeviation)) * exp( (-pow(value - category->mean, 2)) / (2.0 * category->standardDeviation) );
+    int gap = size >> 1;
+    while (gap >= 1) {
+        for (int i = gap; i < size; i += gap) {
+            T tmp = list[i];
+            int j;
+            for (j = i - gap; j >= 0; j -= gap) {
+                if ((is_ascending && tmp < list[j]) ||
+                    (!is_ascending && tmp > list[j])) {
+                    list[j + gap] = list[j];
+                } else {
+                    break;
+                }
+            }
+            list[j + gap] = tmp;
         }
+        gap >>= 1;
     }
 }

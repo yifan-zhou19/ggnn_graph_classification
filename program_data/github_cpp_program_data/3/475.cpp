@@ -1,116 +1,127 @@
+#include "util.h"
 
-#include <iostream>
-#include <string>
-#include <vector>
-using namespace std;
+struct Node {
+  int key, value;
+  Node *prev, *next;
+};
 
-class THashtable {
-private:
-	static const size_t MinCapacity = 7;
-
-	size_t Capacity;
-	size_t Size;
-	vector<vector<pair<string,int> > > Buckets;
-
-	size_t Hash(const string& str) const {
-		const size_t N = 127;
-		size_t res = 0;
-		for (size_t i = 0; i < str.size(); ++i) {
-			res = (res*N + str[i]) % Capacity;
-		}
-		return res;
-	}
-
-	void RehashAll() {
-		vector<vector<pair<string,int> > > newBuckets(Capacity);
-		for (size_t i = 0; i < Buckets.size(); ++i) {
-			for (size_t j = 0; j < Buckets[i].size(); ++j) {
-				size_t bucketInd = Hash(Buckets[i][j].first);
-				newBuckets[bucketInd].push_back(Buckets[i][j]);
-			}
-		}
-		Buckets = newBuckets;
-	}
-
+class LRUCache {
 public:
-	THashtable()
-		: Capacity(MinCapacity)
-		, Size(0)
-		, Buckets(Capacity)
-	{}
+  unordered_map<int, Node *> m;
+  Node *head, *tail;
+  int capacity_, size_;
 
-	const int* Get(const string& key) const {
-		size_t bucketInd = Hash(key);
-		const vector<pair<string,int> >& bucket = Buckets[bucketInd];
-		for (size_t i = 0; i < bucket.size(); ++i) {
-			if (bucket[i].first == key) {
-				return &bucket[i].second;
-			}
-		}
-		return NULL;
-	}
+  LRUCache(int capacity) {
+    capacity_ = capacity;
+    size_ = 0;
+    head = nullptr;
+    tail = nullptr;
+  }
 
-	void Set(const string& key, int value) {
-		if ((double)Size / Capacity > 0.5) {
-			Capacity *= 2;
-			RehashAll();
-		}
-		size_t bucketInd = Hash(key);
-		vector<pair<string,int> >& bucket = Buckets[bucketInd];
-		for (size_t i = 0; i < bucket.size(); ++i) {
-			if (bucket[i].first == key) {
-				bucket[i].second = value;
-				return;
-			}
-		}
-		bucket.push_back(make_pair(key, value));
-		++Size;
-	}
+  void print() {
+    Node *t = head;
+    int c = 0;
+    cout << "[";
+    while (t != nullptr) {
+      if (t == head)
+        cout << "(H)";
+      if (t == tail)
+        cout << "(T)";
+      cout << t->key;
+      if (t->next != nullptr)
+        cout << " -> ";
+      t = t->next;
+      c++;
+      if (c > 10)
+        break;
+    }
+    cout << "]" << endl;
+  }
 
-	void Remove(const string& key) {
-		if ((double)Size / Capacity < 1.0/8 && Capacity > 2*MinCapacity) {
-			Capacity = ::max(MinCapacity, Capacity/4);
-			RehashAll();
-		}
-		size_t bucketInd = Hash(key);
-		vector<pair<string,int> >& bucket = Buckets[bucketInd];
-		for (size_t i = 0; i < bucket.size(); ++i) {
-			if (bucket[i].first == key) {
-				bucket.erase(bucket.begin() + i);
-				--Size;
-				return;
-			}
-		}
-	}
+  void update(Node *n) {
+    if (size_ == 1) {
+      head = n;
+      tail = n;
+      return;
+    }
+    // Only need to update for non-head nodes.
+    if (n != head) {
+      Node *prev = n->prev, *next = n->next;
+      if (prev != nullptr)
+        prev->next = next;
+      if (next != nullptr)
+        next->prev = prev;
+      if (next == nullptr)
+        tail = prev;
+      n->prev = nullptr;
+      n->next = head;
+      head->prev = n;
+      head = n;
+    }
+  }
+
+  int get(int key) {
+    auto it = m.find(key);
+    if (it == m.end())
+      return -1;
+
+    Node *n = it->second;
+    update(n);
+    // print();
+    return n->value;
+  }
+
+  void set(int key, int value) {
+    auto it = m.find(key);
+    Node *n;
+    if (it == m.end()) {
+      size_++;
+      if (size_ > capacity_) {
+        Node *t = tail;
+        tail = t->prev;
+        m.erase(t->key);
+        delete t;
+        size_--;
+      }
+
+      n = new Node();
+      n->key = key;
+      n->value = value;
+      n->next = nullptr;
+      n->prev = tail;
+      if (tail != nullptr)
+        tail->next = n;
+      tail = n;
+      m[key] = n;
+    } else {
+      n = it->second;
+      n->value = value;
+    }
+    update(n);
+    // print();
+  }
 };
 
 int main() {
-	THashtable hash;
+  LRUCache c(3);
+  EXPECT_EQ(-1, c.get(1));
+  c.set(1, 2);
+  EXPECT_EQ(2, c.get(1));
+  c.set(2, 3);
 
-	hash.Set("", 0);
-	hash.Set("zero", 5);
-	hash.Set("zero", 0);
-	hash.Set("one", 1);
-	cout << "zero: " << *hash.Get("zero") << endl;
+  EXPECT_EQ(3, c.get(2));
+  c.set(3, 4);
 
-	hash.Set("two", 2);
-	hash.Set("three", 3);
-	cout << "three: " << *hash.Get("three") << endl;
+  EXPECT_EQ(4, c.get(3));
 
-	hash.Set("four", 4);
-	hash.Set("five", 5);
-	hash.Set("six", 6);
-	hash.Set("seven", 7);
-	hash.Set("eight", 8);
-	hash.Set("nine", 9);
-	hash.Set("ten", 10);
-	hash.Set("eleven", 11);
+  // c.get(1);
+  EXPECT_EQ(2, c.get(1));
+  c.set(4, 5);
 
-	cout << "five: " << *hash.Get("five") << endl;
-	cout << "ten: " << *hash.Get("ten") << endl;
-	cout << "seven: " << *hash.Get("seven") << endl;
-	cout << "eleven: " << *hash.Get("eleven") << endl;
-	cout << "<empty>: " << *hash.Get("") << endl;
+  c.set(4, 5);
 
-	return 0;
+  EXPECT_EQ(5, c.get(4));
+  EXPECT_EQ(-1, c.get(2));
+  EXPECT_EQ(5, c.get(4));
+  return 0;
 }

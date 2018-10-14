@@ -1,72 +1,198 @@
-#include <iostream>
-#include <algorithm>
+#include<iostream>
+#include<cstdlib>
+#include<ctime>
+#include<bits/stdc++.h>
 
 using namespace std;
 
-const long long maxx =1e4+5;
-pair <long long , pair <int, int> > adj[maxx];
-int main_root[maxx];
-int nodes, edges;
 
-int root(int x)
+class Node {
+   public:
+     int val;
+     Node **next;//array of next pointers
+     Node(int v, int level);
+     ~Node();
+};
+
+Node::~Node()
 {
-    while(main_root[x]!=x)
-    {
-        main_root[x]=main_root[main_root[x]];
-        x=main_root[x];
-    }
-    return x;
+  delete[] next;
 }
 
-void unions(int x, int y)
+Node::Node(int v, int level)
 {
-    main_root[root(y)] = main_root[root(x)];
+    val = v;
+    next = new Node*[level+1];
+    memset(next, 0, sizeof(Node*)*(level+1));
 }
 
-long long  MST(pair <long long , pair <int, int> > adj[])
+class SkipList{
+     public:
+      int max_level;//max number of levels
+      int cur_level; //current level
+      float p;//fraction of nodes that have a val
+      Node *head;
+      SkipList(int max_num_levels, float fraction);
+      void insertElement(int value);
+      void displaySkipList();
+      void deleteElement(int value);
+      bool findElement(int value);
+      int randomLevel();
+      ~SkipList();
+};
+
+SkipList::~SkipList()
 {
-    int i, x, y;
-    long long weight=0, w;
-
-    for(i=0; i<edges; i++)
-    {
-        x = adj[i].second.first;
-        y = adj[i].second.second;
-        w = adj[i].first;
-
-        if(root(x)!=root(y))
-        {
-            weight += w;
-            unions(x,y);
-        }
-    }
-    return weight;
+  Node *temp = head, *prev =NULL;
+  while(temp){
+   prev = temp;
+   temp = temp->next[0]; 
+   delete prev;
+  }
 }
 
-
-int main()
+SkipList::SkipList(int max_num_levels, float fraction)
 {
-    int i;
-    cin>>nodes>>edges;
+   max_level = max_num_levels;
+   cur_level = 0;
+   p = fraction;
+   head = new Node(-1, max_level);
+}
 
-    for(i=0; i<edges; i++)
+int SkipList::randomLevel()
+{
+  int level = 0;
+  float fraction = (float)rand () / RAND_MAX;
+  while (fraction < p && level < max_level)
     {
-        int x,y;
-        long long w;
-        cin>>x>>y>>w;
-        adj[i] = make_pair(w, make_pair(x, y));
+      level++;
+      fraction = (float)rand () / RAND_MAX;
     }
+  return level;
+}
 
-    for(i=0; i<=maxx; i++)
-        main_root[i]=i;
+bool SkipList::findElement(int val)
+{
+  for (int i = cur_level; i >= 0; i--)
+    {
+      Node *temp = head->next[i];
+      while (temp)
+	{
+	  if (temp->val == val)
+	    {
+	      return true;
+	    }
+	  else if (temp->val < val)
+	    {
+	      temp = temp->next[i];
+	    }
+	  else
+	    {
+	      break;
+	    }
+	}
+    }
+  return false;
+}
 
-    sort(adj , adj + edges);
-    cout<<MST(adj)<<endl;
+void SkipList::insertElement(int value)
+{
+  int rlevel = randomLevel ();
+  Node *nnode = new Node (value, rlevel);
+  if(cur_level < rlevel)
+    cur_level = rlevel;
 
-    /*
-    for(i=0; i<=5; i++)
-        cout<<main_root[i]<<" ";
-        */
+  for (int i = 0; i < rlevel + 1; i++)
+    {
+      Node *temp = head;
+      while (temp->next[i] != NULL && temp->next[i]->val < value)
+	{
+	  temp = temp->next[i];
+	}
+      if (temp->next[i] == NULL)
+	{
+	  temp->next[i] = nnode;
+	}
+      else
+	{
+	  nnode->next[i] = temp->next[i];
+	  temp->next[i] = nnode;
+	}
+    }
+}
 
-    return 0;
+void SkipList::displaySkipList()
+{
+  for (int i = cur_level; i >= 0; i--)
+    {
+      Node *temp = head->next[i];
+      cout<<i<<") ";
+      while (temp)
+	{
+          cout<<temp->val;
+          if(temp->next[i])
+             cout<<"->";          
+             temp = temp->next[i];
+	}
+        cout<<endl;
+    }
+}
+
+void SkipList::deleteElement(int value)
+{
+  Node *element = NULL;
+  for (int i = cur_level; i >= 0; i--)
+    {
+      Node *temp = head;
+      while (temp->next[i] != NULL && temp->next[i]->val < value)
+	{
+	  temp = temp->next[i];
+	}
+      if (temp->next[i] && temp->next[i]->val == value)
+	{
+	  if (element == NULL){
+	    element = temp->next[i];
+            if(head->next[i] == element && 
+               head->next[i]->next[i]==NULL &&
+               i == cur_level)
+                 cur_level--;
+          }
+	  temp->next[i] = temp->next[i]->next[i];
+	}
+    }
+  delete element;
+}
+
+int main(int argc, char *argv[])
+{
+  srand(time(0));
+
+  SkipList *sp = new SkipList(5,0.5);
+#if 0
+  int n = 0;
+  cout<<"Enter number of values < 1000:";
+  cin >> n;
+  while(n){
+   sp->insertElement(rand()%1000);
+   n--;
+  }
+#endif
+  sp->insertElement(26);
+  sp->insertElement(21);
+  sp->insertElement(19);
+  sp->insertElement(17);
+  sp->insertElement(12);
+  sp->insertElement(9);
+  sp->insertElement(7);
+  sp->insertElement(6);
+  sp->insertElement(3);
+  sp->insertElement(25);
+  sp->displaySkipList();
+
+  cout<<"Find 24:"<<(sp->findElement(24)?"true":"false")<<endl;
+  cout<<"Find 21:"<<(sp->findElement(21)?"true":"false")<<endl;
+  sp->deleteElement(21);
+  sp->displaySkipList();
+  delete sp;
+  return 0;
 }

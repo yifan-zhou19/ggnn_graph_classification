@@ -1,272 +1,139 @@
-class List {
-  public int head;
-  public List tail;
-  
-  public List(int h, List t) {
-    head = h;
-    tail = t;
-  } 
-}
+/*
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
-public class Main {
-  public static void main(String[] args) {
-    List L1 = list(1, list(2, list(3, null)));
-    List L2 = list(5, list(6, list(7, null)));
-    
-    write("L1 is ");
-    write_list(L1);
-    
-    write("L1 without the second element is");
-    write_list(drop_at(L1, 1));
-    
-    write("merge_sort(L1) is");
-    write_list(merge_sort(L1));
-    
-    writeln("L1 length is " + length(L1));
-    
-    writeln("L1 last element is " + last(L1));
-    
-    writeln("Are there any duplicated elements in L1? " + duplicated(L1));
+/*
+ *    NaiveBayesUpdateable.java
+ *    Copyright (C) 1999-2012 University of Waikato, Hamilton, New Zealand
+ *
+ */
 
-    write("L2 is ");
-    write_list(L2);
-    
-    writeln("Appending L2 to L1 is");
-    write_list(append(L1, L2));
-    
-    writeln("L1 reversed (with acc) is");
-    write_list(reverse_acc(L1));
-    
-    writeln("L1 max is " + list_max(L1));
-    
-    writeln("L1 max is " + list_max(L1));
+package weka.classifiers.bayes;
 
-    writeln("L1 sum is " + sum(L1));
-    
-    writeln("Is 2 element from L1? " + elem(L1, 2));
-    
-    writeln("L1 without the second element is");
-    write_list(drop_at(L1, 1));
-    
-    writeln("Does L1 has contiguos elems? " + contiguos(L1));
-    
-    writeln("L1 without the last element is");
-    write_list(init(L1));
-    
-    writeln("Does L1 is a palindrome? " + palindrome(L1));
-    
-    writeln("Are L1 and L2 equal? " + equal_list(L1, L2));
-    
-    writeln("Is L1 ordered? " + ordered(L1));
-    
-    writeln("Ordered insert 4 into L1 is");
-    write_list(ordered_insert(L1, 4));
-    
-    writeln("The third element of the list is " + nth(L1, 2));
-    
-    writeln("Change last for the first of L1 is");
-    write_list(change_first_last(L1));
-  }
+import weka.classifiers.UpdateableClassifier;
+import weka.core.RevisionUtils;
+import weka.core.TechnicalInformation;
+
+/**
+ <!-- globalinfo-start -->
+ * Class for a Naive Bayes classifier using estimator classes. This is the updateable version of NaiveBayes.<br/>
+ * This classifier will use a default precision of 0.1 for numeric attributes when buildClassifier is called with zero training instances.<br/>
+ * <br/>
+ * For more information on Naive Bayes classifiers, see<br/>
+ * <br/>
+ * George H. John, Pat Langley: Estimating Continuous Distributions in Bayesian Classifiers. In: Eleventh Conference on Uncertainty in Artificial Intelligence, San Mateo, 338-345, 1995.
+ * <p/>
+ <!-- globalinfo-end -->
+ *
+ <!-- technical-bibtex-start -->
+ * BibTeX:
+ * <pre>
+ * &#64;inproceedings{John1995,
+ *    address = {San Mateo},
+ *    author = {George H. John and Pat Langley},
+ *    booktitle = {Eleventh Conference on Uncertainty in Artificial Intelligence},
+ *    pages = {338-345},
+ *    publisher = {Morgan Kaufmann},
+ *    title = {Estimating Continuous Distributions in Bayesian Classifiers},
+ *    year = {1995}
+ * }
+ * </pre>
+ * <p/>
+ <!-- technical-bibtex-end -->
+ *
+ <!-- options-start -->
+ * Valid options are: <p/>
+ * 
+ * <pre> -K
+ *  Use kernel density estimator rather than normal
+ *  distribution for numeric attributes</pre>
+ * 
+ * <pre> -D
+ *  Use supervised discretization to process numeric attributes
+ * </pre>
+ * 
+ * <pre> -O
+ *  Display model in old format (good when there are many classes)
+ * </pre>
+ * 
+ <!-- options-end -->
+ *
+ * @author Len Trigg (trigg@cs.waikato.ac.nz)
+ * @author Eibe Frank (eibe@cs.waikato.ac.nz)
+ * @version $Revision: 8034 $
+ */
+public class NaiveBayesUpdateable extends NaiveBayes 
+  implements UpdateableClassifier {
   
-  static List list(int head, List tail) {
-    return new List(head, tail);
+  /** for serialization */
+  static final long serialVersionUID = -5354015843807192221L;
+ 
+  /**
+   * Returns a string describing this classifier
+   * @return a description of the classifier suitable for
+   * displaying in the explorer/experimenter gui
+   */
+  public String globalInfo() {
+    return "Class for a Naive Bayes classifier using estimator classes. This is the "
+      +"updateable version of NaiveBayes.\n"
+      +"This classifier will use a default precision of 0.1 for numeric attributes "
+      +"when buildClassifier is called with zero training instances.\n\n"
+      +"For more information on Naive Bayes classifiers, see\n\n"
+      + getTechnicalInformation().toString();
   }
-  
-  static int head(List xs) {
-    return xs.head;
+
+  /**
+   * Returns an instance of a TechnicalInformation object, containing 
+   * detailed information about the technical background of this class,
+   * e.g., paper reference or book this class is based on.
+   * 
+   * @return the technical information about this class
+   */
+  public TechnicalInformation getTechnicalInformation() {
+    return super.getTechnicalInformation();
   }
-  
-  static List tail(List xs) {
-    return xs.tail;
-  }
-  
-  static boolean empty(List xs) {
-    return xs == null;
-  }
-  
-  static int length(List xs) {
-    if (empty(xs)) return 0;
-    return 1 + length(tail(xs));
-  }
-  
-  static int sum(List xs) {
-    if (empty(xs))
-      return 0;
-    return head(xs) + sum(tail(xs));
-  }
-  
-  static List drop_at(List xs, int i) {
-    if (i == 0)
-      return tail(xs);
-    return list(head(xs), drop_at(tail(xs), i - 1));
-  }
-  
-  static List drop(List xs, int i) {
-    if (i == 0)
-      return xs;
-    return drop(tail(xs), i - 1);
-  }
-  
-  static List take(List xs, int i) {
-    if (i == 0)
-      return null;
-    return list(head(xs), take(tail(xs), i - 1));
-  }
-  
-  static List merge(List xs, List ys) {
-  	if (empty(xs))
-  		return ys;
-  	if (empty(ys))
-  		return xs;
-  	if (head(xs) <= head(ys))
-  		return list(head(xs), merge(tail(xs), ys));
-  	else
-  		return list(head(ys), merge(xs, tail(ys)));
-  }
-  
-  static List merge_sort2(List xs, int n) {
-    if (n == 1)
-      return xs;
-    double half_double = n / 2;
-    int half = (int) half_double;
-    
-    return merge(merge_sort2(take(xs, half), half),
-				         merge_sort2(drop(xs, half), n - half));
-  }
-  
-  static List merge_sort(List xs) {
-    return merge_sort2(xs, length(xs));
-  }
-  
-  static int last(List xs) {
-    if (empty(tail(xs)))
-      return head(xs);
-    return last(tail(xs));
-  }
-  
-  static boolean elem(List xs, int x) {
-  	if (empty(xs))
-  		return false;
-  	if (head(xs) == x)
-  		return true;
-  	return elem(tail(xs), x);
-  }
-  
-  static boolean duplicated(List xs) {
-    if (empty(xs))
-      return false;
-    if (elem(tail(xs), head(xs)))
-      return true;
-    return duplicated(tail(xs));
-  }
-  
-  static List append(List xs, List ys) {
-    if (empty(xs))
-      return ys;
-    return list(head(xs), append(tail(xs), ys));
-  }
-  
-  static List reverse_acc2(List xs, List acc) {
-    if (empty(xs))
-      return acc;
-    return reverse_acc2(tail(xs),
-                        append(list(head(xs), null), acc));
-  }
-  
-  static int list_max2(List xs, int curr) {
-    if (empty(xs))
-      return curr;
-    return list_max2(tail(xs), Math.max(head(xs), curr));
-  }
-  
-  static int list_max(List xs) {
-    return list_max2(tail(xs), head(xs));
-  }
-  
-  static List reverse_acc(List xs) {
-    return reverse_acc2(xs, null);
-  }
-  
-  static boolean contiguos(List xs) {
-    if (empty(xs) || empty(tail(xs)))
-  		return false;
-  	if (head(xs) == head(tail(xs)))
-  		return true;
-  	return contiguos(tail(xs));
-  }
-  
-  static List init(List xs) {
-    if (empty(tail(xs)))
-  		return null;
-  	
-  	return list(head(xs), init(tail(xs)));
-  }
-  
-  static boolean palindrome(List xs) {
-    if (empty(xs) || empty(tail(xs)))
-		  return true;
-  	if (head(xs) != last(xs))
-  		return false;
-  	return palindrome(init(tail(xs)));
-  }
-  
-  static boolean equal_list(List xs, List ys) {
-    if (empty(xs) && empty(ys))
-		  return true;
-  	if (empty(xs) || empty(ys))
-  		return false;
-  	if (head(xs) != head(ys))
-  		return false;
-  	return equal_list(tail(xs), tail(ys));
-  }
-  
-  static boolean ordered(List xs) {
-    if (empty(xs) || empty(tail(xs)))
-  		return true;
-  	if (head(xs) > head(tail(xs)))
-  		return false;
-  	return ordered(tail(xs));
-  }
-  
-  static List ordered_insert(List xs, int x) {
-    if (empty(xs))
-  		return list(x, null);
-  	if (head(xs) > x)
-  		return list(x, xs);
-  	return list(head(xs), ordered_insert(tail(xs), x));
-  }
-  
-  static int nth(List xs, int i) {
-    if (i == 0)
-  		return head(xs);
-  	return nth(tail(xs), i - 1);
-  }
-  
-  static List change_first_last(List xs, int first) {
-    if (empty(xs))
-      return list(first, null);
-    return list(head(xs), change_first_last(tail(xs), first));
-  }
-  
-  static List change_first_last(List xs) {
-    return change_first_last(tail(xs), head(xs));
-  }
-  
-  static void write_list(List xs) {
-    if (empty(xs))
-      write("\n");
-    else {
-      write(" " +head(xs) + " ");
-      write_list(tail(xs));
+
+  /**
+   * Set whether supervised discretization is to be used.
+   *
+   * @param newblah true if supervised discretization is to be used.
+   */
+  public void setUseSupervisedDiscretization(boolean newblah) {
+
+    if (newblah) {
+      throw new IllegalArgumentException("Can't use discretization " + 
+					 "in NaiveBayesUpdateable!");
     }
-  }
-
-  static void write(String str) {
-    System.out.print(str);
+    m_UseDiscretization = false;
   }
   
-  static void writeln(String str) {
-    write(str);
-    write("\n");
+  /**
+   * Returns the revision string.
+   * 
+   * @return		the revision
+   */
+  public String getRevision() {
+    return RevisionUtils.extract("$Revision: 8034 $");
+  }
+
+  /**
+   * Main method for testing this class.
+   *
+   * @param argv the options
+   */
+  public static void main(String [] argv) {
+    runClassifier(new NaiveBayesUpdateable(), argv);
   }
 }
+

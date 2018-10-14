@@ -1,67 +1,47 @@
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
+package stackSample;
 
-public class FordFulkerson {
+import java.util.Arrays;
 
-	public int maxFlow(int source, int sink, int cap[][]) {
 
-		int result = 0;
-		Map<Integer, Integer> parent = new HashMap<>();
-		while (BFS(cap, source, sink, parent)) {
-			int flow = Integer.MAX_VALUE;
-			int v = sink;
-			while (v != source) {
-				int u = parent.get(v);
-				flow = Math.min(flow, cap[u][v]);
-				v = u;
-			}
-			result += flow;
-			v=sink;
-			while (v != source) {
-				int u = parent.get(v);
-				cap[u][v] -= flow;
-				cap[v][u] += flow;
-				v = u;
-			}
+public class Stack {
+
+	private final static int MSIZE = 3; 
+	private int currPos = 0;
+	private int[] val = new int[MSIZE];
+	private int depth=1;
+
+	public void push(int a) {
+		if (!pushPre()) {
+			throw new RuntimeException("cannot push; full stack");
 		}
-		return result;
+		val[currPos++] = a;
+		System.out.println("## Push:"+currPos+":"+depth);		
+		depth++;
 	}
 
-	public boolean BFS(int cap[][], int source, int sink, Map<Integer, Integer> parent) {
-
-		Set<Integer> visited = new HashSet<>();
-		Queue<Integer> queue = new LinkedList<>();
-		visited.add(source);
-		queue.add(source);
-		boolean find = false;
-		while (!queue.isEmpty()) {
-			int u = queue.poll();
-			for (int v = 0; v < cap.length; v++) {
-				if (!visited.contains(v) && cap[u][v] > 0) {
-					parent.put(v, u);
-					visited.add(v);
-					queue.add(v);
-					if (v == sink) {
-						find = true;
-						break;
-					}
-				}
-			}
+	public void pop() {
+		if (!popPre()) {
+			throw new RuntimeException("cannot pop; empty stack");
 		}
-		return find;
+		val[--currPos] = 0;
+		System.out.println("## Pop:"+currPos+":"+depth);
+		depth++;
 	}
 
-	public FordFulkerson() {
-		int[][] capacity = { { 0, 3, 0, 3, 0, 0, 0 }, { 0, 0, 4, 0, 0, 0, 0 }, { 3, 0, 0, 1, 2, 0, 0 },
-				{ 0, 0, 0, 0, 2, 6, 0 }, { 0, 1, 0, 0, 0, 0, 1 }, { 0, 0, 0, 0, 0, 0, 9 }, { 0, 0, 0, 0, 0, 0, 0 } };
-		System.out.println(maxFlow(0, 6, capacity));
+	public boolean pushPre() {		
+		return currPos >= 0 && currPos < MSIZE;
 	}
 
-	public static void main(String[] args) {
-		new FordFulkerson();
+	public boolean popPre() {
+		return currPos > 0 && currPos <= MSIZE;
 	}
+	
+	public String toString() {
+		StringBuffer sb = new StringBuffer();
+		sb.append("currPost="+currPos);
+		sb.append("\\n");
+		sb.append("val="+Arrays.toString(val));
+		return sb.toString();
+	}
+
 }

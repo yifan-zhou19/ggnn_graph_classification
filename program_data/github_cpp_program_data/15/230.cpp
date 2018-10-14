@@ -1,87 +1,69 @@
-#include<bits/stdc++.h>
-using namespace std;
-vector<int> graph[10001];
+#include"heap.h"
 
 
-void dfs(int i,bool visited[], vector<int> v[10001], stack<int>& st){
-	visited[i]=true;
-	vector<int>::iterator it;
-	for(it=v[i].begin();it!=v[i].end();it++)
-		if(!visited[*it])
-			dfs(*it,visited,v,st);
-		
-	st.push(i);
+Heap::Heap (constexpr int option)
+{
+	list = (Event**) calloc(1, sizeof(Event *));;
+	list_length = 0;
+	this->option = option;
 }
 
-
-int * topoSort(vector<int> graph[], int N)
-{
-   // Your code here
-   bool *visited=new bool[N];
-   for(int i=0;i<N;i++)
-    	visited[i]=false;
-    
-    int *arr=new int[N];
-    stack<int> st;
-    for(int i=0;i<N;i++){
-		if(!visited[i]){
-			dfs(i,visited,graph,st);
-		}
+/*
+ Creates a new node with the paramter and adds it to the heap.
+ */
+void Heap::addNode (Event *element) 
+{	
+	list_length++;
+	if (list_length == 1)
+	{
+		//list[0] = calloc(1, sizeof(Event));
+		list[0] = element;
+		return;
+	}
+	else
+	{
+		list = (Event**) realloc(list, sizeof(Event*)*list_length);
+		list[list_length-1] = element;
 	}
 	
-	int temp=0;
-	while(!st.empty()){
-		int n=st.top();
-		st.pop();
-		arr[temp]=n;
-		temp++;
+	int child_index = list_length;
+	int parent_index = child_index/2;
+	Event *tmp;
+	while (child_index > 1 && 
+		(std::get<(option)>(*list[child_index-1])> 
+		std::get<(option)>(*list[parent_index-1])))
+	{
+		//tmp = list[child_index-1];
+		//list[child_index-1] = list[parent_index-1];
+		//list[parent_index-1] = tmp;
+		//child_index = parent_index;
+		//parent_index = child_index/2;
 	}
-	int *ptr=arr;
-	return ptr;
 }
 
 
-
-
-int main()
+Event * Heap::removeNode () 
 {
-int T;
-cin>>T;
-while(T--)
+	void *output = &list[0];
+}
+
+
+void Heap::printHeap () 
 {
-    memset(graph,0,sizeof graph);
-    int N,E;
-    cin>>E>>N;
-    for(int i=0;i<E;i++)
-    {
-        int u,v;
-        cin>>u>>v;
-        graph[u].push_back(v);
-    }
-    int *res = topoSort(graph,N);
-    bool valid =true;
-    for(int i=0;i<N;i++)
-    {
-        int n=graph[res[i]].size();
-        for(int j=0;j<graph[res[i]].size();j++)
-        {
-            for(int k=i+1;k<N;k++)
-            {
-                if(res[k]==graph[res[i] ] [j] )
-                    n--;
-            }
-        }
-        if(n!=0)
-        {
-            valid =false;
-            break;
-        }
-    }
-    if(valid==false)
-        cout<<0<<endl;
-    else
-        cout<<1<<endl;
-}
-}
+	if (list_length > 0)
+	{
+		std::cout << std::get<0>(list[0]->info);
+		std::cout << ": " << std::get<1>(list[0]->info);
+		std::cout << "-" << std::get<2>(list[0]->info);
+	}
 
-
+	int i = 1;
+	while (i < list_length)
+	{
+		std::cout << ", " << std::get<0>(list[i]->info);
+		std::cout << ": " << std::get<1>(list[i]->info);
+		std::cout << "-" << std::get<2>(list[i]->info);
+		i++;
+	}
+	std::cout << std::endl;
+}

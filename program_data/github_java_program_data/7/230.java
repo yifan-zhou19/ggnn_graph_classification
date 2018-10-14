@@ -1,31 +1,26 @@
-package recursive;
+/**
+ * 
+ */
+package recursion;
 
-import java.util.Scanner;
+/**
+ * @author Ronak Goyal
+ *
+ */
+public class TowerOfHanoi {
 
-
-public class Fibonacci {
-
+	/**
+	 * @param args
+	 */
+	public static void towerOfHanoi(int n , char source, char destination, char auxillary){
+		if(n==0 )return ;
+		towerOfHanoi(n-1, source, auxillary, destination);
+		System.out.println("Move the disk " +n + " from " + source+ " to " + destination);
+		towerOfHanoi(n-1, auxillary, destination, source);
+	}
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		Scanner scan=new Scanner(System.in);
-		System.out.println("enter an Integer");
-		int num=scan.nextInt();
-		int op=fib(num);
-		System.out.println(op);
-		scan.close();
-	}
-
-	private static int fib(int num) {
-		// TODO Auto-generated method stub
-		if(num==0||num==1){
-			return num;
-		}
-		//System.out.println("fib(" + new Integer(num) + ") calling fib("+ new Integer(num-1) + ") and fib("+ new Integer(num-2)+")");
-		int res=fib(num-1)+fib(num-2);
-		//System.out.println("result came: fib(" + new Integer(num) + ") calling fib("+ new Integer(num-1) + ") and fib("+ new Integer(num-2)+")");
-
-		return res;
-		
+       towerOfHanoi(5,'S','D','A');
 	}
 
 }

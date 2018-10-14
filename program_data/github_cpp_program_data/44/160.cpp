@@ -1,52 +1,31 @@
-struct Edge {
-    int from;
-    int to;
-    int capacity;
-    int flow;
+#include "stack.h"
+#include <assert.h>
 
-    Edge() {}
-    Edge(int _from, int _to, int _capacity = 0, int _flow = 0)
-        : from(_from), to(_to), capacity(_capacity), flow(_flow) {}
-};
-
-struct flowNetwork {
-    int n;
-    int source;
-    int sink;
-    vector<Edge> edges;
-    vector< vector<int> > adjLists;
-
-    flowNetwork() {}
-    flowNetwork(int _n, int _source, int _sink) : n(_n), source(_source), sink(_sink) {
-        adjLists.resize(n);
-    }
-
-    void addEdge(Edge e) {
-        adjLists[e.from].push_back(edges.size());
-        edges.push_back(e);
-        e = Edge(e.to, e.from, 0);
-        adjLists[e.from].push_back(edges.size());
-        edges.push_back(e);
-    }
-
-    ll dfs(int u, int minC) {
-        if (u == sink) {
-            return minC;
-        }
-
-        visited[u] = 1;
-        for (auto uv : adjLists[u]) {
-            if (!visited[edges[uv].to] && edges[uv].flow < edges[uv].capacity) {
-                int delta = dfs(edges[uv].to, min(minC, edges[uv].capacity - edges[uv].flow));
-
-                if (delta > 0) {
-                    edges[uv].flow += delta;
-                    edges[uv ^ 1].flow -= delta;
-                    return delta;
-                }
-            }
-        }
-
-        return 0;
-    }
-};
+//Constructor
+Stack::Stack(){
+  sz = 0;
+  index = NULL;
+}
+//Push
+void Stack::push(int value){ 
+  Nodo* tmp = new Nodo(value,index);  //Se inicializa un nuevo espacio de memoria apuntando a index y con valor igual a "value"
+  index = tmp;                        //Index ahora apunta al espacio recien inicializado
+  ++sz;                               //La pila crece en 1
+}
+//Pop
+void Stack::pop(){ 
+   assert(index != NULL);             //Si la pila esta vacia, regresa SEGMENTATION FAULT
+   Nodo* tmp = index;                 //tmp apunta a index
+   index = index->nxt;                //Index apunta al siguiente en la pila
+   delete tmp;                        //tmp borra el primer elemento de la memoria
+   --sz;                              //La pila decrece en 1
+}
+//Top
+int Stack::top(){
+  assert(index != NULL);              //Si la pila esta vacia, regresa SEGMENTATION FAULT
+  return index->val;                  //Regresa el valor dentro de index
+}
+//Size
+int Stack::size(){
+  return sz;                          //Regresa la cantidad de elementos en la pila
+}

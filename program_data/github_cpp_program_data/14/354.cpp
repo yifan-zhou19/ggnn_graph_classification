@@ -1,193 +1,411 @@
-#include "Heap.hpp"
+/*
+GRT MIT License
+Copyright (c) <2012> <Nicholas Gillian, Media Lab, MIT>
 
-#define CHANGUI 0x100
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software 
+and associated documentation files (the "Software"), to deal in the Software without restriction, 
+including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, 
+and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, 
+subject to the following conditions:
 
-// To do
-// [ ] Use an internal variable to mantain time. When time is set to 0, make time == order of call
-// [ ] check for overlapping chunks (when alloc() is called)
-// [ ] make two different calls per function:
-//     [ ] malloc_enter(), malloc_return()
-//     [ ] free_enter(), free_return()
-//     [ ] realloc_enter(), realloc_return(), 
-//     [ ] etc.
-//
+The above copyright notice and this permission notice shall be included in all copies or substantial 
+portions of the Software.
 
-bool operator<(const HeapChunk &t, const HeapChunk &other) {
-	return ((t.base<other.base) || (t.base==other.base && t.allocTime<other.allocTime));
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT 
+LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
+
+#include "LogisticRegression.h"
+
+using namespace std;
+
+namespace GRT{
+
+//Register the LogisticRegression module with the Classifier base class
+RegisterRegressifierModule< LogisticRegression >  LogisticRegression::registerModule("LogisticRegression");
+
+LogisticRegression::LogisticRegression(const bool useScaling)
+{
+    this->useScaling = useScaling;
+    minChange = 1.0e-5;
+    maxNumEpochs = 500;
+    learningRate = 0.01;
+    classType = "LogisticRegression";
+    regressifierType = classType;
+    debugLog.setProceedingText("[DEBUG LogisticRegression]");
+    errorLog.setProceedingText("[ERROR LogisticRegression]");
+    trainingLog.setProceedingText("[TRAINING LogisticRegression]");
+    warningLog.setProceedingText("[WARNING LogisticRegression]");
 }
 
-bool operator<(const HeapRegion &t, const HeapRegion &other) {
-	return ((t.base<other.base) || (t.base==other.base && t.allocTime<other.allocTime));
+LogisticRegression::~LogisticRegression(void)
+{
+}
+    
+LogisticRegression& LogisticRegression::operator=(const LogisticRegression &rhs){
+	if( this != &rhs ){
+        this->w0 = rhs.w0;
+        this->w = rhs.w;
+        
+        //Copy the base variables
+        copyBaseVariables( (Regressifier*)&rhs );
+	}
+	return *this;
 }
 
-void HeapRegion::alloc(unsigned int base, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapChunk toFind(base, base+size, time, caller, pid);
-
-    if (top < toFind.top) {
-        top = toFind.top + CHANGUI;
-        verprintf(3,("Readjusting base to 0x%08x\n", top));
+bool LogisticRegression::deepCopyFrom(const Regressifier *regressifier){
+    
+    if( regressifier == NULL ) return false;
+    
+    if( this->getRegressifierType() == regressifier->getRegressifierType() ){
+        const LogisticRegression *ptr = dynamic_cast<const LogisticRegression*>(regressifier);
+        
+        this->w0 = ptr->w0;
+        this->w = ptr->w;
+        
+        //Copy the base variables
+        return copyBaseVariables( regressifier );
     }
-	chunks.insert(toFind);
+    return false;
 }
 
-void HeapRegion::free(unsigned int base, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapChunk toFind(base, 0, time, caller, pid);
-
-    if (!chunks.size()) return;
-	set<HeapChunk>::iterator a=chunks.lower_bound(toFind);
-	a--;
-
-	if (a->base == toFind.base) {
-		// --a;    verprintf(3,("free found -1: %d 0x%08x %lu %lu\n", a->freeTime == 0.0, a->base, a->allocTime, a->freeTime));    a++;
-		        verprintf(2,("free found  0: %d 0x%08x %lu %lu\n", a->freeTime == 0.0, a->base, a->allocTime, a->freeTime));
-		// ++a;    verprintf(3,("free found +1: %d 0x%08x %lu %lu\n", a->freeTime == 0.0, a->base, a->allocTime, a->freeTime));    a--;
-		if (a->freeTime != 0.0) {
-			qprintf(("Freeing a chunk that's already free: 0x%08x\n", toFind.base));
-		} else {
-			((HeapChunk*)&*a)->setFreeTime(toFind.allocTime);
-			((HeapChunk*)&*a)->setFreeCaller(toFind.allocCaller);
-		}
-	} else {
-		verprintf(2,("Found: 0x%08x %lf\n", a->base, a->allocTime));
-		qprintf(("Freeing a not allocated chunk: 0x%08x\n", toFind.base));
+bool LogisticRegression::train_(RegressionData &trainingData){
+    
+    const unsigned int M = trainingData.getNumSamples();
+    const unsigned int N = trainingData.getNumInputDimensions();
+    const unsigned int K = trainingData.getNumTargetDimensions();
+    trained = false;
+    trainingResults.clear();
+    
+    if( M == 0 ){
+        errorLog << "train_(RegressionData trainingData) - Training data has zero samples!" << endl;
+        return false;
+    }
+    
+    if( K == 0 ){
+        errorLog << "train_(RegressionData trainingData) - The number of target dimensions is not 1!" << endl;
+        return false;
+    }
+    
+    numInputDimensions = N;
+    numOutputDimensions = 1; //Logistic Regression will have 1 output
+    inputVectorRanges.clear();
+    targetVectorRanges.clear();
+    
+    //Scale the training and validation data, if needed
+	if( useScaling ){
+		//Find the ranges for the input data
+        inputVectorRanges = trainingData.getInputRanges();
+        
+        //Find the ranges for the target data
+		targetVectorRanges = trainingData.getTargetRanges();
+        
+		//Scale the training data
+		trainingData.scale(inputVectorRanges,targetVectorRanges,0.0,1.0);
 	}
+    
+    //Reset the weights
+    Random rand;
+    w0 = rand.getRandomNumberUniform(-0.1,0.1);
+    w.resize(N);
+    for(UINT j=0; j<N; j++){
+        w[j] = rand.getRandomNumberUniform(-0.1,0.1);
+    }
+
+    double error = 0;
+    double lastSquaredError = 0;
+    double delta = 0;
+    UINT iter = 0;
+    bool keepTraining = true;
+    Random random;
+    vector< UINT > randomTrainingOrder(M);
+    TrainingResult result;
+    trainingResults.reserve(M);
+    
+    //In most cases, the training data is grouped into classes (100 samples for class 1, followed by 100 samples for class 2, etc.)
+    //This can cause a problem for stochastic gradient descent algorithm. To avoid this issue, we randomly shuffle the order of the
+    //training samples. This random order is then used at each epoch.
+    for(UINT i=0; i<M; i++){
+        randomTrainingOrder[i] = i;
+    }
+    std::random_shuffle(randomTrainingOrder.begin(), randomTrainingOrder.end());
+    
+    //Run the main stochastic gradient descent training algorithm
+    while( keepTraining ){
+        
+        //Run one epoch of training using stochastic gradient descent
+        totalSquaredTrainingError = 0;
+        for(UINT m=0; m<M; m++){
+            
+            //Select the random sample
+            UINT i = randomTrainingOrder[m];
+            
+            //Compute the error, given the current weights
+            VectorDouble x = trainingData[i].getInputVector();
+            VectorDouble y = trainingData[i].getTargetVector();
+            double h = w0;
+            for(UINT j=0; j<N; j++){
+                h += x[j] * w[j];
+            }
+            error = y[0] - sigmoid( h );
+            totalSquaredTrainingError += SQR(error);
+            
+            //Update the weights
+            for(UINT j=0; j<N; j++){
+                w[j] += learningRate * error * x[j];
+            }
+            w0 += learningRate * error;
+        }
+        
+        //Compute the error
+        delta = fabs( totalSquaredTrainingError-lastSquaredError );
+        lastSquaredError = totalSquaredTrainingError;
+        
+        //Check to see if we should stop
+        if( delta <= minChange ){
+            keepTraining = false;
+        }
+        
+        if( ++iter >= maxNumEpochs ){
+            keepTraining = false;
+        }
+        
+        if( grt_isinf( totalSquaredTrainingError ) || grt_isnan( totalSquaredTrainingError ) ){
+            errorLog << "train_(RegressionData &trainingData) - Training failed! Total squared error is NAN. If scaling is not enabled then you should try to scale your data and see if this solves the issue." << endl;
+            return false;
+        }
+        
+        //Store the training results
+        rootMeanSquaredTrainingError = sqrt( totalSquaredTrainingError / double(M) );
+        result.setRegressionResult(iter,totalSquaredTrainingError,rootMeanSquaredTrainingError,this);
+        trainingResults.push_back( result );
+        
+        //Notify any observers of the new result
+        trainingResultsObserverManager.notifyObservers( result );
+        
+        trainingLog << "Epoch: " << iter << " SSE: " << totalSquaredTrainingError << " Delta: " << delta << endl;
+    }
+    
+    //Flag that the algorithm has been trained
+    regressionData.resize(1,0);
+    trained = true;
+    return trained;
 }
 
-void HeapRegion::realloc(unsigned int base, unsigned int newBase, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller) {
-    free(base, time, pid, caller);
-    alloc(newBase, size, time, pid, caller);
-}
-
-void HeapRegion::setLimits() {
-
-	set<HeapChunk>::iterator i=chunks.begin();
-
-	minAddr = i->base;
-	maxAddr = i->top;
-	minTime = i->allocTime;
-	maxTime = i->freeTime;
-
-    if (i == chunks.end()) return;
-	for (i++;i != chunks.end(); i++) {
-		if (minAddr > i->base) minAddr = i->base;
-
-		if (maxAddr < i->top) maxAddr = i->top;
-
-		if (minTime > i->allocTime) minTime = i->allocTime;
-
-		if (maxTime < i->allocTime) maxTime = i->allocTime;
-		if (maxTime < i->freeTime) maxTime = i->freeTime;
+bool LogisticRegression::predict_(VectorDouble &inputVector){
+    
+    if( !trained ){
+        errorLog << "predict_(VectorDouble &inputVector) - Model Not Trained!" << endl;
+        return false;
+    }
+    
+    if( !trained ) return false;
+    
+	if( inputVector.size() != numInputDimensions ){
+        errorLog << "predict_(VectorDouble &inputVector) - The size of the input vector (" << int(inputVector.size()) << ") does not match the num features in the model (" << numInputDimensions << endl;
+		return false;
 	}
-
-	for (i=chunks.begin();i != chunks.end(); i++)
-		if (i->freeTime == 0) 
-			((HeapChunk*)&*i)->setFreeTime(maxTime);
-}
-
-void Heap::mmap(unsigned int base, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapRegion toFind(base, base+size, time, caller, pid);
-
-    if (autoRegions) return;
-    _mmap(base, size, time, pid, caller);
-}
-
-void Heap::_mmap(unsigned int base, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapRegion toFind(base, base+size, time, caller, pid);
-
-    verprintf(1,("[%d] mmap(0x%08x, 0x%08x) [%lu]\n", regions.size(), base, size, time));
-    if (!size) return;
-
-	set<HeapRegion>::iterator a=regions.lower_bound(toFind);
-
-    if (a != regions.end()) {
-        --a;
-
-        // --a; verprintf(3,("mmap found -1: 0x%08x-0x%08x %lu %lu\n", a->base, a->top, a->allocTime, a->freeTime)); a++;
-             verprintf(2,("mmap found  0: 0x%08x-0x%08x %lu %lu\n", a->base, a->top, a->allocTime, a->freeTime));
-        // ++a; verprintf(3,("mmap found +1: 0x%08x-0x%08x %lu %lu\n", a->base, a->top, a->allocTime, a->freeTime)); a--;
-
-        if (a->contains(base-1)) {
-            // new starts inside old
-            if (a->contains(base+size-1)) {
-                // new contained in old, just return
-                verprintf(2,("Old Region included new region: 0x%08x-0x%08x [%lu]\n", a->base, a->top, a->allocTime));
-                return;
-            }
-            if (a->top < base+size) {
-                // new extends old
-                verprintf(2,("Extending up region at 0x%08x-0x%08x [%lu]\n", a->base, a->top, a->allocTime));
-                ((HeapRegion*)&*a)->setTop(base+size);
-                return;
-            }
-        } else if (a->contains(base+size)) {
-            if (a->contains(base)) {
-                // new contained in old, just return
-                verprintf(2,("Old Region included new region: 0x%08x-0x%08x [%lu]\n", a->base, a->top, a->allocTime));
-                return;
-            }
-            if (a->base > base) {
-                // new is right before old (new extends old to lower memory)
-                verprintf(2,("Extending down region at 0x%08x-0x%08x [%lu]\n", a->base, a->top, a->allocTime));
-                ((HeapRegion*)&*a)->setBase(base);
-                return;
-            }
+    
+    if( useScaling ){
+        for(UINT n=0; n<numInputDimensions; n++){
+            inputVector[n] = scale(inputVector[n], inputVectorRanges[n].minValue, inputVectorRanges[n].maxValue, 0, 1);
         }
     }
-    regions.insert(toFind);
-}
-
-void Heap::munmap(unsigned int base, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapRegion toFind(base, 0, time, caller, pid);
-
-    if (autoRegions) return;
-	verprintf(1,("[%d] munmap(0x%08x) [%lu]\n", pid, base, time));
-
-}
-
-void Heap::realloc(unsigned int base, unsigned int newBase, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller) {
-	verprintf(1,("[%d] realloc(0x%08x,0x%08x,0x%08x) [%lu]\n", pid, base, newBase, size, time));
-
-    free(base, time, pid, caller);
-    alloc(newBase, size, time, pid, caller);
-}
-
-void Heap::alloc(unsigned int base, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller, unsigned int dontRecurse) {
-    HeapRegion toFind(base, base+size, time, caller, pid);
-
-	verprintf(1,("[%d] alloc(%d) [%lu] = 0x%08x\n", pid, size, time, base));
-
-	set<HeapRegion>::iterator a=regions.lower_bound(toFind);
-
-    if (a != regions.end() && (--a)->contains(base)) {
-
-        // a--; verprintf(3,("region alloc found -1 (%d): 0x%08x-0x%08x %lu %lu\n", a->contains(base), a->base, a->top, a->allocTime, a->freeTime)); a++;
-             verprintf(2,("region alloc found  0 (%d): 0x%08x-0x%08x %lu %lu\n", a->contains(base), a->base, a->top, a->allocTime, a->freeTime));
-        // a++; verprintf(3,("region alloc found +1 (%d): 0x%08x-0x%08x %lu %lu\n", a->contains(base), a->base, a->top, a->allocTime, a->freeTime)); a--;
-
-        a->alloc(base, size, time, pid, caller);
-    } else {
-        if (autoRegions && !dontRecurse) {
-            _mmap(base-CHANGUI,(size+CHANGUI-1+CHANGUI)&~(CHANGUI-1),time,pid,caller);
-            alloc(base, size, time, pid, caller, 1);
-        } else {
-            verprintf(2,("alloc(0x%08x, 0x%08x) in loose region\n", base, size));
-            loose.alloc(base,size,time,pid,caller);
+    
+    regressionData[0] =  w0;
+    for(UINT j=0; j<numInputDimensions; j++){
+        regressionData[0] += inputVector[j] * w[j];
+    }
+	regressionData[0] = sigmoid( regressionData[0] );
+    
+    if( useScaling ){
+        for(UINT n=0; n<numOutputDimensions; n++){
+            regressionData[n] = scale(regressionData[n], 0, 1, targetVectorRanges[n].minValue, targetVectorRanges[n].maxValue);
         }
     }
+    
+    return true;
 }
-
-void Heap::free(unsigned int base, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapRegion toFind(base, 0, time, caller, pid);
-
-	verprintf(1,("[%d] free(0x%08x) [%lu]\n", toFind.pid, toFind.base,toFind.allocTime));
-
-	set<HeapRegion>::iterator a=regions.lower_bound(toFind);
-
-    if (a != regions.end() && (a--, a->contains(base))) {
-        verprintf(3,("region free found (%d): 0x%08x-0x%08x %lu %lu\n", a->contains(base), a->base, a->top, a->allocTime, a->freeTime));
-        a->free(base, time, pid, caller);
-    } else {
-        verprintf(2,("free(0x%08x) in loose region\n", base));
-        loose.free(base, time, pid, caller);
+    
+bool LogisticRegression::saveModelToFile(fstream &file) const{
+    
+    if(!file.is_open())
+	{
+        errorLog << "loadModelFromFile(fstream &file) - The file is not open!" << endl;
+		return false;
+	}
+    
+	//Write the header info
+	file<<"GRT_LOGISTIC_REGRESSION_MODEL_FILE_V2.0\n";
+    
+    //Write the regressifier settings to the file
+    if( !Regressifier::saveBaseSettingsToFile(file) ){
+        errorLog <<"saveModelToFile(fstream &file) - Failed to save Regressifier base settings to file!" << endl;
+		return false;
     }
+    
+    if( trained ){
+        file << "Weights: ";
+        file << w0;
+        for(UINT j=0; j<numInputDimensions; j++){
+            file << " " << w[j];
+        }
+        file << endl;
+    }
+    
+    return true;
 }
+    
+bool LogisticRegression::loadModelFromFile(fstream &file){
+    
+    trained = false;
+    numInputDimensions = 0;
+    w0 = 0;
+    w.clear();
+    
+    if(!file.is_open())
+    {
+        errorLog << "loadModelFromFile(string filename) - Could not open file to load model" << endl;
+        return false;
+    }
+    
+    std::string word;
+    
+    //Find the file type header
+    file >> word;
+    
+    //Check to see if we should load a legacy file
+    if( word == "GRT_LOGISTIC_REGRESSION_MODEL_FILE_V1.0" ){
+        return loadLegacyModelFromFile( file );
+    }
+    
+    if( word != "GRT_LOGISTIC_REGRESSION_MODEL_FILE_V2.0" ){
+        errorLog << "loadModelFromFile( fstream &file ) - Could not find Model File Header" << endl;
+        return false;
+    }
+    
+    //Load the regressifier settings from the file
+    if( !Regressifier::loadBaseSettingsFromFile(file) ){
+        errorLog <<"loadModelFromFile( fstream &file ) - Failed to save Regressifier base settings to file!" << endl;
+		return false;
+    }
+    
+    if( trained ){
+        
+        //Resize the weights
+        w.resize(numInputDimensions);
+        
+        //Load the weights
+        file >> word;
+        if(word != "Weights:"){
+            errorLog << "loadModelFromFile( fstream &file ) - Could not find the Weights!" << endl;
+            return false;
+        }
+        
+        file >> w0;
+        for(UINT j=0; j<numInputDimensions; j++){
+            file >> w[j];
+            
+        }
+    }
+
+    return true;
+}
+
+UINT LogisticRegression::getMaxNumIterations() const{
+    return getMaxNumEpochs();
+}
+
+bool LogisticRegression::setMaxNumIterations(const UINT maxNumIterations){
+return setMaxNumEpochs( maxNumIterations );
+}
+
+double LogisticRegression::sigmoid(const double x) const{
+	return 1.0 / (1 + exp(-x));
+}
+    
+bool LogisticRegression::loadLegacyModelFromFile( fstream &file ){
+    
+    string word;
+    
+    file >> word;
+    if(word != "NumFeatures:"){
+        errorLog << "loadLegacyModelFromFile( fstream &file ) - Could not find NumFeatures!" << endl;
+        return false;
+    }
+    file >> numInputDimensions;
+    
+    file >> word;
+    if(word != "NumOutputDimensions:"){
+        errorLog << "loadLegacyModelFromFile( fstream &file ) - Could not find NumOutputDimensions!" << endl;
+        return false;
+    }
+    file >> numOutputDimensions;
+    
+    file >> word;
+    if(word != "UseScaling:"){
+        errorLog << "loadLegacyModelFromFile( fstream &file ) - Could not find UseScaling!" << endl;
+        return false;
+    }
+    file >> useScaling;
+    
+    ///Read the ranges if needed
+    if( useScaling ){
+        //Resize the ranges buffer
+        inputVectorRanges.resize(numInputDimensions);
+        targetVectorRanges.resize(numOutputDimensions);
+        
+        //Load the ranges
+        file >> word;
+        if(word != "InputVectorRanges:"){
+            file.close();
+            errorLog << "loadLegacyModelFromFile( fstream &file ) - Failed to find InputVectorRanges!" << endl;
+            return false;
+        }
+        for(UINT j=0; j<inputVectorRanges.size(); j++){
+            file >> inputVectorRanges[j].minValue;
+            file >> inputVectorRanges[j].maxValue;
+        }
+        
+        file >> word;
+        if(word != "OutputVectorRanges:"){
+            file.close();
+            errorLog << "loadLegacyModelFromFile( fstream &file ) - Failed to find OutputVectorRanges!" << endl;
+            return false;
+        }
+        for(UINT j=0; j<targetVectorRanges.size(); j++){
+            file >> targetVectorRanges[j].minValue;
+            file >> targetVectorRanges[j].maxValue;
+        }
+    }
+    
+    //Resize the weights
+    w.resize(numInputDimensions);
+    
+    //Load the weights
+    file >> word;
+    if(word != "Weights:"){
+        errorLog << "loadLegacyModelFromFile( fstream &file ) - Could not find the Weights!" << endl;
+        return false;
+    }
+    
+    file >> w0;
+    for(UINT j=0; j<numInputDimensions; j++){
+        file >> w[j];
+        
+    }
+    
+    //Resize the regression data vector
+    regressionData.resize(1,0);
+    
+    //Flag that the model has been trained
+    trained = true;
+    
+    return true;
+}
+
+} //End of namespace GRT
+

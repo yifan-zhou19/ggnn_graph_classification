@@ -1,182 +1,109 @@
-#include "LogisticRegression.hpp"
 
-#include "Utility.hpp"
+/*
+  Merge Sort
 
-class LogisticRegression::impl{
+  Worst Case Performance: O(nlog n)
+  Best Case Performance: O(nlog n)
+  Average Case Performance: O(nlog n)
+  Worst Case Space Complexity: O(n)
 
-    Eigen::VectorXd weights{};
-    std::vector<double> costs{};
-    Eigen::MatrixXd::Index nFeatures = 0;
-    Eigen::MatrixXd::Index nTrainings = 0;
-    double bias = 0;
+  Comparision to other sorts:
+    - Needs an auxillary array the same size of the input.
+    - Unlike Quick Sort, most Merge Sorts are stable.
+    - Best used with sequential memory, such as linked lists.
+*/
 
-    Eigen::MatrixXd computeSigmoid
-    (
-            Eigen::MatrixXd const& a
-    )
-    {
-        return 1.0/( (-1.0*a.array()).exp() + 1 );
+#include <assert.h>
+/* #include <iostream> */
+/* using namespace std; */
+
+void swap(int* &array, const int a, const int b) {
+  int c = array[a];
+  array[a] = array[b];
+  array[b] = c;
+}
+
+bool arrayEqual(const int* uno, const int* dos, const int len) {
+  for(int i = 0; i < len; i++) {
+    /* cout << uno[i] << " == " << dos[i] << endl; */
+    if(uno[i] != dos[i]) return false;
+  }
+  return true;
+}
+
+void copySegment(
+    const int* src, int* &dest,
+    const int start, const int end) {
+  for(int i = start; i < end; i++) {
+    dest[i] = src[i];
+  }
+}
+
+/*
+  This method is called to sort two given close sublists
+  into one sorted list recursively until the original big
+  list is completely sorted.
+*/
+void mergeSortMerge(
+    int* array, int* working,
+    const int start, const int middle, const int end) {
+  int lowStart = start;
+  int lowEnd = middle;
+  for(int index = start; index < end; index++) {
+    if(
+        lowStart < middle &&
+        (lowEnd >= end || array[lowStart] <= array[lowEnd])) {
+      working[index] = array[lowStart];
+      lowStart++;
+    } else {
+      working[index] = array[lowEnd];
+      lowEnd++;
     }
-
-    void initializeParameters ( bool nonZeroRandom );
-
-public:
-
-    impl() = default;
-
-    void train
-    (
-            Eigen::MatrixXd const& X,
-            Eigen::MatrixXd const& y,
-            double learningRate,
-            Eigen::MatrixXd::Index nIterations
-    );
-
-    Eigen::VectorXd predict
-    (
-            Eigen::MatrixXd const& X
-    );
-    
-    double computeError
-    (
-            Eigen::MatrixXd const& XObservation,
-            Eigen::MatrixXd const& yTarget
-    );
-    
-    std::tuple<Eigen::MatrixXd, double>
-    getParameters() const
-    {
-        return { weights, bias };
-    }
-
-    std::vector<double> const&
-    getCosts() const
-    {
-        return costs;
-    }
-};
-
-void LogisticRegression::impl::initializeParameters
-( bool nonZeroRandom )
-{
-    if(!nonZeroRandom)
-    {
-        weights = Eigen::VectorXd::Zero(nFeatures);
-        bias = 0.0;
-    }
-    else
-    {
-        auto limit = 1.0/std::sqrt(nFeatures);
-        weights = generateUniform(nFeatures, 1, -limit, limit);
-        bias = generateUniform(1, 1, -limit, limit)(0, 0);
-    }
+  }
 }
 
-void LogisticRegression::impl::train
-(         
-        Eigen::MatrixXd const& X,
-        Eigen::MatrixXd const& y,
-        double learningRate,
-        Eigen::MatrixXd::Index nIterations
-)
-{
-    nFeatures = X.cols();
-    nTrainings = X.rows();
-    ASSERT( nTrainings == y.rows() );
-    initializeParameters(false);
-
-    costs = std::vector<double>(nIterations);
-    for (Eigen::MatrixXd::Index i = 0; i < nIterations; ++i)
-    {
-        auto yPredict = computeSigmoid( (X*weights).array() + bias );
-        auto error = yPredict - y;
-        costs[i] = -1*
-                   (
-                           y.array()*yPredict.array().log()
-                           +
-                           (1.0-y.array())*(1.0-yPredict.array()).log()
-                   ).mean();
-        weights -= learningRate * (1.0/nTrainings)*X.transpose()*error;
-        bias -= learningRate * (1.0/nTrainings)*error.sum();
-    }
+/*
+  This is the method called recursively to break the list
+  into smalled sublist, the smallest list being size = 1.
+*/
+void mergeSortSplit(int* array, int* working, int start, int end) {
+  if(end - start < 2) return;
+  int middle = (end + start) / 2;
+  mergeSortSplit(array, working, start, middle);
+  mergeSortSplit(array, working, middle, end);
+  mergeSortMerge(array, working, start, middle, end);
+  copySegment(working, array, start, end);
 }
 
-Eigen::VectorXd LogisticRegression::impl::predict
-(         
-        Eigen::MatrixXd const& X
-)
-{
-    return computeSigmoid
-            (
-                    (X*weights).array() + bias
-            ).unaryExpr
-            (
-                    [](auto value)
-                    {
-                        return value > 0.5 ? 1.0 : 0.0;
-                    }
-            );
+/*
+  This is the method called by regular arrays.
+*/
+void mergeSort(int* array, const int len) {
+  int working[len];
+  mergeSortSplit(array, working, 0, len);
 }
 
-double LogisticRegression::impl::computeError
-(         
-        Eigen::MatrixXd const& XObservation,
-        Eigen::MatrixXd const& yTarget
-)
-{
-    auto yPredict = computeSigmoid( (XObservation*weights).array() + bias );
-    return -1*
-           (
-                   yTarget.array()*yPredict.array().log()
-                   +
-                   (1.0-yTarget.array())*(1.0-yPredict.array()).log()
-           ).mean();
+void mergeSortTest() {
+  {
+    int len = 6;
+    int wrong[] = {64, 25, 12, 22, 11, 8};
+    int right[] = {8, 11, 12, 22, 25, 64};
+    mergeSort(wrong, len);
+    assert(arrayEqual(wrong, right, len));
+  }
+
+  {
+    int len = 5;
+    int wrong[] = {67, 34, 17, 55, 6};
+    int right[] = {6, 17, 34, 55, 67};
+    mergeSort(wrong, len);
+    assert(arrayEqual(wrong, right, len));
+  }
 }
 
-void LogisticRegression::train
-(
-        Eigen::MatrixXd const& X,
-        Eigen::MatrixXd const& y,
-        double learningRate,
-        Eigen::MatrixXd::Index nIterations
-)
-{
-    pimpl->train(X, y, learningRate, nIterations);
+int main() {
+  mergeSortTest();
+  return 0;
 }
 
-Eigen::VectorXd LogisticRegression::predict
-(
-        Eigen::MatrixXd const& X
-)
-{
-    return pimpl->predict(X);
-}
 
-double LogisticRegression::computeError
-(
-        Eigen::MatrixXd const& XObservation,
-        Eigen::MatrixXd const& yTarget
-)
-{
-    return pimpl->computeError( XObservation, yTarget );
-}
-
-std::tuple<Eigen::MatrixXd, double>
-LogisticRegression::getParameters() const
-{
-    return pimpl->getParameters();
-}
-
-std::vector<double> const&
-LogisticRegression::getCosts() const
-{
-    return pimpl->getCosts();
-}
-
-LogisticRegression::LogisticRegression()
-                   :pimpl{std::make_unique<impl>()}{
-}
-
-LogisticRegression::~LogisticRegression() = default;
-
-LogisticRegression& LogisticRegression::operator=( LogisticRegression&& ) = default;

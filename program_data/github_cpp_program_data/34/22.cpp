@@ -1,161 +1,135 @@
+#include "Algorithms/NaiveBayes.h"
+#include "Exceptions/MatrixSizeException.h"
+
 #include <iostream>
 
+#include "math.h"
+
+using namespace Medusa;
+using namespace arma;
 using namespace std;
 
-typedef struct Node {
+    int NaiveBayes::learn( mat data, umat classifiers ) {
 
-        int info;
-        struct Node *next; 
-} Node;
+        colvec classifier = conv_to<colvec>::from( classifiers.col( configuration->classifierColumn ) );
 
-struct Node *start=NULL, *end=NULL;
+        if ( data.n_cols != configuration->sourceDimensions ) {
+            MatrixSizeException exception( "NaiveBayes: Unexpected data dimension" );
+            throw exception;
+        }
 
-//function prototypes
-void create(struct Node*&, struct Node*&, int);
-void display(struct Node*);
-void insert_after(struct Node *&, struct Node *&,int,int);
-void insert_before(struct Node *& ,int , int);
-void remove(struct Node *& ,struct Node *& ,int);
+        if ( data.n_rows != classifier.n_rows ) {
+            MatrixSizeException exception( "NaiveBayes: The number of data entries and classifiers do not match." );
+            throw exception;
+        }
 
+        for ( int iter = 0; iter < data.n_rows; iter++ ) {
 
-int main() {
+            rowvec dataRow = data.row( iter );
+            GaussianDist* dist = distributions[ classifier.row( iter ) ];
 
-    int node, 
-         which, //which node
-             what,//what value of node to do 
-                i;//for iteration
+            if ( dist == NULL ) {
+                dist = new GaussianDist( dataRow.n_cols );
+            }
 
-     //for insert keybord   
-    /*do {
-       cout<<"Node=";
-       cin>>node; 
-       create(start,end,(int)node);
-    }while(node != 0);
-    */
+            dist->count++;
+            dist->squaredSum = dist->squaredSum + pow( dataRow, 2 );
+            dist->sum = dist->sum + dataRow;
 
-    for(i = 1; i <= 9; i++) create(start,end,i);
-    display(start);
-
-    cout<<"remove node=";
-    cin>>which;
-    remove(start,end,which);
-    display(start);
- 
-    /*cout<<endl;
-    cout<<"insert after which one=";
-    cin>>which;
-    cout<<"what value = ";
-    cin>>what;
-    insert_after(start,end,which,what); 
-    display(start);
-
-    cout<<endl;
-    cout<<"insert before which one node=";
-    cin>>which;
-    cout<<"what value = ";
-    cin>>what;
-    insert_before(start,which,what); 
-    display(start);
-    */
-
-    return(0);
-}
-
-void create(struct Node *&start, struct Node *&end, int info) {
-
-     struct Node *c;
-
-     if(start == NULL) {
-
-        start = new Node;
-        start->info = info;
-        start->next = NULL;
-        end = start;  
-
-     } else {
-
-        c = new Node; 
-        c->info = info;
-        c->next = NULL;
-        end->next = c;
-        end = c;
-     }  
-}
-
-void insert_after(struct Node *&start, struct Node *&end, int which, int what) {
-
-     struct Node *c = start, *newNode;
-
-     while(c->info != which) 
-           c = c->next;
-
-     newNode = new Node;
-     newNode->info = what;
-     newNode->next = c->next;
-     c->next = newNode;
-
-     if(c == end) end = newNode;    
-}
+            total->count++;
+            total->squaredSum = total->squaredSum + pow( dataRow, 2 );
+            total->sum = total->sum + dataRow;
 
 
-void insert_before(struct Node *&start, int whichnode, int whatvalue) {
+        }
+        return 1;
 
-     struct Node *newNode, *c;
+    }
 
-     if(start->info == whichnode) {
+    double NaiveBayes::getBayesNumerator( rowvec data, GaussianDist* dist ) {
+        if (
+             data.n_cols != ( dist->squaredSum ).n_cols ||
+             data.n_cols != ( dist->sum ).n_cols ||
+             data.n_cols != ( total->squaredSum ).n_cols ||
+             data.n_cols != ( total->sum ).n_cols
+             ) {
 
-        newNode = new Node;
-        newNode->info = whatvalue; 
-        newNode->next = start;
-        start = newNode;
+            MatrixSizeException exception( "NaiveBayes: data dimensions do not match stored distributions" );
+            throw exception;
+        }
 
-     } else {
+        rowvec distMean = ( dist->sum ) / ( dist->count );
+        rowvec distVar = pow( ( ( dist->squaredSum ) / dist->count ), 2 ) - pow( distMean, 2 );
 
-        c = start;  
+        rowvec gaussianScale = ( 1 / sqrt( 2 * 3.1415 * distVar ) );
+        rowvec gaussian = exp( ( -pow( ( data - distMean ), 2 ) ) / ( 2 * distVar ) );
 
-        while(c->next->info != whichnode)
-              c = c->next;
+        // The probability of each feature given this classification
+        rowvec featureProbabilities = gaussianScale % gaussian;
 
-        newNode = new Node;
-        newNode->info = whatvalue;
-        newNode->next = c->next;
-        c->next = newNode;
+        // Simplest way to multiply these probabilities is to take log, sum, and then exp.
+        rowvec logProb = log( featureProbabilities );
+        double logProbSum = accu( logProb );
+        double multProb = exp( logProbSum );
 
-     }
-}
+        //Now need to scale by probability of that class.
 
-void remove(struct Node *& start,struct Node *&end ,int which) {
-     struct Node *temp, *c;
+        double probability = ( dist->count / total->count ) * multProb;
 
-     if(start->info == which) {
+        return probability;
+    }
 
-        temp = start;
-        start = start->next;
+    mat NaiveBayes::run( mat input ) {
+        if ( input.n_cols != configuration->sourceDimensions ) {
+            MatrixSizeException exception( "NaiveBayes: Unexpected data dimension" );
+            throw exception;
+        }
 
-        delete temp;  
+        map< unsigned int, GaussianDist*>::iterator distIter;
 
-     } else {
+        mat resultSet;
 
-        c = start;
+        for ( int dataIter = 0; dataIter < input.n_rows; dataIter++ ) {
+            unsigned int bestClass;
+            double bestNumerator;
 
-        while(c->next->info != which) c = c->next;
+            rowvec data = input.row( dataIter );
+            for ( distIter = distributions.begin( ); distIter != distributions.end( ); distIter++ ) {
+                double numerator = getBayesNumerator( data, distIter->second );
+                if ( numerator > bestNumerator ) {
+                    bestClass = distIter->first;
+                    bestNumerator = numerator;
+                }
+            }
 
-        temp = c->next;
-        c->next = temp->next;
+            rowvec result = zeros( data.n_cols + 1 );
+            result.cols( 1, result.n_cols ) = data;
+            result.col( 0 ) = bestClass;
+            resultSet.row( dataIter ) = result;
+        }
+        
+        return resultSet;
+    }
 
-        if(c->next == end) end = c;
- 
-        delete temp;
-     }
-}
+    NaiveBayes::NaiveBayes( NaiveBayesConfig config ) {
+        configuration = new NaiveBayesConfig();
+        *configuration = config;
+        total = new GaussianDist( configuration->sourceDimensions );
+    }
 
-void display(struct Node* start) {
+    NaiveBayes::~NaiveBayes( ) {
+    }
 
-     struct Node* c = start;
- 
-     while( c && c->info != 0) {
+    MatrixFormat NaiveBayes::getInputFormat( ) {
+        MatrixFormat format;
+        format.format = DOUBLE;
+        format.size = configuration->sourceDimensions;
+        return format;
+    }
 
-            cout<<c->info<<" ";
-            c = c->next;
-     }
-}
+    MatrixFormat NaiveBayes::getOutputFormat( ) {
+        MatrixFormat format;
+        format.format = DOUBLE;
+        format.size = configuration->sourceDimensions + 1;
+        return format;
+    }

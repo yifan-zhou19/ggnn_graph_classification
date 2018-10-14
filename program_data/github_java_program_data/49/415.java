@@ -1,47 +1,110 @@
-package com.baeldung.algorithms.ga.jenetics;
+package perf.parse.consumers.gc;
 
-import static org.jenetics.engine.EvolutionResult.toBestPhenotype;
-import static org.jenetics.engine.limit.bySteadyFitness;
+import org.apache.commons.math3.stat.regression.RegressionResults;
+import org.apache.commons.math3.stat.regression.SimpleRegression;
+import perf.parse.JsonConsumer;
+import perf.parse.Parser;
+import perf.parse.consumers.JsonKeyMapConsumer;
+import perf.parse.factory.OpenJdkGcFactory;
+import perf.parse.reader.TextLineReader;
+import perf.util.AsciiArt;
+import perf.util.file.FileUtility;
+import perf.util.json.Jsons;
 
-import java.util.stream.Stream;
+import java.util.List;
+import java.util.function.Function;
 
-import org.jenetics.BitChromosome;
-import org.jenetics.BitGene;
-import org.jenetics.Mutator;
-import org.jenetics.Phenotype;
-import org.jenetics.RouletteWheelSelector;
-import org.jenetics.SinglePointCrossover;
-import org.jenetics.TournamentSelector;
-import org.jenetics.engine.Engine;
-import org.jenetics.engine.EvolutionStatistics;
+/**
+ * Created by wreicher
+ */
+public class LinearRegressionConsumer implements JsonConsumer {
 
-//The main class.
-public class Knapsack {
+    private static class JsonAccessorFunction implements Function<Jsons, Double> {
+
+        private String key;
+        public JsonAccessorFunction(String keyName){
+            this.key = keyName;
+        }
+
+        @Override
+        public Double apply(Jsons jsonObject) {
+            Double value = jsonObject.optDouble(key);
+            if(value.isNaN()){
+                //System.out.println(jsonObject.toString(2));
+            }
+            return value;
+        }
+    }
+
+    Function<Jsons,Double> converterX;
+    Function<Jsons,Double> converterY;
+    SimpleRegression regression;
+
+    long count = 0;
+    double sum = 0;
+
+    public LinearRegressionConsumer(String keyX, String keyY){
+        this(new JsonAccessorFunction(keyX),new JsonAccessorFunction(keyY));
+    }
+    public LinearRegressionConsumer(Function<Jsons,Double> converterX, Function<Jsons,Double> converterY){
+        this.converterX = converterX;
+        this.converterY = converterY;
+        this.regression = new SimpleRegression();
+    }
+
+    @Override
+    public void consume(Jsons object) {
+        Double x = converterX.apply(object);
+        Double y = converterY.apply(object);
+
+        if(!y.isNaN() && !x.isNaN() && x > 120){
+            regression.addData(x,y);
+        }
+    }
+
+    public RegressionResults getRegression(){
+        return regression.regress();
+    }
 
     public static void main(String[] args) {
-        int nItems = 15;
-        double ksSize = nItems * 100.0 / 3.0;
+        TextLineReader r = new TextLineReader();
+        OpenJdkGcFactory f = new OpenJdkGcFactory();
+        Parser p = f.newGcParser();
 
-        KnapsackFF ff = new KnapsackFF(Stream.generate(KnapsackItem::random)
-            .limit(nItems)
-            .toArray(KnapsackItem[]::new), ksSize);
+        JsonKeyMapConsumer keyMap = new JsonKeyMapConsumer();
+        p.add(keyMap);
 
-        Engine<BitGene, Double> engine = Engine.builder(ff, BitChromosome.of(nItems, 0.5))
-            .populationSize(500)
-            .survivorsSelector(new TournamentSelector<>(5))
-            .offspringSelector(new RouletteWheelSelector<>())
-            .alterers(new Mutator<>(0.115), new SinglePointCrossover<>(0.16))
-            .build();
+        LinearRegressionConsumer sc = new LinearRegressionConsumer(
+                new JsonAccessorFunction("elapsed"),
+                json-> {
+                    if( json.has("heap") ){
+                     return json.getJson("heap").getDouble("postgc");
+                    }
+                     return Double.NaN;
+                });
+        p.add(sc);
 
-        EvolutionStatistics<Double, ?> statistics = EvolutionStatistics.ofNumber();
+        r.addParser(p);
 
-        Phenotype<BitGene, Double> best = engine.stream()
-            .limit(bySteadyFitness(7))
-            .limit(100)
-            .peek(statistics)
-            .collect(toBestPhenotype());
+        List<String> files = FileUtility.getFiles("/home/wreicher/perfWork/amq/jdbc/00259/client1/",".gclog",true);
 
-        System.out.println(statistics);
-        System.out.println(best);
+        files.clear();
+
+        files.add("/home/wreicher/perfWork/amq/jdbc/00259/client1/specjms.verbose-gc-dc.gclog");
+        files.add("/home/wreicher/perfWork/amq/jdbc/00259/client1/specjms.verbose-gc-hq.gclog");
+        files.add("/home/wreicher/perfWork/amq/jdbc/00259/client1/specjms.verbose-gc-sm.gclog");
+        files.add("/home/wreicher/perfWork/amq/jdbc/00259/client1/specjms.verbose-gc-sp.gclog");
+
+        for(String file : files){
+            System.out.println(AsciiArt.ANSI_BLUE+file+AsciiArt.ANSI_RESET);
+            r.read(file);
+            System.out.printf("[%6d] %s±%s/s  + %s±%s%n",
+                sc.regression.getN(),
+                AsciiArt.printKMG(sc.regression.getSlope()),
+                AsciiArt.printKMG(sc.regression.getSlopeConfidenceInterval()),
+                AsciiArt.printKMG(sc.regression.getIntercept()),
+                AsciiArt.printKMG(sc.regression.getSlopeConfidenceInterval()));
+            sc.regression.clear();
+        }
     }
 }

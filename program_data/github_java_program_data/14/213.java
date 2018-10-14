@@ -1,279 +1,300 @@
-/*
- *  Copyright 2006-2007 Columbia University.
- *
- *  This file is part of MEAPsoft.
- *
- *  MEAPsoft is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License version 2 as
- *  published by the Free Software Foundation.
- *
- *  MEAPsoft is distributed in the hope that it will be useful, but
- *  WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with MEAPsoft; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- *  02110-1301 USA
- *
- *  See the file "COPYING" for the text of the license.
- */
-package EvacSim.jme3tools.navmesh.util;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Vector;
+//
+// This file is auto-generated. Please don't modify it!
+//
+package org.opencv.ml;
 
-/**
- * Abstract implementation of the basic functions needed for a binary
- * heap using java.util.Vector as a back end.  
- *
- * Unlike java.util.TreeSet, this data structure can handle duplicate
- * entries.  The implementations of the methods given here implement a
- * MinHeap.  It is abstract so that we can have a MinHeap class that
- * supports deleteMin() and a MaxHeap class that supports deleteMax()
- * but neither of them support both.
- *
- * @author Ron Weiss (ronw@ee.columbia.edu)
- */
-public abstract class Heap<T> extends Vector<T> {
-    // Comparator to use to compare two elements in this Heap (if this
-    // is null, assume that all elements are Comparable)
+import org.opencv.core.Mat;
+import org.opencv.core.TermCriteria;
 
-    private Comparator<T> comp = null;
-    // Does the current instance obey the heap property?
-    // (all operations aside from sort() are guaranteed to maintain
-    // the heap property, this is just to keep track of whether or not
-    // sort() has screwed stuff up).
-    protected boolean isHeap = true;
+// C++: class LogisticRegression
+//javadoc: LogisticRegression
+public class LogisticRegression extends StatModel {
 
-    /**
-     * Creates an empty Heap.
-     */
-    public Heap() {
-        super();
+    protected LogisticRegression(long addr) { super(addr); }
+
+
+    public static final int
+            REG_DISABLE = -1,
+            REG_L1 = 0,
+            REG_L2 = 1,
+            BATCH = 0,
+            MINI_BATCH = 1;
+
+
+    //
+    // C++:  Mat get_learnt_thetas()
+    //
+
+    //javadoc: LogisticRegression::get_learnt_thetas()
+    public  Mat get_learnt_thetas()
+    {
+        
+        Mat retVal = new Mat(get_learnt_thetas_0(nativeObj));
+        
+        return retVal;
     }
 
-    /**
-     *  Use given Comparator for all comparisons between elements in
-     *  this Heap.  Otherwise rely on compareTo methods and Comparable
-     *  Objects.
-     */
-    public Heap(Comparator<T> c) {
-        super();
-        comp = c;
+
+    //
+    // C++: static Ptr_LogisticRegression create()
+    //
+
+    //javadoc: LogisticRegression::create()
+    public static LogisticRegression create()
+    {
+        
+        LogisticRegression retVal = new LogisticRegression(create_0());
+        
+        return retVal;
     }
 
-    /**
-     * Creates an empty Heap with the given capacity.
-     */
-    public Heap(int capacity) {
-        super(capacity);
+
+    //
+    // C++:  TermCriteria getTermCriteria()
+    //
+
+    //javadoc: LogisticRegression::getTermCriteria()
+    public  TermCriteria getTermCriteria()
+    {
+        
+        TermCriteria retVal = new TermCriteria(getTermCriteria_0(nativeObj));
+        
+        return retVal;
     }
 
-    /**
-     * Create a new Heap containing the elements of the given
-     * Collection.
-     */
-    public Heap(Collection<T> c) {
-        super();
-        addAll(c);
+
+    //
+    // C++:  double getLearningRate()
+    //
+
+    //javadoc: LogisticRegression::getLearningRate()
+    public  double getLearningRate()
+    {
+        
+        double retVal = getLearningRate_0(nativeObj);
+        
+        return retVal;
     }
 
-    /**
-     * Remove the Object at the given index from the Heap
-     */
+
+    //
+    // C++:  float predict(Mat samples, Mat& results = Mat(), int flags = 0)
+    //
+
+    //javadoc: LogisticRegression::predict(samples, results, flags)
+    public  float predict(Mat samples, Mat results, int flags)
+    {
+        
+        float retVal = predict_0(nativeObj, samples.nativeObj, results.nativeObj, flags);
+        
+        return retVal;
+    }
+
+    //javadoc: LogisticRegression::predict(samples)
+    public  float predict(Mat samples)
+    {
+        
+        float retVal = predict_1(nativeObj, samples.nativeObj);
+        
+        return retVal;
+    }
+
+
+    //
+    // C++:  int getIterations()
+    //
+
+    //javadoc: LogisticRegression::getIterations()
+    public  int getIterations()
+    {
+        
+        int retVal = getIterations_0(nativeObj);
+        
+        return retVal;
+    }
+
+
+    //
+    // C++:  int getMiniBatchSize()
+    //
+
+    //javadoc: LogisticRegression::getMiniBatchSize()
+    public  int getMiniBatchSize()
+    {
+        
+        int retVal = getMiniBatchSize_0(nativeObj);
+        
+        return retVal;
+    }
+
+
+    //
+    // C++:  int getRegularization()
+    //
+
+    //javadoc: LogisticRegression::getRegularization()
+    public  int getRegularization()
+    {
+        
+        int retVal = getRegularization_0(nativeObj);
+        
+        return retVal;
+    }
+
+
+    //
+    // C++:  int getTrainMethod()
+    //
+
+    //javadoc: LogisticRegression::getTrainMethod()
+    public  int getTrainMethod()
+    {
+        
+        int retVal = getTrainMethod_0(nativeObj);
+        
+        return retVal;
+    }
+
+
+    //
+    // C++:  void setIterations(int val)
+    //
+
+    //javadoc: LogisticRegression::setIterations(val)
+    public  void setIterations(int val)
+    {
+        
+        setIterations_0(nativeObj, val);
+        
+        return;
+    }
+
+
+    //
+    // C++:  void setLearningRate(double val)
+    //
+
+    //javadoc: LogisticRegression::setLearningRate(val)
+    public  void setLearningRate(double val)
+    {
+        
+        setLearningRate_0(nativeObj, val);
+        
+        return;
+    }
+
+
+    //
+    // C++:  void setMiniBatchSize(int val)
+    //
+
+    //javadoc: LogisticRegression::setMiniBatchSize(val)
+    public  void setMiniBatchSize(int val)
+    {
+        
+        setMiniBatchSize_0(nativeObj, val);
+        
+        return;
+    }
+
+
+    //
+    // C++:  void setRegularization(int val)
+    //
+
+    //javadoc: LogisticRegression::setRegularization(val)
+    public  void setRegularization(int val)
+    {
+        
+        setRegularization_0(nativeObj, val);
+        
+        return;
+    }
+
+
+    //
+    // C++:  void setTermCriteria(TermCriteria val)
+    //
+
+    //javadoc: LogisticRegression::setTermCriteria(val)
+    public  void setTermCriteria(TermCriteria val)
+    {
+        
+        setTermCriteria_0(nativeObj, val.type, val.maxCount, val.epsilon);
+        
+        return;
+    }
+
+
+    //
+    // C++:  void setTrainMethod(int val)
+    //
+
+    //javadoc: LogisticRegression::setTrainMethod(val)
+    public  void setTrainMethod(int val)
+    {
+        
+        setTrainMethod_0(nativeObj, val);
+        
+        return;
+    }
+
+
     @Override
-    public T remove(int index) {
-        if (!isHeap) {
-            rebuildHeap();
-        }
-
-        T o = get(index);
-
-        set(index, get(size() - 1));
-        removeElementAt(size() - 1);
-
-        heapify(index);
-
-        return o;
+    protected void finalize() throws Throwable {
+        delete(nativeObj);
     }
 
-    /**
-     * Remove the Object o from the Heap and return true.  Returns
-     * false if o is not in the Heap (as measured by o.equals()).
-     */
-    @Override
-    public boolean remove(Object o) {
-        boolean found = false;
-        for (int i = 0; i < size(); i++) {
-            if (o == null ? get(i) == null : o.equals(get(i))) {
-                found = true;
-                remove(i);
 
-                break;
-            }
-        }
 
-        return found;
-    }
+    // C++:  Mat get_learnt_thetas()
+    private static native long get_learnt_thetas_0(long nativeObj);
 
-    /**
-     * Add o to the Heap.
-     */
-    @Override
-    public boolean add(T o) {
-        if (!isHeap) {
-            rebuildHeap();
-        }
+    // C++: static Ptr_LogisticRegression create()
+    private static native long create_0();
 
-        boolean b = super.add(o);
+    // C++:  TermCriteria getTermCriteria()
+    private static native double[] getTermCriteria_0(long nativeObj);
 
-        for (int node = size() - 1; node > 0;) {
-            int cmp;
-            int parent = (int) ((node - 1) / 2);
+    // C++:  double getLearningRate()
+    private static native double getLearningRate_0(long nativeObj);
 
-            if (cmp(node, parent) < 0) {
-                // swap them and reheapify
-                T tmp = get(node);
-                set(node, get(parent));
-                set(parent, tmp);
-            }
+    // C++:  float predict(Mat samples, Mat& results = Mat(), int flags = 0)
+    private static native float predict_0(long nativeObj, long samples_nativeObj, long results_nativeObj, int flags);
+    private static native float predict_1(long nativeObj, long samples_nativeObj);
 
-            node = parent;
-        }
+    // C++:  int getIterations()
+    private static native int getIterations_0(long nativeObj);
 
-        //System.out.print("\nContents: ");
-        //for(int x = 0; x < size(); x++)
-        //    System.out.print(get(x) + " ");
-        //System.out.println();
+    // C++:  int getMiniBatchSize()
+    private static native int getMiniBatchSize_0(long nativeObj);
 
-        return b;
-    }
+    // C++:  int getRegularization()
+    private static native int getRegularization_0(long nativeObj);
 
-    /**
-     *  Add the contents of a Collection to the Heap.
-     */
-    @Override
-    public boolean addAll(Collection c) {
-        boolean b = super.addAll(c);
-        rebuildHeap();
-        return (b);
-    }
+    // C++:  int getTrainMethod()
+    private static native int getTrainMethod_0(long nativeObj);
 
-    /**
-     * Ensure that every element in this heap obeys the heap property.
-     * Runs in linear time.  
-     *
-     * This is meant to be called if/when the Comparator associated
-     * with this object is modified.
-     */
-    public void rebuildHeap() {
-        // do the whole linear time build-heap thing
-        for (int i = (int) (size() / 2); i >= 0; i--) {
-            heapify(i);
-        }
+    // C++:  void setIterations(int val)
+    private static native void setIterations_0(long nativeObj, int val);
 
-        isHeap = true;
-    }
+    // C++:  void setLearningRate(double val)
+    private static native void setLearningRate_0(long nativeObj, double val);
 
-    /**
-     * Perform an in place heap sort on the data stored in this heap.
-     * After calling sort, a call to this objects iterator() method
-     * will iterate through the data stored in the heap in ascending
-     * sorted order.  This is not a stable sort.
-     */
-    public void sort() {
-        Object[] a = toArray();
-        if (comp == null) {
-            Arrays.sort(a);
-        } else {
-            Arrays.sort((T[])a, comp);
-        }
+    // C++:  void setMiniBatchSize(int val)
+    private static native void setMiniBatchSize_0(long nativeObj, int val);
 
-        elementData = a;
+    // C++:  void setRegularization(int val)
+    private static native void setRegularization_0(long nativeObj, int val);
 
-        // there is some wierdo off by one error here that I cannot find...
-        //for(int x = size()-1; x > 0; x--)
-        //{
-        //    // swap end of heap with the root, then heapify whats
-        //    // left.
-        //    Object tmp = get(x);
-        //    set(x, get(0));
-        //    set(0, tmp);
-        //
-        //    heapify(0, x);
-        //}           
+    // C++:  void setTermCriteria(TermCriteria val)
+    private static native void setTermCriteria_0(long nativeObj, int val_type, int val_maxCount, double val_epsilon);
 
-        // the above code destroys the heap property - the array is
-        // essentially in reverse sorted order (with respect to the
-        // first element in the heap (min if MinHeap, max if MaxHeap))
-        //
-        // The next call to one of the Heap methods will rebuild the
-        // heap.
-        isHeap = false;
-    }
+    // C++:  void setTrainMethod(int val)
+    private static native void setTrainMethod_0(long nativeObj, int val);
 
-    /**
-     * Compare two Objects in this heap - wrapper around
-     * compareTo/Comparator.compare.
-     */
-    protected int cmp(int node1, int node2) {
-        int c = 0;
-        if (comp != null) {
-            c = comp.compare(get(node1), get(node2));
-        } else {
-            c = ((Comparable<T>) get(node1)).compareTo(get(node2));
-        }
+    // native support for java finalize()
+    private static native void delete(long nativeObj);
 
-        return c;
-    }
-
-    /**
-     * Ensure that the subtree of the given size rooted at node obeys
-     * the heap property
-     */
-    private void heapify(int node, int size) {
-        if (node > size) {
-            return;
-        }
-
-        int left = (node + 1) * 2 - 1;
-        int right = (node + 1) * 2;
-
-        int minidx = node;
-
-        if (left < size && cmp(left, node) <= 0) {
-            minidx = left;
-        }
-        if (right < size && cmp(right, node) <= 0 && cmp(right, left) <= 0) {
-            minidx = right;
-        }
-
-        if (minidx != node) {
-            // swap them and recurse on the subtree rooted at minidx
-            T tmp = get(node);
-            set(node, get(minidx));
-            set(minidx, tmp);
-
-            heapify(minidx, size);
-        }
-    }
-
-    /**
-     * Ensure that the subtree rooted at node obeys the heap property
-     */
-    private void heapify(int node) {
-        heapify(node, size());
-    }
-
-    /**
-     * Do the contents of this object currently obey the heap
-     * property?
-     */
-    public boolean isHeap() {
-        return isHeap;
-    }
 }

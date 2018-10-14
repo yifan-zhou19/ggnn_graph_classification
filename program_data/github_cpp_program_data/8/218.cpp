@@ -1,34 +1,66 @@
-#include <iostream>
-#include "SortTestHelper.h"
-#include "SelectionSort.h"
+// RUN: %clang_cc1 -fsyntax-only %s
 
-using namespace std;
+template<unsigned I>
+struct FibonacciEval;
 
-template<typename T>
-void insertionSort(T arr[], int n){
+template<unsigned I>
+struct Fibonacci {
+  enum { value = FibonacciEval<I-1>::value + FibonacciEval<I-2>::value };
+};
 
-    for( int i = 1 ; i < n ; i ++ ) {
-        for( int j = i ; j > 0 && arr[j] < arr[j-1] ; j -- )
-            swap( arr[j] , arr[j-1] );
-    }
+template<unsigned I>
+struct FibonacciEval {
+  enum { value = Fibonacci<I>::value };
+};
 
-    return;
-}
+template<> struct Fibonacci<0> {
+  enum { value = 0 };
+};
 
-int main() {
+template<> struct Fibonacci<1> {
+  enum { value = 1 };
+};
 
-    int n = 10000;
-    cout<<"Test for Random Array, size = "<<n<<", random range [0, "<<n<<"]"<<endl;
-    int *arr1 = SortTestHelper::generateRandomArray(n,0,n);
-    int *arr2 = SortTestHelper::copyIntArray(arr1, n);
+int array5[Fibonacci<5>::value == 5? 1 : -1];
+int array10[Fibonacci<10>::value == 55? 1 : -1];
 
-    SortTestHelper::testSort("Insertion Sort", insertionSort,arr1,n);
-    SortTestHelper::testSort("Selection Sort", selectionSort,arr2,n);
+template<unsigned I>
+struct FibonacciEval2;
 
-    delete[] arr1;
-    delete[] arr2;
+template<unsigned I>
+struct Fibonacci2 {
+  static const unsigned value 
+    = FibonacciEval2<I-1>::value + FibonacciEval2<I-2>::value;
+};
 
-    cout<<endl;
+template<unsigned I>
+struct FibonacciEval2 {
+  static const unsigned value = Fibonacci2<I>::value;
+};
 
-    return 0;
-}
+template<> struct Fibonacci2<0> {
+  static const unsigned value = 0;
+};
+
+template<> struct Fibonacci2<1> {
+  static const unsigned value = 1;
+};
+
+int array5_2[Fibonacci2<5>::value == 5? 1 : -1];
+int array10_2[Fibonacci2<10>::value == 55? 1 : -1];
+
+template<unsigned I>
+struct Fibonacci3 {
+  static const unsigned value = Fibonacci3<I-1>::value + Fibonacci3<I-2>::value;
+};
+
+template<> struct Fibonacci3<0> {
+  static const unsigned value = 0;
+};
+
+template<> struct Fibonacci3<1> {
+  static const unsigned value = 1;
+};
+
+int array5_3[Fibonacci3<5>::value == 5? 1 : -1];
+int array10_3[Fibonacci3<10>::value == 55? 1 : -1];

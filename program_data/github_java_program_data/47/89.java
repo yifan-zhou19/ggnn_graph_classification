@@ -1,43 +1,45 @@
-package com.github.chandramohann.wk.palindrome;
-
-/**
- * Palindrome class
- * 
- * Checks if the given string is a Palindrome or not Input parameter is a string
- * Return type is boolean based on the input string
- * 
- * 3 different implementations of the same methods with different O(n)
- * notations.
- *
- */
-
-public class Palindrome {
-	/*
-	 * Performs n/2 comparison. 
-	 * This method is used in current implementation of
-	 * palindrome app
-	 */
-	public boolean isPalindrome(String str) {
-		int n = str.length();
-		for (int i = 0; i < n / 2; ++i) {
-			if (str.charAt(i) != str.charAt(n - i - 1))
-				return false;
-		}
-		return true;
-	}
-
-	// naive method
-	public boolean isPalindromeNaive(String str) {
-		int n = str.length();
-		for (int i = 0; i < n; ++i) {
-			if (str.charAt(i) != str.charAt(n - i - 1))
-				return false;
-		}
-		return true;
-	}
-
-	// 2n notation
-	public boolean isPalindrome2n(String str) {
-		return str.equals(new StringBuilder(str).reverse().toString());
-	}
+  public void insertItem(Object key, Object element)
+    throws InvalidKeyException  {
+    checkKey(key); // may throw an InvalidKeyException
+    Position insPos = T.root();
+    do {
+      insPos = findPosition(key, insPos);
+      if (T.isExternal(insPos))
+        break;
+      else // the key already exists
+        insPos = T.rightChild(insPos);
+    } while (true);
+    T.expandExternal(insPos);
+    Item newItem = new Item(key, element);
+    T.replaceElement(insPos, newItem);
+    actionPos = insPos; // node where the new item was inserted
+  }
+  
+  public Object removeElement(Object key) throws InvalidKeyException  {
+    Object toReturn;
+    checkKey(key); // may throw an InvalidKeyException
+    Position remPos = findPosition(key, T.root());
+    if(T.isExternal(remPos)) {
+      actionPos = remPos; // node where the search ended unsuccessfully
+      return NO_SUCH_KEY;
+    }
+    else{
+      toReturn = element(remPos); // element to be returned
+      if (T.isExternal(T.leftChild(remPos)))
+        remPos = T.leftChild(remPos);
+      else if (T.isExternal(T.rightChild(remPos)))
+        remPos = T.rightChild(remPos);
+      else { // key is at a node with internal children
+        Position swapPos = remPos; // find node for swapping items
+        remPos = T.rightChild(swapPos);
+        do
+	  remPos = T.leftChild(remPos);
+	while (T.isInternal(remPos));
+	swap(swapPos, T.parent(remPos));
+      }
+      actionPos = T.sibling(remPos); // sibling of the leaf to be removed
+      T.removeAboveExternal(remPos);
+      return toReturn;
+    }
+  }
 }

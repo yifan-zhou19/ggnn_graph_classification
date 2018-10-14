@@ -1,106 +1,115 @@
-#include <iostream>
-#include <vector>
+#include <bits/stdc++.h>
 using namespace std;
-vector<int> mergeSort(vector<int> &nums, int length);
-vector<int> merge_array(vector<int> &nums, vector<int> left, int leftCount, 
-			vector<int> right, int rightCount);
-int main()
-{
-	vector <int> nums;
-	nums.push_back(2);
-	nums.push_back(4);
-	nums.push_back(1);
-	nums.push_back(6);
-	nums.push_back(8);
-	nums.push_back(5);
-	nums.push_back(3);
-	nums.push_back(7);
-	int length = nums.size();
-	cout<<"Elements before merge sort: "<<endl;
-	for(int j = 0; j<nums.size(); j++)
-	{
-		cout<<nums[j]<<" ";
-	}
-	cout<<endl;
-	mergeSort(nums, length);
-	cout<<"Elements after merge sort: "<<endl;
-	for(int j = 0; j<nums.size(); j++)
-	{
-		cout<<nums[j]<<" ";
-	}
-	cout<<endl;
+
+template <typename T>
+class Graph{
+    int V, E;
+    unordered_map<T, list< pair<T, int> > > adjList;
+public:
+    void addEdge(T u, T v, int weight, bool bidir = true) {
+        adjList[u].push_back(make_pair(v, weight));
+        if (bidir) {
+            adjList[v].push_back(make_pair(u, weight));            
+        }
+    }
+
+    void djikshtra(int V) {
+        cout << "Djikshtra Algorithm" << endl;
+
+        for(int src = 0; src < V; src++) {            
+            unordered_map<T, int> dist;
+            // unordered_map<T, T> parent;
+            for (auto j: adjList) {
+                dist[j.first] = INT_MAX;
+                // parent[j.first] = src;
+            }
+
+            priority_queue<pair <int, T> > p;
+            dist[src] = 0;
+            p.push(make_pair(dist[src], src));
+
+            while(!p.empty()) {
+                T node = p.top().second;
+                p.pop();
+                for(auto neighbour: adjList[node]) {
+                    if (dist[neighbour.first] > dist[node] + neighbour.second) {
+                        dist[neighbour.first] = dist[node] + neighbour.second;
+                        // parent[neighbour.first] = node;
+                        p.push(make_pair(dist[neighbour.first], neighbour.first));
+                    }
+                }
+            }
+            for(int i = 0; i < V; i++) {
+                cout << dist[i] << " ";
+            }
+            cout << endl;
+        }
+        // stack<T> s;
+        // T node = dest;
+        // s.push(node);
+        // while(node != src) {
+        //     node = parent[node];
+        //     s.push(node);
+        // }
+        // while(!s.empty()) {
+        //     T node = s.top();
+        //     cout << node << "-->";
+        //     s.pop();
+        // }
+        // cout << "Distance Covered: " << dist[dest] << endl;
+    }
+
+    void floyd_warshall(int V) {
+        long long dist[V][V];
+        for(int i = 0; i < V; i++) {
+            for(int j = 0; j < V; j++) {
+                dist[i][j] = INT_MAX;
+            }
+            dist[i][i] = 0;
+        }
+
+        for(auto i : adjList) {
+            for(auto j : adjList[i.first]) {
+                dist[i.first][j.first] = j.second;
+            }
+        }
+
+        for(int k = 0; k < V; k++) {
+            for(int i = 0; i < V; i++) {
+                for(int j = 0; j < V; j++) {
+                    if (dist[i][j] > (dist[i][k] + dist[k][j])) {
+                        dist[i][j] = dist[i][k] + dist[k][j];
+                    }
+                }
+            }
+        }
+
+        cout << "Floyd Warshall Matrix" << endl;
+        for(int i = 0; i < V; i++) {
+            for(int j = 0; j < V; j++) {
+                cout << dist[i][j] << " ";
+            }
+            cout << endl;
+        }
+    }
+};
+
+int main() {
+    Graph<int> g;
+    
+    g.addEdge(1, 2, 10);
+    g.addEdge(1, 0, 5);
+    g.addEdge(2, 3, 7);
+    g.addEdge(2, 4, 3);
+    g.addEdge(3, 4, 3);
+    g.addEdge(4, 5, 2);
+    g.addEdge(4, 0, 10);
+    g.addEdge(5, 0, 4);
+
+
+    g.djikshtra(6);
+    cout << endl;
+    g.floyd_warshall(6);
+
+    return 0;
 }
-
-vector<int> mergeSort(vector<int> &nums, int length)
-{
-	int n, mid, i;
-	vector<int>left;
-	vector<int>right;
-	if(length < 2)
-		return nums;
-	mid = length/2;
-
-	/* Creating left sub array */
-	for(i = 0; i < mid; i++)
-	{
-		left.push_back(nums[i]);
-	}
-	
-
-	/*Creating right sub array */
-	for(i = mid; i < length; i++)
-	{
-		right.push_back(nums[i]);
-	}
-	//cout<<"Hi"<<endl;
-
-	/* Sorting left sub array */
-	mergeSort(left, mid);
-
-	/*Sorting right sub array */
-	mergeSort(right, length-mid);
-	
-	/* Merging left and right sub array in to a sorted list */
-	merge_array(nums, left, mid, right, length-mid);
-	
-	return nums;
-
-}
-
-/* Merging left and right sub arrays into a single array */
-vector<int> merge_array(vector<int> &nums, vector<int> left, int leftCount, 
-			vector<int> right, int rightCount)
-{
-	/* To mark indices of left, right and merged subarrays */
-	int i = 0, j = 0, k = 0; 
-	while((i < leftCount) && (j < rightCount))
-	{
-		if(left[i] < right[j])
-		{
-			nums[k] = left[i];
-			i = i + 1;
-		}
-		else
-		{
-			nums[k] = right[j];
-			j = j+1;
-		}
-		k = k + 1;
-	}
-	while(i < leftCount)
-	{
-		nums[k] = left[i];
-		i = i + 1;
-		k = k + 1;
-	}
-	while(j < rightCount)
-	{
-		nums[k] = right[j];
-		j = j + 1;
-		k = k + 1;
-	}
-	
-	return nums;
-
-}
-

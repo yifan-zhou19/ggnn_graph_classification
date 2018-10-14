@@ -1,58 +1,81 @@
-package ch07.exercise.problem10;
+/*
+ * Created on 29-Apr-2005
+ * Created by Paul Gardner
+ * Copyright (C) 2005, 2006 Aelitis, All Rights Reserved.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * 
+ * AELITIS, SAS au capital de 46,603.30 euros
+ * 8 Allee Lenotre, La Grille Royale, 78600 Le Mesnil le Roi, France.
+ *
+ */
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+package com.aelitis.azureus.core.util.bloom;
+
 import java.util.Map;
-import java.util.PriorityQueue;
-import java.util.Queue;
 
-import ch06.sec06.Arrays;
+import com.aelitis.azureus.core.util.bloom.impl.*;
 
-public class Dijkstra {
-	public static Map<String, Neighbor> run(Map<String, List<Neighbor>> graph, String startNodeName) {
-		Neighbor startNode = new Neighbor(startNodeName, 0);
-		Queue<Neighbor> unvisitedNodes = new PriorityQueue<>((f, s) -> Integer.compare(f.getDistance(), s.getDistance()));
-		unvisitedNodes.add(startNode);
-		
-		Map<String, Neighbor> distanceNodes = new HashMap<>();
-		distanceNodes.put(startNodeName, startNode);
-		
-		for (String nodeName : graph.keySet()) {
-			if (!nodeName.equals(startNodeName)) {
-				Neighbor neighbor = new Neighbor(nodeName, Integer.MAX_VALUE);
-				unvisitedNodes.add(neighbor);
-				distanceNodes.put(nodeName, neighbor);
-			}
-		}
-		
-		while (!unvisitedNodes.isEmpty()) {
-			unvisitedNodes.add(unvisitedNodes.remove());
-			Neighbor node = unvisitedNodes.poll();
-			
-			List<Neighbor> neighbors = graph.get(node.getName());
-			for (Neighbor neighbor : neighbors) {
-				int distance = node.getDistance() + neighbor.getDistance();
-				Neighbor distanceNode = distanceNodes.get(neighbor.getName());
-				
-				if (distance < distanceNode.getDistance()) {
-					distanceNode.setDistance(distance);
-				}
-			}
-		}
-		
-		return distanceNodes;
+public class 
+BloomFilterFactory 
+{
+		/**
+		 * Creates a new bloom filter. 
+		 * @param max_entries The filter size.
+		 * 	a size of 10 * expected entries gives a false-positive of around 0.01%
+		 *  17* -> 0.001
+		 *  29* -> 0.0001
+		 * Each entry takes 1, 4 or 8 bits depending on type  
+		 * So, if 0.01% is acceptable and expected max entries is 100, use a filter
+		 * size of 1000.
+		 * @return
+		 */
+	
+	public static BloomFilter
+	createAddRemove4Bit(
+		int		filter_size )
+	{
+		return( new BloomFilterAddRemove4Bit( filter_size ));
 	}
 	
-	public static void main(String[] args) {
-		Map<String, List<Neighbor>> graph = new HashMap<>();
-		graph.put("A", new ArrayList<>(Arrays.asList(new Neighbor("B", 10), new Neighbor("C", 30), new Neighbor("D", 15))));
-		graph.put("B", new ArrayList<>(Arrays.asList(new Neighbor("E", 20))));
-		graph.put("C", new ArrayList<>(Arrays.asList(new Neighbor("F", 5))));
-		graph.put("D", new ArrayList<>(Arrays.asList(new Neighbor("C", 5), new Neighbor("F", 20))));
-		graph.put("E", new ArrayList<>(Arrays.asList(new Neighbor("F", 20))));
-		graph.put("F", new ArrayList<>(Arrays.asList(new Neighbor("D", 20))));
-		
-		System.out.println(run(graph, "A"));
+	public static BloomFilter
+	createAddRemove8Bit(
+		int		filter_size )
+	{
+		return( new BloomFilterAddRemove8Bit( filter_size ));
+	}
+	
+	public static BloomFilter
+	createAddOnly(
+		int		filter_size )
+	{
+		return( new BloomFilterAddOnly( filter_size ));
+	}
+	
+	public static BloomFilter
+	createRotating(
+		BloomFilter		basis,
+		int				number )
+	{
+		{
+			return( new BloomFilterRotator( basis, number ));
+		}
+	}
+	
+	public static BloomFilter
+	deserialiseFromMap(
+		Map<String,Object>	map )
+	{
+		return( BloomFilterImpl.deserialiseFromMap(map));
 	}
 }

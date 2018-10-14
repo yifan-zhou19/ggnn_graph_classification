@@ -1,26 +1,56 @@
-#include <iostream>
-#include <vector>
+#include "stack.h"
 
-using namespace std;
-
-
-vector<int> PrefixFunction(string S) {
-    vector<int> p(S.size());
-    int j = 0;
-    for (int i = 1; i < (int)S.size(); i++) {
-        while (j > 0 && S[j] != S[i])
-            j = p[j-1];
-
-        if (S[j] == S[i])
-            j++;
-        p[i] = j;
-    }
-    return p;
+template<class T> stack<T>::stack(int tam){
+	N = 0;
+	topo = -1;
+	this->tam = tam;
+	pilha = new T[tam];
 }
 
-int main() {
-    vector<int> theshit = PrefixFunction("ababbabbabbababbabb");
-    for(int i=0; i<theshit.size(); i++)
-        cout << theshit[i] << " ";
-    return 0;
+template<class T> stack<T>::stack(){
+	N = 0;
+	topo = -1;
+	this->tam = 100;
+	pilha = new T[100];
 }
+
+template<class T> void stack<T>::pop(){
+	if(empty()){
+		std::cerr << "Stack underflow!" << std::endl;
+		assert(topo != -1);
+	}else{ 
+		this->topo--;	
+		N--;
+	}
+}
+
+template<class T> bool stack<T>::empty(){
+	return (topo == -1)?true:false;
+}
+
+template<class T> void stack<T>::push(T data){
+	if(topo == tam-1){
+		std::cerr << "Stack overflow!" << std::endl;
+		assert(topo != tam-1);
+	}	
+	topo++;
+	N++;
+	pilha[topo] = data;
+}
+
+template<class T> T stack<T>::top(){
+	return pilha[topo];	
+}
+
+/*template<class T> stack<T>::~stack(){
+	N = 0;
+	topo = -1;
+	tam = 0;
+	delete [] pilha;
+}
+*/
+template class stack<int>;
+template class stack<std::string>;
+template class stack<bool>;
+template class stack<double>;
+template class stack<float>;

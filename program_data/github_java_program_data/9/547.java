@@ -1,64 +1,40 @@
-package dfs;
+/**
+ * @author Luca Castelli Aleardi (Ecole Polytechnique, INF311, 2014) 
+ * 
+ * This class provides an implementation of insertion sorting algorithm
+ */
+public class InsertionSort implements SortingAlgorithm {
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import common.Constants;
-import common.DFileID;
-
-public abstract class DFS
-{
-	private boolean _format;
-	private String _volName;
-
-	DFS(String volName, boolean format) {
-		_volName = volName;
-		_format = format;
-	}
-	
-	DFS(boolean format) {
-		this(Constants.vdiskName,format);
+	final ElementComparator c; // comparator defining a total order
+	final Element[] t; // array of elements to sort
+	//Draw d = new Draw("InsertionSort", 1000, 200); // useful for drawings and
+													// animations
+	public InsertionSort(Element[] t, ElementComparator c) {
+		this.t = t;
+		this.c = c;
+		//d.draw(t);
 	}
 
-	DFS() {
-		this(Constants.vdiskName,false);
+	/**
+	 * Copy the input element e at position k in the array this.t
+	 */
+	public void replace(int k, Element e) {
+		//d.erase(k, t[k]);
+		t[k] = e; // recopie finale
+		//d.blink(k, t[k]);
 	}
 
-	/*
-	 * If format is true, the system should format the underlying disk contents,
-	 * i.e., initialize to empty. On success returns true, else return false.
-	 */
-	public abstract boolean format();
+	public void run() {
+		for(int i = 1; i < t.length; i++){
+			Element tmps = t[i];
+			int k=i;
+			while((k > 0) && (tmps.isSmaller(t[k-1],c))){
+				t[k]=t[k-1];
+				k=k-1;
+			}
+			replace(k,tmps);
+			//d.draw(t);
+		}
+	}
 	
-	/* creates a new DFile and returns the DFileID, which is useful to uniquely identify the DFile*/
-	public abstract DFileID createDFile();
-	
-	/* destroys the file specified by the DFileID */
-	public abstract void destroyDFile(DFileID dFID);
-
-	/*
-	 * reads the file dfile named by DFileID into the buffer starting from the
-	 * buffer offset startOffset; at most count bytes are transferred
-	 */
-	public abstract int read(DFileID dFID, byte[] buffer, int startOffset, int count);
-	
-	/*
-	 * writes to the file specified by DFileID from the buffer starting from the
-	 * buffer offset startOffsetl at most count bytes are transferred
-	 */
-	public abstract int write(DFileID dFID, byte[] buffer, int startOffset, int count);
-	
-	/* returns the size in bytes of the file indicated by DFileID. */
-	public abstract int sizeDFile(DFileID dFID);
-
-	/* 
-	 * List all the existing DFileIDs in the volume
-	 */
-	public abstract List<DFileID> listAllDFiles();
-	
-	/*
-	 *  Write back all dirty blocks to volume, and wait for completion.
-	 */
-	public abstract void sync();
 }

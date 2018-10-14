@@ -1,46 +1,22 @@
-#include <bits/stdc++.h>
-using namespace std;
+//============================================================================
+// Name        : insertion-sort.cpp
+// Author      :
+// Date        :
+// Copyright   :
+// Description : Implementation of insertion sort in C++
+//============================================================================
 
-typedef long long ll;
-typedef pair<int, int> ii;
-typedef vector<ii> vii;
-typedef vector<int> vi;
+#include "sort.h"
 
-vector<vii> AdjList;
-vi prev;
-
-int a, b, V, E, s;
-
-void DFS(int s, bool visited[])
+void InsertionSort::sort(int A[], int size)
 {
-	visited[s]= true;
-
-	for(int i=0; i<AdjList[s].size(); i++)
-	{
-		ii v= AdjList[s][i];
-		if(!visited[v.first])
-		{
-			printf("%d ", s);
-			DFS(v.first, visited);
+	for(int k=1; k<size; k++) {
+		int tmp=A[k];
+		int j;
+		for(j = k; j>0 && (num_cmps++, tmp<A[j-1]); j--) {
+			A[j] = A[j-1];
 		}
-	}
-}
-
-int main()
-{
-	scanf("%d %d", &V, &E);
-	AdjList.assign(V, vii());
-	for(int i=0; i<E; i++)
-	{
-		scanf("%d %d", &a, &b);
-		AdjList[a].push_back(ii(b, 0));
-		AdjList[b].push_back(ii(a, 0));
+		A[j] = tmp;
 	}
 
-	scanf("%d", &s);
-
-	bool visited[V];
-	memset(visited, false, sizeof(visited));
-
-	DFS(s, visited);
 }

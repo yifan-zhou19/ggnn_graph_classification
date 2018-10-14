@@ -1,238 +1,185 @@
-/* Jen Hanni [CS163] "prog2csairways.cpp" [Program #2] */
+/*
+ * BucketSort.cpp
+ *
+ *  Created on: 22 Oct 2012
+ *      Author: robinsonm
+ */
 
-#include "prog1symtable.h"
+#include "BucketSort.h"
+#include <boost/foreach.hpp>
 
-/* Node */
+namespace Tyche {
 
-node::node() 
-{
-	next = NULL;
-	char * name;
-	char * ticket;
-	char * seat;
-	int status;	// 1 = ticketed, 2 = aboard
-}
-
-node::node(char * newname, char * newtype, char * newvalue) 
-{
-	next = NULL;
-	if(newname) {
-		int namelen = strlen(newname) + 1;
-		name = new char[namelen];
-		strncpy(name, newname, namelen);
-	}
-	if(newticket) {
-		int ticketlen = strlen(newticket) + 1;
-		ticket = new char[ticketlen];
-		strncpy(ticket, newticket, ticketlen);
-	}
-	if(newseat) {
-		int seatlen = strlen(newseat) + 1;
-		seat = new char[seatlen];
-		strncpy(seat, newseat, seatlen);
-	}
-}
-
-node::node(char * newname)
-{
-	next = NULL;
-	if(newname) {
-		int namelen;
-		namelen = strlen(newname) + 1;
-		name = new char[namelen];
-		strncpy(name, newname, namelen);
-	}
-	char * type;
-	char * value;
-}
-
-node::~node() {
-	delete next; 
-	delete[] name;
-	delete[] type;
-	delete[] value;
-}
-
-int node::compare(node& source) 
-{
-	int temp;
-	temp = strcmp(name, source.name);
-	return temp;
-}
-
-int node::set(node& source)
-{
-	if(source.name) {
-		int namelen = strlen(source.name) + 1;
-		name = NULL;
-		name = new char[namelen];
-		strncpy(name, source.name, namelen);
-	}
-	if(source.type) {
-		int typelen = strlen(source.type) + 1;
-		type = NULL;
-		type = new char[typelen];
-		strncpy(type, source.type, typelen);
-	}
-	if(source.value) {
-		int valuelen = strlen(source.value) + 1;
-		value = NULL;
-		value = new char[valuelen];
-		strncpy(value, source.value, valuelen);
-	}
-	return 0;
-}
-
-/****************/
-/* Symbol Table */
-/****************/
-
-/* symbol table :: constructor */
-
-symbolTable::symbolTable()
-{
-	node * head = NULL;
-}
-
-symbolTable::~symbolTable() {
-	delete head;
-}
-
-/* symbol table :: creates a new symbol, adds it to the list */
-
-// strcmp(str1,str2) returns 0 when the strings are equal
-// strcmp(str1,str2) returns a negative integer when s1 < s2
-// strcmp(str1,str2) returns a positive integer when s1 > s2
-
-int symbolTable::add(char * newname, char * newtype, char * newvalue) 
-{
-	node * symtoadd = new node(newname, newtype, newvalue);
-	node * current = head;
-	if (!current) 
-	{	// if an empty list, make the new symbol the head
-		head = symtoadd; 
-	}
-	else if (current->compare(*symtoadd) == 0)
-	{	// return the symbol already exists
-		return 2;
-	}
-	else if (current->compare(*symtoadd) > 0)
-	{	// if name of the first node is already more than the symtoadd
-		symtoadd->next = current;
-		head = symtoadd;
-		return 0;
-	}
-	else if (current->next->compare(*symtoadd) < 0)
-	{	// traverse if name of curr->next is less than symtoadd name
-		current = current->next;
-		return 0;
-	}
-	else if (current->next->compare(*symtoadd) > 0)
-	{ 	// if name of curr->next is more than symtoadd name
-		symtoadd->next = current->next;
-		current->next = symtoadd;
-		return 0;
-	}
-	else if (current->compare(*symtoadd) < 0 && current->next == '\0')
-	{	// if current is less than symtoaddname but current->next is NULL
-		current->next = symtoadd;
-		symtoadd->next = '\0';
-		return 0;
-	}
-	else { return 1; }
-	
-	return 0;
-}
-
-int symbolTable::drop(char * nametodrop) 
-{
-	node * symtodrop = new node(nametodrop);
-	node * current = head;
-
-	if (!current) 
-	{ 
-		return 1; 
-	}
-	else if (current->compare(*symtodrop) == 0)
-	{
-		return 0;
-	}
-	else if (find(current->next, symtodrop) == 0)
-	{
-		node * temp = current->next;
-		current->next = current->next->next;
-		delete temp;
-		return 0;
-	}
-	else if (find(current->next, symtodrop) == 1)
-	{
-		return 1;
-	}
-}
-
-void symbolTable::get(char * nametoget)
-{
-	node * symtoget = new node(nametoget);
-	node * current = head;
-
-	if (!current)
-	{
-	cout << "This is an empty list. " << endl;
-	}
-	else if (find(current, symtoget) == 0)
-	{
-	char name[20];
-	current->displayname(*current);
-	cout << "Name: " << name << endl;
-	}
-	else 
-	{
-	cout << "The symbol wasn't found." << endl;
-	}
-}
-
-char node::displayname(node& source)
-{
-	name = source.name;
-	return *name;
-}
-
-int symbolTable::set(char * newname, char * newtype, char * newvalue) 
-{
-	node * symtoset = new node(newname, newtype, newvalue);
-	node * current = head;
-
-	if (!current) 
-	{ 
-		return 1; // clean up error messages here
-	}
-	else if (find(current, symtoset) == 0)
-	{
-		if (current->set(*symtoset) == 0)
-		{
-		return 0;  // clean up error messages here
-		}
-		else
-		{
-		return 1;  // here as well
+void BucketSort::reset(const Vect3d& _low, const Vect3d& _high, double _max_interaction_radius) {
+	LOG(2,"Resetting bucketsort data structure:");
+	LOG(2,"\tMax interaction radius = "<<_max_interaction_radius);
+	high = _high;
+	low = _low;
+	max_interaction_radius = _max_interaction_radius;
+	Vect3i num_cells_without_ghost = ((high-low)/max_interaction_radius).cast<int>();
+	Vect3d new_high = high;
+	for (int i = 0; i < 3; ++i) {
+		if (num_cells_without_ghost[i]==0) {
+			LOG(2,"\tNote: Dimension "<<i<<" has no length, setting cell side equal to interaction radius.");
+			new_high[i] = low[i] + max_interaction_radius;
+			num_cells_without_ghost[i] = 1;
 		}
 	}
-	else if (find(current, symtoset) == 1)
-	{
-		return 1;  // here as well
+	num_cells_along_axes = num_cells_without_ghost + Vect3i(3,3,3);
+	LOG(2,"\tNumber of cells along each axis = "<<num_cells_along_axes);
+	cell_size = (new_high-low).cwiseQuotient(num_cells_without_ghost.cast<double>());
+	LOG(2,"\tCell sizes along each axis = "<<cell_size);
+	inv_cell_size = Vect3d(1,1,1).cwiseQuotient(cell_size);
+	num_cells_along_yz = num_cells_along_axes[2]*num_cells_along_axes[1];
+	const unsigned int num_cells = num_cells_along_axes.prod();
+	cells.assign(num_cells, CELL_EMPTY);
+	//TODO: assumed 3d
+	surrounding_cell_offsets.clear();
+	for (int i = -1; i < 2; ++i) {
+		for (int j = -1; j < 2; ++j) {
+			for (int k = -1; k < 2; ++k) {
+				surrounding_cell_offsets.push_back(vect_to_index(Vect3i(i,j,k)));
+			}
+		}
+	}
+
+
+	ghosting_indices_pb.assign(num_cells, std::vector<int>());
+	ghosting_indices_cb.clear();
+	for (int i = 0; i < NDIM; ++i) {
+		if (!periodic[i]) continue;
+		int j,k;
+		switch (i) {
+			case 0:
+				j = 1;
+				k = 2;
+				break;
+			case 1:
+				j = 0;
+				k = 2;
+				break;
+			case 2:
+				j = 0;
+				k = 1;
+				break;
+			default:
+				break;
+		}
+
+		Vect3i tmp;
+		const int n = num_cells_along_axes[i];
+		for (int jj = 0; jj < num_cells_along_axes[j]-2; ++jj) {
+			tmp[j] = jj;
+			for (int kk = 0; kk < num_cells_along_axes[k]-2; ++kk) {
+				tmp[k] = kk;
+				tmp[i] = n-3;
+				const int index_from1 = vect_to_index(tmp);
+				tmp[i] = 0;
+				const int index_to1 = vect_to_index(tmp);
+				ghosting_indices_pb[index_from1].push_back(index_to1);
+				ghosting_indices_cb.push_back(std::pair<int,int>(index_to1,index_from1));
+				tmp[i] = 1;
+				const int index_from2 = vect_to_index(tmp);
+				tmp[i] = n-2;
+				const int index_to2 = vect_to_index(tmp);
+				ghosting_indices_pb[index_from2].push_back(index_to2);
+				ghosting_indices_cb.push_back(std::pair<int,int>(index_to2,index_from2));
+			}
+		}
 	}
 }
 
-int symbolTable::find(node * here, node * symtodrop) 
-{
-	int rVal = 1;
-	if (here)
-	{
-		rVal = here->compare(*symtodrop);
-		if (rVal == 1) 
-		{
-		return find(here->next, symtodrop);
+void BucketSort::embed_points(std::vector<Vect3d>& positions) {
+	const unsigned int n = positions.size();
+	linked_list.assign(n, CELL_EMPTY);
+	const bool particle_based = dirty_cells.size() < cells.size();
+	if (particle_based) {
+		BOOST_FOREACH(int i, dirty_cells) {
+			cells[i] = CELL_EMPTY;
+		}
+	} else {
+		cells.assign(cells.size(), CELL_EMPTY);
+	}
+
+	dirty_cells.clear();
+	for (int i = 0; i < n; ++i) {
+		const int celli = find_cell_index(positions[i]);
+		const int cell_entry = cells[celli];
+
+		// Insert into own cell
+		cells[celli] = i;
+		dirty_cells.push_back(celli);
+		linked_list[i] = cell_entry;
+
+		// Insert into ghosted cells
+		if (particle_based) {
+			BOOST_FOREACH(int j, ghosting_indices_pb[celli]) {
+				const int cell_entry = cells[j];
+				cells[j] = i;
+				dirty_cells.push_back(j);
+				linked_list[i] = cell_entry;
+			}
 		}
 	}
-	return rVal; // return 0;
+
+	if (!particle_based) {
+		for (std::vector<std::pair<int,int> >::iterator index_pair = ghosting_indices_cb.begin(); index_pair != ghosting_indices_cb.end(); ++index_pair) {
+			//BOOST_FOREACH(std::pair<int,int> index_pair, ghosting_indices) {
+			cells[index_pair->first] = cells[index_pair->second];
+		}
+	}
 }
+
+std::vector<int>& BucketSort::find_broadphase_neighbours(const Vect3d& r, const int my_index, const bool self) {
+	const int cell_i = find_cell_index(r);
+	neighbr_list.clear();
+	int n = surrounding_cell_offsets.size();
+	if (self) n = (n-1)/2;
+	for (int i = 0; i < n; ++i) {
+		const int offset = surrounding_cell_offsets[i];
+		int entry = cells[cell_i + offset];
+		while (entry != CELL_EMPTY) {
+			neighbr_list.push_back(entry);
+			entry = linked_list[entry];
+		}
+	}
+	if (self) {
+		int entry = cells[cell_i];
+		bool found_self = false;
+		while (entry != CELL_EMPTY) {
+			if (found_self) {
+				neighbr_list.push_back(entry);
+			} else if (my_index==entry) {
+				found_self = true;
+			}
+			entry = linked_list[entry];
+		}
+	}
+	return neighbr_list;
+}
+
+
+Vect3d BucketSort::correct_position_for_periodicity(const Vect3d& source_r, const Vect3d& to_correct_r) {
+	Vect3d corrected_r = to_correct_r - source_r;
+	for (int i = 0; i < NDIM; ++i) {
+		if (!periodic[i]) continue;
+		if (corrected_r[i] > cell_size[i]) corrected_r[i] -= domain_size[i];
+		if (corrected_r[i] < -cell_size[i]) corrected_r[i] += domain_size[i];
+	}
+	return corrected_r + source_r;
+}
+
+Vect3d BucketSort::correct_position_for_periodicity(const Vect3d& to_correct_r) {
+	Vect3d corrected_r = to_correct_r;
+	for (int i = 0; i < NDIM; ++i) {
+		if (!periodic[i]) continue;
+		while (corrected_r[i] >= high[i]) corrected_r[i] -= domain_size[i];
+		while (corrected_r[i] < low[i]) corrected_r[i] += domain_size[i];
+	}
+	return corrected_r;
+}
+
+
+}
+
+

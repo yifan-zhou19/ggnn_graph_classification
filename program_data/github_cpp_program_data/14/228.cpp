@@ -1,193 +1,182 @@
-#include <fstream>
-#include <iostream>
-#include <string>
+#include "LogisticRegression.hpp"
 
-#include "Heap.h"
+#include "Utility.hpp"
 
-namespace Mrowka {
+class LogisticRegression::impl{
 
-	Heap::Heap() {
-		this->_size = 0;
-		this->_heap = nullptr;
-	}
+    Eigen::VectorXd weights{};
+    std::vector<double> costs{};
+    Eigen::MatrixXd::Index nFeatures = 0;
+    Eigen::MatrixXd::Index nTrainings = 0;
+    double bias = 0;
 
-	Heap::Heap(std::string path) {
-		std::fstream file;
-		int j, father, x;
-		file.open(path, std::ios::in);
-		
-		if (file.good()) {
-			std::cout << "Udalo sie otworzyc plik.\n";
-			file >> _size;
-			this->_heap = new int[_size];
+    Eigen::MatrixXd computeSigmoid
+    (
+            Eigen::MatrixXd const& a
+    )
+    {
+        return 1.0/( (-1.0*a.array()).exp() + 1 );
+    }
 
-			for (int i = 0; i < _size; ++i) {
-				file >> _heap[i];
-			}
+    void initializeParameters ( bool nonZeroRandom );
 
-			for (int i = 1; i < _size; ++i) {
-				father = ((i + 1) / 2) - 1;
-				j = i;
-				x = _heap[i];
+public:
 
-				while (x > _heap[father] && father >= 0) {
-					_heap[j] = _heap[father];
-					_heap[father] = x;
-					j = father;
-					father = ((father + 1) / 2) - 1;
-				}
-			}
-		}
-		else {
-			std::cout << "Nie udalo sie otworzyc pliku.\n";
-		}
+    impl() = default;
 
-		file.close();
-	}
+    void train
+    (
+            Eigen::MatrixXd const& X,
+            Eigen::MatrixXd const& y,
+            double learningRate,
+            Eigen::MatrixXd::Index nIterations
+    );
 
-	Heap::~Heap() {
-		delete[] this->_heap;
-		this->_heap = nullptr;
-	}
+    Eigen::VectorXd predict
+    (
+            Eigen::MatrixXd const& X
+    );
+    
+    double computeError
+    (
+            Eigen::MatrixXd const& XObservation,
+            Eigen::MatrixXd const& yTarget
+    );
+    
+    std::tuple<Eigen::MatrixXd, double>
+    getParameters() const
+    {
+        return { weights, bias };
+    }
 
-	bool Heap::Add(int value) {
-		int *heap;
-		int x, father, j;
-		heap = new int[_size + 1];
+    std::vector<double> const&
+    getCosts() const
+    {
+        return costs;
+    }
+};
 
-		for (int i = 0; i < _size; ++i) {
-			heap[i] = _heap[i];
-		}
-
-		heap[_size] = value;
-		delete[] this->_heap;
-		++_size;
-		this->_heap = heap;
-
-		// przywrocenie struktury
-
-		x = _heap[_size - 1];
-		father = (_size / 2) - 1;
-		j = _size - 1;
-
-		while (x > _heap[father] && father >= 0) { // przesuwanie nowego elementu w stron� korzenia
-			_heap[j] = _heap[father];
-			_heap[father] = x;
-			j = father;
-			father = ((father + 1) / 2) - 1;
-		}
-
-		return true;		
-	}
-
-	bool Heap::Delete(int value) {
-		int j = -1;
-		int father, x;
-		bool found = false;
-
-		if (value == _heap[0]) {
-			_heap[0] = _heap[_size - 1];
-			found = true;
-		}
-		else {
-			
-			for (int i = 0; i < _size; ++i) {
-
-				if (value == _heap[i]) {
-					j = i;
-					i = i + _size;
-				}
-			}
-
-			if (j != -1)
-			{
-				_heap[j] = _heap[_size - 1];
-			}
-			
-			found = true;
-		}
-
-		if (found) {
-			int * heap;
-			heap = new int[_size - 1];
-			--_size;
-
-			for (int i = 0; i < _size; ++i) {
-				heap[i] = _heap[i];
-			}
-
-			delete[] _heap;
-			_heap = heap;
-
-			for (int i = 1; i < _size; ++i) {
-				father = ((i + 1) / 2) - 1;
-				j = i;
-				x = _heap[i];
-
-				while (x > _heap[father] && father >= 0) {
-					_heap[j] = _heap[father];
-					_heap[father] = x;
-					j = father;
-					father = ((father + 1) / 2) - 1;
-				}
-			}
-
-			return true;
-		}
-		else {
-			return false;
-		}
-	}
-
-	bool Heap::Search(int value) {
-		if (value == _heap[0]) {
-			return true;
-		}
-		else if (value > _heap[0]) { // na szczycie jest najwieksza wartosc, wiec jesli wyszukiwana jest wieksza niz korzen, to znaczy ze nie ma takiej wartosci
-			return false;
-		}
-		else {
-
-			for (int i = 1; i < _size; ++i) {
-				
-				if (_heap[i] == value) {
-					return true;
-				}
-			}
-		}
-
-		return false;
-	}
-
-	int Heap::GetSize() {
-		return _size;
-	}
-
-	void Heap::View(std::string sp, std::string sn, int v) {
-		std::string cr, cl, cp, s;
-		cr = cl = cp = "  ";
-		cr[0] = 218; cr[1] = 196;
-		cl[0] = 192; cl[1] = 196;
-		cp[0] = 179; // uzycie kodow ascii, aby stworzyc 'ramke'
-
-		if (v < _size) {
-			s = sp; 
-			
-			if (cr == sn) { 
-				s[s.length() - 2] = ' ';
-			}
-
-			View((s + cp), cr, (2 * v + 2));
-			s = s.substr(0, sp.length() - 2);
-			std::cout << s << sn << _heap[v] << std::endl;
-			s = sp;
-
-			if (sn == cl) {
-				s[s.length() - 2] = ' ';
-			}
-
-			View((s + cp), cl, (2 * v + 1));
-		}
-	}
-
+void LogisticRegression::impl::initializeParameters
+( bool nonZeroRandom )
+{
+    if(!nonZeroRandom)
+    {
+        weights = Eigen::VectorXd::Zero(nFeatures);
+        bias = 0.0;
+    }
+    else
+    {
+        auto limit = 1.0/std::sqrt(nFeatures);
+        weights = generateUniform(nFeatures, 1, -limit, limit);
+        bias = generateUniform(1, 1, -limit, limit)(0, 0);
+    }
 }
+
+void LogisticRegression::impl::train
+(         
+        Eigen::MatrixXd const& X,
+        Eigen::MatrixXd const& y,
+        double learningRate,
+        Eigen::MatrixXd::Index nIterations
+)
+{
+    nFeatures = X.cols();
+    nTrainings = X.rows();
+    ASSERT( nTrainings == y.rows() );
+    initializeParameters(false);
+
+    costs = std::vector<double>(nIterations);
+    for (Eigen::MatrixXd::Index i = 0; i < nIterations; ++i)
+    {
+        auto yPredict = computeSigmoid( (X*weights).array() + bias );
+        auto error = yPredict - y;
+        costs[i] = -1*
+                   (
+                           y.array()*yPredict.array().log()
+                           +
+                           (1.0-y.array())*(1.0-yPredict.array()).log()
+                   ).mean();
+        weights -= learningRate * (1.0/nTrainings)*X.transpose()*error;
+        bias -= learningRate * (1.0/nTrainings)*error.sum();
+    }
+}
+
+Eigen::VectorXd LogisticRegression::impl::predict
+(         
+        Eigen::MatrixXd const& X
+)
+{
+    return computeSigmoid
+            (
+                    (X*weights).array() + bias
+            ).unaryExpr
+            (
+                    [](auto value)
+                    {
+                        return value > 0.5 ? 1.0 : 0.0;
+                    }
+            );
+}
+
+double LogisticRegression::impl::computeError
+(         
+        Eigen::MatrixXd const& XObservation,
+        Eigen::MatrixXd const& yTarget
+)
+{
+    auto yPredict = computeSigmoid( (XObservation*weights).array() + bias );
+    return -1*
+           (
+                   yTarget.array()*yPredict.array().log()
+                   +
+                   (1.0-yTarget.array())*(1.0-yPredict.array()).log()
+           ).mean();
+}
+
+void LogisticRegression::train
+(
+        Eigen::MatrixXd const& X,
+        Eigen::MatrixXd const& y,
+        double learningRate,
+        Eigen::MatrixXd::Index nIterations
+)
+{
+    pimpl->train(X, y, learningRate, nIterations);
+}
+
+Eigen::VectorXd LogisticRegression::predict
+(
+        Eigen::MatrixXd const& X
+)
+{
+    return pimpl->predict(X);
+}
+
+double LogisticRegression::computeError
+(
+        Eigen::MatrixXd const& XObservation,
+        Eigen::MatrixXd const& yTarget
+)
+{
+    return pimpl->computeError( XObservation, yTarget );
+}
+
+std::tuple<Eigen::MatrixXd, double>
+LogisticRegression::getParameters() const
+{
+    return pimpl->getParameters();
+}
+
+std::vector<double> const&
+LogisticRegression::getCosts() const
+{
+    return pimpl->getCosts();
+}
+
+LogisticRegression::LogisticRegression()
+                   :pimpl{std::make_unique<impl>()}{
+}
+
+LogisticRegression::~LogisticRegression() = default;
+
+LogisticRegression& LogisticRegression::operator=( LogisticRegression&& ) = default;

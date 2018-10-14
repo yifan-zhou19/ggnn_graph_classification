@@ -1,140 +1,83 @@
+#include <bits/stdc++.h>
 
-#include <vector>
-#include <iostream>
 using namespace std;
 
-ostream& operator<<(ostream& o, const vector<int>& v) {
-    for (size_t i = 0; i < v.size(); ++i) {
-        o << v[i] << " ";
-    }
-    return o;
-}
+template <typename T>
+class SegmentTree {
+    vector<T> original_data; // the original data / vector
+    vector<T> segment_tree; // the actual tree
+    function<T(T,T)> operation; // operation on the segments
 
-int SearchRecImpl(const vector<int>& v, int x, size_t start, size_t end) {
-    if (end <= start) {
-        return v[start] == x ? start : -1;
-    }
-    int mid = start + (end - start) / 2;
-    if (v[mid] > x) {
-        return SearchRecImpl(v, x, start, mid - 1);
-    } else if (v[mid] < x) {
-        return SearchRecImpl(v, x, mid + 1, end);
-    } else {
-        return mid;
-    }
-}
-
-int SearchRec(const vector<int>& v, int x) {
-    return SearchRecImpl(v, x, 0, v.size() - 1);
-}
-
-int SearchIter(const vector<int>& v, int x) {
-    size_t start = 0;
-    size_t end = v.size() - 1;
-    while (true) {
-        if (end <= start) {
-            return v[start] == x ? start : -1;
+  public:
+    SegmentTree(const vector<T> &data, const function<T(T, T)> &op) {
+        original_data = data;
+        segment_tree.resize(2 * original_data.size());
+        operation = op;
+        
+        for (int i = 0 ; i < original_data.size() ; i++) {
+            segment_tree[original_data.size() + i] = original_data[i];
         }
-        int mid = start + (end - start) / 2;
-        if (v[mid] > x) {
-            end = mid - 1;
-        } else if (v[mid] < x) {
-            start = mid + 1;
-        } else {
-            return mid;
+
+        for (int i = original_data.size() - 1 ; i > 0 ; i--) {
+            segment_tree[i] = operation(segment_tree[2 * i], segment_tree[2 * i + 1]);
         }
-    }
-    return -1;
-}
+    };
 
-void Shift(vector<int>& v, size_t shift) {
-    vector<int> tmp(v.end() - shift, v.end());
-    for (int i = v.size() - 1; i >= shift; --i) {
-        v[i] = v[i-shift];
-    }
-    for (int i = 0; i < shift; ++i) {
-        v[i] = tmp[i];
-    }
-}
-
-int FindShift(const vector<int>& v) {
-    // find minimal element that is smaller than first one
-    size_t start = 0;
-    size_t end = v.size() - 1;
-    while (true) {
-        if (end == start) {
-            return 0;
+    void update(int loc, T newVal) {
+        segment_tree[loc + original_data.size()] = newVal; // updat leaf
+        for (int i = loc + original_data.size() ; i > 1 ; i /= 2) {
+            segment_tree[i / 2] = operation(segment_tree[i], segment_tree[i^1]);
         }
-        if (end == start + 1) {
-            return v[start] > v[end] ? end : 0;
+    };
+
+    T query(int lbound, int rbound, T def = 0) {
+        // XXX lbound and rbound are 1 indexed!!!
+        // return query of l and r
+        T result = def;
+        for (int l = original_data.size() + lbound, r = original_data.size() + rbound ; l <= r ; l /= 2, r /= 2) {
+            if (l&1) {
+                result = operation(segment_tree[l], result);
+                l++;
+            }
+            if (!(r&1)) {
+                result = operation(result, segment_tree[r]);
+                r--;
+            }
         }
-        int mid = start + (end - start) / 2;
-        if (v[mid] > v[0]) {
-            start = mid; 
-        } else {
-            end = mid;
-        }
+        return result;
+    };
+};
+
+int main(int argc, char *argv[]) {
+    int N;
+    cin >> N;
+    vector<int> inputs(N);
+    for (int i = 0 ; i < N ; i++) {
+        cin >> inputs[i];
     }
-    return -1;
-}
+    SegmentTree<int> seg_tree(inputs, [](int a, int b){return a + b;});
+    
+    int Q;
+    cin >> Q;
+    for (int i = 0 ; i < Q ; i++) {
+        int l, r;
+        cin >> l >> r;
+        cout << seg_tree.query(l, r) << '\n';
+    }
 
-int main() {
-    vector<int> v;
-    int x;
+    int U;
+    cin >> U;
+    for (int i = 0 ; i < U ; i++) {
+        int p, v;
+        cin >> p >> v;
+        seg_tree.update(p, v);
+    }
 
-    v.push_back(2);
-    v.push_back(3);
-    v.push_back(5);
-    v.push_back(6);
-    v.push_back(7);
-    v.push_back(9);
-    v.push_back(10);
-    v.push_back(14);
-    v.push_back(15);
-    v.push_back(16);
-    v.push_back(18);
-    v.push_back(20);
-    cout << v << endl;
+    cin >> Q;
+    for (int i = 0 ; i < Q ; i++) {
+        int l, r;
+        cin >> l >> r;
+        cout << seg_tree.query(l, r) << '\n';
+    }
 
-    x = 5;
-    cout << x << ": " << SearchRec(v, x) << endl;
-    cout << x << ": " << SearchIter(v, x) << endl;
-
-    x = 20;
-    cout << x << ": " << SearchRec(v, x) << endl;
-    cout << x << ": " << SearchIter(v, x) << endl;
-
-    x = 2;
-    cout << x << ": " << SearchRec(v, x) << endl;
-    cout << x << ": " << SearchIter(v, x) << endl;
-
-    x = 15;
-    cout << x << ": " << SearchRec(v, x) << endl;
-    cout << x << ": " << SearchIter(v, x) << endl;
-
-    x = 8;
-    cout << x << ": " << SearchRec(v, x) << endl;
-    cout << x << ": " << SearchIter(v, x) << endl;
-
-    size_t shift;
-
-    cout << v << endl;
-    cout << "shift: " << FindShift(v) << endl;
-
-    shift = 1;
-    Shift(v, shift);
-    cout << v << endl;
-    cout << "shift: " << FindShift(v) << endl;
-
-    shift = 3;
-    Shift(v, shift);
-    cout << v << endl;
-    cout << "shift: " << FindShift(v) << endl;
-
-    shift = 7;
-    Shift(v, shift);
-    cout << v << endl;
-    cout << "shift: " << FindShift(v) << endl;
-
-    return 0;
 }

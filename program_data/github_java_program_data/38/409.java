@@ -1,81 +1,55 @@
-package kuvaldis.algorithm.geometry;
+/*
+ * Copyright (c) 2010 Henrik Gustafsson <henrik.gustafsson@fnord.se>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+package se.fnord.rt.ui;
 
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+public class Queue {
+    private Integer id = null;
+    private String name = null;
+    private String description = null;
+    private boolean verified = false;
 
-public class GrahamConvexHull {
-
-    private final List<Point> points;
-
-    public GrahamConvexHull(final Point... points) {
-        this.points = Stream.of(points).collect(Collectors.toList());
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public List<Point> build() {
-        // 0. It's possible to create a convex hull only out of 3 or more points
-        if (points.size() < 3) {
-            return Collections.emptyList();
-        }
+    public String getName() {
+        return name;
+    }
 
-        // 1. Pick p0, the point with lowest y coordinate.
-        // If there are two or more points with lowest coordinate, pick one with lowest x coordinate.
-        final Point p0 = points.stream()
-                .min(Comparator.comparingInt(Point::getY)
-                        .thenComparingInt(Point::getX))
-                .orElseThrow(IllegalStateException::new);
+    public void setId(Integer id) {
+        this.id = id;
+    }
 
-        // 2. Sort other points (pi) by angle between horizontal vector starting from p0 and p0pi, lowest first.
-        // Note, that possible angle values are from 0 to 180 degrees, since p0 is lowest point or all points are to the right.
-        // Additionally, cos(0) is 1.0 and cos(180) is -1.0.
-        // Thus, if we sort the points by cos in descendant order, i.e. from highest to lowest values, it would be the same.
+    public Integer getId() {
+        return id;
+    }
 
-        // this is our horizontal vector
-        final Vector v0 = new Vector(p0, new Point(p0.getX() + 1, p0.getY()));
-        final LinkedList<Point> sortedPoints = points.stream()
-                .filter(point -> !p0.equals(point))
-                .sorted(Comparator.<Point>comparingDouble(p -> v0.cos(new Vector(p0, p)))
-                        .reversed())
-                .collect(Collectors.toCollection(LinkedList::new));
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-        // 3. Put 3 first points, including p0 to the resulting stack
-        // They are base for calculation.
-        // Note, that if we take only these 3 points into account, the stack basically contains the solution,
-        // that is, 3 points out of 3 in total make a convex hull.
-        // Thus, on the first step stack contains correct result for it.
-        final LinkedList<Point> stack = new LinkedList<>();
-        // p0
-        stack.push(p0);
-        // p1
-        stack.push(sortedPoints.pollFirst());
-        // p2
-        stack.push(sortedPoints.pollFirst());
+    public String getDescription() {
+        return description;
+    }
 
-        // 4.
-        for (Point point : sortedPoints) {
-            while (true) {
-                final Point top = stack.pop();
-                final Point nextToTop = stack.peek();
+    public void setVerified(boolean verified) {
+        this.verified = verified;
+    }
 
-                final Vector v1 = new Vector(nextToTop, top);
-                final Vector v2 = new Vector(nextToTop, point);
-                // It means that v2 is located to the right of v1, that is, we are moving to the right.
-                // Thus, with the fact that all points are sorted by angle, the 'point' spans the 'top',
-                // i.e. 'point' puts 'top' inside the convex hull if included into the resulting set.
-                if (v1.multiply(v2) < 0) {
-                    // we already popped top point, so nothing to do here
-                    continue;
-                }
-                // otherwise push top back, since if we are here it means that we 'moved to the left',
-                // that is, both top and point add up to the result for this step.
-                stack.push(top);
-                stack.push(point);
-                break;
-            }
-        }
-
-        Collections.reverse(stack);
-
-        return stack;
+    public boolean isVerified() {
+        return this.verified;
     }
 }

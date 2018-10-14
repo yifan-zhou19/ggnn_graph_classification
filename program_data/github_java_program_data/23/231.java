@@ -1,76 +1,48 @@
-package com.vivek.graph;
+package cuiods.list.skiplist;
 
-import java.util.*;
+/**
+ * 跳转表节点
+ * @author cuiods
+ */
+public class SkipListNode<T extends Comparable<? super T>> {
+    private T data;
+    /**
+     * 用数组保存其他节点的引用
+     */
+    private SkipListNode[] next;
 
-public class MinimumSpanningTree {
-
-    public static void main(String[] args) {
-
-        try (Scanner in = new Scanner(System.in)) {
-            int n = in.nextInt();
-            int m = in.nextInt();
-
-            List<Graph.Vertex> vertices = new ArrayList<>();
-            List<Graph.Edge> edges = new ArrayList<>();
-
-            for (int i = 1; i <= n; i++) {
-                vertices.add(new Graph.Vertex(i));
-            }
-
-            for (int i = 0; i < m; i++) {
-                Graph.Vertex u = vertices.get(in.nextInt() - 1);
-                Graph.Vertex v = vertices.get(in.nextInt() - 1);
-                int w = in.nextInt();
-                Graph.Edge e = new Graph.Edge(u, v, w);
-                u.addAdjacentEdge(v, e);
-                v.addAdjacentEdge(u, e);
-                edges.add(e);
-            }
-
-            Graph graph = new Graph(vertices, edges);
-            System.out.println(getMst(graph, vertices.get(in.nextInt() - 1)));
-
-        }
-
+    /**
+     * @param data
+     *      节点保存的数据
+     * @param maxLevel
+     *      若跳转表最多保存n个数据，则最多的层次为[log2(n)]
+     */
+    public SkipListNode(T data, int maxLevel) {
+        this.data = data;
+        next = new SkipListNode[maxLevel];
     }
 
-
-    static int getMst(Graph graph, Graph.Vertex start) {
-        int cost = 0;
-
-        final Set<Graph.Vertex> unvisited = new HashSet<>();
-        unvisited.addAll(graph.getVertices());
-        unvisited.remove(start);
-
-        final Queue<Graph.Edge> edgesAvailable = new PriorityQueue<>();
-
-        Graph.Vertex vertex = start;
-
-        while (!unvisited.isEmpty()) {
-            // Add all edges to unvisited vertices
-            for (Graph.Edge e : vertex.getAdjacencyMap().values()) {
-                if (unvisited.contains(e.getDest()) ||
-                        unvisited.contains(e.getSrc()))
-                    edgesAvailable.add(e);
-            }
-
-            // Remove the lowest cost edge
-            Graph.Edge e = edgesAvailable.remove();
-            while (!unvisited.contains(e.getDest()) && !unvisited.contains(e.getSrc())) {
-                e = edgesAvailable.remove();
-            }
-            cost += e.getWeight();
-
-            vertex = vertex != e.getDest() ? e.getDest() : e.getSrc();
-            if (!unvisited.contains(vertex)) {
-                for (Graph.Vertex v : unvisited) {
-                    vertex = v;
-                    break;
-                }
-            }
-            unvisited.remove(vertex);
-        }
-        return cost;
+    public T getData() {
+        return data;
     }
 
+    public void setData(T data) {
+        this.data = data;
+    }
+
+    public SkipListNode[] getNext() {
+        return next;
+    }
+
+    public SkipListNode getNext(int index) {
+        return next[index];
+    }
+
+    public void setNext(SkipListNode[] next) {
+        this.next = next;
+    }
+
+    public void setNext(SkipListNode next, int i) {
+        this.next[i] = next;
+    }
 }

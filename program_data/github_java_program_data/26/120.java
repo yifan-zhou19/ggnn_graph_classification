@@ -1,40 +1,32 @@
-/**
- * Class for doing Radix sort
- *
- * @author Akhil Batra
- * @version 1.4 - April 14, 2016
- *
- **/
-public class RadixSort
-{
+import java.util.Arrays;
 
-    /**
-     * Does Radix sort on the passed in array with the following restrictions:
-     *  The array can only have ASCII Strings (sequence of 1 byte characters)
-     *  The sorting is stable and non-destructive
-     *  The Strings can be variable length (all Strings are not constrained to 1 length)
-     *
-     * @param asciis String[] that needs to be sorted
-     *
-     * @return String[] the sorted array
-     **/
-    public static String[] sort(String[] asciis)
-    {
-        return null;
-    }
+public class Example {
 
-    /**
-     * Radix sort helper function that recursively calls itself to achieve the sorted array
-     *  destructive method that changes the passed in array, asciis
-     *
-     * @param asciis String[] to be sorted
-     * @param start int for where to start sorting in this method (includes String at start)
-     * @param end int for where to end sorting in this method (does not include String at end)
-     * @param index the index of the character the method is currently sorting on
-     *
-     **/
-    private static void sortHelper(String[] asciis, int start, int end, int index)
-    {
-        //TODO use if you want to
-    }
+   public static void main(String[] args) {
+      int[] arr = {9,7,5,3,1,0,2,4,6,8};
+      System.out.println("Unsorted: " + Arrays.toString(arr));
+      bubbleSort(arr);
+      System.out.println("Sorted  : " + Arrays.toString(arr));
+   }
+
+   public static void bubbleSort(int arr[]) {
+      int len = arr.length;
+      for (int i = len; i >= 0; i--) {
+         for (int j = 0; j < len - 1; j++) {
+            int k = j + 1;
+            if (arr[j] > arr[k]) {
+               swapNumbers(j, k, arr);
+            }
+         }
+      }
+   }
+
+   private static void swapNumbers(int i, int j, int[] arr) {
+      int temp;
+      temp = arr[i];
+      arr[i] = arr[j];
+      arr[j] = temp;
+   }
 }
+
+

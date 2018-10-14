@@ -1,97 +1,54 @@
-package spml_assignment1;
+package com.accolite.problems;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.PriorityQueue;
-import java.util.Set;
+public class matrixChainMultiplication {
 
-/**
- *
- * @author Jasper
- */
-public class Kruskal {
-    private final boolean verbose;
-
-    public Kruskal(boolean verbose) {
-        this.verbose = verbose;
-    }
-
-    private List<Set<Integer>> generateUnconnectedVertices(int numVertices) {
-        List<Set<Integer>> connectedVertices = new ArrayList<>(numVertices);
-        for (int i = 0; i < numVertices; ++i) {
-            connectedVertices.add(new HashSet<>());
-            connectedVertices.get(i).add(i);
-        }
-
-        return connectedVertices;
-    }
-
-    private void mergeSets(List<Set<Integer>> connectedVertices,
-            int start, int end) {
-        int startIndex = 0;
-        int endIndex = 0;
-        for (int i = 0; i < connectedVertices.size(); ++i) {
-            if (connectedVertices.get(i).contains(start)) {
-                startIndex = i;
-            }
-            if (connectedVertices.get(i).contains(end)) {
-                endIndex = i;
-            }
-        }
-
-        if (startIndex != endIndex) {
-            connectedVertices.get(startIndex).addAll(
-                    connectedVertices.remove(endIndex));
-        }
-    }
-
-    public boolean areVerticesConnected(List<Set<Integer>> connectedVertices,
-            int v1, int v2) {
-        return connectedVertices.stream().anyMatch((connectedSet)
-                -> (connectedSet.contains(v1) && connectedSet.contains(v2)));
-    }
-
-    public Graph run(Graph graph) {
-        Graph mst = new Graph(graph.getNumberOfVertices());
-
-        PriorityQueue<Edge> edges = new PriorityQueue<>();
-        for (int i = 0; i < graph.getNumberOfVertices(); ++i) {
-            for (int j = 0; j < graph.getNumberOfVertices(); ++j) {
-                double cost = graph.getCost(i, j);
-
-                if (cost > 0.0d) {
-                    edges.add(new Edge(i, j, cost));
-                }
-            }
-        }
-
-        List<Set<Integer>> connectedVertices = generateUnconnectedVertices(
-                graph.getNumberOfVertices());
-        Edge edge = edges.poll();
-        mst.setCost(edge.getStart(), edge.getEnd(), edge.getCost());
-        int nEdgesConsidered = 0;
-        while (!edges.isEmpty()
-                && connectedVertices.size() > 1) {
-            nEdgesConsidered++;
-            edge = edges.poll();
-
-            if (!areVerticesConnected(connectedVertices, edge.getStart(),
-                    edge.getEnd())) {
-                mst.setCost(edge.getStart(), edge.getEnd(), edge.getCost());
-                mergeSets(connectedVertices, edge.getStart(), edge.getEnd());
-            }
-        }
-
-        if (connectedVertices.size() > 1) {
-            throw new IllegalArgumentException("Not all edges in the graph "
-                    + "are connected.");
-        }
-
-        if (verbose) {
-            System.out.println(nEdgesConsidered + " edges considered.");
-        }
-
-        return mst;
-    }
+	public static void main(String [] args) {
+		int [] rows =  {40, 20, 30, 10, 30}   ;
+		System.out.println(matrixMul(rows,0,rows.length-1));
+		System.out.println(matrixMul2(rows,0,rows.length-2));
+	}
+	
+	public static int matrixMul(int [] arr, int start, int end) {
+		int min = Integer.MAX_VALUE;
+		int prod = 0;
+		if(start >= end-1) {
+			return 0;
+		}
+		else {
+			
+			for(int i = start+1; i< end ; i++) {
+				int left = matrixMul(arr,start,i);
+				int right = matrixMul(arr,i,end);			
+				prod = left + right + arr[start]*arr[i]*arr[end];
+				if(prod < min){
+					min = prod;
+				}
+				
+			}
+			return min;
+		}
+	}
+	
+	public static int matrixMul2(int [] arr, int start, int end) {
+		int min = Integer.MAX_VALUE;
+		int prod = 0;
+		System.out.println(start+"  " +end);
+		if(start >= end) {
+			return 0;
+		}
+		else {
+			
+			for(int i = start; i< end ; i++) {
+				int left = matrixMul2(arr,start,i);
+				int right = matrixMul2(arr,i+1,end);			
+				prod = left + right + arr[start]*arr[i+1]*arr[end+1];
+				if(prod < min){
+					min = prod;
+				}
+				
+			}
+			return min;
+		}
+		
+	}
 }

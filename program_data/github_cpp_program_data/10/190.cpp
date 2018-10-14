@@ -1,204 +1,192 @@
-////////////////////////////////////////////////////////////////////////
-// QuadTree.cpp
-// Super Mario Project
-// Copyright (C) 2011  
-// Lionel Joseph lionel.r.joseph@gmail.com
-// Olivier Guittonneau openmengine@gmail.com
-////////////////////////////////////////////////////////////////////////
+//=======================================================================
+// Copyright 2001 University of Notre Dame.
+// Author: Jeremy G. Siek
+//
+// Distributed under the Boost Software License, Version 1.0. (See
+// accompanying file LICENSE_1_0.txt or copy at
+// http://www.boost.org/LICENSE_1_0.txt)
+//=======================================================================
 
-#include "QuadTree.hpp"
-#include "BlockOccurrence.hpp"
+#include <boost/config.hpp>
+#include <boost/test/minimal.hpp>
+#include <stdlib.h>
 
-using namespace std;
-using namespace sf;
+#include <boost/graph/depth_first_search.hpp>
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/graph_archetypes.hpp>
+#include <boost/graph/graph_utility.hpp>
+#include <boost/graph/random.hpp>
 
-namespace smp
+#include <boost/random/mersenne_twister.hpp>
+
+template <typename ColorMap, typename ParentMap,
+  typename DiscoverTimeMap, typename FinishTimeMap>
+class dfs_test_visitor {
+  typedef typename boost::property_traits<ColorMap>::value_type ColorValue;
+  typedef typename boost::color_traits<ColorValue> Color;
+public:
+  dfs_test_visitor(ColorMap color, ParentMap p, DiscoverTimeMap d,
+                   FinishTimeMap f)
+    : m_color(color), m_parent(p),
+    m_discover_time(d), m_finish_time(f), m_time(0) { }
+
+  template <class Vertex, class Graph>
+  void initialize_vertex(Vertex u, Graph&) {
+    BOOST_CHECK( boost::get(m_color, u) == Color::white() );
+  }
+  template <class Vertex, class Graph>
+  void start_vertex(Vertex u, Graph&) {
+    BOOST_CHECK( boost::get(m_color, u) == Color::white() );
+  }
+  template <class Vertex, class Graph>
+  void discover_vertex(Vertex u, Graph&) {
+    using namespace boost;
+    BOOST_CHECK( get(m_color, u) == Color::gray() );
+    BOOST_CHECK( get(m_color, get(m_parent, u)) == Color::gray() );
+
+    put(m_discover_time, u, m_time++);
+  }
+  template <class Edge, class Graph>
+  void examine_edge(Edge e, Graph& g) {
+    using namespace boost;
+    BOOST_CHECK( get(m_color, source(e, g)) == Color::gray() );
+  }
+  template <class Edge, class Graph>
+  void tree_edge(Edge e, Graph& g) {
+    using namespace boost;
+    BOOST_CHECK( get(m_color, target(e, g)) == Color::white() );
+
+    put(m_parent, target(e, g), source(e, g));
+  }
+  template <class Edge, class Graph>
+  void back_edge(Edge e, Graph& g) {
+    using namespace boost;
+    BOOST_CHECK( get(m_color, target(e, g)) == Color::gray() );
+  }
+  template <class Edge, class Graph>
+  void forward_or_cross_edge(Edge e, Graph& g) {
+    using namespace boost;
+    BOOST_CHECK( get(m_color, target(e, g)) == Color::black() );
+  }
+  template <class Edge, class Graph>
+  void finish_edge(Edge e, Graph& g) {
+    using namespace boost;
+    BOOST_CHECK( get(m_color, target(e, g)) == Color::gray() ||
+                 get(m_color, target(e, g)) == Color::black() );
+  }
+  template <class Vertex, class Graph>
+  void finish_vertex(Vertex u, Graph&) {
+    using namespace boost;
+    BOOST_CHECK( get(m_color, u) == Color::black() );
+
+    put(m_finish_time, u, m_time++);
+  }
+private:
+  ColorMap m_color;
+  ParentMap m_parent;
+  DiscoverTimeMap m_discover_time;
+  FinishTimeMap m_finish_time;
+  typename boost::property_traits<DiscoverTimeMap>::value_type m_time;
+};
+
+template <typename Graph>
+struct dfs_test
 {
+  typedef boost::graph_traits<Graph> Traits;
+  typedef typename Traits::vertices_size_type
+    vertices_size_type;
 
-	bool QuadTree::isLeaf()
-	{
-		return _subTree1 == nullptr &&
-			_subTree2 == nullptr &&
-			_subTree3 == nullptr &&
-			_subTree4 == nullptr;
-	}
+  static void go(vertices_size_type max_V) {
+    using namespace boost;
+    typedef typename Traits::vertex_descriptor vertex_descriptor;
+    typedef typename boost::property_map<Graph,
+      boost::vertex_color_t>::type ColorMap;
+    typedef typename boost::property_traits<ColorMap>::value_type ColorValue;
+    typedef typename boost::color_traits<ColorValue> Color;
 
-	void QuadTree::buildTree(vector<BlockOccurrence*>& obj)
-	{
-		sf::Vector2i size;
-		sf::Vector2f center;
+    vertices_size_type i, k;
+    typename Traits::edges_size_type j;
+    typename Traits::vertex_iterator vi, vi_end, ui, ui_end;
 
-		if(!obj.empty() && _depth < MAX_DEPTH)
-		{
-			size.x = _size.x / 2;
-			size.y = _size.y / 2;
+    boost::mt19937 gen;
 
-			if(size.x >= 2 * obj.front()->getHitboxSize().x
-				&& size.y >= 2 * obj.front()->getHitboxSize().y)
-			{
+    for (i = 0; i < max_V; ++i)
+      for (j = 0; j < i*i; ++j) {
+        Graph g;
+        generate_random_graph(g, i, j, gen);
 
-				/* create sub trees */
-				center.x = _center.x - _size.x / 4;
-				center.y = _center.y + _size.y / 4;
-				_subTree1 = new QuadTree(center, size, _depth + 1);
+        ColorMap color = get(boost::vertex_color, g);
+        std::vector<vertex_descriptor> parent(num_vertices(g));
+        for (k = 0; k < num_vertices(g); ++k)
+          parent[k] = k;
+        std::vector<int> discover_time(num_vertices(g)),
+          finish_time(num_vertices(g));
 
-				center.x +=  _size.x / 2;
-				_subTree2 = new QuadTree(center, size, _depth + 1);
+        // Get vertex index map
+        typedef typename boost::property_map<Graph, boost::vertex_index_t>::const_type idx_type;
+        idx_type idx = get(boost::vertex_index, g);
+        
+        typedef
+          boost::iterator_property_map<typename std::vector<vertex_descriptor>::iterator, idx_type>
+          parent_pm_type;
+        parent_pm_type parent_pm(parent.begin(), idx);
+        typedef
+          boost::iterator_property_map<std::vector<int>::iterator, idx_type>
+          time_pm_type;
+        time_pm_type discover_time_pm(discover_time.begin(), idx);
+        time_pm_type finish_time_pm(finish_time.begin(), idx);
 
-				center.x = _center.x - _size.x / 4;
-				center.y -= _size.y / 2;
-				_subTree3 = new QuadTree(center, size, _depth + 1);
+        dfs_test_visitor<ColorMap, parent_pm_type,
+          time_pm_type, time_pm_type>
+          vis(color, parent_pm,
+              discover_time_pm, finish_time_pm);
 
-				center.x += _size.x / 2;
-				_subTree4 = new QuadTree(center, size, _depth + 1);
+        boost::depth_first_search(g, visitor(vis).color_map(color));
 
-				/* create subvector */
-				std::vector<BlockOccurrence*> subTab1, subTab2, subTab3, subTab4;
-				center = _center;
+        // all vertices should be black
+        for (boost::tie(vi, vi_end) = vertices(g); vi != vi_end; ++vi)
+          BOOST_CHECK(get(color, *vi) == Color::black());
 
-				for(vector<BlockOccurrence*>::iterator itObj = obj.begin(); itObj != obj.end(); ++itObj)
-				{
-					Vector2f point_BL = (*itObj)->getHitboxPosition();
-					float x = point_BL.x + (*itObj)->getHitboxSize().x;
-					float y = point_BL.y + (*itObj)->getHitboxSize().y;
-					Vector2f point_HR = Vector2f(x,y);
+        // check parenthesis structure of discover/finish times
+        // See CLR p.480
+        for (boost::tie(ui, ui_end) = vertices(g); ui != ui_end; ++ui)
+          for (boost::tie(vi, vi_end) = vertices(g); vi != vi_end; ++vi) {
+            vertex_descriptor u = *ui, v = *vi;
+            if (u != v) {
+              BOOST_CHECK( finish_time[u] < discover_time[v]
+                          || finish_time[v] < discover_time[u]
+                          || (discover_time[v] < discover_time[u]
+                               && finish_time[u] < finish_time[v]
+                               && boost::is_descendant(u, v, parent_pm))
+                          || (discover_time[u] < discover_time[v]
+                               && finish_time[v] < finish_time[u]
+                               && boost::is_descendant(v, u, parent_pm))
+                        );
+            }
+          }
+      }
 
-					if(point_HR.x <= center.x)
-					{
-						if(point_HR.y <= center.y)
-						{
-							subTab3.push_back(*itObj);
-						}
-						else if(point_BL.y >= center.y)
-						{
-							subTab1.push_back(*itObj);
-						}
-						else
-						{
-							_elements.push_back(*itObj);
-						}
-					}
-					else
-					{
-						if(point_HR.y <= center.y)
-						{
-							subTab4.push_back(*itObj);
-						}
-						else if(point_BL.y >= center.y)
-						{
-							subTab2.push_back(*itObj);
-						}
-						else
-						{
-							_elements.push_back(*itObj);
-						}
-					}
-				}
+  }
+};
 
-				/* build subTrees */
-				_subTree1->buildTree(subTab1);
-				_subTree2->buildTree(subTab2);
-				_subTree3->buildTree(subTab3);
-				_subTree4->buildTree(subTab4);
-			}
-			else
-			{
-				/* We store blocks */
-				_elements.insert(_elements.end(), obj.begin(), obj.end());
-			}
-		}
-	}
 
-	void QuadTree::getBlocks(sf::Vector2f& position, sf::Vector2i& size, vector<BlockOccurrence*>* blocks)
-	{
-		if(!isLeaf())
-		{
-			/* Left side */
-			if((position.x >= _center.x - _size.x / 2 && position.x <= _center.x)
-				|| (position.x + size.x >= _center.x - _size.x / 2 && position.x + size.x <= _center.x))
-			{
-				if(position.y >= _center.y - _size.y / 2 && position.y <= _center.y)
-				{
-					/* subTree 3 */
-					if(_subTree3 != NULL)
-					{
-						_subTree3->getBlocks(position, size, blocks);
-					}
-				}
+// usage: dfs.exe [max-vertices=15]
 
-				if(position.y + size.y >= _center.y  && position.y + size.y <= _center.y + _size.y / 2)
-				{
-					/* subTree 1 */
-					if(_subTree1 != NULL)
-					{
-						_subTree1->getBlocks(position, size, blocks);
-					}
-				}
-			}
+int test_main(int argc, char* argv[])
+{
+  int max_V = 7;
+  if (argc > 1)
+    max_V = atoi(argv[1]);
 
-			/* Right side */
-			if((position.x + size.x >= _center.x && position.x + size.x <= _center.x + _size.x / 2)
-				|| (position.x >= _center.x && position.x <= _center.x + _size.x / 2))
-			{
-				if(position.y >= _center.y - _size.y / 2 && position.y <= _center.y)
-				{
-					/* subTree 4 */
-					if(_subTree4 != NULL)
-					{
-						_subTree4->getBlocks(position, size, blocks);
-					}
-				}
+  // Test directed graphs.
+  dfs_test< boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS,
+           boost::property<boost::vertex_color_t, boost::default_color_type> >
+    >::go(max_V);
+  // Test undirected graphs.
+  dfs_test< boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS,
+           boost::property<boost::vertex_color_t, boost::default_color_type> >
+    >::go(max_V);
 
-				if(position.y + size.y >= _center.y && position.y + size.y <= _center.y + _size.y / 2)
-				{
-					/* subTree 2 */
-					if(_subTree2 != NULL)
-					{
-						_subTree2->getBlocks(position, size, blocks);
-					}
-				}
-			}
-		}
-		else
-		{
-			blocks->insert(blocks->end(), _elements.begin(), _elements.end());
-		}
-	}
-
-	void QuadTree::render(RenderWindow& app)
-	{
-		Vector2f pointBL, pointHL, pointHR, pointBR;
-
-		pointBL.x = _center.x - _size.x / 2;
-		pointBL.y = _center.y - _size.y / 2;
-
-		pointHR.x = _center.x + _size.x / 2;
-		pointHR.y = _center.y + _size.y / 2;
-
-		sf::RectangleShape rect = sf::RectangleShape(sf::Vector2f(pointHR.x - pointBL.x, pointHR.y - pointBL.y));
-		rect.setOutlineColor(sf::Color::Red);
-		rect.setPosition(pointBL);
-
-		app.draw(rect);
-
-		if(_subTree1 != nullptr)
-			_subTree1->render(app);
-
-		if(_subTree2 != nullptr)
-			_subTree2->render(app);
-
-		if(_subTree3 != nullptr)
-			_subTree3->render(app);
-
-		if(_subTree4 != nullptr)
-			_subTree4->render(app);
-	}
-
-	QuadTree::~QuadTree()
-	{
-		delete _subTree1;
-		delete _subTree2;
-		delete _subTree3;
-		delete _subTree4;
-	}
+  return 0;
 }
+

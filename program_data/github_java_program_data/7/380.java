@@ -1,31 +1,34 @@
-package recursive;
+/**
+ * 
+ */
+package home.algo.recursion;
 
-import java.util.Scanner;
+/**
+ * @author smrutis
+ *
+ */
+public class TowerOfHanoi {
 
-
-public class Fibonacci {
-
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-		Scanner scan=new Scanner(System.in);
-		System.out.println("enter an Integer");
-		int num=scan.nextInt();
-		int op=fib(num);
-		System.out.println(op);
-		scan.close();
+	public String move(int numberOfDisks, int fromPeg, int toPeg, int helperPeg) {
+		if (1 == numberOfDisks)
+			return directMove(numberOfDisks, fromPeg, toPeg);
+		else {
+			String step = move(numberOfDisks - 1, fromPeg, helperPeg, toPeg);
+			step += directMove(numberOfDisks, fromPeg, toPeg);
+			step += move(numberOfDisks - 1, helperPeg, toPeg, fromPeg);
+			return step;
+		}
 	}
 
-	private static int fib(int num) {
-		// TODO Auto-generated method stub
-		if(num==0||num==1){
-			return num;
-		}
-		//System.out.println("fib(" + new Integer(num) + ") calling fib("+ new Integer(num-1) + ") and fib("+ new Integer(num-2)+")");
-		int res=fib(num-1)+fib(num-2);
-		//System.out.println("result came: fib(" + new Integer(num) + ") calling fib("+ new Integer(num-1) + ") and fib("+ new Integer(num-2)+")");
+	private String directMove(int numberOfDisks, int fromPeg, int toPeg) {
+		return "\nMove disk " + numberOfDisks + " from peg-" + fromPeg
+				+ " to peg-" + toPeg;
+	}
 
-		return res;
-		
+	public static void main(String[] args) {
+		TowerOfHanoi towerOfHanoi = new TowerOfHanoi();
+		String step = towerOfHanoi.move(5, 1, 3, 2);
+		System.out.println(step);
 	}
 
 }

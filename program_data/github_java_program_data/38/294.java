@@ -1,87 +1,85 @@
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.util.ArrayList;
+// Ilay Raz
+// ilraz
+// CMPS12B-02
+// 2/23/18
+// Queue.java
 
-public class ConvexHullVisualizer extends JPanel implements MouseListener{
+public class Queue implements QueueInterface {
+    private class Node {
+        public Object data;
+        public Node next;
 
-    public static void main(String[] args) {
-        JFrame window = new JFrame();
-        window.setTitle("ConvexHull Visualizer");
-        window.setSize(600,600);
-
-       ConvexHullVisualizer chv = new ConvexHullVisualizer();
-
-        window.add(chv);
-        window.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        window.setVisible(true);
-    }
-
-    public ConvexHullVisualizer(){
-        this.setBackground(Color.BLACK);
-        this.addMouseListener(this);
-
-        JButton solveButton = new JButton("Gift Wrapping");
-        solveButton.setSize(100,30);
-        solveButton.setLocation(10,10);
-        solveButton.addActionListener((ActionEvent e) -> {startSolving();
-        });
-
-        this.setLayout(null);
-        this.add(solveButton);
-    }
-
-    ArrayList<Point> points = new ArrayList<>();
-    ArrayList<Point> hull = null;
-
-    public void startSolving(){
-        hull = JarvisConvexHull.convexHull(points);
-        repaint();
-    }
-
-    @Override
-    public void paint(Graphics g) {
-        super.paint(g);
-
-        g.setColor(Color.WHITE);
-        for(Point p : points){
-            g.fillOval(p.x-5,p.y-5,10,10);
-        }
-
-        if(hull != null){
-            Polygon hullPoly = new Polygon();
-            for(Point p : hull){
-                hullPoly.addPoint(p.x,p.y);
-            }
-            g.drawPolygon(hullPoly);
+        public Node(Object myData) {
+            data = myData;
+            next = null;
         }
     }
 
-    @Override
-    public void mouseClicked(MouseEvent e) {
-        points.add(new Point(e.getX(),e.getY()));
-        repaint();
+    private int size;
+    private Node head;
+    private Node tail;
+
+    public Queue() {
+        size = 0;
+        head = null;
+        tail = null;
     }
 
-    @Override
-    public void mousePressed(MouseEvent e) {
-
+    public boolean isEmpty() {
+        return size == 0;
     }
 
-    @Override
-    public void mouseReleased(MouseEvent e) {
-
+    public int length() {
+        return size;
     }
 
-    @Override
-    public void mouseEntered(MouseEvent e) {
-
+    public void enqueue(Object newItem) {
+        if (tail == null)
+            head = tail = new Node(newItem);
+        else {
+            tail.next = new Node(newItem);
+            tail = tail.next;
+        }
+        size++;
     }
 
-    @Override
-    public void mouseExited(MouseEvent e) {
+    public Object dequeue() throws QueueEmptyException {
+        if (isEmpty())
+            throw new QueueEmptyException("Queue is empty");
+        Node node = head;
+        head = head.next;
+        size--;
+        if (head == null)
+            tail = null;
+        return node.data;
+    }
 
+    public Object peek() throws QueueEmptyException {
+        if (isEmpty())
+            throw new QueueEmptyException("Queue is empty");
+        return head.data;
+    }
+
+    public void dequeueAll() throws QueueEmptyException {
+        if (isEmpty())
+            throw new QueueEmptyException("Queue is empty");
+        head = null;
+        tail = null;
+        size = 0;
+    }
+
+    public Queue clone() {
+        Queue queue = new Queue();
+        for (Node node = head; node != null; node = node.next)
+            queue.enqueue(node.data);
+        return queue;
+    }
+
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+
+        for (Node node = head; node != null; node = node.next)
+            builder.append(node.data.toString() + " ");
+        return builder.toString();
     }
 }

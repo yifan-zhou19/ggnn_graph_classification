@@ -1,94 +1,85 @@
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+package org.apache.pig.builtin;
 
 /**
- * Created by yxy on 4/19/2015.
+ * A RegressionModel that fits a straight line to a data set
  */
-public class Knapsack {
-    public static long[] cache;
-    public static Item[] items;
+public class LinearRegressionModel extends RegressionModel {
 
-    public static void knapsack(String fileName) {
+  /** The y intercept of the straight line */
+  private double a;
 
-        try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
-            String[] firstLine = br.readLine().split(" ");
-            int knapsackSize = Integer.parseInt(firstLine[0]);
-            int numOfItem = Integer.parseInt(firstLine[1]);
+  /** The gradient of the line */
+  private double b;
+  
+  /** The type of g(x) */
+  private int tp = 0;
 
-            cache = new long[knapsackSize+1];
-            for (int i = 0; i < cache.length; i++)
-                cache[i] = 0;
-            items = new Item[numOfItem+1];
-            items[0] = new Item();
+  /**
+   * Construct a new LinearRegressionModel with the supplied data set
+   * 
+   * @param x
+   *          The x data points
+   * @param y
+   *          The y data points
+   */
+  public LinearRegressionModel(double[] x, double[] y, int type) {
+    super(x, y, type);
+    a = b = 0;
+    tp = type;
+  }
 
-            String line;
-            int index = 1;
-            while ((line = br.readLine()) != null) {
-                String[] valueAndWeight = line.split(" ");
-                int value = Integer.parseInt(valueAndWeight[0]);
-                int weight = Integer.parseInt(valueAndWeight[1]);
+  /**
+   * Get the coefficents of the fitted straight line
+   * 
+   * @return An array of coefficients {intercept, gradient}
+   * 
+   * @see RegressionModel#getCoefficients()
+   */
+  @Override
+  public double[] getCoefficients() {
+    if (!computed)
+      throw new IllegalStateException("Model has not yet computed");
 
-                items[index++] = new Item(value, weight);
-            }
+    return new double[] { a, b };
+  }
 
-            for (int i = 1; i <= numOfItem; i++) {
-                long[] tempCache = new long[knapsackSize+1];
-                for (int j = 0; j <= knapsackSize; j++) {
-                    tempCache[j] = pickOptWithCache(j, i);
-                }
-                cache = tempCache;  // update cache
-            }
+  /**
+   * Compute the coefficients of a straight line the best fits the data set
+   * 
+   * @see RegressionModel#compute()
+   */
+  @Override
+  public void compute() {
 
-            System.out.println(/*pickOpt(knapsackSize, numOfItem)*/ cache[knapsackSize]);
-
-        } catch (IOException ex) {
-            System.out.println(ex.getMessage());
-        }
+    // throws exception if regression can not be performed
+    if (xValues.length < 2 | yValues.length < 2) {
+      throw new IllegalArgumentException("Must have more than two values");
     }
 
-    // has to be run in a increasing order
-    public static long pickOptWithCache(int currentKnapsackSize, int itemIndex) {
-        long withThisItem;
-        if (currentKnapsackSize >= items[itemIndex].weight) {
-            withThisItem = cache[currentKnapsackSize - items[itemIndex].weight];
-            withThisItem += items[itemIndex].value;
-        }
-        else {
-            withThisItem = 0;
-        }
+    // get the value of the gradient using the formula b = cov[x,y] / var[x]
+    b = MathUtils.covariance(xValues, yValues) / MathUtils.variance(xValues);
 
-        long withoutThisItem = cache[currentKnapsackSize];
+    // get the value of the y-intercept using the formula a = ybar + b * xbar
+    a = MathUtils.mean(yValues) - b * MathUtils.mean(xValues);
 
-        if (withoutThisItem >= withThisItem) {
-            return withoutThisItem;
-        }
-        else {
-            return withThisItem;
-        }
-    }
+    // set the computed flag to true after we have calculated the coefficients
+    computed = true;
+  }
 
-    /*public static long pickOpt(int currentKnapsackSize, int itemIndex) {
-        if (itemIndex == 0) {
-            return 0;
-        }
+  /**
+   * Evaluate the computed model at a certain point
+   * 
+   * @param x
+   *          The point to evaluate at
+   * @return The value of the fitted straight line at the point x
+   * 
+   * @see RegressionModel#evaluateAt(double)
+   */
+  @Override
+  public double evaluateAt(double x) {
+    if (!computed)
+      throw new IllegalStateException("Model has not yet computed");
 
-        long withThisItem;
-        if (currentKnapsackSize >= items[itemIndex].weight) {
-            withThisItem = pickOpt(currentKnapsackSize - items[itemIndex].weight, itemIndex - 1);
-            withThisItem += items[itemIndex].value;
-        }
-        else {
-            withThisItem = 0;
-        }
-
-        long withoutThisItem = pickOpt(currentKnapsackSize, itemIndex - 1);
-
-        if (withoutThisItem > withThisItem) {
-            return withoutThisItem;
-        }
-        else {
-            return withThisItem;
-        }
-    }*/
+    return a + b * x;
+  }
 }

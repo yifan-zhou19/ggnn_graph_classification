@@ -1,97 +1,69 @@
-package spml_assignment1;
+package DP;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.PriorityQueue;
-import java.util.Set;
+public class MatrixChainMultiplication {
 
-/**
- *
- * @author Jasper
- */
-public class Kruskal {
-    private final boolean verbose;
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		
+		MatrixChainMultiplication mc = new MatrixChainMultiplication();
+		int[] p = {2,3,6,4,5};
+		int[][] cost = new int[p.length][p.length];
+		System.out.println(mc.MatrixChain(p, 1, p.length-1));
+		System.out.println(mc.MatrxChain(p,cost, 1, p.length));
 
-    public Kruskal(boolean verbose) {
-        this.verbose = verbose;
-    }
-
-    private List<Set<Integer>> generateUnconnectedVertices(int numVertices) {
-        List<Set<Integer>> connectedVertices = new ArrayList<>(numVertices);
-        for (int i = 0; i < numVertices; ++i) {
-            connectedVertices.add(new HashSet<>());
-            connectedVertices.get(i).add(i);
-        }
-
-        return connectedVertices;
-    }
-
-    private void mergeSets(List<Set<Integer>> connectedVertices,
-            int start, int end) {
-        int startIndex = 0;
-        int endIndex = 0;
-        for (int i = 0; i < connectedVertices.size(); ++i) {
-            if (connectedVertices.get(i).contains(start)) {
-                startIndex = i;
-            }
-            if (connectedVertices.get(i).contains(end)) {
-                endIndex = i;
-            }
-        }
-
-        if (startIndex != endIndex) {
-            connectedVertices.get(startIndex).addAll(
-                    connectedVertices.remove(endIndex));
-        }
-    }
-
-    public boolean areVerticesConnected(List<Set<Integer>> connectedVertices,
-            int v1, int v2) {
-        return connectedVertices.stream().anyMatch((connectedSet)
-                -> (connectedSet.contains(v1) && connectedSet.contains(v2)));
-    }
-
-    public Graph run(Graph graph) {
-        Graph mst = new Graph(graph.getNumberOfVertices());
-
-        PriorityQueue<Edge> edges = new PriorityQueue<>();
-        for (int i = 0; i < graph.getNumberOfVertices(); ++i) {
-            for (int j = 0; j < graph.getNumberOfVertices(); ++j) {
-                double cost = graph.getCost(i, j);
-
-                if (cost > 0.0d) {
-                    edges.add(new Edge(i, j, cost));
+	}
+	
+	
+	public int MatrxChain(int[] arr,int[][] cost,int start,int end){
+		for(int i = 0 ; i < cost.length-1 ; i++)
+			cost[i][i] = 0;
+		int[][] seq = new int[arr.length][arr.length];
+		// Length of matrix. Starts from 2 .. to length. Sort of columns
+		for (int L=2 ; L < arr.length; L++){
+			// A sort of rows in table
+            for (int i=1 ; i < arr.length-L+1; i++) { // Starting point
+                int j = i+L-1; // Ending point
+                if(j == arr.length) continue;
+                cost[i][j] = Integer.MAX_VALUE;
+                // Splits at each point
+                for (int k=i ; k <= j-1; k++) {
+                    int q = cost[i][k] + cost[k+1][j] + arr[i-1]*arr[k]*arr[j];
+                    if (q < cost[i][j]) {
+                        cost[i][j] = q;
+                        seq[i][j] = k;
+                    }
                 }
             }
         }
+		print(seq);
+		return cost[1][4];
+	}
 
-        List<Set<Integer>> connectedVertices = generateUnconnectedVertices(
-                graph.getNumberOfVertices());
-        Edge edge = edges.poll();
-        mst.setCost(edge.getStart(), edge.getEnd(), edge.getCost());
-        int nEdgesConsidered = 0;
-        while (!edges.isEmpty()
-                && connectedVertices.size() > 1) {
-            nEdgesConsidered++;
-            edge = edges.poll();
+	public void print(int[][] cost){
+		for(int row = 0 ; row < 5 ; row++){
+			for(int col = 0 ; col < 5; col++){
+				System.out.print(cost[row][col]+"        ");
+			}	
+			System.out.println();
+		}
+	}
+	
+	
+	public int MatrixChain(int[] arr,int start,int end){
+		if(start == end)
+			return 0;
+		int cost = Integer.MAX_VALUE;
+		int min = 0;
+		for(int p = start ; p < end ; p++) {
+			min = MatrixChain(arr,start,p)+
+					MatrixChain(arr,p+1,end)+
+					arr[start-1]*arr[p]*arr[end];
+			if(cost > min)
+				cost = min;
+		}
+		return cost;
+	}
 
-            if (!areVerticesConnected(connectedVertices, edge.getStart(),
-                    edge.getEnd())) {
-                mst.setCost(edge.getStart(), edge.getEnd(), edge.getCost());
-                mergeSets(connectedVertices, edge.getStart(), edge.getEnd());
-            }
-        }
-
-        if (connectedVertices.size() > 1) {
-            throw new IllegalArgumentException("Not all edges in the graph "
-                    + "are connected.");
-        }
-
-        if (verbose) {
-            System.out.println(nEdgesConsidered + " edges considered.");
-        }
-
-        return mst;
-    }
+	
+	
 }

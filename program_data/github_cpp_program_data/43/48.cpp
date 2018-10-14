@@ -1,31 +1,64 @@
-#include "stack.h"
-#include <assert.h>
+/*
+<REQUIRE>
+    <1>
 
-//Constructor
-Stack::Stack(){
-  sz = 0;
-  index = NULL;
-}
-//Push
-void Stack::push(int value){ 
-  Nodo* tmp = new Nodo(value,index);  //Se inicializa un nuevo espacio de memoria apuntando a index y con valor igual a "value"
-  index = tmp;                        //Index ahora apunta al espacio recien inicializado
-  ++sz;                               //La pila crece en 1
-}
-//Pop
-void Stack::pop(){ 
-   assert(index != NULL);             //Si la pila esta vacia, regresa SEGMENTATION FAULT
-   Nodo* tmp = index;                 //tmp apunta a index
-   index = index->nxt;                //Index apunta al siguiente en la pila
-   delete tmp;                        //tmp borra el primer elemento de la memoria
-   --sz;                              //La pila decrece en 1
-}
-//Top
-int Stack::top(){
-  assert(index != NULL);              //Si la pila esta vacia, regresa SEGMENTATION FAULT
-  return index->val;                  //Regresa el valor dentro de index
-}
-//Size
-int Stack::size(){
-  return sz;                          //Regresa la cantidad de elementos en la pila
-}
+<USAGE>
+    <1>
+
+*/
+#ifndef ___BucketSort_cpp__
+#define ___BucketSort_cpp__
+#include <string.h>
+#include <stdlib.h>
+//=========================================================================
+//  BucketSort
+//=========================================================================
+class BucketSort{
+public:
+    class Bucket{
+    private:
+        int curSize,maxSize,*dataArr;
+    public:
+        inline int getMaxSize(){ return maxSize;}
+        inline int getCurSize(){ return curSize;}
+        inline void push(int val){
+            dataArr[curSize++] = val;
+        }
+        inline int *retrieve(){
+            curSize = 0;
+            return dataArr;
+        }
+        Bucket(int _maxSize){
+            curSize = 0;
+            maxSize = _maxSize;
+            dataArr = (int *) malloc(_maxSize * sizeof(int));
+        }
+        ~Bucket(){
+            free(dataArr);
+        }
+    };
+    static int sort(char *input){
+        /*
+        int existence[256],length = 1;
+        memset(existence, 0, sizeof(existence));
+        for(char *read_input = (char *) input; *read_input != '\0'; ++read_input){
+            existence[*read_input] += 1;
+            length += 1;
+        }
+        existence['\0'] = 1;
+
+        Bucket *buckets[256];
+        char output
+        for(int i = 0; i < 256; ++i){
+            buckets
+        }*/
+    }
+};
+
+
+
+
+
+
+
+#endif

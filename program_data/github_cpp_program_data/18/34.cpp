@@ -1,16 +1,63 @@
-void build(char *pattern) {
-    int length = (int)strlen(pattern + 1);
-    fail[0] = -1;
-    for (int i = 1, j; i <= length; ++i) {
-        for (j = fail[i - 1]; j != -1 && pattern[i] != pattern[j + 1]; j = fail[j]);
-        fail[i] = j + 1;
+#include <iostream>
+#include <string>
+#include <iterator>
+
+using std::string;      using std::cin;
+using std::cout;        using std::endl;
+using std::iterator;
+
+void reverseString(string &);
+template <typename T> void value_swap(T & a, T & b);
+
+int main()
+{
+    string str = "words";
+    string str2 = "wowzers";
+    cout << str << endl;
+    cout << str2 << endl;
+    reverseString(str2);
+    cout << str2 << endl;
+
+    auto e = str.size() - 1;
+
+    for(auto i = 0; i < e; ++i)
+    {
+        char temp;
+
+        temp = str.at(i);
+        str.at(i) = str.at(e);
+        str.at(e) = temp;
+        --e;
+    }
+
+    cout << str << endl;
+
+    for(string::const_iterator iter = str.end() - 1; iter != str.begin() - 1; --iter)
+    {
+        cout << *iter;
+    }
+    cout << endl;
+    return 0;
+}
+
+
+void reverseString(string &str)
+{
+    string::iterator start = str.begin();
+    string::iterator last = str.end() - 1;
+
+    while (start != last)
+    {
+        value_swap(*start, *last);
+        ++start;
+        --last;
     }
 }
 
-void solve(char *text, char *pattern) {
-    int length = (int)strlen(text + 1);
-    for (int i = 1, j; i <= length; ++i) {
-        for (j = match[i - 1]; j != -1 && text[i] != pattern[j + 1]; j = fail[j]);
-        match[i] = j + 1;
-    }
+template <class T> void value_swap(T &a, T &b)
+{
+    T t = a;
+    a = b;
+    b = t;
 }
+

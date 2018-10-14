@@ -1,112 +1,125 @@
-// File: binary-search.cpp
-// Inclass exercise for 1/22/2017
+#include <bits/stdc++.h>
+using namespace std;
 
-#include <iostream>
-#include <iomanip>
-#include <fstream>
-#include <cstdlib> // exit()
+#define rep(i, a, b) for(int i = a; i < int(b); ++i)
+#define trav(a, v) for(auto& a : v)
+#define all(x) x.begin(), x.end()
+#define sz(x) (int)(x).size()
 
-// Function prototypes go here
-void read_datafile (std::ifstream &infile, // REC'D/P'BACK: input filestream
-		    int array[],           // P'BACK: array to be filled
-		    int &num_elements);    // P'BACK: # elements filled
-void print_array (const int array[],       // REC'D: array to print
-		  int num_elements);       // REC'D: # elements filled
+typedef long long ll;
+typedef pair<int, int> pii;
+typedef vector<int> vi;
 
-// Function: binary_search
-// Returns the index of the target in an array
-int binary_search (const int an_array[],   // RECV'D: array to search
-		   int target,             // RECV'D: target value
-		   int first,              // REDV'D: lower bound of range to search
-		   int last);               // REDV'D: upper bound of range to search
-		   
-const int ARRAY_SIZE = 100;  // C++ constant; don't use #define
-
-int main(int argc, char *argv[])
-{
-   using namespace std;
-
-   if (argc != 2)
-   {
-      cerr << "Usage: " << argv[0] << " datafile" << endl;
-      exit(1);
-   }
-
-   ifstream infile (argv[1]);
-   if (!infile)
-   {
-      cerr << "Unable to open file: " << argv[1] << endl;
-      exit(1);
-   }
-
-   int n, target, position;
-   int an_array[ARRAY_SIZE];
-
-   read_datafile(infile, an_array, n);
-   print_array(an_array, n);
-
-   cout << "\nEnter an integer to search for: ";
-   cin >> target;
-
-   // Function call goes here
-   position = binary_search(an_array, target, 0, n-1);
-   if (position != -1)
-      cout << "The target is at index: " << position << endl;
-   else
-      cout << "The target is not in the file" << endl;
-
-   return 0;
+static unsigned RA = 1231231;
+int ra() {
+	RA *= 574841;
+	RA += 14;
+	return RA >> 1;
 }
-int binary_search (const int an_array[],   // RECV'D: array to search
-		   int target,             // RECV'D: target value
-		   int first,              // REDV'D: lower bound of range to search
-		   int last)               // REDV'D: upper bound of range to search
-{
-  // Base cases:
-  //      - finding target
-  //      - not finding the target
 
-  // check if indexes have crossed
-  if (last < first)
-    return -1;  // not found, -1 is not a valid array index
+namespace maximum {
 
-  // compute the index of the midpoint value
-  int mid_index = (first + last)/2;
-  // check if it is the target
-  if (an_array[mid_index] == target)
-    return mid_index; //return the index of the target
-
-  if (target < an_array[mid_index])
-    //search the "left" half
-    //smaller-caller cuts the search space in half
-    return binary_search(an_array, target, first, mid_index-1);
-
-  //otherwise search the "right" half
-  return binary_search(an_array, target, mid_index+1, last);
+#include "../content/data-structures/SegmentTree.h"
 
 }
 
-// Function definitions goes here
-void read_datafile (std::ifstream &infile, int array[], int &num_elements)
-{
-   int value;
-   num_elements = 0;
-   while (infile >> value)  // read until end of file
-   {
-      array[num_elements] = value;
-      num_elements++;
-   }
-} // end read_datafile
+namespace nonabelian {
 
-void print_array (const int array[], int num_elements)
-{
-   using namespace std;
+// https://en.wikipedia.org/wiki/Dihedral_group_of_order_6
+const int lut[6][6] = {
+	{0, 1, 2, 3, 4, 5},
+	{1, 0, 4, 5, 2, 3},
+	{2, 5, 0, 4, 3, 1},
+	{3, 4, 5, 0, 1, 2},
+	{4, 3, 1, 2, 5, 0},
+	{5, 2, 3, 1, 0, 4}
+};
 
-   for (int i = 0; i < num_elements; i++)
-   {
-      if (i % 10 == 0)
-	 cout << endl;
-      cout << setw(4) << array[i];
-   }
-   cout << endl;
-} // end print_array
+struct Tree {
+	typedef int T;
+	const T LOW = 0;
+	T f(T a, T b) { return lut[a][b]; }
+	vector<T> s; int n;
+	Tree(int n = 0, T def = 0) : s(2*n, def), n(n) {}
+	void update(int pos, T val) {
+		for (s[pos += n] = val; pos > 1; pos /= 2)
+			s[pos / 2] = f(s[pos & ~1], s[pos | 1]);
+	}
+	T query(int b, int e) { // query [b, e)
+		T ra = LOW, rb = LOW;
+		for (b += n, e += n; b < e; b /= 2, e /= 2) {
+			if (b % 2) ra = f(ra, s[b++]);
+			if (e % 2) rb = f(s[--e], rb);
+		}
+		return f(ra, rb);
+	}
+};
+
+}
+
+int main() {
+	{
+		maximum::Tree t(0);
+		assert(t.query(0, 0) == t.LOW);
+	}
+
+	if (1) {
+		const int N = 10000;
+		maximum::Tree tr(N);
+		ll sum = 0;
+		rep(it,0,1000000) {
+			tr.update(ra() % N, ra());
+			int i = ra() % N;
+			int j = ra() % N;
+			if (i > j) swap(i, j);
+			int v = tr.query(i, j+1);
+			sum += v;
+		}
+		cout << sum << endl;
+		// return 0;
+	}
+
+	rep(n,1,10) {
+		maximum::Tree tr(n);
+		vi v(n);
+		rep(it,0,1000000) {
+			int i = rand() % (n+1), j = rand() % (n+1);
+			int x = rand() % (n+2);
+
+			int r = rand() % 100;
+			if (r < 30) {
+				int ma = tr.LOW;
+				rep(k,i,j) ma = max(ma, v[k]);
+				assert(ma == tr.query(i,j));
+			}
+			else {
+				i = min(i, n-1);
+				tr.update(i, x);
+				v[i] = x;
+			}
+		}
+	}
+
+	rep(n,1,10) {
+		nonabelian::Tree tr(n);
+		vi v(n);
+		rep(it,0,1000000) {
+			int i = rand() % (n+1), j = rand() % (n+1);
+			int x = rand() % 6;
+
+			int r = rand() % 100;
+			if (r < 30) {
+				int ma = tr.LOW;
+				rep(k,i,j) ma = nonabelian::lut[ma][v[k]];
+				assert(ma == tr.query(i,j));
+			}
+			else {
+				i = min(i, n-1);
+				tr.update(i, x);
+				v[i] = x;
+			}
+		}
+	}
+
+	exit(0);
+}

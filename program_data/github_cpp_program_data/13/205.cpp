@@ -1,138 +1,57 @@
-/*
- GRT MIT License
- Copyright (c) <2012> <Nicholas Gillian, Media Lab, MIT>
- 
- Permission is hereby granted, free of charge, to any person obtaining a copy of this software
- and associated documentation files (the "Software"), to deal in the Software without restriction,
- including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
- and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
- subject to the following conditions:
- 
- The above copyright notice and this permission notice shall be included in all copies or substantial
- portions of the Software.
- 
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
- LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
- IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
- WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
- SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
+//
+//  Created by azx on 16/3/5.
+//  Copyright © 2016年 azx. All rights reserved.
+//
+//  输入要排序的数字，终止符结束，用归并排序得出非降序列(与书上实现略有不同)
+//  Worst-case: Θ(nlgn)
 
-/*
- Logistic Regression Example
- This examples demonstrates how to initialize, train, and use the LogisticRegression class for regression.
- 
- Logistic Regression is a simple but powerful regression algorithm that can map an N-dimensional signal to a 1-dimensional signal.
- 
- In this example we create an instance of an LogisticRegression algorithm and then use the algorithm to train a model using some pre-recorded training data.
- The trained model is then used to perform regression on the test data.
- 
- This example shows you how to:
- - Create an initialize the LogisticRegression algorithm for regression
- - Create a new instance of a GestureRecognitionPipeline and add the regression instance to the pipeline
- - Load some LabelledRegressionData from a file
- - Train a LogisticRegression model using the training dataset
- - Test the LogisticRegression model using the test dataset
- - Save the output of the LogisticRegression algorithm to a file
-*/
+#include <iostream>
+#include <vector>
 
-#include "GRT.h"
-using namespace GRT;
+using namespace std;
 
-int main (int argc, const char * argv[])
-{
-    //Turn on the training log so we can print the training status of the LogisticRegression to the screen
-    TrainingLog::enableLogging( true ); 
+int sentinel = INT32_MAX; // 每个数组的最后都插入一个标识，当一组被选完时，保证另一组剩余的全部加上
 
-    //Load the training data
-    RegressionData trainingData;
-    RegressionData testData;
+void mergeSort(vector<int> &T) {
+    vector<int> L, R;
+    L.assign(T.begin(), T.begin()+T.size()/2); // 数组的左半边赋给L
+    R.assign(T.begin()+T.size()/2, T.end()-1);  // 数组的右半边赋给R(将最后的标识去掉)
     
-    if( !trainingData.loadDatasetFromFile("LogisticRegressionTrainingData.grt") ){
-        cout << "ERROR: Failed to load training data!\n";
-        return EXIT_FAILURE;
-    }
+    L.push_back(sentinel);
+    R.push_back(sentinel);  // 左右数组最后分别插入标识
     
-    if( !testData.loadDatasetFromFile("LogisticRegressionTestData.grt") ){
-        cout << "ERROR: Failed to load test data!\n";
-        return EXIT_FAILURE;
-    }
+    if (L.size() != 2) { mergeSort(L); }
+    if (R.size() != 2) { mergeSort(R); }  // 当除去sentinel后只剩一个数时，停止递归
     
-    //Make sure the dimensionality of the training and test data matches
-    if( trainingData.getNumInputDimensions() != testData.getNumInputDimensions() ){
-        cout << "ERROR: The number of input dimensions in the training data (" << trainingData.getNumInputDimensions() << ")";
-        cout << " does not match the number of input dimensions in the test data (" << testData.getNumInputDimensions() << ")\n";
-        return EXIT_FAILURE;
-    }
-    
-    if( testData.getNumTargetDimensions() != testData.getNumTargetDimensions() ){
-        cout << "ERROR: The number of target dimensions in the training data (" << testData.getNumTargetDimensions() << ")";
-        cout << " does not match the number of target dimensions in the test data (" << testData.getNumTargetDimensions() << ")\n";
-        return EXIT_FAILURE;
-    }
-    
-    cout << "Training and Test datasets loaded\n";
-    
-    //Print the stats of the datasets
-    cout << "Training data stats:\n";
-    trainingData.printStats();
-    
-    cout << "Test data stats:\n";
-    testData.printStats();
-    
-    //Create a new gesture recognition pipeline
-    GestureRecognitionPipeline pipeline;
-    
-    //Add a LogisticRegression instance to the pipeline
-    pipeline.setRegressifier( LogisticRegression() );
-    
-    //Train the LogisticRegression model
-    cout << "Training LogisticRegression model...\n";
-    if( !pipeline.train( trainingData ) ){
-        cout << "ERROR: Failed to train LogisticRegression model!\n";
-        return EXIT_FAILURE;
-    }
-    
-    cout << "Model trained.\n";
-    
-    //Test the model
-    cout << "Testing LogisticRegression model...\n";
-    if( !pipeline.test( testData ) ){
-        cout << "ERROR: Failed to test LogisticRegression model!\n";
-        return EXIT_FAILURE;
-    }
-    
-    cout << "Test complete. Test RMS error: " << pipeline.getTestRMSError() << endl;
-
-    //Run back over the test data again and output the results to a file 
-    fstream file;
-    file.open("LogisticRegressionResultsData.csv", fstream::out);
-
-    for(UINT i=0; i<testData.getNumSamples(); i++){
-        vector< double > inputVector = testData[i].getInputVector();
-        vector< double > targetVector = testData[i].getTargetVector();
-
-        //Map the input vector using the trained regression model
-        if( !pipeline.predict( inputVector ) ){
-            cout << "ERROR: Failed to map test sample " << i << endl;
-            return EXIT_FAILURE;
+    int m = 0, n = 0;
+    for (int i = 0; i < L.size() + R.size() - 2; i++) {
+        if (L[m] < R[n]) {  // 将两数组小的先加入总数组中
+            T[i] = L[m];
+            m++;
+        } else {
+            T[i] = R[n];
+            n++;
         }
-
-        //Get the mapped regression data
-        vector< double > outputVector = pipeline.getRegressionData();
-        
-        //Write the mapped value and also the target value to the file
-        for(UINT j=0; j<outputVector.size(); j++){
-            file << outputVector[j] << "\t";
-        }
-        for(UINT j=0; j<targetVector.size(); j++){
-            file << targetVector[j] << "\t";
-        }
-        file << endl;
     }
-
-    //Close the file
-    file.close();
-    
-    return EXIT_SUCCESS;
 }
+
+int main()
+{
+    int x;
+    vector<int> A;
+    while (cin >> x) {
+        A.push_back(x);
+    }
+    A.push_back(sentinel);
+    mergeSort(A);
+    A.pop_back();  // 将刚刚加入为了mergeSort的sentinel标识除去(作为int_max肯定在最后一个)
+    for (vector<int>::iterator it = A.begin(); it != A.end(); ++it) {
+        cout << *it << " ";
+    }
+    
+    return 0;
+}
+
+
+
+

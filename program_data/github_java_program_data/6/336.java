@@ -1,24 +1,39 @@
-package com.lz.Demo4;
-
-public class TowerOfHanoi {
-	public static void main(String[] args) {
-		int[] startPole = {1,2,3,4,5};
-		int[] tempPole = {0,0,0,0,0};
-		int[] endPole = {0,0,0,0,0};
-		for (int i = 0; i < startPole.length; i++) {
-			System.out.print(endPole[i]);
-		}
-		method(4,startPole,tempPole,endPole);
+static Pair<int[], int[]> bellmanFord(Edge[] edges, int origin,
+		int n) throws NegativeWeightCycleException{
+	int[] via = new int[n];
+	int[] length = new int[n];
+	for(int i = 0; i < n; i++) {
+		via[i] = -1;
+		length[i] = Integer.MAX_VALUE;
 	}
-	public static void method(int numberOfDisks,int[] startPole,int[] tempPole,int[] endPole ){
-		if(numberOfDisks==0){
-			endPole[numberOfDisks] = startPole[numberOfDisks];
-			startPole[numberOfDisks] = 0;
-		}else{
-			//startPole�������һ������  �����Ķ��ƶ���tmpePole��
-			method(numberOfDisks-1,startPole,endPole,tempPole);
-			method(numberOfDisks-1,tempPole,startPole,endPole);
-		}
-	};
+	length[origin] = 0;
+	via[origin] = origin;
+	boolean changes = false;
+	for (int i = 1; i < n; i++) {
+		changes = updateLengths(edges, length);
+		if (!changes)
+			break;
+	}
+	// Negative-weight cycles detection.
+	if (changes && updateLengths(edges, length))
+		throw new NegativeWeightCycleException();
+	else
+		return new Pair<int[], int[]>(length, via);
+}
 
+static boolean updateLengths(Edge[] edges, int[] length, int[] via) {
+	boolean changes = false;
+	for (Edge e : edges) {
+		int startPoint = e.origin;
+		int endPoint = e.destin;
+		if (length[startPoint] < Integer.MAX_VALUE) {
+			int newLength = length[startPoint] + e.weigth;
+			if (newLength < length[endPoint]) {
+				length[endPoint] = newLength;
+				via[endPoint] = endPoints[startPoint];
+				changes = true;
+			}
+		}
+	}
+	return changes;
 }

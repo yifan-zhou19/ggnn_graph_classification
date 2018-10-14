@@ -1,108 +1,97 @@
+#include "../KNearestNeighbours/KNearestNeighbours.h"
+#include "../../../Utilities/Utilities.h"
+#include "../../Point/IClusteringPoint.h"
+#include "../../GenericVector/GenericVector.h"
+#include "NaiveBayesClassification.h"
 
-#include <assert.h>
+#include <vector>
+#include <limits>
+#include <iostream>
 
-template <class T>
-class LinkedList {
-  public:
-    T value;
-    LinkedList<T> *next;
+std::vector<std::vector<std::shared_ptr<IClusteringPoint>>> NaiveBayesClassification::getClassifiedPoints()
+{
+    std::vector<std::vector<std::shared_ptr<IClusteringPoint>>> result;
 
-    LinkedList(T nodeValue) {
-      value = nodeValue;
-      next = NULL;
+    //Prepping resultingClassifiedPoints 2d vector
+    for (size_t i = 0; i < trainingClusters.size(); i++)
+    {
+        std::vector<std::shared_ptr<IClusteringPoint>> newEmptyCluster;
+        result.push_back(newEmptyCluster);
     }
 
-    LinkedList(T nodeValue, LinkedList<T> *nodeNext) {
-      value = nodeValue;
-      next = nodeNext;
+    for (std::shared_ptr<IClusteringPoint> &point : inputPoints)
+    {
+        int newClusterIndexForThisPoint = getPredictedClusterForPoint(point);
+        result[newClusterIndexForThisPoint].push_back(point);
     }
-
-    LinkedList<T>* query(const T search) {
-      if(value == search) return this;
-      if(next == NULL) return NULL;
-      return next->query(search);
-    }
-
-    bool insertAfter(LinkedList<T> *node, LinkedList<T> *newNode) {
-      if(this == node) {
-        LinkedList<T> *oldNext = (*node).next;
-        (*node).next = newNode;
-        (*newNode).next = oldNext;
-        return true;
-      }
-      if(next == NULL) return false;
-      return next->insertAfter(node, newNode);
-    }
-
-    bool removeAfter(LinkedList<T> *node) {
-      if(next == NULL) return false;
-      if(this == node) {
-        next = next->next;
-        return true;
-      }
-      return next->removeAfter(node);
-    }
-
-    void append(LinkedList<T> *list) {
-      if(next == NULL) {
-        next = list;
-      } else {
-        next->append(list);
-      }
-    }
-
-    int size() {
-      if(next == NULL) return 1;
-      return next->size(1);
-    }
-
-  private:
-    /*
-     * Written this way for tail-call optimization
-     */
-    int size(int count) {
-      ++count;
-      if(next == NULL) return count;
-      return next->size(count);
-    }
-};
-
-
-int main() {
-  typedef LinkedList<int> LLI;
-
-  LLI root(12);
-  LLI child1(24);
-
-  assert(root.query(0) == NULL);
-  assert(root.query(12) == &root);
-  assert(root.size() == 1);
-
-  root.append(&child1);
-
-  assert(root.size() == 2);
-
-  LLI* child2 = new LLI(36);
-
-  bool didInsert = root.insertAfter(&child1, child2);
-
-  assert(didInsert);
-  assert(root.size() == 3);
-
-  bool didRemove = root.removeAfter(&root);
-
-  assert(didRemove);
-  assert(root.size() == 2);
-
-  LLI* list = new LLI(48, new LLI(60, new LLI(72)));
-
-  assert(list->size() == 3);
-
-  root.append(list);
-
-  assert(root.size() == 5);
-  assert(root.query(48) == list);
-
-  return 0;
+    return result;
 }
 
+int NaiveBayesClassification::getPredictedClusterForPoint(std::shared_ptr<IClusteringPoint> &subjectPoint)
+{
+    map<int, double> finalProbabilities;
+    map<int, float> priorProbabilities = createPriorProbabilityMap();
+    map<int, float> neighboursLikelihoods = createNeighbourLikelihoodMap(subjectPoint);
+
+    std::map<int, float>::iterator it;
+    for (it = neighboursLikelihoods.begin(); it != neighboursLikelihoods.end(); ++it)
+    {
+        int currClusterId = it->first;
+        finalProbabilities[currClusterId] = priorProbabilities[currClusterId] * neighboursLikelihoods[currClusterId];
+    }
+
+    //finding cluster with highest final probability, unfortunate loop repitition
+    double highestFinalProbabilityYet = std::numeric_limits<double>::min();
+    int clusterWithHighestFinalProbabilityYet = 0;
+
+    std::map<int, double>::iterator it2;
+    for (it2 = finalProbabilities.begin(); it2 != finalProbabilities.end(); ++it2)
+    {
+        if (it2->second > highestFinalProbabilityYet)
+        {
+            highestFinalProbabilityYet = it2->second;
+            clusterWithHighestFinalProbabilityYet = it2->first;
+        }
+    }
+    return clusterWithHighestFinalProbabilityYet;
+}
+
+std::map<int, float> NaiveBayesClassification::createPriorProbabilityMap()
+{
+    std::map<int, float> priorProbabilityMap;
+
+    float sumOfAllClusterSizes = 0;
+    for (std::vector<std::shared_ptr<IClusteringPoint>> cluster : trainingClusters)
+        sumOfAllClusterSizes += cluster.size();
+
+    for (size_t i = 0; i < trainingClusters.size(); i++)
+    {
+        std::vector<shared_ptr<IClusteringPoint>> currCluster = trainingClusters[i];
+        float likelihoodToBeInThisCluster = currCluster.size() / sumOfAllClusterSizes;
+
+        priorProbabilityMap.insert(make_pair(i, likelihoodToBeInThisCluster));
+    }
+    return priorProbabilityMap;
+}
+
+std::map<int, float> NaiveBayesClassification::createNeighbourLikelihoodMap(std::shared_ptr<IClusteringPoint> &subjectPoint)
+{
+    std::map<int, float> neighbourLikelihoodsPerCluster;
+
+    //amount of neighbours was tested manually
+    std::vector<std::shared_ptr<IClusteringPoint>> neighbours = KNearestNeighbours::getNearestNeighbours(subjectPoint, 7, trainingClusters);
+
+    for (std::shared_ptr<IClusteringPoint> &neighbour : neighbours)
+        neighbourLikelihoodsPerCluster[(*neighbour).getClusterId()] += 1;
+
+    //dividing neighbour clusterCounts by the total amount of points per cluster
+    std::map<int, float>::iterator it;
+    for (it = neighbourLikelihoodsPerCluster.begin(); it != neighbourLikelihoodsPerCluster.end(); ++it)
+    {
+        int currClusterId = it->first;
+        int totalAmountOfPointsInThisCluster = trainingClusters[currClusterId].size();
+
+        it->second = it->second / totalAmountOfPointsInThisCluster;
+    }
+    return neighbourLikelihoodsPerCluster;
+}

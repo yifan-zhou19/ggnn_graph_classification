@@ -1,143 +1,81 @@
 /*
- * Copyright (C) 2017 jadovan
+ * Created on 29-Apr-2005
+ * Created by Paul Gardner
+ * Copyright (C) 2005, 2006 Aelitis, All Rights Reserved.
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-package com.nasa;
-
-/**
- * Project: NASA Path in conjunction with University of Maryland University
- * College
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * 
+ * AELITIS, SAS au capital de 46,603.30 euros
+ * 8 Allee Lenotre, La Grille Royale, 78600 Le Mesnil le Roi, France.
  *
- * @author jadovan
  */
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
+
+package com.aelitis.azureus.core.util.bloom;
+
 import java.util.Map;
-import java.util.Set;
 
-public class Dijkstra {
-	private final List < Node > nodes;
-	private final List < Edge > edges;
-	private Set < Node > settledNodes;
-	private Set < Node > unSettledNodes;
-	private Map < Node,
-	Node > predecessors;
-	private Map < Node,
-	Double > distance;
+import com.aelitis.azureus.core.util.bloom.impl.*;
 
-	public Dijkstra(Graph graph) {
-		// create a copy of the array so that we can operate on this array
-		this.nodes = new ArrayList < >(graph.getNodes());
-		this.edges = new ArrayList < >(graph.getEdges());
+public class 
+BloomFilterFactory 
+{
+		/**
+		 * Creates a new bloom filter. 
+		 * @param max_entries The filter size.
+		 * 	a size of 10 * expected entries gives a false-positive of around 0.01%
+		 *  17* -> 0.001
+		 *  29* -> 0.0001
+		 * Each entry takes 1, 4 or 8 bits depending on type  
+		 * So, if 0.01% is acceptable and expected max entries is 100, use a filter
+		 * size of 1000.
+		 * @return
+		 */
+	
+	public static BloomFilter
+	createAddRemove4Bit(
+		int		filter_size )
+	{
+		return( new BloomFilterAddRemove4Bit( filter_size ));
 	}
-
-	public void execute(Node source) {
-		settledNodes = new HashSet < >();
-		unSettledNodes = new HashSet < >();
-		distance = new HashMap < >();
-		predecessors = new HashMap < >();
-		distance.put(source, 0.0);
-		unSettledNodes.add(source);
-		while (unSettledNodes.size() > 0) {
-			Node node = getMinimum(unSettledNodes);
-			settledNodes.add(node);
-			unSettledNodes.remove(node);
-			findMinimalDistances(node);
+	
+	public static BloomFilter
+	createAddRemove8Bit(
+		int		filter_size )
+	{
+		return( new BloomFilterAddRemove8Bit( filter_size ));
+	}
+	
+	public static BloomFilter
+	createAddOnly(
+		int		filter_size )
+	{
+		return( new BloomFilterAddOnly( filter_size ));
+	}
+	
+	public static BloomFilter
+	createRotating(
+		BloomFilter		basis,
+		int				number )
+	{
+		{
+			return( new BloomFilterRotator( basis, number ));
 		}
 	}
-
-	private void findMinimalDistances(Node node) {
-		List < Node > adjacentNodes = getNeighbors(node);
-		adjacentNodes.stream().filter((target) ->(getShortestDistance(target) > getShortestDistance(node) + getDistance(node, target))).map((target) ->{
-			distance.put(target, getShortestDistance(node) + getDistance(node, target));
-			return target;
-		}).map((target) ->{
-			predecessors.put(target, node);
-			return target;
-		}).forEachOrdered((target) ->{
-			unSettledNodes.add(target);
-		});
-
-	}
-
-	private double getDistance(Node node, Node target) {
-		for (Edge edge: edges) {
-			if (edge.getSource().equals(node) && edge.getDestination().equals(target)) {
-				return edge.getWeight();
-			}
-		}
-		throw new RuntimeException("Should not happen");
-	}
-
-	private List < Node > getNeighbors(Node node) {
-		List < Node > neighbors = new ArrayList < >();
-		edges.stream().filter((edge) ->(edge.getSource().equals(node) && !isSettled(edge.getDestination()))).forEachOrdered((edge) ->{
-			neighbors.add(edge.getDestination());
-		});
-		return neighbors;
-	}
-
-	private Node getMinimum(Set < Node > nodes) {
-		Node minimum = null;
-		for (Node node: nodes) {
-			if (minimum == null) {
-				minimum = node;
-			} else {
-				if (getShortestDistance(node) < getShortestDistance(minimum)) {
-					minimum = node;
-				}
-			}
-		}
-		return minimum;
-	}
-
-	private boolean isSettled(Node node) {
-		return settledNodes.contains(node);
-	}
-
-	private double getShortestDistance(Node destination) {
-		Double d = distance.get(destination);
-		if (d == null) {
-			return Double.MAX_VALUE;
-		} else {
-			return d;
-		}
-	}
-
-	/*
-     * This method returns the path from the source to the selected target and
-     * NULL if no path exists
-     */
-	public LinkedList < Node > getPath(Node target) {
-		LinkedList < Node > path = new LinkedList < >();
-		Node step = target;
-		// check if a path exists
-		if (predecessors.get(step) == null) {
-			return null;
-		}
-		path.add(step);
-		while (predecessors.get(step) != null) {
-			step = predecessors.get(step);
-			path.add(step);
-		}
-		// Put it into the correct order
-		Collections.reverse(path);
-		return path;
+	
+	public static BloomFilter
+	deserialiseFromMap(
+		Map<String,Object>	map )
+	{
+		return( BloomFilterImpl.deserialiseFromMap(map));
 	}
 }

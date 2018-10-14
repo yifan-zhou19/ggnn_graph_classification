@@ -1,63 +1,31 @@
-/*
- Petar 'PetarV' Velickovic
- Algorithm: Knuth-Morris-Pratt
-*/
-
-#include <stdio.h>
-#include <math.h>
-#include <string.h>
+// reverseString.cpp
+// this is exercise 1.20 in the Schaum book.
 #include <iostream>
-#include <vector>
-#include <list>
 #include <string>
-#include <algorithm>
-#include <queue>
-#include <stack>
-#include <set>
-#include <map>
-#include <complex>
-#define MAX_N 1000001
-using namespace std;
-typedef long long lld;
 
-int n, m;
-string needle, haystack;
-int P[MAX_N];
-vector<int> matches;
+ void reverseString(std::string& inputString);
 
-//Knuth-Morris-Pratt algoritam za string matching
-//Slozenost: O(N + M)
-
-inline void KMP()
+int main(void)
 {
-    for (int i=0;i<m;i++) P[i] = -1;
-    for (int i=0, j=-1;i<m;)
-    {
-        while (j > -1 && needle[i] != needle[j]) j = P[j];
-        i++;
-        j++;
-        P[i] = j;
-    }
-    for (int i=0, j=0;i<n;)
-    {
-        while (j > -1 && haystack[i] != needle[j]) j = P[j];
-        i++;
-        j++;
-        if (j == m)
-        {
-            matches.push_back(i - m);
-            j = P[j];
-        }
-    }
+	std::cout << "Enter a string:" << std::endl;
+	std::string inputString;
+	std::cin >> inputString;
+	std::cout << "This is what you entered: " << inputString << std::endl;
+	reverseString(inputString);
+	std::cout << "This is the reverse: " << inputString << std::endl;
+	return 0;
 }
 
-int main()
+void reverseString(std::string& inputString)
 {
-    n = 6, m = 2;
-    haystack = "abcabc";
-    needle = "bc";
-    KMP();
-    for (int i=0;i<matches.size();i++) printf("%d ",matches[i]);
-    printf("\n");
-    return 0;
+	char temp = 0;
+	int len = inputString.length();
+	std::cout << len << std::endl;
+	for(int i = 0; i < len/2; i++)
+	{
+		std::cout << inputString[i] << std::endl;
+		temp = inputString[i];
+		inputString[i] = inputString[len - 1 - i];
+		inputString[len - 1 - i] = temp;
+	}
 }

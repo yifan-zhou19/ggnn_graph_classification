@@ -1,87 +1,63 @@
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.util.ArrayList;
+// Decompiled by Jad v1.5.8f. Copyright 2001 Pavel Kouznetsov.
+// Jad home page: http://www.kpdus.com/jad.html
+// Decompiler options: packimports(3) 
 
-public class ConvexHullVisualizer extends JPanel implements MouseListener{
+public final class Queue {
 
-    public static void main(String[] args) {
-        JFrame window = new JFrame();
-        window.setTitle("ConvexHull Visualizer");
-        window.setSize(600,600);
-
-       ConvexHullVisualizer chv = new ConvexHullVisualizer();
-
-        window.add(chv);
-        window.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        window.setVisible(true);
+    public Queue() {
+        root = new SubNode();
+        root.childSubnode = root;
+        root.parentSubnode = root;
     }
 
-    public ConvexHullVisualizer(){
-        this.setBackground(Color.BLACK);
-        this.addMouseListener(this);
-
-        JButton solveButton = new JButton("Gift Wrapping");
-        solveButton.setSize(100,30);
-        solveButton.setLocation(10,10);
-        solveButton.addActionListener((ActionEvent e) -> {startSolving();
-        });
-
-        this.setLayout(null);
-        this.add(solveButton);
+    public void add(SubNode node) {
+        if(node.parentSubnode != null)
+            node.removeQueue();
+        node.parentSubnode = root.parentSubnode;
+        node.childSubnode = root;
+        node.parentSubnode.childSubnode = node;
+        node.childSubnode.parentSubnode = node;
     }
 
-    ArrayList<Point> points = new ArrayList<>();
-    ArrayList<Point> hull = null;
-
-    public void startSolving(){
-        hull = JarvisConvexHull.convexHull(points);
-        repaint();
-    }
-
-    @Override
-    public void paint(Graphics g) {
-        super.paint(g);
-
-        g.setColor(Color.WHITE);
-        for(Point p : points){
-            g.fillOval(p.x-5,p.y-5,10,10);
-        }
-
-        if(hull != null){
-            Polygon hullPoly = new Polygon();
-            for(Point p : hull){
-                hullPoly.addPoint(p.x,p.y);
-            }
-            g.drawPolygon(hullPoly);
+    public SubNode removeFirst()  {
+        SubNode node = root.childSubnode;
+        if(node == root) {
+            return null;
+        } else {
+            node.removeQueue();
+            return node;
         }
     }
 
-    @Override
-    public void mouseClicked(MouseEvent e) {
-        points.add(new Point(e.getX(),e.getY()));
-        repaint();
+    public SubNode getFirst() {
+        SubNode class30_sub2 = root.childSubnode;
+        if(class30_sub2 == root) {
+            iterator = null;
+            return null;
+        } else {
+            iterator = class30_sub2.childSubnode;
+            return class30_sub2;
+        }
     }
 
-    @Override
-    public void mousePressed(MouseEvent e) {
-
+    public SubNode getNext() {
+        SubNode class30_sub2 = iterator;
+        if(class30_sub2 == root) {
+            iterator = null;
+            return null;
+        } else {
+            iterator = class30_sub2.childSubnode;
+            return class30_sub2;
+        }
     }
 
-    @Override
-    public void mouseReleased(MouseEvent e) {
-
+    public int size() {
+        int size = 0;
+        for(SubNode class30_sub2 = root.childSubnode; class30_sub2 != root; class30_sub2 = class30_sub2.childSubnode)
+            size++;
+        return size;
     }
 
-    @Override
-    public void mouseEntered(MouseEvent e) {
-
-    }
-
-    @Override
-    public void mouseExited(MouseEvent e) {
-
-    }
+    public SubNode root;
+    public SubNode iterator;
 }

@@ -1,61 +1,43 @@
-package bashimquotes.quality;
+package com.github.chandramohann.wk.palindrome;
 
-import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression;
+/**
+ * Palindrome class
+ * 
+ * Checks if the given string is a Palindrome or not Input parameter is a string
+ * Return type is boolean based on the input string
+ * 
+ * 3 different implementations of the same methods with different O(n)
+ * notations.
+ *
+ */
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.Scanner;
-import java.util.stream.IntStream;
+public class Palindrome {
+	/*
+	 * Performs n/2 comparison. 
+	 * This method is used in current implementation of
+	 * palindrome app
+	 */
+	public boolean isPalindrome(String str) {
+		int n = str.length();
+		for (int i = 0; i < n / 2; ++i) {
+			if (str.charAt(i) != str.charAt(n - i - 1))
+				return false;
+		}
+		return true;
+	}
 
-public class LinearRegression {
+	// naive method
+	public boolean isPalindromeNaive(String str) {
+		int n = str.length();
+		for (int i = 0; i < n; ++i) {
+			if (str.charAt(i) != str.charAt(n - i - 1))
+				return false;
+		}
+		return true;
+	}
 
-    private double[] coefficients;
-
-    public void learn() throws FileNotFoundException {
-        OLSMultipleLinearRegression regression = new OLSMultipleLinearRegression();
-        Scanner sc = new Scanner(new FileInputStream(new File("learn.txt")));
-
-        ArrayList<Double> qc = new ArrayList<>();
-        ArrayList<ArrayList<Double>> rating = new ArrayList<>();
-
-        while (sc.hasNext()) {
-            String[] oneLineDate = sc.nextLine().split(":");
-            ArrayList<Double> rtg = new ArrayList<>();
-            for (int i = 0; i < oneLineDate.length - 1; i++) {
-                rtg.add(Double.valueOf(oneLineDate[i]));
-            }
-            rating.add(rtg);
-            qc.add(Double.valueOf(oneLineDate[oneLineDate.length - 1]));
-        }
-
-        double[] qcArr = qc.stream().mapToDouble(i -> i).toArray();
-        double[][] ratingArr = new double[qcArr.length][];
-        IntStream.range(0, rating.size()).forEach(i -> ratingArr[i] = rating.get(i).stream().mapToDouble(j -> j).toArray());
-
-        regression.newSampleData(qcArr, ratingArr);
-        coefficients = regression.estimateRegressionParameters();
-    }
-
-
-    public void ranging(Integer[][] arr) throws Exception {
-        ArrayList<Double> res = new ArrayList<>();
-
-        for (Integer[] i : arr) {
-            double coeff = coefficients[0];
-            int k = 0;
-            for (Integer j : i) {
-                coeff += j * coefficients[k + 1];
-                k++;
-            }
-            res.add(coeff);
-        }
-
-        double result = 0;
-        for (double d : res) {
-            result += d;
-        }
-        System.out.println("Оценка качества после LR: \n" + (result / res.size()));
-    }
+	// 2n notation
+	public boolean isPalindrome2n(String str) {
+		return str.equals(new StringBuilder(str).reverse().toString());
+	}
 }

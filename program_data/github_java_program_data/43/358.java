@@ -1,50 +1,73 @@
-public class Stack<T> {
-	//Top of the stack
-	private Node top;
+public class RadixSort {
 
-	private class Node {
-		T data;
-		Node next;
+	//Key-indexed counting(a[].key is an int in [0, R))
+	//O(N) time
+	public static void keyIndexCounting(String[] a) {
+		int N = a.length;
+		String[] aux = new String[N];
+		int[] count = new [R + 1];
 
-		public Node (T item) {
-			data = item;
+		//Count the each key's frenquency
+		for(int i = 0; i < N; i++) {
+			count[a[i].key() + 1]++;
+		}
+
+		//Transform frequency to indices
+		for(int r = 0; r < R; r++) {
+			count[r + 1] += count[r];
+		}
+
+		//Distribute data into aux
+		for(int i = 0; i < N; i++) {
+			aux[count[a[i].key()]++] = a[i];
+		}
+
+		//Copy back
+		for(int i = 0; i < N; i++) {
+			a[i] = aux[i];
 		}
 	}
 
-	public Stack() {
-		top = null;
-	}
+	
+	//LSD sort for same length strings, sort a[] on leading W characters
+	//LSDstringsortuses~7WN􏰄3WRarrayaccessesand extra space proportional to N􏰄R to sort N items whose keys are W-character strings taken from an R-character alphabet.
+	public static void sortLSD(String[] a, int W) {
+		int N = a.length;
+		int R = 256;
+		String[] aux = new String[N];
 
-	//Push item to stack
-	public void push(T item) {
-		Node n = new Node(item);
-			n.next = top;
-			top = n;
-	}
+		for(int d = W - 1; d >= 0; d--) {
+			int[] count = new int[R + 1];
+			for(int i = 0; i < N; i++) 
+				count[a[i].charAt(d) + 1]++;
 
-	//Pop top of stack
-	public T pop() {
-		if(top == null) {
-			return null;
-		}
-		else {
-			top = top.next;
-			return top == null ? null : top.data;
-		}
-	}
+			for(int r = 0; r < R; r++)
+				count[r + 1] += count[r];
 
-	//Peek top of stack
-	public T peek() {
-		if(top == null) {
-			return null;
-		} else {
-			return top.data;
+			for(int i = 0; i < N; i++)
+				aux[count[a[i].charAt(d)]++] = a[i];
+
+			for(int i = 0; i < N; i++)
+				a[i] = aux[i];
 		}
 	}
 
-	//Check if stack is empty
-	public boolean empty() {
-		return top == null;
+	//LSD for number for positive numbers
+	public static void sort(int[] a) {
+		int N = a.length;
+		int R = 256;
+		int[] aux = new int[N];
+		for(int d = 0; d < 4; d++) {
+			int mask = 255 << (8 * d);
+			int[] count = new int[R + 1];
+			for(int i = 0; i < N; i++) 
+				count[(a[i] & mask) + 1]++;
+			for(int r = 0; r < R; r++)
+				count[r + 1] += count[r];
+			for(int i = 0; i < N; i++) 
+				aux[count[a[i] & mask]++] = a[i];
+			for(int i = 0; i < N; i++)
+				a[i] = aux[i];
+		}
 	}
 }
-

@@ -1,27 +1,34 @@
-package com.wang.domain.fanxing.complexmodel;
+/**
+ * 
+ */
+package home.algo.recursion;
 
 /**
- * Created by chao.wang2 on 2018/6/14  12:59
+ * @author smrutis
+ *
  */
-public class Fibonacci implements Generator<Integer> {
+public class TowerOfHanoi {
 
-    private int count = 0;
+	public String move(int numberOfDisks, int fromPeg, int toPeg, int helperPeg) {
+		if (1 == numberOfDisks)
+			return directMove(numberOfDisks, fromPeg, toPeg);
+		else {
+			String step = move(numberOfDisks - 1, fromPeg, helperPeg, toPeg);
+			step += directMove(numberOfDisks, fromPeg, toPeg);
+			step += move(numberOfDisks - 1, helperPeg, toPeg, fromPeg);
+			return step;
+		}
+	}
 
-    @Override
-    public Integer next() {
-        return fib(count++);
-    }
+	private String directMove(int numberOfDisks, int fromPeg, int toPeg) {
+		return "\nMove disk " + numberOfDisks + " from peg-" + fromPeg
+				+ " to peg-" + toPeg;
+	}
 
-    private int fib(int n){
-        if (n<2) return 1;
-        return fib(n-1)+fib(n-2);
-    }
-
-    public static void main(String[] args) {
-        Fibonacci fibonacci = new Fibonacci();
-        for (int i = 0; i < 18; i++) {
-            System.out.print(fibonacci.next()+ " ");
-        }
-    }
+	public static void main(String[] args) {
+		TowerOfHanoi towerOfHanoi = new TowerOfHanoi();
+		String step = towerOfHanoi.move(5, 1, 3, 2);
+		System.out.println(step);
+	}
 
 }

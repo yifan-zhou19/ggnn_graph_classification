@@ -1,79 +1,97 @@
-//Solution 1: gap = n/2
+package spml_assignment1;
 
-/* package whatever; // don't place package name! */
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.PriorityQueue;
+import java.util.Set;
 
-import java.util.*;
-import java.lang.*;
-import java.io.*;
+/**
+ *
+ * @author Jasper
+ */
+public class Kruskal {
+    private final boolean verbose;
 
-/* Name of the class has to be "Main" only if the class is public. */
-class Ideone
-{
-	public static void main (String[] args) throws java.lang.Exception
-	{
-		Scanner sc = new Scanner(System.in);
-		int size = sc.nextInt();
-		int a[] = new int[size];
-		for(int i = 0; i < size; i++)
-			a[i] = sc.nextInt();
-		Ideone ideone = new Ideone();
-		ideone.shellSort(a, a.length);
-		for(int i = 0 ;i < a.length; i++)
-		System.out.print(a[i] + " ");
-	}
-	
-	public void shellSort(int a[], int n){
-		for(int gap = n/2; gap > 0; gap/=2){
-			for(int i = gap; i<n; i++){
-				int temp = a[i];
-				int j;
-			for(j = i; j>= gap && a[j-gap] > temp; j-=gap)
-				a[j] = a[j - gap];
-			a[j] = temp;
-			}	
-		}	
-	}
-}
+    public Kruskal(boolean verbose) {
+        this.verbose = verbose;
+    }
 
-//Solution 2: gap = 3n + 1
+    private List<Set<Integer>> generateUnconnectedVertices(int numVertices) {
+        List<Set<Integer>> connectedVertices = new ArrayList<>(numVertices);
+        for (int i = 0; i < numVertices; ++i) {
+            connectedVertices.add(new HashSet<>());
+            connectedVertices.get(i).add(i);
+        }
 
-/* package whatever; // don't place package name! */
+        return connectedVertices;
+    }
 
-import java.util.*;
-import java.lang.*;
-import java.io.*;
+    private void mergeSets(List<Set<Integer>> connectedVertices,
+            int start, int end) {
+        int startIndex = 0;
+        int endIndex = 0;
+        for (int i = 0; i < connectedVertices.size(); ++i) {
+            if (connectedVertices.get(i).contains(start)) {
+                startIndex = i;
+            }
+            if (connectedVertices.get(i).contains(end)) {
+                endIndex = i;
+            }
+        }
 
-/* Name of the class has to be "Main" only if the class is public. */
-class Ideone
-{
-	public static void main (String[] args) throws java.lang.Exception
-	{
-		Scanner sc = new Scanner(System.in);
-		int size = sc.nextInt();
-		int a[] = new int[size];
-		for(int i = 0; i < size; i++)
-			a[i] = sc.nextInt();
-		Ideone ideone = new Ideone();
-		ideone.shellSort(a, a.length);
-		for(int i = 0 ;i < a.length; i++)
-		System.out.print(a[i] + " ");
-	}
-	
-	public void shellSort(int a[], int n){
-		int h = 1;
-		while(h<n/3) h = 3*h + 1; // 1, 4, 13, 40, 121, 364, ...
-		
-		while(h >=1){
-			for(int i = h; i< n ; i++){
-				int temp = a[i];
-				int j;
-				for(j = i; j>= h && a[j-h] > temp; j-=h)
-					a[j] = a[j - h];
-				a[j] = temp;
-			}	
-			
-			h = h/3;
-		}
-		
-	}
+        if (startIndex != endIndex) {
+            connectedVertices.get(startIndex).addAll(
+                    connectedVertices.remove(endIndex));
+        }
+    }
+
+    public boolean areVerticesConnected(List<Set<Integer>> connectedVertices,
+            int v1, int v2) {
+        return connectedVertices.stream().anyMatch((connectedSet)
+                -> (connectedSet.contains(v1) && connectedSet.contains(v2)));
+    }
+
+    public Graph run(Graph graph) {
+        Graph mst = new Graph(graph.getNumberOfVertices());
+
+        PriorityQueue<Edge> edges = new PriorityQueue<>();
+        for (int i = 0; i < graph.getNumberOfVertices(); ++i) {
+            for (int j = 0; j < graph.getNumberOfVertices(); ++j) {
+                double cost = graph.getCost(i, j);
+
+                if (cost > 0.0d) {
+                    edges.add(new Edge(i, j, cost));
+                }
+            }
+        }
+
+        List<Set<Integer>> connectedVertices = generateUnconnectedVertices(
+                graph.getNumberOfVertices());
+        Edge edge = edges.poll();
+        mst.setCost(edge.getStart(), edge.getEnd(), edge.getCost());
+        int nEdgesConsidered = 0;
+        while (!edges.isEmpty()
+                && connectedVertices.size() > 1) {
+            nEdgesConsidered++;
+            edge = edges.poll();
+
+            if (!areVerticesConnected(connectedVertices, edge.getStart(),
+                    edge.getEnd())) {
+                mst.setCost(edge.getStart(), edge.getEnd(), edge.getCost());
+                mergeSets(connectedVertices, edge.getStart(), edge.getEnd());
+            }
+        }
+
+        if (connectedVertices.size() > 1) {
+            throw new IllegalArgumentException("Not all edges in the graph "
+                    + "are connected.");
+        }
+
+        if (verbose) {
+            System.out.println(nEdgesConsidered + " edges considered.");
+        }
+
+        return mst;
+    }
 }

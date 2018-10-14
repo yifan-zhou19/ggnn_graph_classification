@@ -1,143 +1,78 @@
-package com.diwayou.algs.book; /*************************************************************************
- *  Compilation:  javac Stack.java
- *  Execution:    java Stack < input.txt
- *
- *  A generic stack, implemented using a linked list. Each stack
- *  element is of type Item.
- *  
- *  % more tobe.txt 
- *  to be or not to - be - - that - - - is
- *
- *  % java Stack < tobe.txt
- *  to be not that or be (2 left on stack)
- *
- *************************************************************************/
-
-import com.diwayou.algs.util.StdIn;
-import com.diwayou.algs.util.StdOut;
-
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
- *  The <tt>Stack</tt> class represents a last-in-first-out (LIFO) stack of generic items.
- *  It supports the usual <em>push</em> and <em>pop</em> operations, along with methods
- *  for peeking at the top item, testing if the stack is empty, and iterating through
- *  the items in LIFO order.
- *  <p>
- *  All stack operations except iteration are constant time.
- *  <p>
- *  For additional documentation, see <a href="/algs4/13stacks">Section 1.3</a> of
- *  <i>Algorithms, 4th Edition</i> by Robert Sedgewick and Kevin Wayne.
+ * Created by maggie on 6/18/16.
  */
-public class Stack<Item> implements Iterable<Item> {
-    private int N;          // size of the stack
-    private Node first;     // top of stack
+public class Sort_BucketSort {
+    //let's do a more complicated bucket sort
+    //1. Decide size of every bucket (In simple bucket sort, by default, every bucket size is 1)
+    //2. Traverse original array, putting elements from array into bucket
+    //3. sorting every bucket using insert sort
+    //4. Creating a new array to put sorted elements
+    //5. Traverse buckets, put elements of every bucket in ascending order
 
-    // helper linked list class
-    private class Node {
-        private Item item;
-        private Node next;
-    }
-
-   /**
-     * Create an empty stack.
-     */
-    public Stack() {
-        first = null;
-        N = 0;
-    }
-
-   /**
-     * Is the stack empty?
-     */
-    public boolean isEmpty() {
-        return first == null;
-    }
-
-   /**
-     * Return the number of items in the stack.
-     */
-    public int size() {
-        return N;
-    }
-
-   /**
-     * Add the item to the stack.
-     */
-    public void push(Item item) {
-        Node oldfirst = first;
-        first = new Node();
-        first.item = item;
-        first.next = oldfirst;
-        N++;
-    }
-
-   /**
-     * Delete and return the item most recently added to the stack.
-     * Throw an exception if no such item exists because the stack is empty.
-     */
-    public Item pop() {
-        if (isEmpty()) throw new RuntimeException("Stack underflow");
-        Item item = first.item;        // save item to return
-        first = first.next;            // delete first node
-        N--;
-        return item;                   // return the saved item
-    }
-
-
-   /**
-     * Return the item most recently added to the stack.
-     * Throw an exception if no such item exists because the stack is empty.
-     */
-    public Item peek() {
-        if (isEmpty()) throw new RuntimeException("Stack underflow");
-        return first.item;
-    }
-
-   /**
-     * Return string representation.
-     */
-    public String toString() {
-        StringBuilder s = new StringBuilder();
-        for (Item item : this)
-            s.append(item + " ");
-        return s.toString();
-    }
-       
-
-   /**
-     * Return an iterator to the stack that iterates through the items in LIFO order.
-     */
-    public Iterator<Item> iterator()  { return new ListIterator();  }
-
-    // an iterator, doesn't implement remove() since it's optional
-    private class ListIterator implements Iterator<Item> {
-        private Node current = first;
-        public boolean hasNext()  { return current != null;                     }
-        public void remove()      { throw new UnsupportedOperationException();  }
-
-        public Item next() {
-            if (!hasNext()) throw new NoSuchElementException();
-            Item item = current.item;
-            current = current.next; 
-            return item;
+    public int[] bucketSort(int[] num, int bucketSize){
+        if(num.length == 0 || num.length == 1) return num;
+        //1. Decide size of every bucket -- find maxValue and minValue
+        int max = Integer.MIN_VALUE;
+        int min = Integer.MAX_VALUE;
+        for(int i = 0; i < num.length; i++){
+            if(max < num[i]){
+                max = num[i];
+            }
+            if(min > num[i]){
+                min = num[i];
+            }
         }
-    }
+        System.out.println("max:" + max + ";" + " min:" + min);
+        int bucketCount = ((max - min)%bucketSize == 0)? (max - min)/bucketSize :(max - min)/bucketSize +1  ;
+        //bucketCount is num of subList
+        // elements in subList is unlimited
+        List<List<Integer>> intermediate = new ArrayList<List<Integer>>(bucketCount);
+        System.out.println("bucketCount: " + bucketCount);
 
-
-   /**
-     * A test client.
-     */
-    public static void main(String[] args) {
-        Stack<String> s = new Stack<String>();
-        while (!StdIn.isEmpty()) {
-            String item = StdIn.readString();
-            if (!item.equals("-")) s.push(item);
-            else if (!s.isEmpty()) StdOut.print(s.pop() + " ");
+        for(int i = 0; i < bucketCount; i++){
+            intermediate.add(new ArrayList<Integer>());
         }
-        StdOut.println("(" + s.size() + " left on stack)");
+        for(int i = 0; i < num.length; i++){
+            intermediate.get((num[i] - min)/bucketSize).add(num[i]);
+        }
+
+        // sort every subList
+        int[] res = new int[num.length];
+        int j = 0;
+        for(int i = 0; i < bucketCount; i++){
+            int[] tmp = new int[intermediate.get(i).size()];
+            int k =0;
+            for (Object o : intermediate.get(i)) {
+                tmp[k] = (Integer)o;
+                k++;
+            }
+            Arrays.sort(tmp);
+
+            for(int c = 0; c < tmp.length;c++){
+                res[j] = tmp[c];
+                System.out.print(res[j]+ ",");
+                j++;
+            }
+        }
+
+        return res;
+
     }
+
+
+    public static void main(String[] args){
+        int[] arr = new int[]{2,3,1,3,8,4,5,6,6,7};
+        Sort_BucketSort b = new Sort_BucketSort();
+        b.bucketSort(arr,3);
+    }
+
+
+
+
+
 }
-

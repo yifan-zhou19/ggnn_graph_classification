@@ -1,103 +1,42 @@
+// Example program
 #include <iostream>
+#include <string>
+#include <algorithm>
+#include <vector>
 using namespace std;
 
-const int MAX_SIZE = 100;
+void bucketSort(float a[], int size) {
+    vector<float> bv[size];
+    
+    //inserting elements into the bucket
+    for(int i=0;i<size;i++){
+        int bi = size*a[i];        
+        bv[bi].push_back(a[i]);
+    }
 
-class StackOverFlowException 
-{
-    public:
-        StackOverFlowException() 
-        {
-            cout << "Stack overflow" << endl;
+    //sorting each bucket
+    for(int i=0;i<size;i++){
+        sort(bv[i].begin(), bv[i].end());
+    }
+
+    //traversing to load back
+    int index = 0;
+    for(int i=0;i<size;i++){
+        for(int j=0; j< bv[i].size(); j++) {
+            a[index++] = bv[i][j];
         }
-};
-
-class StackUnderFlowException 
-{
-    public:
-        StackUnderFlowException() 
-        {
-            cout << "Stack underflow" << endl;
-        }
-};
-
-class ArrayStack 
-{
-	private:
-	int data[MAX_SIZE];
-	int top;
-	
-	public:
-	ArrayStack()
-	{
-		top = -1;
-	}
-	int Pop();
-	void Push(int number);
-	int Top();
-	int Size();
-	bool isEmpty();
-	
-};
-
-int ArrayStack::Pop() {
-	if ( top == -1 ) 
-            {            
-                throw new StackUnderFlowException();            
-            }            
-    return data[top--];   
+    }
 }
 
-void ArrayStack::Push(int number)
+int main()
 {
-	if ( top >= MAX_SIZE ) 
-    {            
-        throw new StackOverFlowException();
-    }                   
-    data[++top] = number; 
+    float arr[] = {0.897, 0.565, 0.656, 0.1234, 0.665, 0.3434};
+    int n = sizeof(arr)/sizeof(arr[0]);
+    bucketSort(arr, n);
+ 
+    cout << "Sorted array is \n";
+    for (int i=0; i<n; i++)
+       cout << arr[i] << " ";
+       
+    return 0;
 }
-
-int ArrayStack::Top()
-{
-	return data[top];      
-	
-}
-
-int ArrayStack::Size()
-{
-	return top + 1;
-}
-
-bool ArrayStack::isEmpty()
-{
-	if (top == -1) {
-		return true;
-	} else {
-		return false;
-	}
-}
-int main() {
-	 
-	 ArrayStack s;
-	 if ( s.isEmpty() ) 
-            {
-            cout << "Stack is empty" << endl;    
-            }
-        // Push elements    
-        s.Push(100);    
-        s.Push(200);    
-        // Size of stack
-        cout << "Size of stack = " << s.Size() << endl;
-        // Top element    
-        cout << s.Top() << endl;    
-        // Pop element    
-        cout << s.Pop() << endl;
-        // Pop element    
-        cout << s.Pop() << endl;
-        // Pop element    
-     
-}
-
-
-
-

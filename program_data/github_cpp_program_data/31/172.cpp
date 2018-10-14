@@ -1,23 +1,20 @@
-// Obtiene el arbol de expansion minima de un
-// grafo bidireccional. Para obtener el arbol
-// de expansion maxima descomentar el reverse.
-// En caso de tener varias componentes conexas,
-// obtiene el bosque de expansion minima.
-vector<Ponderada> Kruskal() {
-  vector<Ponderada> todas;
-  for (int u = 0; u < NODOS; ++u)
-    for (CostoNodo arista : grafoCosto[u])
-      todas.push_back(Ponderada(u, arista.second, arista.first) );
-  sort(todas.begin(), todas.end());
-  // reverse(todas.begin(), todas.end());
-  vector<Ponderada> mst;
-  UnionFind componentes(NODOS);
-  for (Ponderada arista : todas) {
-    int u = arista.x;
-    int v = arista.y;
-    if (!componentes.SonConexos(u, v))
-      componentes.Unir(u, v), 
-          mst.push_back(arista);
-  }
-  return mst;
-}
+// Time:  O(m * n * l), A is m x n matrix, B is n x l matrix
+// Space: O(m * l)
+
+class Solution {
+public:
+    vector<vector<int>> multiply(vector<vector<int>>& A, vector<vector<int>>& B) {
+        const int m = A.size(), n = A[0].size(), l = B[0].size();
+        vector<vector<int>> res(m, vector<int>(l));
+        for (int i = 0; i < m; ++i) {
+            for (int k = 0; k < n; ++k) {
+                if (A[i][k]) {
+                    for (int j = 0; j < l; ++j) {
+                        res[i][j] += A[i][k] * B[k][j];
+                    }
+                }
+            }
+        }
+        return res;
+    }
+};

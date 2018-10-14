@@ -1,32 +1,42 @@
-//============================================================================
-// Name        : insertion-sort.cpp
-// Author      : Nathan Lee
-// Date        : 21 September 2014
-// Copyright   : 
-// Description : Implementation of insertion sort in C++
-//============================================================================
 
-#include "sort.h"
+//          Copyright Oliver Kowalke 2009.
+// Distributed under the Boost Software License, Version 1.0.
+//    (See accompanying file LICENSE_1_0.txt or copy at
+//          http://www.boost.org/LICENSE_1_0.txt)
 
-void
-InsertionSort::sort(int A[], int size)				// main entry point
+#include <cstdlib>
+#include <iostream>
+
+#include <boost/range.hpp>
+#include <boost/coroutine/all.hpp>
+
+void fibonacci( boost::coroutines::asymmetric_coroutine< int >::push_type & sink)
 {
-  /* Complete this function with the implementation of insertion sort algorithm 
-  Record number of comparisons in variable num_cmps of class Sort
-  */
-	int temp_var;
-	for (int i = 1; i < size; i++) {
-		//int j = i;
-		for (int j = i; j > 0 && (num_cmps++, A[j - 1] > A[j]); j--) {
-			temp_var = A[j];
-			A[j] = A[j - 1];
-			A[j - 1] = temp_var;
-		}
-		/*while (j > 0 && (num_cmps++, A[j - 1] > A[j])) {
-			temp_var = A[j];
-			A[j] = A[j - 1];
-			A[j - 1] = temp_var;
-			j--;
-		}*/
-	}
+    int first = 1, second = 1;
+    sink( first);     
+    sink( second);     
+    while ( true)
+    {
+        int third = first + second;
+        first = second;
+        second = third;
+        sink( third);     
+    }
+}
+
+int main()
+{
+    boost::coroutines::asymmetric_coroutine< int >::pull_type source( fibonacci);
+    boost::range_iterator<
+       boost::coroutines::asymmetric_coroutine< int >::pull_type
+    >::type   it( boost::begin( source) );
+    for ( int i = 0; i < 10; ++i)
+    {
+        std::cout << * it <<  " ";
+        ++it;
+    }
+
+    std::cout << "\nDone" << std::endl;
+
+    return EXIT_SUCCESS;
 }

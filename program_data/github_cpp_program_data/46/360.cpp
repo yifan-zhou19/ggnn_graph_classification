@@ -1,49 +1,63 @@
-#include<bits/stdc++.h>
+#include <iostream>
+
 using namespace std;
 
-int binarySearch(vector<int> &arr, int left, int right, int target){
+template<int MAXN>
+struct SegmentTree {
+	int idx[4 * MAXN + 10];
+	int bs;
 
-  if(left > right) return -1;
-  int middle = (left+ right)/2;
-  
-  if(arr[middle]==target) return middle;
-  
-  if(arr[middle] < target){
-    return binarySearch(arr, middle+1, right, target);
-  }
-  else {
-    return binarySearch(arr, left, middle-1, target);
-  }
-}
+	SegmentTree() {
+		for (int i = 0; i < 4 * MAXN + 10; i++) {
+			idx[i] = 0;
+		}
 
-int main(){
-  //test cases
-  vector<int> n1={-1,0,1,2,3,4,8,11};
-  
-  //{1, 3},{2}
-  // 
-  cout<<"The element is at index: "<<binarySearch(n1, 0, (int)n1.size()-1,0);
-  return 0;
-}
+		for (bs = 1; bs <= MAXN; bs *= 2) {}
+	}
+	
+	void update(int x, int v) {
+		x += bs;
+		while (x) {
+			idx[x] += v;
+			x /= 2;
+		}
+	}
 
-#include<bits/stdc++.h>
-using namespace std;
+	int sum(int x, int y) {
+		int res = 0;
 
-int binarySearch(vector<int>& nums, int target){
-  int left=0, right=nums.size()-1;
-  
-  while(left <= right){
-    int mid= left + (right-left)/2;
-    if(nums[mid]== target) return mid;
-    else if(nums[mid]< target) left = mid+1;
-    else right = mid-1;
-  }
-  return -1;
-}
+		x += bs;
+		y += bs;
 
-int main(){
-  vector<int> n1={0,1,2,4,7};
-  cout<<binarySearch(n1, 4);
-  
-  return 0;
+		while (x < y) {
+			if (x % 2 == 1) {
+				res += idx[x];	
+				x++;
+			}
+
+			if (y % 2 == 0) {
+				res += idx[y];
+				y--;
+			}
+			x /= 2;
+			y /= 2;
+		}
+
+		if (x == y) {
+			res += idx[x];
+		}
+
+		return res;
+	}
+};
+
+int main() {
+	SegmentTree<10> tree;
+	for (int i = 0; i < 10; i++) {
+		tree.update(i, i+1);
+	}
+
+	cout << tree.sum(0, 9) << endl;
+	
+	return 0;
 }

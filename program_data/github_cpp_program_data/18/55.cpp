@@ -1,45 +1,34 @@
-#include <string>
 #include <iostream>
-
+#include <string>
+#include <stack>
 using namespace std;
 
-void COMPUTE_PREFIX_FUNCTION(string P,int M,int* pie)
-{
-    pie[0]=-1;
-    int k=-1,q;
+//Function Prototypes
+void Reverse(string &);
 
-    for(q=1;q<M;q++)
-    {
-        while(k>=0 && P[k+1]!=P[q])
-            k=pie[k];
-        if(P[k+1]==P[q])
-            k=k+1;
-        pie[q]=k;
-    }
+int main() {
+
+	string user_string;
+	cout << "Enter a string: ";
+	getline(cin, user_string);
+	Reverse(user_string);
+	cout << "\n" << user_string << "\n";
+
+	return 0;
 }
 
-void KMP_MATCHER(string P,int M,string Q,int N)
-{
-    int pie[M],i,q=-1;
+void Reverse(string &my_string) {
 
-    COMPUTE_PREFIX_FUNCTION(P,M,pie);
+	// Create a stack of characters
+	stack<char> S;
 
-    for(i=0;i<N;i++)
-    {
-        while(q>=0 && P[q+1]!=Q[i])
-            q=pie[q];
-        if(P[q+1]==Q[i])
-            q++;
-        if(q==M-1)
-            cout<<"Found  "<<i-M+1<<endl;
-    }
-}
+	// For each character in my_string... 
+	for (char &c : my_string)
+		S.push(c); // Push into stack
 
-int main()
-{
-    string P,Q;
-    cin>>P>>Q;
-    
-    KMP_MATCHER(P,P.length(),Q,Q.length());
-    return 0;
+	// For each character in my_string...
+	for (char &i : my_string) {
+		i = S.top(); // Overwrite i
+		S.pop();     // And perform pop
+	}
 }

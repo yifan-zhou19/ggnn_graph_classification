@@ -1,199 +1,128 @@
-#include<iostream>
-
+/*
+Naive Bayes模型
+输入：n*(m+1)的矩阵,最后一列为分类Y，取值-1,1，应用于二分类
+	  n*m为特征矩阵，取值为整数
+输出：训练出一个朴素贝叶斯分类器，对于给定的m维输入，输出分类
+*/
+#include <iostream>
+#include <cstdio>
+#include <string>
+#include <algorithm>
+#include <vector>
+#include <map>
+#include <set>
 using namespace std;
-
-class node
-{
-    int data;
-    node* next;
-
-public:
-
-    node()
-    {
-        data=0;
-        next=NULL;
-    }
-
-    node(int d)
-    {
-        data=d;
-        next=NULL;
-    }
-
-    int get_data()
-    {
-        return data;
-    }
-    void set_data(int d)
-    {
-        data=d;
-    }
-
-    node* get_next()
-    {
-        return next;
-    }
-
-    void set_next(node* p)
-    {
-        next=p;
-    }
-};
-
-class Linked_List
-{
-    node* head;
-    node* tail;
-    int size;
-
-public:
-    Linked_List()
-    {
-        head=NULL;
-        tail=NULL;
-    }
-    void push_back(int d);
-    void push_front(int d);
-    void pop_back();
-    void pop_front();
-    void deletepos(int d);
-    void print();
-    void deleteel(int d);
-    void pushpos(int d, int pos);
-};
-
-void Linked_List::push_back(int d)
-{
-    node* NODE = new node(d);
-    size++;
-
-    if(head==NULL && tail==NULL)
-    {
-     head=tail=NODE;
-    }
-    else
-    {
-        tail->set_next(NODE);
-        tail=NODE;
-    }
+typedef vector<vector<int> > matrix;
+typedef vector<int> column;//表示一列
+typedef vector<int> row;//表示一行
+typedef pair<int,int> pii;
+double lambda = 1; // 拉普拉斯平滑因子
+double py[2];// 先验概率
+int posCnt,negCnt;
+vector<map<pii,double> > pxy; // 条件概率 
+row diffCnt;//存储每一列X不同元素的个数
+void train(matrix &X,column &Y){
+	int n = X.size(),m = X[0].size();
+	//计算两种分类的先验概率P(Y=1),P(Y=-1)
+	posCnt = 0,negCnt = 0;
+	for(int i = 0;i < n;i++) posCnt += (Y[i]==1 ? 1 : 0);
+	negCnt = n - posCnt;
+	py[0] = (posCnt+lambda)/(n+2.0*lambda);
+	py[1] = (negCnt+lambda)/(n+2.0*lambda);
+	//计算条件概率P(X|Y)
+	pxy.clear();
+	set<int> mSet;
+	for(int j = 0;j < m;j++){
+		map<pii,double> mp;
+		mp.clear();
+		mSet.clear();
+		for(int i = 0;i < n;i++){
+			pii tp = make_pair(X[i][j],Y[i]);
+			if(mp.find(tp) == mp.end()) mp[tp] = 0;
+			mp[tp] += 1;
+			mSet.insert(X[i][j]);
+		}
+		diffCnt.push_back(mSet.size());
+		map<pii, double>::iterator it;
+		for(it = mp.begin();it != mp.end();it++){
+			int tmpCnt = it->first.second==1 ? posCnt : negCnt; 
+			mp[it->first] = (it->second+lambda)/(tmpCnt+diffCnt[j]*lambda);
+		}
+		pxy.push_back(mp);
+	}
 }
-
-void Linked_List::push_front(int d)
-{
- node* NODE= new node(d);
-  size++;
- if(head==NULL && tail==NULL)
- {
-     head=tail=NODE;
- }
- else
- {
-     NODE->set_next(head);
-     head=NODE;
-
+// 计算p(Y=y)*multi(P(Xi|y))
+double getProbility(row &X,int y){
+	double ret = py[y == 1 ? 0 : 1];
+	for(int i = 0;i < pxy.size();i++){
+		map<pii,double> mp = pxy[i];
+		pii tmp = make_pair(X[i],y);
+		int tmpCnt = y==1 ? posCnt : negCnt;
+		//判断P(Xi|Y=y)是否出现过，没出现按0处理，要加上正则化即拉普拉斯平滑
+		if(mp.find(tmp) == mp.end()) ret = ret*lambda/(diffCnt[i]*lambda+tmpCnt);
+		else ret *= mp[tmp]; 
+	}
+	return ret;
 }
+int classifyNB(row &X){
+	double posP,negP;
+	posP = getProbility(X,1);
+	negP = getProbility(X,-1);
+	printf("posP:%.4f\n", posP);
+	printf("negP:%.4f\n", negP);
+	return posP > negP ? 1 : -1;
 }
-
-void Linked_List::print()
-{
-    node* NODE = head;
-    while(NODE)
-    {
-        cout<<NODE->get_data();
-        NODE=NODE->get_next();
-        if(NODE)
-            cout<<"->";
-    }
-    cout<<"\n";
+int main(){
+	int n,m;
+	while(~scanf("%d %d",&n,&m)){
+		matrix X;
+		column Y;
+		X.clear(),Y.clear();
+		int x,y;
+		for(int i = 0;i < n;i++){
+			row r;
+			r.clear();
+			for(int j = 0;j < m;j++){
+				scanf("%d",&x);
+				r.push_back(x);
+			}
+			X.push_back(r);
+			scanf("%d",&y);
+			Y.push_back(y);
+		}
+		train(X,Y);
+		int q;
+		scanf("%d",&q);
+		row r;
+		int ca = 1;
+		while(q--){
+			r.clear();
+			for(int i = 0;i < m;i++){
+				scanf("%d",&x);
+				r.push_back(x);
+			}
+			printf("Case %d: %d\n", ca++,classifyNB(r));
+		}
+	}
+	return 0;
 }
-
-void Linked_List::pop_back()
-{
-
-  if(head== NULL && tail==NULL)
-  {
-      cout<<"Empty";
-  }
-
-  else
-  {
-      node* temp=head;
-      int flag=0;
-
-      while(!flag)
-      {
-          if(temp->get_next()== tail)
-          {
-              temp->set_next(NULL);
-              tail=temp;
-              flag=1;
-              size--;
-          }
-          temp=temp->get_next();
-      }
-  }
-}
-
-void Linked_List::pop_front()
-{
-    if(head==NULL && tail==NULL)
-    {
-         cout<<"Empty";
-    }
-
-    else
-    {
-        node* temp=head->get_next();
-        delete(head);
-        head=temp;
-        size--;
-    }
-}
-
-void Linked_List::deletepos(int d)
-{
-    node* temp= head;
-    for(int i=0;i<d-1;i++)
-    {
-        temp=temp->get_next();
-    }
-    node* temp1=temp->get_next();
-    temp->set_next(temp1->get_next());
-    delete(temp1);
-}
-
-void Linked_List::deleteel(int d)
-{
-    node* temp=head;
-    int i=0;
-    while(temp)
-    {
-      if(temp->get_data()==d)
-      {
-          temp=temp->get_next();
-          deletepos(i);
-
-
-      }
-      i++;
-      temp=temp->get_next();
-    }
-}
-
-void Linked_List::pushpos(int d, int pos)
-{
-    node* temp=head;
-    while(temp)
-    {
-        temp=temp->get_next();
-        pos--;
-        if(pos==0)
-        {
-            node* temp1 = new node(d);
-            node* temp2 = temp->get_next();
-            temp->set_next(temp1);
-            temp1->set_next(temp2);
-        }
-    }
-}
+/*数据格式，<统计学习方法>例4.1
+15 2
+1 1 -1
+1 2 -1
+1 2 1
+1 1 1
+1 1 -1
+2 1 -1
+2 2 -1
+2 2 1
+2 3 1
+2 3 1
+3 3 1
+3 2 1
+3 2 1
+3 3 1
+3 3 -1
+1
+2 1
+*/

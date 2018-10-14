@@ -1,81 +1,148 @@
-/* Ford-Fulkerson O((E+V)F*) time
-O(E) memory
-*/
-#include<bits/stdc++.h>
+/*++
+Copyright (c) 2007 Microsoft Corporation
 
+Module Name:
 
-using namespace std;
-const int maxN=1e3+10;
+    stack.cpp
 
-int n,st,fn,m;
-bool mark[maxN];
-int cap[maxN][maxN];
-vector<int> g[maxN],path;
-#define PB push_back
-/*
+Abstract:
+    Low level stack (aka stack-based allocator).
 
-4 5
-1 3
+Author:
 
-1 2 5
-1 4 3
-2 4 2
-2 3 3
-4 3 5
-*/
+    Leonardo (leonardo) 2011-02-27
 
-void input()
-{
-  cin>>n>>m;
-  cin>>st>>fn;
-  for(int i=1;i<=m;i++)
-    {
-      int k1,k2,val;
-      cin>>k1>>k2>>val;
-      g[k1].push_back(k2);
-      g[k2].push_back(k1);
-      cap[k1][k2]=val;
+Notes:
+
+--*/
+#include"stack.h"
+#include"page.h"
+#include"tptr.h"
+
+inline void stack::store_mark(size_t m) {
+    reinterpret_cast<size_t*>(m_curr_ptr)[0] = m;
+    m_curr_ptr += sizeof(size_t);
+}
+
+inline size_t stack::top_mark() const {
+    return reinterpret_cast<size_t*>(m_curr_ptr)[-1];
+}
+
+inline size_t ptr2mark(void * ptr, bool external) {
+    return reinterpret_cast<size_t>(ptr) | static_cast<size_t>(external);
+}
+
+#define MASK (static_cast<size_t>(-1) - 1)
+
+inline char * mark2ptr(size_t m) {
+    return reinterpret_cast<char *>(m & MASK);
+}
+
+inline bool external_ptr(size_t m) {
+    return static_cast<bool>(m & 1);
+}
+
+inline void stack::allocate_page(size_t m) {
+    m_curr_page     = allocate_default_page(m_curr_page, m_free_pages);
+    m_curr_ptr      = m_curr_page;
+    m_curr_end_ptr  = end_of_default_page(m_curr_page);
+    store_mark(m);
+}
+
+inline void stack::store_mark(void * ptr, bool external) {
+    SASSERT(m_curr_ptr < m_curr_end_ptr || m_curr_ptr == m_curr_end_ptr); // mem is aligned
+    if (m_curr_ptr + sizeof(size_t) > m_curr_end_ptr) {
+        SASSERT(m_curr_ptr == m_curr_end_ptr);
+        // doesn't fit in the current page
+        allocate_page(ptr2mark(ptr, external));
+    }
+    else {
+        store_mark(ptr2mark(ptr, external));
     }
 }
-bool dfs(int v)
-{
-  mark[v]=true;
-  path.PB(v);
-  if(v==fn)
-    return true;
-  for(auto u : g[v])
-    if(!mark[u] && cap[v][u]>0 )
-      {
-	if(dfs(u)==true)
-	  return true;
-      }
-  path.pop_back();
-  return false;
+
+stack::stack() {
+    m_curr_page    = 0;
+    m_curr_ptr     = 0;
+    m_curr_end_ptr = 0;
+    m_free_pages   = 0;
+    allocate_page(0);
+    SASSERT(empty());
 }
-int Ford_Fulkerson()
-{
-  int MaxFlow=0;
-  while(dfs(st))
-    {
-      int minCap=INT_MAX;
-      for(int i=1;i<path.size();i++)
-	minCap=min(minCap,cap[path[i-1]][path[i]]);
-      for(int i=1;i<path.size();i++)
-	{
-	  cap[path[i-1]][path[i]]-=minCap;
-	  cap[path[i]][path[i-1]]+=minCap;
-	}
-      MaxFlow+=minCap;
-      path.clear();
-      memset(mark,0,sizeof(mark));
+
+stack::~stack() {
+    reset();
+    del_pages(m_curr_page);
+    del_pages(m_free_pages);
+}
+
+void stack::reset() {
+    while(!empty())
+        deallocate();
+}
+
+void * stack::top() const {
+    SASSERT(!empty());
+    size_t m = top_mark();
+    void * r = mark2ptr(m);
+    if (external_ptr(m)) 
+        r = reinterpret_cast<void**>(r)[0];
+    return r;
+}
+
+void * stack::allocate_small(size_t size, bool external) {
+    SASSERT(size < DEFAULT_PAGE_SIZE);
+    char * new_curr_ptr = m_curr_ptr + size;
+    char * result;
+    if (new_curr_ptr < m_curr_end_ptr) {
+        result = m_curr_ptr;
+        m_curr_ptr = ALIGN(char *, new_curr_ptr);
     }
-  return MaxFlow;
+    else {
+        allocate_page(top_mark()); 
+        result = m_curr_ptr;
+        m_curr_ptr += size;
+        m_curr_ptr = ALIGN(char *, m_curr_ptr);
+    }
+    store_mark(result, external);
+    SASSERT(m_curr_ptr > m_curr_page);
+    SASSERT(m_curr_ptr <= m_curr_end_ptr);
+    return result;
 }
-int main()
-{
-  input();
-  int ans=Ford_Fulkerson();
-  cout<<ans<<endl;
-  
-  return 0;
+
+void * stack::allocate_big(size_t size) {
+    char * r   = alloc_svect(char, size);
+    void * mem = allocate_small(sizeof(char*), true);
+    reinterpret_cast<char**>(mem)[0] = r;
+    SASSERT(m_curr_ptr > m_curr_page);
+    SASSERT(m_curr_ptr <= m_curr_end_ptr);
+    return r;
 }
+    
+void stack::deallocate() {
+    SASSERT(m_curr_ptr > m_curr_page);
+    SASSERT(m_curr_ptr <= m_curr_end_ptr);
+    size_t m = top_mark();
+    SASSERT(m != 0);
+    if (m_curr_ptr == m_curr_page + sizeof(size_t)) {
+        // mark is in the beginning of the page
+        char * prev = prev_page(m_curr_page);
+        recycle_page(m_curr_page, m_free_pages);
+        m_curr_page    = prev;
+        m_curr_ptr     = mark2ptr(m);
+        m_curr_end_ptr = end_of_default_page(m_curr_page);
+        SASSERT(m_curr_ptr >  m_curr_page);
+        SASSERT(m_curr_ptr <= m_curr_end_ptr);
+    }
+    else {
+        // mark is in the middle of the page
+        m_curr_ptr = mark2ptr(m);
+        SASSERT(m_curr_ptr < m_curr_end_ptr);
+    }
+    if (external_ptr(m)) {
+        dealloc_svect(reinterpret_cast<char**>(m_curr_ptr)[0]);
+    }
+    SASSERT(m_curr_ptr > m_curr_page);
+}
+
+

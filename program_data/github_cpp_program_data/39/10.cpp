@@ -1,75 +1,32 @@
-//quick sort
-
-#include <iostream>
-#include <fstream>
-#include <cmath>
-#include <ctime>
-
-using namespace std;
-
-void writeArr(int *arr, int len);
-void printArr(int *arr, int len, ofstream &fout, char sep = ' ');
-
-void quickSort(int *arr, int l, int r);
-void quickSort(int *arr, int n);
-
-int main() {
-	ifstream fin("input.txt");
-	ofstream fout("output.txt");
-	srand(time(0));
-
-	int len;
-	fin >> len;
-
-	int *arr = new int[len];
-
-	writeArr(arr, len);
-	//printArr(arr, len, fout, '\n');
-
-	quickSort(arr, len);
-	
-	printArr(arr, len, fout, '\n');
-
-	fin.close();
-	fout.close();
-
-	delete[] arr;
-	return 0;
+//水平序凸包
+inline bool turn_left(const point &a, const point &b, const point &c) {
+	return det(b - a, c - a) > EPS;
 }
-
-void quickSort(int *arr, int l, int r) {
-	int i = l, j = r, middle = arr[(i + j) / 2];
-
-	do {
-		while (middle > arr[i]) i++;
-		while (middle < arr[j]) j--;
-
-		if (i <= j) {
-			int tmp = arr[i];
-			arr[i] = arr[j];
-			arr[j] = tmp;
-
-			i++; j--;
+inline bool turn_right(const point &a, const point &b, const point &c) {
+	return det(b - a, c - a) < -EPS;
+}
+inline vector<point> convex_hull(vector<point> a) {
+	int n = (int)a.size(), cnt = 0;
+	sort(a.begin(), a.end());
+	vector<point> ret;
+	for (int i = 0; i < n; ++i) {
+		while (cnt > 1 && turn_left(ret[cnt - 2], a[i], ret[cnt - 1])) {
+			--cnt;
+			ret.pop_back();
 		}
-
-	} while (i < j);
-
-	if (i < r) quickSort(arr, i, r);
-	if (j > l) quickSort(arr, l, j);
-}
-
-void quickSort(int *arr, int n) {
-	quickSort(arr, 0, n - 1);
-}
-
-void writeArr(int *arr, int len) {
-	for (int i = 0; i < len; i++) {
-		arr[i] = rand() % 10000;
+		ret.push_back(a[i]);
+		++cnt;
 	}
-}
-
-void printArr(int *arr, int len, ofstream &fout, char sep) {
-	for (int i = 0; i < len; i++) {
-		fout << arr[i] << sep;
+	int fixed = cnt;
+	for (int i = n - 1; i >= 0; --i) {
+		while (cnt > fixed && turn_left(ret[cnt - 2], a[i], ret[cnt - 1])) {
+			--cnt;
+			ret.pop_back();
+		}
+		ret.push_back(a[i]);
+		++cnt;
 	}
+	// this algorithm will preserve the points which are collineation
+	// the lowest point will occur twice , i.e. ret.front () == ret.back ()
+	return ret;
 }

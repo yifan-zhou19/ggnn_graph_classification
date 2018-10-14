@@ -1,55 +1,64 @@
+/*
+<REQUIRE>
+    <1>
 
-#include "Linklist.h"
+<USAGE>
+    <1>
 
-#define InitList(L)		InitStack(L)
-#define DestroyList(L) 		DestroySatck(L)
-#define ClearList(L) 		ClearStack(L)
-#define ListEmpty(L) 		StackEmpty(L)
-#define ListLength(L) 		SatckLength(L)
-typedef struct
-{
-    ElemType 		data;
-    struct LNode *	next;
-} LNode, *LinkList;
+*/
+#ifndef ___BucketSort_cpp__
+#define ___BucketSort_cpp__
+#include <string.h>
+#include <stdlib.h>
+//=========================================================================
+//  BucketSort
+//=========================================================================
+class BucketSort{
+public:
+    class Bucket{
+    private:
+        int curSize,maxSize,*dataArr;
+    public:
+        inline int getMaxSize(){ return maxSize;}
+        inline int getCurSize(){ return curSize;}
+        inline void push(int val){
+            dataArr[curSize++] = val;
+        }
+        inline int *retrieve(){
+            curSize = 0;
+            return dataArr;
+        }
+        Bucket(int _maxSize){
+            curSize = 0;
+            maxSize = _maxSize;
+            dataArr = (int *) malloc(_maxSize * sizeof(int));
+        }
+        ~Bucket(){
+            free(dataArr);
+        }
+    };
+    static int sort(char *input){
+        /*
+        int existence[256],length = 1;
+        memset(existence, 0, sizeof(existence));
+        for(char *read_input = (char *) input; *read_input != '\0'; ++read_input){
+            existence[*read_input] += 1;
+            length += 1;
+        }
+        existence['\0'] = 1;
+
+        Bucket *buckets[256];
+        char output
+        for(int i = 0; i < 256; ++i){
+            buckets
+        }*/
+    }
+};
 
 
-typedef Linklist Stack;
 
-Status GetTop(Stack S,ElemType &e){
-	e = S->next->data;
-	
-	return True;
-}
 
-Status Push(Stack &S,ElemType e){
-	Stack tmpNode = S;
-	while(tmpNode->next){
-		tmpNode = tmpNode->next;
-	}
-	Stack newNode = (Stack)malloc(sizeof(LNode));
-	newNode->data = e;
-	newNode->next = NULL:
-	tmpNode->next = newNode;
-	
-	return True;
-}
-Status Pop(Stack &S,ElemType &e){
-	Stack tmpNode = S,preNode;
-	while(tmpNode->next){
-		preNode = tmpNode;
-		tmpNode = tmpNode->next;
-		}
-	}
-	e = tmpNode->data;
-	free(tmpNode);
-	preNode->next = NULL;
-	
-	return True;
-}
 
-int main(){
-	Stack S;
-	InitStack(S);
-	printf("%d\n", StackEmpty(S));
-	return 0;
-}
+
+
+#endif

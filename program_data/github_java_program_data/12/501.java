@@ -1,25 +1,52 @@
-List<T> mergeSort(List<T> list) {
-  int size = list.size();
-  if (list.size() > 1) {
-    List<T> left = mergeSort(list.subList(0, (size / 2) - 1));
-    List<T> right = mergeSort(list.subList(size / 2, size - 1);
-    return merge(left, right);
-  }
-  return list;
+Author: Frederik Wegner
+Time: 22.06.17
+Tests: 11/11
+executeVariant()
+{
+    setIteration(getIteration()+1);
+    if(getIteration() < getNodeQueue().size())
+        setCurrentNode(getNodeQueue().get(getIteration()));
 }
-
-List<T> merge(List<T> left, List<T> right) {
-  List<T> merged = new List<T>();
-  while (!left.isEmpty() && !right.isEmpty()) {
-    if (left.get(0) < right.get(0)) {
-      merged.add(left.get(0));
-      left.remove(0);
-    } else {
-      merged.add(right.get(0));
-      right.remove(0);
+checkBreakCondition()
+{
+    return getIteration() < getGraph().getNodeList().size();
+}
+preProcess()
+{
+    InvalidInputException exception = new InvalidInputException("");
+    AbstractGraph g = getGraph();
+    if(g == null) throw exception;
+    if(getNodeQueue() == null) throw exception;
+    if(!(getNodeQueue().containsAll(g.getNodeList()) && g.getNodeList().containsAll(getNodeQueue()))) throw exception;
+    
+    setIteration(0);
+    ArrayList<Node<N,E>> nodes = g.getNodeList();
+    AbstractEdgeComparator<E> cmp = g.getComparator();
+    for(Node<N,E> vv : nodes) {
+        int v = getMatrixIndex(vv);
+        for(Node<N,E> ww : nodes) {
+            int w = getMatrixIndex(ww);
+            if(w == v) setM(v,w,cmp.getZero());
+            else setM(v,w,cmp.getMax());
+        }
+        for(Edge<N,E> e : (ArrayList<Edge<N,E>>)vv.getFanOut()) {
+            int w = getMatrixIndex(e.getTargetNode());
+            setM(v,w,e.getData());
+        }
     }
-  }
-  merged.addAll(left);
-  merged.addAll(right);
-  return merged;
+    setCurrentNode(getNodeQueue().get(getIteration()));
+}
+doFunctionality()
+{
+    AbstractGraph g = getGraph();
+    AbstractEdgeComparator<E> cmp = g.getComparator();
+    ArrayList<Node<N,E>> nodes = g.getNodeList();
+    
+    for(Node<N,E> vv : nodes)
+        for(Node<N,E> ww : nodes) {
+            int v = getMatrixIndex(vv);
+            int w = getMatrixIndex(ww);
+            int u = getMatrixIndex(getCurrentNode());
+            setM(v,w,cmp.min(getM(v,w), cmp.sum(getM(v,u),getM(u,w))));
+        }
 }

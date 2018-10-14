@@ -1,76 +1,80 @@
-#include <stdio.h>
-#include <iostream>
-#include <vector>
+//���ߣ����ٹ�
+//ʱ�䣺2016-06-26
+//--Ѱ�����·��֮Floyd-Warshall�㷨
 
+#include <iostream>
+#include <fstream>
+#include <vector>
 using namespace std;
 
-vector<int> Merge(vector<int> a1, vector<int> a2, int len_a1, int len_a2) {
-	int len_b = len_a1 + len_a2;
-	vector<int> b;
+struct Info
+{
+	int cost; //��ǰ��㵽��ʼ�ڵ�����·������
+	int pre; //��ǰ����ǰ���ڵ�
+	Info(){ cost = INT_MAX; pre = -1; }
+};
+vector<vector<Info>> Path[2]; //�洢ÿ���ڵ�Ե�·����Ϣ���������������ʾ��ʼ�ڵ㣬��������ʾ��ֹ�ڵ�
+//����ʹ�õ�����˫�ױ�ʾ����˼��
+//���ڸ��㷨�ڵ��������в���ԭ�ز��������Դ˴�ʹ�����������󣬵��������в����л����Ӷ�������
+//ÿ�ε���ʱ���о�����
 
-	int i = 0;
-	int j = 0;
-	int k = 0;
-
-	while (i < len_b) {
-		if ((j < len_a1) && (k < len_a2)) {
-			if (a1[j] < a2[k]) {
-				b.push_back(a1[j]);
-				j++;
-			}
-			else {
-				b.push_back(a2[k]);
-				k++;
+int Floyd()
+{
+	int n = Path[0].size();
+	int flag = 0, flag1;
+	for (int k = 0; k < n; k++)
+	{
+		flag1 = flag;
+		flag = (flag + 1) % 2;
+		for (int i = 0; i < n; i++)
+		{
+			for (int j = 0; j < n; j++)
+			{
+				if (Path[flag1][i][k].cost == INT_MAX || Path[flag1][k][j].cost==INT_MAX ||
+					Path[flag1][i][j].cost <= Path[flag1][i][k].cost + Path[flag1][k][j].cost)
+				{
+					Path[flag][i][j] = Path[flag1][i][j];
+				}
+				else
+				{
+					Path[flag][i][j].cost = Path[flag1][i][k].cost + Path[flag1][k][j].cost;
+					Path[flag][i][j].pre = Path[flag1][k][j].pre;
+				}
 			}
 		}
-		else {
-			if (j < len_a1) {
-				b.push_back(a1[j]);
-				j++;
-			}
-			else {
-				b.push_back(a2[k]);
-				k++;
-			}
-		}
-		i++;
 	}
-	return b;
+	return flag;
 }
-
-vector<int> MergeSort(vector<int> a, int len_a) {
-	if (len_a == 1) return a;
-
-	int len_a1 = len_a/2;
-	int len_a2 = len_a - len_a1;
-
-	vector<int> a1(a.begin(), a.begin() + len_a1);
-	vector<int> a2(a.begin() + len_a1, a.end());
-
-	a1 = MergeSort(a1, len_a1);
-	a2 = MergeSort(a2, len_a2);
-
-	return Merge(a1, a2, len_a1, len_a2);
+void Print(vector<vector<Info>>& Path)
+{
+	int n = Path.size();
+	cout << "Result:\n";
+	for (int i = 0; i < n; i++)
+	{
+		for (int j = 0; j < n; j++)
+			cout << "From " << i << " to " << j << ": " << Path[i][j].cost << endl;
+	}
+	cout << endl;
 }
-
-
-int main() {
-	int n;
-	scanf("%d", &n);
-	vector<int> a;
-
-	for (int i = 0; i < n; i++) {
-		int temp;
-		scanf("%d", &temp);
-		a.push_back(temp);
+int main()
+{
+	int n, m, u, v, w;
+	ifstream in("data.txt"); //���ļ��ж�ȡͼ����Ϣ
+	in >> n >> m; //n��ʾ;�нڵ�ĸ�����m��ʾͼ�бߵ�����
+	Path[0].assign(n, vector<Info>(n, Info()));
+	while (m--)
+	{
+		in >> u >> v >> w;
+		Path[0][u][v].cost = w;
+		Path[0][u][v].pre = u;
 	}
-	// vector<int> a = {3, 9, 1, 0, 5, 7, 2, 4, 8, 6};
+	for (int i = 0; i < n; i++)
+		Path[0][i][i].cost = 0;
+	Path[1] = Path[0];
 
-	a = MergeSort(a, a.size());
+	int nu=Floyd();
+	Print(Path[nu]);
 
-	for (int i = 0; i < n; i++) {
-		printf("%d ", a[i]);
-	}
-
+	system("pause");
 	return 0;
 }

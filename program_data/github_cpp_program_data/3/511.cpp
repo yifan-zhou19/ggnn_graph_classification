@@ -1,95 +1,88 @@
-#include <iostream>
-#include <string>
-using namespace std;
+#include <map>
 
-template <class T>
-class HashEntry{
-	public:
-		HashEntry(int key, T value){
-			this->key = key;
-			this->value = value;
-			this->next = NULL;
-		}
-		
-		~HashEntry(){
-			if(this->getNext() != NULL){
-				delete this->getNext();
-			}
-		}
-		
-		int getKey(){
-			return this->key;
-		}
-		
-		T getValue(){
-			return this->value;
-		}
-		
-		HashEntry<T> * getNext(){
-			return this->next;
-		}
-		
-		void setNext(HashEntry<T> * next){
-			this->next = next;
-		}
-		
-	private:
-		int key;
-		T value;
-		HashEntry<T> *next;
+class LRUCache{
+public:
+    class ListNode {
+    public:
+        int val;
+        ListNode *next, *prev;
+        ListNode(int val) {
+            this->val = val;
+            this->next = NULL;
+            this->prev = NULL;
+        }
+    };
+    map<int, int> hash1;
+    map<int, ListNode*> hash2;
+    int cap, cur;
+    ListNode *head, *tail;
+    // @param capacity, an integer
+    LRUCache(int capacity) {
+        // write your code here
+        cap = capacity;
+        cur = 0;
+        head = new ListNode(-1);
+        tail = new ListNode(-1);
+        head->next = tail;
+        tail->prev = head;
+    }
+    void move(ListNode *cnt) {
+        ListNode *cnt_next = cnt->next, *cnt_prev = cnt->prev;
+        cnt_prev->next = cnt_next;
+        cnt_next->prev = cnt_prev;
+        ListNode *head_next = head->next;
+        head->next = cnt;
+        cnt->prev = head;
+        cnt->next = head_next;
+        head_next->prev = cnt;
+    }
+    void add(ListNode *cnt) {
+        ListNode *head_next = head->next;
+        head->next = cnt;
+        cnt->prev = head;
+        cnt->next = head_next;
+        head_next->prev = cnt;
+    }
+    void solve(int key, int value) {
+        int k = tail->prev->val;
+        hash1.erase(k);
+        hash2.erase(k);
+        hash1.insert(make_pair(key, value));
+        ListNode *p = tail->prev;
+        p->val = key;
+        move(p);
+        hash2.insert(make_pair(key, p));
+    }
+    // @return an integer
+    int get(int key) {
+        // write your code here
+        if (hash1.find(key) == hash1.end()) {
+            return -1;
+        } else {
+            ListNode *res = hash2[key];
+            move(res);
+            return hash1[key];
+        }
+    }
+
+    // @param key, an integer
+    // @param value, an integer
+    // @return nothing
+    void set(int key, int value) {
+        // write your code here
+        if (hash1.find(key) != hash1.end()) {
+            hash1[key] = value;
+            get(key);
+        } else {
+            if (cur < cap) {
+                ListNode *cnt = new ListNode(key);
+                hash1.insert(make_pair(key, value));
+                hash2.insert(make_pair(key, cnt));
+                add(cnt);
+                cur ++;
+            } else {
+                solve(key, value);
+            }
+        }
+    }
 };
-
-const int TABLE_SIZE = 8;
-template <class T>
-class HashTable{
-	public:
-		HashTable(){
-			this->table = new HashEntry<T>*[TABLE_SIZE];
-			for(int i=0;i<TABLE_SIZE;i++){
-				this->table[i] = NULL;
-			}
-		}
-		
-		~HashTable(){
-			for(int i=0;i<TABLE_SIZE;i++){
-				if(this->table[i] != NULL){
-					delete this->table[i];
-				}
-			}
-			delete[] this->table;
-		}
-		
-		T get(int key){
-			HashEntry<T> *h = this->table[this->slot(key)];
-			while((h != NULL) && (h->getKey() != key)){
-				h = h->getNext();
-			}
-			if(h != NULL){
-				return h->getValue();
-			}
-			else{
-				return NULL;
-			}
-		}
-		
-		void set(int key, T value){
-			int slot = this->slot(key);
-			HashEntry<T> *h = new HashEntry<T>(key, value);
-			h->setNext(this->table[slot]);
-			this->table[slot] = h;
-		}
-	private:
-		HashEntry<T> **table;
-		
-		int slot(int key){
-			return (key % TABLE_SIZE);
-		}
-};
-
-int main(){
-	HashTable<string> *h = new HashTable<string>();
-	h->set(1, "Hello");
-	h->set(129, " There");
-	cout << h->get(1) << h->get(129) << endl;
-	delete h;
-}

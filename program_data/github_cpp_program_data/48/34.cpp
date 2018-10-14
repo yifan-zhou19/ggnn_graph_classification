@@ -1,215 +1,155 @@
-// --------------------------------------------------------------------------
-//                   OpenMS -- Open-Source Mass Spectrometry
-// --------------------------------------------------------------------------
-// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
-// ETH Zurich, and Freie Universitaet Berlin 2002-2016.
-//
-// This software is released under a three-clause BSD license:
-//  * Redistributions of source code must retain the above copyright
-//    notice, this list of conditions and the following disclaimer.
-//  * Redistributions in binary form must reproduce the above copyright
-//    notice, this list of conditions and the following disclaimer in the
-//    documentation and/or other materials provided with the distribution.
-//  * Neither the name of any author or any participating institution
-//    may be used to endorse or promote products derived from this software
-//    without specific prior written permission.
-// For a full list of authors, refer to the file AUTHORS.
-// --------------------------------------------------------------------------
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING
-// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
-// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
-// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
-// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// --------------------------------------------------------------------------
-// $Maintainer: Clemens Groepl  $
-// $Authors: $
-// --------------------------------------------------------------------------
+#include <iostream>
+#include <string>
 
-#include <OpenMS/MATH/STATISTICS/LinearRegression.h>
-#include <OpenMS/MATH/STATISTICS/StatisticFunctions.h>
-
-#include <boost/math/distributions/normal.hpp>
-#include <boost/math/special_functions/binomial.hpp>
-#include <boost/math/distributions.hpp>
-
-using boost::math::detail::inverse_students_t;
-
-namespace OpenMS
+namespace  betacore
 {
-  namespace Math
-  {
-    double LinearRegression::getIntercept() const
+
+void printArray(char **matrix, int rows, int cols)
+{
+    for (int i = 0; i < rows; i++)
     {
-      return intercept_;
+		for (int j = 0; j < cols; j++)
+		{
+			std::cout << matrix[i][j] << "\t";
+		}
+		std::cout << "" << std::endl;
     }
+}
+int max(int a, int b){
+	return (a>b)? a : b ;
+}
 
-    double LinearRegression::getSlope() const
+void printArray(int **matrix, int rows, int cols)
+{
+    for (int i = 0; i < rows; i++)
     {
-      return slope_;
+		for (int j = 0; j < cols; j++)
+		{
+			std::cout << matrix[i][j] << "\t";
+		}
+		std::cout << "" << std::endl;
     }
+}
+	int longest_palindrome( char * input, int length )
+	{
+		int n = length;// input.length();
+		int i = 0, k, j;
 
-    double LinearRegression::getXIntercept() const
-    {
-      return x_intercept_;
-    }
+		bool **m = new bool*[n];
 
-    double LinearRegression::getLower() const
-    {
-      return lower_;
-    }
+		
+		int mx = -1;
+		/*
+		* Case : |input| = 1
+		*/
+		for ( i = 0 ; i < n-1; ++i )
+		{
+			m[i] = new bool[n];
+			m[i][i]=true;
+		}
+		/*
+		* Case : |input| = 2
+		*/
+		int s = 0;
+		for( i =0; i < n-1; ++i )
+		{
+			if(input[i] == input[i+1])
+			{
+				m[i][i+1] = true;
+				s = i;
+				mx = 2;
+			}
+		}
+		
+		for( k = 3 ; k <= n; ++k)
+		{
+			for ( i =0; i < n-k+1; ++i){
+				j = i + k - 1;
 
-    double LinearRegression::getUpper() const
-    {
-      return upper_;
-    }
+				if ( m[i+1][j-1] && input[i] == input[j])
+				{
+					m[i][j] = true;
+					if( k > mx)
+					{
+						s  = i;
+						mx = k;
+					}
+				}
+			}
+		}
+		//clean  up
+		delete[] m;
+		// input.substr(s, s + mx - 1 )
+		std::string str;
+		for( i = s; i <= s + mx - 1; ++i)
+		{
+			str += input[i];
+		}
+		std::cout << "Longest palindrome substring is: "<< mx << "\t" << str << std::endl;
+		return mx;
+	}
 
-    double LinearRegression::getTValue() const
-    {
-      return t_star_;
-    }
+	int longest_palindrome_mod( char * input, int length )
+	{
+        int n = length;// input.length();
+		int i = 0, k, j;
 
-    double LinearRegression::getRSquared() const
-    {
-      return r_squared_;
-    }
+		int **m = new int*[n];
+		for ( i = 0 ; i < n; ++i )
+		{
+			m[i] = new int[n];
+			m[i][i]=true;
+		}
+		
+	
+		if(length<1){
+				return -1;
+		}
+	
+		if(length ==1){
+			return 1;
+		}
+			
+		if(length ==2)
+		{	
+			if(input[0]==input[1]){
+				return 2;
+			}
+			return 1;
+		}
+	
+	
+		
+		for( k = 3 ; k <= n; ++k)
+		{
+			for ( i =0; i < n-k+1; ++i){
+				//j = i + k - 1;
 
-    double LinearRegression::getStandDevRes() const
-    {
-      return stand_dev_residuals_;
-    }
+				if (input[i] == input[i+k-1])
+				{
+					m[i][k] = 2+ m[i+1][k-2];
+				}else{
+					m[i][k] = max(m[i][k-1], m[i+1][k-1]);
+				}
+			}
+		}
+		//clean  up
+		printArray(m,n,n);
+		// input.substr(s, s + mx - 1 )
+		std::string str;
+		int mx = m[1][n-1];
+		std::cout << "Longest palindrome mod substring is: "<< mx<< "\t" << str << std::endl;
+		
+		delete[] m;
+		return mx;
+	}
 
-    double LinearRegression::getMeanRes() const
-    {
-      return mean_residuals_;
-    }
-
-    double LinearRegression::getStandErrSlope() const
-    {
-      return stand_error_slope_;
-    }
-
-    double LinearRegression::getChiSquared() const
-    {
-      return chi_squared_;
-    }
-
-    double LinearRegression::getRSD() const
-    {
-      return rsd_;
-    }
-
-    void LinearRegression::computeGoodness_(const std::vector<Wm5::Vector2d>& points, double confidence_interval_P)
-    {
-      unsigned N = static_cast<unsigned>(points.size());
-      std::vector<double> X; X.reserve(N);
-      std::vector<double> Y; Y.reserve(N);
-      for (unsigned i = 0; i < N; ++i)
-      {
-        X.push_back(points.at(i).X());
-        Y.push_back(points.at(i).Y());
-      }
-      // Variance and Covariances
-      double var_X = Math::variance(X.begin(), X.end());
-      double var_Y = Math::variance(Y.begin(), Y.end());
-      double cov_XY = Math::covariance(X.begin(), X.end(), Y.begin(), Y.end());
-
-      // Mean of abscissa and ordinate values
-      double x_mean = Math::mean(X.begin(), X.end());
-      double y_mean = Math::mean(Y.begin(), Y.end());
-
-      // S_xx
-      double s_XX = 0;
-      for (unsigned i = 0; i < N; ++i)
-      {
-        double d = (X[i] - x_mean);
-        s_XX += d * d;
-      }
-
-      // Compute the squared Pearson coefficient
-      r_squared_ = (cov_XY * cov_XY) / (var_X * var_Y);
-
-      // The standard deviation of the residuals
-      double sum = 0;
-      for (unsigned i = 0; i < N; ++i)
-      {
-        double x_i = fabs(Y[i] - (intercept_ + slope_ * X[i]));
-        sum += x_i;
-      }
-      mean_residuals_       = sum / N;
-      stand_dev_residuals_ = sqrt((chi_squared_ - (sum * sum) / N) / (N - 1));
-
-      // The Standard error of the slope
-      stand_error_slope_ = stand_dev_residuals_ / sqrt(s_XX);
-
-      // and the intersection of Y_hat with the x-axis
-      x_intercept_ = -(intercept_ / slope_);
-
-      double P = 1 - (1 - confidence_interval_P) / 2;
-      boost::math::students_t tdist(N - 2);
-      t_star_ = boost::math::quantile(tdist, P);
-
-      //Compute the asymmetric 95% confidence intervall of around the X-intercept
-      double g = (t_star_ / (slope_ / stand_error_slope_));
-      g *= g;
-      double left = (x_intercept_ - x_mean) * g;
-      double bottom = 1 - g;
-      double d = (x_intercept_ - x_mean);
-      double right = t_star_ * (stand_dev_residuals_ / slope_) * sqrt((d * d) / s_XX + (bottom / N));
-
-      // Confidence intervall lower_ <= X_intercept <= upper_
-      lower_ = x_intercept_ + (left + right) / bottom;
-      upper_ = x_intercept_ + (left - right) / bottom;
-
-      if (lower_ > upper_)
-      {
-        std::swap(lower_, upper_);
-      }
-
-      double tmp = 0;
-      for (unsigned i = 0; i < N; ++i)
-      {
-        tmp += (X[i] - x_mean) * (X[i] - x_mean);
-      }
-
-      //            cout << "100.0 / abs( x_intercept_ ) " << (100.0 / fabs( x_intercept_ )) << endl;
-      //            cout << "tmp : " << tmp << endl;
-      //            cout << "slope_ " << slope_ << endl;
-      //            cout << "y_mean " << y_mean << endl;
-      //            cout << "N " << N << endl;
-      //            cout << "stand_dev_residuals_ " << stand_dev_residuals_ << endl;
-      //            cout << " (1.0/ (double) N)  " <<  (1.0/ (double) N)  << endl;
-      //            cout << "sx hat " << (stand_dev_residuals_ / slope_) * sqrt(  (1.0/ (double) N) * (y_mean / (slope_ * slope_ * tmp ) ) ) << endl;
-
-      // compute relative standard deviation (non-standard formula, taken from Mayr et al. (2006) )
-      rsd_ = (100.0 / fabs(x_intercept_)) * (stand_dev_residuals_ / slope_) * sqrt((1.0 / (double) N) * (y_mean / (slope_ * slope_ * tmp)));
-
-      if (rsd_ < 0.0)
-      {
-        std::cout << "rsd < 0.0 " << std::endl;
-        std::cout <<   "Intercept                                " << intercept_
-                  << "\nSlope                                    " << slope_
-                  << "\nSquared pearson coefficient              " << r_squared_
-                  << "\nValue of the t-distribution              " << t_star_
-                  << "\nStandard deviation of the residuals      " << stand_dev_residuals_
-                  << "\nStandard error of the slope              " << stand_error_slope_
-                  << "\nThe X intercept                          " << x_intercept_
-                  << "\nThe lower border of confidence interval  " << lower_
-                  << "\nThe higher border of confidence interval " << upper_
-                  << "\nChi squared value                        " << chi_squared_
-                  << "\nx mean                                   " << x_mean
-                  << "\nstand_error_slope/slope_                 " << (stand_dev_residuals_ / slope_)
-                  << "\nCoefficient of Variation                 " << (stand_dev_residuals_ / slope_) / x_mean * 100  << std::endl
-                  << "========================================="
-                  << std::endl;
-      }
-    }
-
-  }
+}
+int main( int argc, char * argv[] )
+{
+	char  str[14] = {'A','C','G','T','G','T','C','A','A','A','A','T','C','G'};
+	int length = 14;
+	betacore::longest_palindrome(str, length);
+	betacore::longest_palindrome_mod(str, length);
+	return 0;
 }

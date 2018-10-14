@@ -1,57 +1,74 @@
 #include <iostream>
+using std::cout;
+using std::cerr;
+using std::endl;
+using std::string;
+#include <vector>
+using std::vector;
+#include <algorithm>
+using std::min;
 
-using namespace std;
+typedef vector<vector<int> > matrix;
 
-template <class T>
-void heapify(T array[],int size)
-{
-    for(int parent=size/2;parent>=1;parent--)
-    sink(array,parent,size);
+int diff(char a, char b) {
+	return (a == b) ? 0 : 1;
 }
 
-template <class T>
-void sink(T array[],int parent,int size)
-{
-
-    while(parent*2<=size)
-    {
-        int child=parent*2;
-        if(child+1<=size)
-        {
-            if(array[child]<array[child+1])
-            child++;
-        }
-        if(array[parent]<array[child])
-        swap(array[parent],array[child]);
-        parent=child;
-    }
+template<typename T>
+std::ostream& operator<<(std::ostream& s, const std::vector<T>& v) {
+	s.put('[');
+	char comma[3] = {'\0', ' ', '\0'};
+	for (const auto& e : v) {
+		s << comma << e;
+		comma[0] = ',';
+	}
+	return s << ']';
 }
 
-template <class T>
-void heapsort(T array[], int size)
-{
-    int index=size;
-    while(index>=1)
-    {
-        swap(array[1],array[index]);
-        sink(array,1,index-1);
-        index--;
-    }
+int edit_distance(string one, string two) {
+	matrix E;
+	int m = one.size();
+	int n = two.size();
+
+	E.resize(m + 1);
+	for (int i = 0; i <= m; i++) {
+		vector<int> temp;
+		temp.resize(n + 1);
+		E.at(i) = temp;
+	}
+
+	// set up top row
+	for (int i = 0; i <= m; i++) {
+		E.at(i).at(0) = i;
+	}
+
+	// set up left column
+	for (int j = 1; j <= n; j++) {
+		E.at(0).at(j) = j;
+	}
+
+	// find distances
+	for (int i = 1; i <= m; i++) {
+		for (int j = 1; j <= n; j++) {
+			E.at(i).at(j) = min({
+				E.at(i - 1).at(j) + 1,
+				E.at(i).at(j - 1) + 1,
+				E.at(i - 1).at(j - 1) + diff(one.at(i - 1), two.at(j - 1)),
+			});
+		}
+	}
+
+	return E.at(m).at(n);
 }
 
-int main()
-{
-    int size;
-    cin>>size;
-    int array[size+1];
-    for(int i=1;i<=size;i++)
-    cin>>array[i];
-    heapify<int>(array,size);
-    heapsort<int>(array,size);
-    cout<<"The sorted array is :"<<endl;
-    for(int i=1;i<=size;i++)
-    cout<<array[i]<<" ";
-    cout<<endl;
-    return 0;
+int main(int argc, char const *argv[]) {
+	if (argc < 3)
+		cerr << argv[0] << " string1 string2" << endl;
 
+	string one = argv[1];
+	string two = argv[2];
+
+	cout << edit_distance(one, two) << endl;
+
+	return 0;
 }

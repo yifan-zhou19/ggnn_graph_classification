@@ -1,56 +1,86 @@
-/**
- * Copyright (c) 2017, Kyle Fricilone <kfricilone@gmail.com>
- * All rights reserved.
- * <p>
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- * <p>
- * 1. Redistributions of source code must retain the above copyright notice, this
- * list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- * <p>
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-package com.friz.algorithms;
+package EvacSim.jme3tools.navmesh;
 
-import com.friz.graphs.Vertex;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import EvacSim.jme3tools.navmesh.util.MinHeap;
+import com.jme3.math.Vector3f;
 
 /**
- * Created by Kyle Fricilone on Feb 13, 2018.
+ * A NavigationHeap is a priority-ordered list facilitated by the STL heap
+ * functions. This class is also used to hold the current path finding session
+ * ID and the desired goal point for NavigationCells to query. Thanks to Amit J.
+ * Patel for detailing the use of STL heaps in this way. It's much faster than a
+ * linked list or multimap approach.
+ * 
+ * Portions Copyright (C) Greg Snook, 2000
+ * 
+ * @author TR
+ * 
  */
-public class TopologicalSort<V extends Object>
-{
+class Heap implements java.io.Serializable {
 
-	private final List<Vertex> order;
+    private MinHeap nodes = new MinHeap();
+    private int sessionID;
+    private Vector3f goal;
 
-	public TopologicalSort(DepthFirstSearch<V> dfs)
-	{
-		this.order = new ArrayList<>();
+    int getSessionID() {
+        return sessionID;
+    }
 
-		List<Vertex> postOrder = dfs.getPostOrder();
-		for (int i = postOrder.size() - 1; i >= 0; i--)
-		{
-			order.add(postOrder.get(i));
-		}
-	}
+    Vector3f getGoal() {
+        return goal;
+    }
 
-	public List<Vertex> getOrder()
-	{
-		return Collections.unmodifiableList(order);
-	}
+    void initialize(int sessionID, Vector3f goal) {
+        this.goal = goal;
+        this.sessionID = sessionID;
+        nodes.clear();
+    }
+
+    void addCell(Cell pCell) {
+        Node newNode = new Node(pCell, pCell.getTotalCost());
+        nodes.add(newNode);
+    }
+
+    /**
+     * Adjust a cell in the heap to reflect it's updated cost value. NOTE: Cells
+     * may only sort up in the heap.
+     */
+    void adjustCell(Cell pCell) {
+        Node n = findNodeIterator(pCell);
+
+        if (n != nodes.lastElement()) {
+            // update the node data
+            n.cell = pCell;
+            n.cost = pCell.getTotalCost();
+
+            nodes.sort();
+        }
+    }
+
+    /**
+     * @return true if the heap is not empty
+     */
+    boolean isNotEmpty() {
+        return !nodes.isEmpty();
+    }
+
+    /**
+     * Pop the top off the heap and remove the best value for processing.
+     */
+    Node getTop() {
+        return (Node) nodes.deleteMin();
+    }
+
+    /**
+     * Search the container for a given cell. May be slow, so don't do this
+     * unless nessesary.
+     */
+    Node findNodeIterator(Cell pCell) {
+        for (Object n : nodes) {
+
+            if (((Node) n).cell.equals(pCell)) {
+                return ((Node) n);
+            }
+        }
+        return (Node) nodes.lastElement();
+    }
 }

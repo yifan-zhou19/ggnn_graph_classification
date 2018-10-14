@@ -1,27 +1,37 @@
-package com.wang.domain.fanxing.complexmodel;
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package Chapter18Review;
+
+import java.util.Scanner;
 
 /**
- * Created by chao.wang2 on 2018/6/14  12:59
+ *
+ * @author dsli
  */
-public class Fibonacci implements Generator<Integer> {
-
-    private int count = 0;
-
-    @Override
-    public Integer next() {
-        return fib(count++);
-    }
-
-    private int fib(int n){
-        if (n<2) return 1;
-        return fib(n-1)+fib(n-2);
-    }
-
+public class TowerOfHanoi {
+    public static int runs = 0;
     public static void main(String[] args) {
-        Fibonacci fibonacci = new Fibonacci();
-        for (int i = 0; i < 18; i++) {
-            System.out.print(fibonacci.next()+ " ");
+        Scanner input = new Scanner(System.in);
+        System.out.print("Enter number of disks: ");
+        int n = input.nextInt();
+        
+        //Find the solution recursively
+        System.out.println("The moves are: ");
+        moveDisks(n, 'A', 'B', 'C');
+        System.out.println("The method runs " + runs + " times.");
+    }
+    //The method for finding the solution to move n disks from fromTower to toTower with auxTower
+    public static void moveDisks(int n, char fromTower, char toTower, char auxTower) {
+        runs++;
+        if (n == 1) //Stopping condition
+            System.out.println("Move disk " + n + " from " + fromTower + " to " + toTower);
+        else {
+            moveDisks(n - 1, fromTower, auxTower, toTower);
+            System.out.println("Move disk " + n + " from " + fromTower + " to " + toTower);
+            moveDisks(n - 1, auxTower, toTower, fromTower);
         }
     }
-
 }

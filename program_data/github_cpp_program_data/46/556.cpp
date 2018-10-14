@@ -1,70 +1,126 @@
-/*
-Given a sorted (in ascending order) integer array nums of n elements and a target value, write a function to search target in nums. If target exists, then return its index, otherwise return -1.
+#include <bits/stdc++.h>
 
-
-Example 1:
-
-Input: nums = [-1,0,3,5,9,12], target = 9
-Output: 4
-Explanation: 9 exists in nums and its index is 4
-
-Example 2:
-
-Input: nums = [-1,0,3,5,9,12], target = 2
-Output: -1
-Explanation: 2 does not exist in nums so return -1
- 
-
-Note:
-
-You may assume that all elements in nums are unique.
-n will be in the range [1, 10000].
-The value of each element in nums will be in the range [-9999, 9999].
-*/
-
-#include <iostream>
-#include <vector>
-#include <unordered_map>
-#include <cassert>
-#include <cmath>
-#include <numeric>
-#include <string>
-#include<stdio.h>
 using namespace std;
 
+typedef long long ll;
+typedef pair<int, int> ii;
+typedef pair<ll, ll> pll;
+typedef vector<int> vi;
+typedef vector<vi> vvi;
+typedef vector<ii> vii;
 
-class Solution {
-public:
-    int search(vector<int>& nums, int target) {
-        int low = 0, high = nums.size()-1;
-        while (low <= high) {
-            int mid = (low+high)/2;
-            if (nums[mid] == target) {
-                return mid;
-            } else if (nums[mid] > target) {
-                high = mid-1;
-            } else {
-                low = mid+1;
-            }
+#define pb push_back
+#define mp make_pair
+#define fi first
+#define se second
+#define FAST_IO  ios_base::sync_with_stdio(false)
+#define EPS 1e-8
+
+int N, Q;
+
+// This is azure97 (Kak Ayaz)'s implementation of SegmentTree 
+struct SegmentTree {
+    vi max_value;
+    vi min_value;
+    vi arr;
+    int n;
+
+    SegmentTree() {
+    }
+
+    void set_n(int _n) {
+        n = _n;
+        arr.resize(n+5);
+        max_value.resize(n+5);
+        min_value.resize(n+5);
+    }
+
+    void build(int id, int l, int r) {
+        if (l == r) {
+            min_value[id] = arr[l];
+            max_value[id] = arr[l];
+        } else {
+            int m = (l + r) / 2;
+            int chld = id << 1;
+
+            build(chld, l, m);
+            build(chld + 1, m + 1, r);
+
+            max_value[id] = max(max_value[chld], max_value[chld+1]);
+            min_value[id] = min(min_value[chld], min_value[chld+1]);
         }
-        return -1;
+    }
+
+    void build() {
+        build(1, 1, n);
+    }
+
+    // query range(x, y)
+    int query_min(int id, int l, int r, int x, int y) {
+        if (x <= l && r <= y) {
+            cerr << "return " << min_value[id] << '\n';
+            return min_value[id];
+        } else {
+            int m = (l + r) / 2;
+            int chld = id << 1;
+
+            int ret = 1e9+1;
+            if (x <= m) ret = min(ret, query_min(chld, l, m, x, y));
+            if (y > m) ret = min(ret, query_min(chld+1, m+1, r, x ,y));
+            cerr << "return bawah " << ret<< endl;
+            return ret;
+        }
+    }
+
+    int query_min(int l, int r) {
+        int ret =  query_min(1, 1, n, l, r);
+        cerr << "query min is " << ret << endl;
+        return ret;
+    }
+
+    int query_max(int id, int l,  int r, int x, int y) {
+        if (x <= l && r <= y) {
+            cerr << "return " << max_value[id] << '\n';
+            return max_value[id];
+        } else {
+            int m = (l + r) / 2;
+            int chld = id << 1;
+
+            int ret = -1e9-1;
+            if (x <= m) ret = max(ret, query_max(chld, l, m, x, y));
+            if (y > m) ret = max(ret, query_max(chld+1, m+1, r, x, y));
+
+            return ret;
+        }
+    }
+
+    int query_max(int l, int r) {
+        return query_max(1, 1, n, l, r);
     }
 };
 
 int main() {
-    Solution s;
-    vector<vector<int>> grid;
-    vector<int> v = {-1, 3, 5, 6, 10};
-    cout << s.search(v, -1) << endl;
-    cout << s.search(v, 2) << endl;
-    cout << s.search(v, 3) << endl;
-    cout << s.search(v, 10) << endl;
+    // C++ Fast I/O
+    FAST_IO;
 
-    vector<int> v2 = {9};
-    cout << s.search(v2, 10) << endl;
-    cout << s.search(v2, 9) << endl;
+    SegmentTree segment_tree;
+    // N elements, Q queries
+    cin >> N >> Q;
 
-    return 0;
+    segment_tree.set_n(N);
+    
+    for (int i = 1; i <= N; ++i) {
+        cin >> segment_tree.arr[i]; 
+    }
+
+    segment_tree.build();
+    
+    for (int i = 0; i < Q; ++i) {
+        int L, R;
+        // Read Query here
+        cin >> L >> R;
+        // Do something here
+    }
+
+	return 0;
 }
-
-

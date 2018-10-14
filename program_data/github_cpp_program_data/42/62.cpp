@@ -1,58 +1,33 @@
-/**
- * 	author: satyajith
- * 	algorithm: bucket sort
- */
+//============================================================================
+// Name        : selection-sort.cpp
+// Author      : Salman Mithani
+// Author      : 
 
-#include <cmath>
+// Date        :
+// Copyright   : 
+// Description : Implementation of selection sort in C++
+//============================================================================
+
+#include "sort.h"
 #include <iostream>
-#include <list>
-#include <vector>
 
-// constants
-#define N 10
+void
+SelectionSort::sort(int A[], int size)				// main entry point
+{
+  /* Complete this function with the implementation of selection sort algorithm 
+  Record number of comparisons in variable num_cmps of class Sort
+  */
 
-// function declarations
-std::list< float >* bucket_sort(float[]);
-
-// operator overloading to print a list
-std::ostream& operator<<(std::ostream& ostr, const std::list< float >& list) {
-	for (auto& i : list)
-		ostr << " " << i;
-	return ostr;
-}
-
-int main(int argc, char const* argv[]) {
-	// input array
-	float arr[ N ] = {0.78, 0.17, 0.39, 0.26, 0.72, 0.94, 0.21, 0.12, 0.23, 0.68};
-
-	std::list< float >* final = bucket_sort(arr);
-	std::cout << * final;						   // print final list
-	final->erase(final->begin(), final->end());	// erase all elements
-
-	delete final;	// free the memory
-	return 0;
-}
-
-// the bucket sort routine definition
-std::list< float >* bucket_sort(float arr[]) {
-	int i;
-	std::vector< std::list< float > > B(N);	// initialize a vector of lists
-
-	for (i = 0; i < N; ++i)
-		B[ floor(N * arr[ i ]) ].push_back(arr[ i ]);	// distribute into buckets
-
-	for (i = 0; i < N; ++i)
-		B[ i ].sort();	// sort each list in ascending order
-
-	std::list< float >* final = new std::list< float >;	// final list of concatenated buckets
-	auto iter = final->begin();							   // iterator to final list
-
-	for (i = 0; i < N; ++i) {
-		final->splice(iter, B[ i ]);	// concatenate all buckets
-		iter = final->end();
+	for (int k = 0; k < size-1; k++) {
+		int index = k;
+		for (int i = k+1; i < size; i++) {
+			if (A[i] < A[index]) index = i;
+			num_cmps++;
+		}
+		int tmp = A[k]; // swap A[k] and A[index]
+		A[k] = A[index];
+		A[index] = tmp;
 	}
 
-	B.erase(B.begin(), B.end());	// erase all data from the vector of lists
 
-	return final;
 }

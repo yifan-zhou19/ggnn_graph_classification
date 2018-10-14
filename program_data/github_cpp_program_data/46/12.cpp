@@ -1,148 +1,119 @@
-// binary_search example - finding first x for which p(x) is true
-
-#include <bits/stdc++.h>
-
-#define ll long long 
-
-#define tr(container, it) \ 
-	for(typeof(container.begin()) it = container.begin();it != container.end(); it++)
-
+#include <cstdio>
+#include <iostream>
+#include <vector>
+#include <cmath>
 
 using namespace std;
 
-bool myfunction (int i,int j) { return (i<j); }
+typedef vector<int> vi;
 
-/*void predfunc(int A[],bool p[])
-{
-	//calculate boolean values for each index and store in p[]
+int approxTwo(int n) {
+  n = n - 1;
+  n |= n >> 1;
+  n |= n >> 2;
+  n |= n >> 4;
+  n |= n >> 8;
+  n |= n >> 16;
+  return n + 1;
 }
 
-int bsearch(ll lo,ll hi) //p
-{
-	while(lo < hi)
-	{	mid = lo + (hi-lo)/2;
-		if(p(mid)==true)
-			hi = mid;
-		else
-			lo = mid+1;
+struct SegmentTree {
+  vi tree;
+  vi lazy;
+  int N;
+  int H;
 
-	}
-	
-	if(p(lo)==false)
-		return -1;
-	
-	return lo;
-}*/
+  SegmentTree(vi &values) {
+    N = approxTwo(values.size());
+    H = 8 * sizeof(int) - __builtin_clz(N);
 
-//normal binary search for exact element
+    tree.resize(N << 1);
+    lazy.resize(N);
+    for(int i = 0; i < values.size(); ++i) {
+      tree[i+N] = values[i];
+    }
 
-int bsearch_0(vector<int>& A,int target)
-{
-	int lo = 0;
-	int hi = A.size()-1;
-	int mid;
+    for(int i = N - 1; i >= 1; --i) {
+      tree[i] = merge(tree[i<<1], tree[i<<1|1]);
+    }
+  }
 
-	while(lo <= hi)
-	{
-		mid = lo + (hi-lo)/2;
-		if(A[mid]==target)
-			return mid;
-		else if (A[mid]>target)
-		{
-			hi = mid-1;
-		}
-		else 
-		{
-			lo = mid+1;
-		}
-	}	
-	return -1;
-}
+  int merge(int a, int b) {
+    return a + b;
+  }
 
-//lower bound binary searching - lowest index in A which has a value >= target
+  void apply(int p, int value, int k) {
+    tree[p] += value * k;
+    if(p < N) lazy[p] += value;
+  }
 
-int lowerbound(vector<int>& A,int target)
-{
-	int lo = 0;
-	int hi = A.size()-1;
-	int mid;
+  void build(int p) {
+    for(p >>= 1; p >= 1; p >>= 1) {
+      tree[p] = merge(merge(tree[p<<1], tree[p<<1|1]), lazy[p]);
+    }
+  }
 
-	while(lo < hi)
-	{
-		mid = lo + (hi-lo)/2;
-		if (A[mid]>=target)
-		{
-			hi = mid;
-		}
-		else 
-		{
-			lo = mid+1;
-		}
-	}	
+  void push(int p) {
+    int k = N;
+    for(int s = H; s > 0; --s, k >>= 1) {
+      int i = p >> s;
+      if(lazy[i]) {
+        apply(i>>1,   lazy[i], k);
+        apply(i>>1|1, lazy[i], k);
+        lazy[i] = 0;
+      }
+    }
+  }
 
-	if(A[lo] >= target)
-		return lo;
-	else
-		return -1;
-}
+  // update interval [l, r)
+  void update(int l, int r, int value) {
+    int l0 = (l += N);
+    int r0 = (r += N);
 
-// upper bound binary searching - highest index in A which has a value <= target
-int upperbound(vector<int>& A,int target)
-{
-	int lo = 0;
-	int hi = A.size()-1;
-	int mid;
+    push(l0);
+    push(r0-1);
+    
+    for(int k = 1; r > l; l >>= 1, r >>= 1, k <<= 1) {
+      // l is the right child of the parent, so include l but not the parent
+      if(l&1) {
+        apply(l++, value, k);
+      }
+      // r is the right child of the parent, so include the left child but not the parent
+      if(r&1) {
+        apply(--r, value, k);
+      }
+    }
 
-	while(lo < hi)
-	{
-		mid = lo + (hi-lo+1)/2;
-		if (A[mid]<=target)
-		{
-			lo = mid;
-		}
-		else 
-		{
-			hi = mid-1;
-		}
-	}
+    build(l0);
+    build(r0-1);
+  }
 
-	if(A[lo] <= target)
-		return lo;
-	else
-		return -1;
-}
+  // query interval [l, r)
+  int query(int l, int r) {
+    push(l+N);
+    push(r+N-1);
 
-int main () 
-{
-	int A[] = {0,5,13,19,22,41,55,68,72,81,98};
-	std::vector<int> V(A,A+(sizeof(A)/sizeof(A[0])));
-	cout<<V.size()<<endl;
+    int res = 0;
+    for(l += N, r += N; r > l; l >>= 1, r >>= 1) {
+      // l is the right child of the parent, so include l but not the parent
+      if(l&1) {
+        res = merge(res, tree[l++]);
+      }
+      // r is the right child of the parent, so include the left child but not the parent
+      if(r&1) {
+        res = merge(res, tree[--r]);
+      }
+    }
+    return res;
+  }
+};
 
-	int search  = bsearch_0(V,98);
-	cout << search << endl;
- 	int lsearch = lowerbound(V,100);
- 	int usearch = upperbound(V,68);
+int main() {
+  vi test({1, 2, 3, 4, 5, 6});
+  SegmentTree tree(test);
 
-	cout << lsearch << endl;
- 	cout << usearch << endl;
+  tree.update(1, 3, 2);
+  cout << tree.query(2, 5) << endl;
 
- 	//using stl library
- 	vector<int>::iterator low,up;
- 	low = lower_bound(V.begin(),V.end(),100);
- 	up = upper_bound(V.begin(),V.end(),68);
-
- 	//lower_bound gives lowest index in A with val >=target
- 	//upper_bound gives lower index in A with val > target
- 	//V.size() gives size 1-indexed but vector is stored in 0-index
- 	cout << "Using STL for lower : " << (low - V.begin())   << '\n';
-	cout << "Using STL for upper : " << (up - V.begin()) -1 << '\n';
-
-	int B[] = {32,71,12,45,26,80,53,33};
-	vector<int> W(B,B+(sizeof(B)/sizeof(B[0])));
-
-	sort(W.begin(),W.end(),myfunction);
-	tr(W,it)
-		cout<<*it<<endl;
-
-	return 0;
+  return 0;
 }

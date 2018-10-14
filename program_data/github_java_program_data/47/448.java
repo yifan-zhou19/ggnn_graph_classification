@@ -1,66 +1,37 @@
-package com.baeldung.string;
-
-import java.util.stream.IntStream;
-
-public class Palindrome {
-
-    public boolean isPalindrome(String text) {
-        String clean = text.replaceAll("\\s+", "").toLowerCase();
-        int length = clean.length();
-        int forward = 0;
-        int backward = length - 1;
-        while (backward > forward) {
-            char forwardChar = clean.charAt(forward++);
-            char backwardChar = clean.charAt(backward--);
-            if (forwardChar != backwardChar)
-                return false;
-        }
-        return true;
+  /** Auxiliary method used by removeElement. */
+  protected void swap(Position swapPos, Position remPos){
+    T.replaceElement(swapPos, remPos.element());
+  }
+  /** Auxiliary method used by findElement, insertItem, and removeElement. */
+  protected Position findPosition(Object key, Position pos) {
+    if (T.isExternal(pos))
+      return pos; // key not found and external node reached returned
+    else {
+      Object curKey = key(pos);
+      if(C.isLessThan(key, curKey))
+        return findPosition(key, T.leftChild(pos));
+      else if(C.isGreaterThan(key, curKey)) // search in left subtree
+        return findPosition(key, T.rightChild(pos)); // search in right subtree
+      else
+        return pos; // return internal node where key is found
     }
+  }
 
-    public boolean isPalindromeReverseTheString(String text) {
-        StringBuilder reverse = new StringBuilder();
-        String clean = text.replaceAll("\\s+", "").toLowerCase();
-        char[] plain = clean.toCharArray();
-        for (int i = plain.length - 1; i >= 0; i--)
-            reverse.append(plain[i]);
-        return (reverse.toString()).equals(clean);
-    }
-
-    public boolean isPalindromeUsingStringBuilder(String text) {
-        String clean = text.replaceAll("\\s+", "").toLowerCase();
-        StringBuilder plain = new StringBuilder(clean);
-        StringBuilder reverse = plain.reverse();
-        return (reverse.toString()).equals(clean);
-    }
-
-    public boolean isPalindromeUsingStringBuffer(String text) {
-        String clean = text.replaceAll("\\s+", "").toLowerCase();
-        StringBuffer plain = new StringBuffer(clean);
-        StringBuffer reverse = plain.reverse();
-        return (reverse.toString()).equals(clean);
-    }
-
-    public boolean isPalindromeRecursive(String text) {
-        String clean = text.replaceAll("\\s+", "").toLowerCase();
-        return recursivePalindrome(clean, 0, clean.length() - 1);
-    }
-
-    private boolean recursivePalindrome(String text, int forward, int backward) {
-        if (forward == backward)
-            return true;
-        if ((text.charAt(forward)) != (text.charAt(backward)))
-            return false;
-        if (forward < backward + 1) {
-            return recursivePalindrome(text, forward + 1, backward - 1);
-        }
-
-        return true;
-    }
-
-    public boolean isPalindromeUsingIntStream(String text) {
-        String temp = text.replaceAll("\\s+", "").toLowerCase();
-        return IntStream.range(0, temp.length() / 2)
-            .noneMatch(i -> temp.charAt(i) != temp.charAt(temp.length() - i - 1));
-    }
-}
+  // methods of the dictionary ADT
+  public int size()  { 
+    return (T.size() - 1) / 2; 
+  }
+  
+  public boolean isEmpty() { 
+    return T.size() == 1;
+  }
+  
+  public Object findElement(Object key) throws InvalidKeyException {
+    checkKey(key); // may throw an InvalidKeyException
+    Position curPos = findPosition(key, T.root());
+    actionPos = curPos; // node where the search ended
+    if (T.isInternal(curPos))
+      return element(curPos);
+    else
+      return NO_SUCH_KEY;
+  }

@@ -1,103 +1,38 @@
+#include <cstdio>
+#include <cstdlib>
+#include <fstream>
 #include <iostream>
-using namespace std;
+#include "windows.h"
+#include "Bucket.cpp"
 
-const int MAX_SIZE = 100;
+const int Num = 1000000;
+Point array[Num];
 
-class StackOverFlowException 
+int main()
 {
-    public:
-        StackOverFlowException() 
-        {
-            cout << "Stack overflow" << endl;
-        }
-};
+	Bucket b(Num);
+	string fileName("./dataset/dataset.txt");
+	int time0, time1;
 
-class StackUnderFlowException 
-{
-    public:
-        StackUnderFlowException() 
-        {
-            cout << "Stack underflow" << endl;
-        }
-};
+	time0 = GetTickCount();
+	b.getData(fileName);
+	time1 = GetTickCount();
+	printf("Got all data!\nCost %.3f seconds.\n",(time1-time0)/1000.0);
 
-class ArrayStack 
-{
-	private:
-	int data[MAX_SIZE];
-	int top;
-	
-	public:
-	ArrayStack()
+	time0 = GetTickCount();
+	b.sort(array);
+	time1 = GetTickCount();
+	printf("Sort array successfully!\nCost %.3f seconds.\n",(time1-time0)/1000.0);
+
+	time0 = GetTickCount();
+	freopen("dataout.txt","w",stdout);
+	for (int i=0; i<Num; ++i)
 	{
-		top = -1;
+		array[i].show();
+		printf("\n");
 	}
-	int Pop();
-	void Push(int number);
-	int Top();
-	int Size();
-	bool isEmpty();
-	
-};
+	time1 = GetTickCount();
+	printf("Cost %.3f seconds.\n",(time1-time0)/1000.0);
 
-int ArrayStack::Pop() {
-	if ( top == -1 ) 
-            {            
-                throw new StackUnderFlowException();            
-            }            
-    return data[top--];   
+	return 0;
 }
-
-void ArrayStack::Push(int number)
-{
-	if ( top >= MAX_SIZE ) 
-    {            
-        throw new StackOverFlowException();
-    }                   
-    data[++top] = number; 
-}
-
-int ArrayStack::Top()
-{
-	return data[top];      
-	
-}
-
-int ArrayStack::Size()
-{
-	return top + 1;
-}
-
-bool ArrayStack::isEmpty()
-{
-	if (top == -1) {
-		return true;
-	} else {
-		return false;
-	}
-}
-int main() {
-	 
-	 ArrayStack s;
-	 if ( s.isEmpty() ) 
-            {
-            cout << "Stack is empty" << endl;    
-            }
-        // Push elements    
-        s.Push(100);    
-        s.Push(200);    
-        // Size of stack
-        cout << "Size of stack = " << s.Size() << endl;
-        // Top element    
-        cout << s.Top() << endl;    
-        // Pop element    
-        cout << s.Pop() << endl;
-        // Pop element    
-        cout << s.Pop() << endl;
-        // Pop element    
-     
-}
-
-
-
-

@@ -1,48 +1,35 @@
-/**
- * Incorrect code to identify palindromes
- */
-
 #include <iostream>
-#include <sstream>
-#include <cstring> 
+#include <vector>
+#include <iterator>
 
-using namespace std;
-
-bool helper(stringstream &input, int len)
+template <typename RandomAccessIterator, typename Key>
+RandomAccessIterator binary_search_iterative(RandomAccessIterator p, RandomAccessIterator r, Key k)
 {
-	char prev;
-
-	//if we are at the midpoint of the string, return true.
-	if (len == 0) return true;
-
-	/**
-	 * If the length of the string is odd, and the next
-	 * character is the midpoint of the string, consume it
-	 * and return true.
-	 */
-	input >> prev;
-	if (len == 1) return true;
-
-	bool val = helper(input, len-2);
-
-	//make your changes below this line.
-	char next;
-	input >> next;
-	if (val && prev == next) return true;
-	return false;
+    auto const e = r;
+    for (auto d = r - p; d > 0; d = r - p) {
+        auto m = p + d/2;
+        if (k == *m) return m;
+        else if (k < *m) r = m;
+        else p = m + 1;
+    }
+    return e;
 }
 
-//do not change the main function.
-int main(int argc, char* argv[])
+template <typename RandomAccessIterator, typename Key>
+RandomAccessIterator binary_search_recursive(RandomAccessIterator p, RandomAccessIterator r, Key k)
 {
-  if(argc < 2){
-    cerr << "Please provide a string of characters." << endl;
-    return 1;
-  }
-  stringstream ss;
-  ss << argv[1];
-  if(helper(ss, strlen(argv[1])))
-	  cout << "Palindrome" << endl;
-  else cout << "Not a Palindrome" << endl;
-  return 0;
+    static auto const e = r;
+    auto d = r - p;
+    auto m = p + d/2;
+    if (d <= 0) return e;
+    else if (k < *m) return binary_search_recursive(p, m, k);
+    else if (k > *m) return binary_search_recursive(m + 1, r, k);
+    else return m;
+}
+
+int main()
+{
+    std::vector<int> v = {1,2,3,4,5,6,7,8,9};
+    std::cout << (binary_search_iterative(begin(v), end(v), 0) == end(v)) << std::endl;
+    std::cout << (binary_search_recursive(begin(v), end(v), 0) == end(v)) << std::endl;
 }

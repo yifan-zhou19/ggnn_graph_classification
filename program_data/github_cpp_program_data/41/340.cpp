@@ -1,35 +1,40 @@
-/**
- *  Author: Nhat M. Nguyen
- *  Date: 04-02-18
-**/
-
-#include <iostream>
-#include <utility> //std::swap
-
-
-using namespace std;
+struct node
+{
+int info; //Информационное поле
+node *l, *r;//Левая и Правая часть дерева
+};
+class bitree{
+public:
 
 
-void selection_sort(int a[], int n) {
-    for (int i = n - 1; i > 0; i--) {
-        int max_index = i;
-        for (int j = i - 1; j >= 0; j--) {
-            if (a[j] > a[max_index]) {
-                max_index = j;
-            }
+    node * tree=NULL; //Объявляем переменную, тип которой структура Дерево
+
+    /*ФУНКЦИЯ ЗАПИСИ ЭЛЕМЕНТА В БИНАРНОЕ ДЕРЕВО*/
+    void push(int a,node **t)
+    {
+        if ((*t)==NULL) //Если дерева не существует
+        {
+            (*t)=new node; //Выделяем память
+            (*t)->info=a; //Кладем в выделенное место аргумент a
+            (*t)->l=(*t)->r=NULL; //Очищаем память для следующего роста
+            return; //Заложили семечко, выходим
         }
-        swap(a[i], a[max_index]);
+           //Дерево есть
+            if (a>(*t)->info) push(a,&(*t)->r); //Если аргумент а больше чем текущий элемент, кладем его вправо
+            else push(a,&(*t)->l); //Иначе кладем его влево
     }
-}
 
-
-int main() {
-    int a[]  = {3, 2, 6, 8, 0, 9, 1, 5, 4, 7};
-    int n = sizeof(a) / sizeof(a[0]);
-    selection_sort(a, n);
-    for (int i = 0; i < n; i++) {
-        cout << a[i] << " ";
+    /*ФУНКЦИЯ ОТОБРАЖЕНИЯ ДЕРЕВА НА ЭКРАНЕ*/
+    void print (node *t,int u)
+    {
+        if (t==NULL) return; //Если дерево пустое, то отображать нечего, выходим
+        else //Иначе
+        {
+        print(t->l,++u);//С помощью рекурсивного посещаем левое поддерево
+        for (int i=0;i<u;++i) cout<<"-";
+        cout<<t->info<<endl; //И показываем элемент
+        u--;
+        }
+        print(t->r,++u); //С помощью рекурсии посещаем правое поддерево
     }
-    cout << "\n";
-    return 0;
-}
+};

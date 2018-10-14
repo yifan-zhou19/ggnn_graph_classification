@@ -1,110 +1,60 @@
-package perf.parse.consumers.gc;
-
-import org.apache.commons.math3.stat.regression.RegressionResults;
-import org.apache.commons.math3.stat.regression.SimpleRegression;
-import perf.parse.JsonConsumer;
-import perf.parse.Parser;
-import perf.parse.consumers.JsonKeyMapConsumer;
-import perf.parse.factory.OpenJdkGcFactory;
-import perf.parse.reader.TextLineReader;
-import perf.util.AsciiArt;
-import perf.util.file.FileUtility;
-import perf.util.json.Jsons;
-
-import java.util.List;
-import java.util.function.Function;
+import java.util.ArrayDeque;
+import java.util.Queue;
+import java.util.Scanner;
+import java.util.Stack;
 
 /**
- * Created by wreicher
+ * Created by Sourav on 11/10/2017.
  */
-public class LinearRegressionConsumer implements JsonConsumer {
+public class Palindrome {
 
-    private static class JsonAccessorFunction implements Function<Jsons, Double> {
-
-        private String key;
-        public JsonAccessorFunction(String keyName){
-            this.key = keyName;
-        }
-
-        @Override
-        public Double apply(Jsons jsonObject) {
-            Double value = jsonObject.optDouble(key);
-            if(value.isNaN()){
-                //System.out.println(jsonObject.toString(2));
-            }
-            return value;
-        }
+    Stack<Character> stack;
+    Queue<Character> queue;
+    Palindrome(){
+        stack = new Stack<>();
+        queue =  new ArrayDeque<>();
     }
-
-    Function<Jsons,Double> converterX;
-    Function<Jsons,Double> converterY;
-    SimpleRegression regression;
-
-    long count = 0;
-    double sum = 0;
-
-    public LinearRegressionConsumer(String keyX, String keyY){
-        this(new JsonAccessorFunction(keyX),new JsonAccessorFunction(keyY));
+    public void pushCharacter(Character c){
+        stack.push(c);
     }
-    public LinearRegressionConsumer(Function<Jsons,Double> converterX, Function<Jsons,Double> converterY){
-        this.converterX = converterX;
-        this.converterY = converterY;
-        this.regression = new SimpleRegression();
+    public Character popCharacter(){
+        return stack.pop();
     }
-
-    @Override
-    public void consume(Jsons object) {
-        Double x = converterX.apply(object);
-        Double y = converterY.apply(object);
-
-        if(!y.isNaN() && !x.isNaN() && x > 120){
-            regression.addData(x,y);
-        }
+    public Character dequeueCharacter(){
+        return queue.poll();
     }
-
-    public RegressionResults getRegression(){
-        return regression.regress();
+    public void enqueueCharacter(Character c){
+        queue.add(c);
     }
 
     public static void main(String[] args) {
-        TextLineReader r = new TextLineReader();
-        OpenJdkGcFactory f = new OpenJdkGcFactory();
-        Parser p = f.newGcParser();
+        Scanner scan = new Scanner(System.in);
+        String input = scan.nextLine();
+        scan.close();
 
-        JsonKeyMapConsumer keyMap = new JsonKeyMapConsumer();
-        p.add(keyMap);
+        // Convert input String to an array of characters:
+        char[] s = input.toCharArray();
 
-        LinearRegressionConsumer sc = new LinearRegressionConsumer(
-                new JsonAccessorFunction("elapsed"),
-                json-> {
-                    if( json.has("heap") ){
-                     return json.getJson("heap").getDouble("postgc");
-                    }
-                     return Double.NaN;
-                });
-        p.add(sc);
+        // Create a Solution object:
+        Palindrome p = new Palindrome();
 
-        r.addParser(p);
-
-        List<String> files = FileUtility.getFiles("/home/wreicher/perfWork/amq/jdbc/00259/client1/",".gclog",true);
-
-        files.clear();
-
-        files.add("/home/wreicher/perfWork/amq/jdbc/00259/client1/specjms.verbose-gc-dc.gclog");
-        files.add("/home/wreicher/perfWork/amq/jdbc/00259/client1/specjms.verbose-gc-hq.gclog");
-        files.add("/home/wreicher/perfWork/amq/jdbc/00259/client1/specjms.verbose-gc-sm.gclog");
-        files.add("/home/wreicher/perfWork/amq/jdbc/00259/client1/specjms.verbose-gc-sp.gclog");
-
-        for(String file : files){
-            System.out.println(AsciiArt.ANSI_BLUE+file+AsciiArt.ANSI_RESET);
-            r.read(file);
-            System.out.printf("[%6d] %s±%s/s  + %s±%s%n",
-                sc.regression.getN(),
-                AsciiArt.printKMG(sc.regression.getSlope()),
-                AsciiArt.printKMG(sc.regression.getSlopeConfidenceInterval()),
-                AsciiArt.printKMG(sc.regression.getIntercept()),
-                AsciiArt.printKMG(sc.regression.getSlopeConfidenceInterval()));
-            sc.regression.clear();
+        // Enqueue/Push all chars to their respective data structures:
+        for (char c : s) {
+            p.pushCharacter(c);
+            p.enqueueCharacter(c);
         }
+
+        // Pop/Dequeue the chars at the head of both data structures and compare them:
+        boolean isPalindrome = true;
+        for (int i = 0; i < s.length/2; i++) {
+            if (p.popCharacter() != p.dequeueCharacter()) {
+                isPalindrome = false;
+                break;
+            }
+        }
+
+        //Finally, print whether string s is palindrome or not.
+        System.out.println( "The word, " + input + ", is "
+                + ( (!isPalindrome) ? "not a palindrome." : "a palindrome." ) );
     }
 }

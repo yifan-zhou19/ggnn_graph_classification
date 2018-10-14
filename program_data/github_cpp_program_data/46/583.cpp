@@ -1,148 +1,125 @@
-// binary_search example - finding first x for which p(x) is true
-
 #include <bits/stdc++.h>
-
-#define ll long long 
-
-#define tr(container, it) \ 
-	for(typeof(container.begin()) it = container.begin();it != container.end(); it++)
-
-
 using namespace std;
 
-bool myfunction (int i,int j) { return (i<j); }
+#define rep(i, a, b) for(int i = a; i < int(b); ++i)
+#define trav(a, v) for(auto& a : v)
+#define all(x) x.begin(), x.end()
+#define sz(x) (int)(x).size()
 
-/*void predfunc(int A[],bool p[])
-{
-	//calculate boolean values for each index and store in p[]
+typedef long long ll;
+typedef pair<int, int> pii;
+typedef vector<int> vi;
+
+static unsigned RA = 1231231;
+int ra() {
+	RA *= 574841;
+	RA += 14;
+	return RA >> 1;
 }
 
-int bsearch(ll lo,ll hi) //p
-{
-	while(lo < hi)
-	{	mid = lo + (hi-lo)/2;
-		if(p(mid)==true)
-			hi = mid;
-		else
-			lo = mid+1;
+namespace maximum {
 
+#include "../content/data-structures/SegmentTree.h"
+
+}
+
+namespace nonabelian {
+
+// https://en.wikipedia.org/wiki/Dihedral_group_of_order_6
+const int lut[6][6] = {
+	{0, 1, 2, 3, 4, 5},
+	{1, 0, 4, 5, 2, 3},
+	{2, 5, 0, 4, 3, 1},
+	{3, 4, 5, 0, 1, 2},
+	{4, 3, 1, 2, 5, 0},
+	{5, 2, 3, 1, 0, 4}
+};
+
+struct Tree {
+	typedef int T;
+	const T LOW = 0;
+	T f(T a, T b) { return lut[a][b]; }
+	vector<T> s; int n;
+	Tree(int n = 0, T def = 0) : s(2*n, def), n(n) {}
+	void update(int pos, T val) {
+		for (s[pos += n] = val; pos > 1; pos /= 2)
+			s[pos / 2] = f(s[pos & ~1], s[pos | 1]);
 	}
-	
-	if(p(lo)==false)
-		return -1;
-	
-	return lo;
-}*/
-
-//normal binary search for exact element
-
-int bsearch_0(vector<int>& A,int target)
-{
-	int lo = 0;
-	int hi = A.size()-1;
-	int mid;
-
-	while(lo <= hi)
-	{
-		mid = lo + (hi-lo)/2;
-		if(A[mid]==target)
-			return mid;
-		else if (A[mid]>target)
-		{
-			hi = mid-1;
+	T query(int b, int e) { // query [b, e)
+		T ra = LOW, rb = LOW;
+		for (b += n, e += n; b < e; b /= 2, e /= 2) {
+			if (b % 2) ra = f(ra, s[b++]);
+			if (e % 2) rb = f(s[--e], rb);
 		}
-		else 
-		{
-			lo = mid+1;
-		}
-	}	
-	return -1;
+		return f(ra, rb);
+	}
+};
+
 }
 
-//lower bound binary searching - lowest index in A which has a value >= target
-
-int lowerbound(vector<int>& A,int target)
-{
-	int lo = 0;
-	int hi = A.size()-1;
-	int mid;
-
-	while(lo < hi)
+int main() {
 	{
-		mid = lo + (hi-lo)/2;
-		if (A[mid]>=target)
-		{
-			hi = mid;
-		}
-		else 
-		{
-			lo = mid+1;
-		}
-	}	
-
-	if(A[lo] >= target)
-		return lo;
-	else
-		return -1;
-}
-
-// upper bound binary searching - highest index in A which has a value <= target
-int upperbound(vector<int>& A,int target)
-{
-	int lo = 0;
-	int hi = A.size()-1;
-	int mid;
-
-	while(lo < hi)
-	{
-		mid = lo + (hi-lo+1)/2;
-		if (A[mid]<=target)
-		{
-			lo = mid;
-		}
-		else 
-		{
-			hi = mid-1;
-		}
+		maximum::Tree t(0);
+		assert(t.query(0, 0) == t.LOW);
 	}
 
-	if(A[lo] <= target)
-		return lo;
-	else
-		return -1;
-}
+	if (1) {
+		const int N = 10000;
+		maximum::Tree tr(N);
+		ll sum = 0;
+		rep(it,0,1000000) {
+			tr.update(ra() % N, ra());
+			int i = ra() % N;
+			int j = ra() % N;
+			if (i > j) swap(i, j);
+			int v = tr.query(i, j+1);
+			sum += v;
+		}
+		cout << sum << endl;
+		// return 0;
+	}
 
-int main () 
-{
-	int A[] = {0,5,13,19,22,41,55,68,72,81,98};
-	std::vector<int> V(A,A+(sizeof(A)/sizeof(A[0])));
-	cout<<V.size()<<endl;
+	rep(n,1,10) {
+		maximum::Tree tr(n);
+		vi v(n);
+		rep(it,0,1000000) {
+			int i = rand() % (n+1), j = rand() % (n+1);
+			int x = rand() % (n+2);
 
-	int search  = bsearch_0(V,98);
-	cout << search << endl;
- 	int lsearch = lowerbound(V,100);
- 	int usearch = upperbound(V,68);
+			int r = rand() % 100;
+			if (r < 30) {
+				int ma = tr.LOW;
+				rep(k,i,j) ma = max(ma, v[k]);
+				assert(ma == tr.query(i,j));
+			}
+			else {
+				i = min(i, n-1);
+				tr.update(i, x);
+				v[i] = x;
+			}
+		}
+	}
 
-	cout << lsearch << endl;
- 	cout << usearch << endl;
+	rep(n,1,10) {
+		nonabelian::Tree tr(n);
+		vi v(n);
+		rep(it,0,1000000) {
+			int i = rand() % (n+1), j = rand() % (n+1);
+			int x = rand() % 6;
 
- 	//using stl library
- 	vector<int>::iterator low,up;
- 	low = lower_bound(V.begin(),V.end(),100);
- 	up = upper_bound(V.begin(),V.end(),68);
+			int r = rand() % 100;
+			if (r < 30) {
+				int ma = tr.LOW;
+				rep(k,i,j) ma = nonabelian::lut[ma][v[k]];
+				assert(ma == tr.query(i,j));
+			}
+			else {
+				i = min(i, n-1);
+				tr.update(i, x);
+				v[i] = x;
+			}
+		}
+	}
 
- 	//lower_bound gives lowest index in A with val >=target
- 	//upper_bound gives lower index in A with val > target
- 	//V.size() gives size 1-indexed but vector is stored in 0-index
- 	cout << "Using STL for lower : " << (low - V.begin())   << '\n';
-	cout << "Using STL for upper : " << (up - V.begin()) -1 << '\n';
-
-	int B[] = {32,71,12,45,26,80,53,33};
-	vector<int> W(B,B+(sizeof(B)/sizeof(B[0])));
-
-	sort(W.begin(),W.end(),myfunction);
-	tr(W,it)
-		cout<<*it<<endl;
-
-	return 0;
+	exit(0);
 }

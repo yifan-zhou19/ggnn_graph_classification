@@ -1,48 +1,103 @@
-struct BIT{
-	LL d[maxn];
-	inline int lowbit(int x){return x&-x;}
-	LL get(int x){
-		LL ans=0;
-		while(x)ans+=d[x],x-=lowbit(x);
-		return ans;
-	}
-	void updata(int x,LL f){
-		while(x<=m)d[x]+=f,x+=lowbit(x);
-	}
-	void add(int l,int r,LL f){
-		updata(l,f);
-		updata(r+1,-f);
-	}
-}T,T2;
-int anss[maxn],wana[maxn];
-struct qes{
-	LL x,y,z;
-	qes(LL _x=0,LL _y=0,LL _z=0):
-		x(_x),y(_y),z(_z){}
-}q[maxn],p[maxn];
-bool part(qes &q){
-	if(q.y+q.z>=wana[q.x])return 1;
-	q.z+=q.y;q.y=0;return 0;
-}
-void solve(int lef,int rig,int l,int r){
-	if(l==r){
-		for(int i=lef;i<=rig;i++)if(anss[p[i].x]!=-1)
-		anss[p[i].x]=l;return;
-	}int mid=(l+r)>>1;
-	for(int i=l;i<=mid;i++){
-		if(q[i].x<=q[i].y)T.add(q[i].x,q[i].y,q[i].z);
-		else T.add(1,q[i].y,q[i].z),T.add(q[i].x,m,q[i].z);
-	}for(int i=lef;i<=rig;i++){
-		p[i].y=0;
-		for(int j=0;j<O[p[i].x].size()&&p[i].y<=int(1e9)+1;j++)
-		p[i].y+=T.get(O[p[i].x][j]);
-	}for(int i=l;i<=mid;i++){
-		if(q[i].x<=q[i].y)T.add(q[i].x,q[i].y,-q[i].z);
-		else T.add(1,q[i].y,-q[i].z),T.add(q[i].x,m,-q[i].z);
-	}int dv=stable_partition(p+lef,p+rig+1,part)-p-1;		
-	if(lef<=dv)
-	solve(lef,dv,l,mid);
-	if(dv+1<=rig)
-	solve(dv+1,rig,mid+1,r);
-}
+#include<bits/stdc++.h>
+using namespace std;
 
+// segment tree with data compression and lazy propagation
+// this segment tree is specialized to be a sum segment tree
+
+template<class T> class segment_tree{
+   private:
+           int qlo,qhi,N;
+           T   V;
+           map<int,T>tree,lazy;
+           // replace with this if using c++11
+           //unordered_map<int,T>tree,lazy;
+   public:
+         segment_tree(int _N){
+            N = _N;
+         }
+         segment_tree(T arr[],int _N){
+            N = _N; for(int i = 0;i < N;i++)
+                update(i+1,arr[i]);
+         }
+         segment_tree(vector<T> arr,int _N){
+            N = _N;
+            for(int i = 0;i < N;i++)
+                update(i+1,arr[i]);
+         }
+    public:
+           // updating methods
+           void update(int it,int v){// single point update
+              qlo = qhi = it;
+              V = v;
+              _update(1,1,N);
+           }
+           void update(int it,int jt,T v){// range update
+              qlo = it,qhi = jt;
+              V = v;
+              _update(1,1,N);
+           }
+           // querying methods
+           T query(int it){
+               qlo = qhi = it;
+               return _query(1,1,N);
+           }
+           T query(int it,int jt){
+               qlo = it, qhi = jt;
+               return _query(1,1,N);
+           }
+     private:
+             void _update(int n,int lo,int hi){
+                  propagate(n,lo,hi);
+                  if(lo > qhi || hi < qlo || lo > hi)
+                     return;
+                  else{
+                      if(lo >= qlo && hi <= qhi){
+                         tree[n] += abs(hi-lo+1)*V;
+                         if(lo!=hi){
+                            lazy[2*n]   += V;
+                            lazy[2*n+1] += V;
+                         }
+                      }else{
+                          _update(2*n,lo,(lo+hi)/2);
+                          _update(2*n+1,(lo+hi)/2+1,hi);
+                          tree[n] = tree[2*n]+tree[2*n+1];
+                      }
+                  }
+             }
+             T _query(int n,int lo,int hi){
+                 propagate(n,lo,hi);
+                 if(lo > qhi || hi < qlo || lo > hi)
+                    return 0;
+                 else if(lo >= qlo && hi <= qhi)
+                    return tree[n];
+                 else
+                    return _query(2*n,lo,(lo+hi)/2)+_query(2*n+1,(lo+hi)/2+1,hi);
+             }
+             // helper methods
+             void propagate(int n,int lo,int hi){
+                if(lazy[n]!=0){
+                    tree[n]  += abs(hi-lo+1)*lazy[n];
+                    if(lo!=hi){
+                       lazy[2*n]   += lazy[n];
+                       lazy[2*n+1] += lazy[n];
+                    }
+                    lazy[n] = 0;
+                }
+             }
+};
+
+segment_tree<int> tree(1000);
+
+int main(){
+    //tree.update(0,500);
+    //tree.update(9,1000);
+
+    for(int i = 1;i <= 5;i++)
+        tree.update(i,500);
+    cout << tree.query(1,5) << endl;
+    tree.update(1,5,500);
+
+    cout << tree.query(1,5) << endl;
+    cout << tree.query(1,2) << endl;
+    cout << tree.query(1,3) << endl;
+}

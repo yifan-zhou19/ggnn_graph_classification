@@ -1,95 +1,137 @@
-M
+package com.interview.graph;
 
-Recursively 在segment tree里面找index, update it with value.   
-
-每个iteration，很可能（要么左手，要么右手）max就变了。所以每次都left.max and right.max compare一下。   
-最后轮回到头顶，头顶一下包括头顶，就全部都是max了。   
-
-Divde and Conquer
-
-```
-/*
-For a Maximum Segment Tree, which each node has an extra value max to store the maximum value in this node's interval.
-
-Implement a modify function with three parameter root, 
-index and value to change the node's value with [start, end] = [index, index] to the new given value. 
-Make sure after this change, every node in segment tree still has the max attribute with the correct value.
-
-Example
-For segment tree:
-
-                      [1, 4, max=3]
-                    /                \
-        [1, 2, max=2]                [3, 4, max=3]
-       /              \             /             \
-[1, 1, max=2], [2, 2, max=1], [3, 3, max=0], [4, 4, max=3]
-
-if call modify(root, 2, 4), we can get:
-
-                      [1, 4, max=4]
-                    /                \
-        [1, 2, max=4]                [3, 4, max=3]
-       /              \             /             \
-[1, 1, max=2], [2, 2, max=4], [3, 3, max=0], [4, 4, max=3]
-
-or call modify(root, 4, 0), we can get:
-
-                      [1, 4, max=2]
-                    /                \
-        [1, 2, max=2]                [3, 4, max=0]
-       /              \             /             \
-[1, 1, max=2], [2, 2, max=1], [3, 3, max=0], [4, 4, max=0]
-Note
-We suggest you finish problem Segment Tree Build and Segment Tree Query first.
-
-Challenge
-Do it in O(h) time, h is the height of the segment tree.
-
-Tags Expand 
-LintCode Copyright Binary Tree Segment Tree
-*/
-
-/*
-  Thought:
-  Renew index x with new value, and update the max value alone the way.
-  1. Use segmenttree property to find that leaf, which is node.start == node.end == index.
-  2. Along the way, whenever going to one segment/interval, compare left.max and right.max again, and update max.
-*/
+import java.util.*;
 
 /**
- * Definition of SegmentTreeNode:
- * public class SegmentTreeNode {
- *     public int start, end, max;
- *     public SegmentTreeNode left, right;
- *     public SegmentTreeNode(int start, int end, int max) {
- *         this.start = start;
- *         this.end = end;
- *         this.max = max
- *         this.left = this.right = null;
- *     }
- * }
+ * Date 04/14/2014
+ * @author Tushar Roy
+ *
+ * Ford fulkerson method Edmonds Karp algorithm for finding max flow
+ *
+ * Capacity - Capacity of an edge to carry units from source to destination vertex
+ * Flow - Actual flow of units from source to destination vertex of an edge
+ * Residual capacity - Remaining capacity on this edge i.e capacity - flow
+ * AugmentedPath - Path from source to sink which has residual capacity greater than 0
+ *
+ * Time complexity is O(VE^2)
+ *
+ * References:
+ * http://www.geeksforgeeks.org/ford-fulkerson-algorithm-for-maximum-flow-problem/
+ * https://en.wikipedia.org/wiki/Edmonds%E2%80%93Karp_algorithm
  */
-public class Solution {
-    /**
-     *@param root, index, value: The root of segment tree and 
-     *@ change the node's value with [index, index] to the new given value
-     *@return: void
-     */
-    public void modify(SegmentTreeNode root, int index, int value) {
-      if (root.start == root.end && root.start == index) {
-        root.max = value;
-        return;
-      }
+public class FordFulkerson {
 
-      //Divide and seawrch
-      int mid = (root.start + root.end)/2;
-      if (index <= mid) {
-        modify(root.left, index, value);
-      } else {
-        modify(root.right, index, value);
-      }
-      root.max = Math.max(root.left.max, root.right.max);
+    public int maxFlow(int capacity[][], int source, int sink){
+
+        //declare and initialize residual capacity as total avaiable capacity initially.
+        int residualCapacity[][] = new int[capacity.length][capacity[0].length];
+        for (int i = 0; i < capacity.length; i++) {
+            for (int j = 0; j < capacity[0].length; j++) {
+                residualCapacity[i][j] = capacity[i][j];
+            }
+        }
+
+        //this is parent map for storing BFS parent
+        Map<Integer,Integer> parent = new HashMap<>();
+
+        //stores all the augmented paths
+        List<List<Integer>> augmentedPaths = new ArrayList<>();
+
+        //max flow we can get in this network
+        int maxFlow = 0;
+
+        //see if augmented path can be found from source to sink.
+        while(BFS(residualCapacity, parent, source, sink)){
+            List<Integer> augmentedPath = new ArrayList<>();
+            int flow = Integer.MAX_VALUE;
+            //find minimum residual capacity in augmented path
+            //also add vertices to augmented path list
+            int v = sink;
+            while(v != source){
+                augmentedPath.add(v);
+                int u = parent.get(v);
+                if (flow > residualCapacity[u][v]) {
+                    flow = residualCapacity[u][v];
+                }
+                v = u;
+            }
+            augmentedPath.add(source);
+            Collections.reverse(augmentedPath);
+            augmentedPaths.add(augmentedPath);
+
+            //add min capacity to max flow
+            maxFlow += flow;
+
+            //decrease residual capacity by min capacity from u to v in augmented path
+            // and increase residual capacity by min capacity from v to u
+            v = sink;
+            while(v != source){
+                int u = parent.get(v);
+                residualCapacity[u][v] -= flow;
+                residualCapacity[v][u] += flow;
+                v = u;
+            }
+        }
+        printAugmentedPaths(augmentedPaths);
+        return maxFlow;
+    }
+
+    /**
+     * Prints all the augmented path which contribute to max flow
+     */
+    private void printAugmentedPaths(List<List<Integer>> augmentedPaths) {
+        System.out.println("Augmented paths");
+        augmentedPaths.forEach(path -> {
+            path.forEach(i -> System.out.print(i + " "));
+            System.out.println();
+        });
+    }
+
+    /**
+     * Breadth first search to find augmented path
+     */
+    private boolean BFS(int[][] residualCapacity, Map<Integer,Integer> parent,
+            int source, int sink){
+        Set<Integer> visited = new HashSet<>();
+        Queue<Integer> queue = new LinkedList<>();
+        queue.add(source);
+        visited.add(source);
+        boolean foundAugmentedPath = false;
+        //see if we can find augmented path from source to sink
+        while(!queue.isEmpty()){
+            int u = queue.poll();
+            for(int v = 0; v < residualCapacity.length; v++){
+                //explore the vertex only if it is not visited and its residual capacity is
+                //greater than 0
+                if(!visited.contains(v) &&  residualCapacity[u][v] > 0){
+                    //add in parent map saying v got explored by u
+                    parent.put(v, u);
+                    //add v to visited
+                    visited.add(v);
+                    //add v to queue for BFS
+                    queue.add(v);
+                    //if sink is found then augmented path is found
+                    if ( v == sink) {
+                        foundAugmentedPath = true;
+                        break;
+                    }
+                }
+            }
+        }
+        //returns if augmented path is found from source to sink or not
+        return foundAugmentedPath;
+    }
+    
+    public static void main(String args[]){
+        FordFulkerson ff = new FordFulkerson();
+        int[][] capacity = {{0, 3, 0, 3, 0, 0, 0},
+                            {0, 0, 4, 0, 0, 0, 0},
+                            {3, 0, 0, 1, 2, 0, 0},
+                            {0, 0, 0, 0, 2, 6, 0},
+                            {0, 1, 0, 0, 0, 0, 1},
+                            {0, 0, 0, 0, 0, 0, 9},
+                            {0, 0, 0, 0, 0, 0, 0}};
+
+        System.out.println("\nMaximum capacity " + ff.maxFlow(capacity, 0, 6));
     }
 }
-
-```

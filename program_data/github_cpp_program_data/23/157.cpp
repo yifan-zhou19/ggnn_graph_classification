@@ -1,79 +1,130 @@
-/*
-	Simple implementation of Prim's MST algorithm
-	(Should be rewritten to handle conditions like overflow, etc...)
-*/
+#include <cstdio>
+#include <cstdlib>
 
-// g[v] is a vector of (len, u) pairs
+#define NIL 0
+#define LAYER_COUNT 20
+#define NODE_COUNT 100000
 
-vector<pii> g[N];
+using namespace std;
 
-int minimum_spanning_tree()
+struct node
 {
-	set<int> seen;
-	set<pii> q;
-	q.insert({0, 0});
-	int len = 0;
-	while(!q.empty())
+	int id, value;
+	node *next, *lower;
+	node();
+};
+
+node::node() : next(NIL) { }
+
+node *head[LAYER_COUNT];
+
+void init()
+{
+	head[0] = new node;
+	for (int i = 1; i < LAYER_COUNT; i++)
 	{
-		auto p = q.begin();
-		len += p->first;
-		int v = p->second;
-		q.erase(p);
-		if(!seen.count(v))
-		{
-			seen.insert(v);
-			for(auto e : g[v])
-				q.insert(e);
-		}
+		head[i] = new node;
+		head[i]->lower = head[i - 1];
 	}
-	return len;
 }
 
-
-
-/*
-	Implementation of Chu-Liu-Edmonds algorithm for computing the MST on directed graphs
-*/
-
-struct edge { int u, v, c; };
-vector<edge> es;
-edge * pre[N];
-int n, id[N], pass[N];
-
-int directed_minimum_spanning_tree(int root)
+void insert(int id, int value)
 {
-	int ans = 0, m = n;
-	while(true)
+	int k = 0;
+	while ((rand() & 1) == 0)
 	{
-		clr0(pre), clr1(id), clr1(pass);
-		for(auto & e : es) if(!pre[e.v] || e.c < pre[e.v]->c)
-			pre[e.v] = &e;
-		rep(v, m) if(v != root && !pre[v])
-			return -1;
-		int k = 0;
-		rep(v, m) if(v != root)
-		{
-			ans += pre[v]->c;
-			int u = v;
-			while(u != root && pass[u] == -1)
-			{
-				pass[u] = v;
-				u = pre[u]->u;
-			}
-			if(pass[u] == v)
-			{
-				while(id[u] == -1)
-					id[u] = k, u = pre[u]->u;
-				k++;
-			}
-		}
-		if(k == 0) break;
-		rep(v, m) if(id[v] == -1)
-			id[v] = k++;
-		vector<edge> fs;
-		for(auto & e : es) if(id[e.u] != id[e.v])
-			fs.emplace_back(id[e.u], id[e.v], e.c - pre[e.v]->c);
-		root = id[root], m = k, es = move(fs);
+		k++;
 	}
-	return ans;
+	node *prev = head[k], *cur = head[k], *upper = NIL;
+	for (; k >= 0; k--)
+	{
+		while (cur != NIL && cur->id < id)
+		{
+			prev = cur;
+			cur = cur->next;
+		}
+		node *o = new node;
+		o->next = cur;
+		o->id = id;
+		o->value = value;
+		prev->next = o;
+		prev = prev->lower;
+		cur = prev;
+		if (upper != NIL)
+		{
+			upper->lower = o;
+		}
+		upper = o;
+	}
+}
+
+int find(int id)
+{
+	node *prev, *cur = head[LAYER_COUNT - 1];
+	for (int k = LAYER_COUNT - 1; k >= 0; k--)
+	{
+		while (cur != NIL && cur->id < id)
+		{
+			prev = cur;
+			cur = cur->next;
+		}
+		if (cur != NIL && cur->id == id)
+		{
+			return cur->value;
+		}
+		else
+		{
+			prev = prev->lower;
+			cur = prev;
+		}
+	}
+	return -1;
+}
+
+void debug()
+{
+	for (int i = 5; i >= 0; i--)
+	{
+		node *cur = head[i];
+		printf("head[%d]", i);
+		while (cur != NIL)
+		{
+			printf(" -> (%d, %d)", cur->id, cur->value);
+			cur = cur->next;
+		}
+		printf("\n");
+	}
+}
+
+int main()
+{
+	int in, id, value;
+	init();
+	while (true)
+	{
+		scanf("%d", &in);
+		if (in == 1)
+		{
+			scanf("%d%d", &id, &value);
+			insert(id, value);
+		}
+		else if (in == 2)
+		{
+			scanf("%d", &id);
+			printf("%d\n", find(id));
+		}
+		else if (in == 4)
+		{
+			debug();
+		}
+		else if (in == 0)
+		{
+			return 0;
+		}
+		else
+		{
+			printf("No such command!\n");
+		}
+	}
+	return 0;
 }

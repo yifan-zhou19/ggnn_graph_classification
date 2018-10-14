@@ -1,73 +1,95 @@
-package kuvaldis.algorithm.geometry;
+package Queue;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.Scanner;
 
-public class JarvisConvexHull {
+public class Main {
 
-    private final List<Point> points;
+	public static void main(String[] args) {
+		Queue myqueue = new Queue(5);
+		Scanner input = new Scanner(System.in);
+		String command = "";
+		while (!command.equals("quit")) {
+			System.out.println();
+			System.out
+					.println("Do you want to insert, remove, getsize or quit?");
+			command = input.next();
+			if (command.equals("insert")) {
+				System.out.println("Enter name to insert");
+				String name = input.next();
+				myqueue.insert(name);
+				System.out.println(name + " has been inserted into the queue");
+				myqueue.printout();
+			} else if (command.equals("remove")) {
+				System.out.println(myqueue.remove()
+						+ " has been removed from the queue");
+				myqueue.printout();
+			} else if (command.equals("getsize")) {
+				System.out.println("The size of the queue is "
+						+ myqueue.getSize());
+			}
+		}
+	}
+}
 
-    public JarvisConvexHull(final Point... points) {
-        this.points = Stream.of(points).collect(Collectors.toList());
-    }
 
-    public List<Point> build() {
-        // 0. It's possible to create a convex hull only out of 3 or more points
-        if (points.size() < 3) {
-            return Collections.emptyList();
-        }
 
-        // 1. Pick p0, the point with lowest y coordinate.
-        // If there are two or more points with lowest coordinate, pick one with lowest x coordinate.
-        final Point p0 = points.stream()
-                .min(Comparator.comparingInt(Point::getY)
-                        .thenComparingInt(Point::getX))
-                .orElseThrow(IllegalStateException::new);
 
-        // 2. The idea is to "wrap" points. Thus, we look for a point having smallest polar angle relatively to the current one.
-        // That is, the angle between vectors, both are starting from the current point, but one is directed strictly to the right,
-        // i.e. a horizontal, the other one is to the next point.
-        // If there are several points with the same lowest angle, then we pick farthest.
-        // We do it until we reach a point with highest y value.
-        // Then we do quite the same, but this time we search lowest angle from upside down point of view,
-        // that is, between horizontal vector directed to the left and vector constituted by current point and a potential one.
 
-        final int maxY = points.stream()
-                .mapToInt(Point::getY)
-                .max()
-                .orElse(Integer.MAX_VALUE);
 
-        final LinkedList<Point> result = new LinkedList<>();
-        result.add(p0);
-        Point current = p0;
-        int direction = 1;
-        while (true) {
-            final Vector horizontalVector = new Vector(current, new Point(current.getX() + direction, current.getY()));
-            final Point p1 = current;
-            final int sign = direction;
-            current = points.stream()
-                    .filter(point -> !p1.equals(point))
-                    // take into account only those having y higher or equal to current for right chain
-                    // and lower or equal for left chain
-                    .filter(point -> Integer.compare(point.getY(), p1.getY()) * sign >= 0)
-                    .map(p2 -> new Vector(p1, p2))
-                    .max(Comparator.comparingDouble(horizontalVector::cos)
-                            .thenComparingDouble(Vector::magnitude))
-                    .map(Vector::getTo)
-                    .orElseThrow(IllegalStateException::new);
-            if (current.getY() == maxY) {
-                direction = -1;
-            }
-            if (p0.equals(current)) {
-                break;
-            }
-            result.add(current);
-        }
+package Queue;
 
-        return result;
-    }
+public class Queue {
+
+	private String[] array;
+	private int size;
+	private int front;
+	private int rear;
+	private int nItems;
+
+	public Queue(int s) {
+		size = s;
+		array = new String[size];
+		front = 0;
+		rear = -1;
+		nItems = 0;
+	}
+
+	public boolean insert(String name) {
+		if (isFull())
+			return false;
+		if (rear == size - 1)
+			rear = -1;
+		rear++;
+		array[rear] = name;
+		nItems++;
+		return true;
+	}
+
+	public String remove() {
+		if (isEmpty())
+			return null;
+		String temp = array[front];
+		front++;
+		if (front == size)
+			front = 0;
+		return temp;
+	}
+
+	public boolean isFull() {
+		return (nItems == size);
+	}
+
+	public boolean isEmpty() {
+		return (nItems == 0);
+	}
+
+	public int getSize() {
+		return nItems;
+	}
+
+	public void printout() {
+		for(int i=front;i<nItems;i++){
+			System.out.print(array[i] + " ");
+		}
+	}
 }

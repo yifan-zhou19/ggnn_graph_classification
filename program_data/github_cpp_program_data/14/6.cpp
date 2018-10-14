@@ -1,193 +1,182 @@
-#include "Heap.hpp"
+/*//////////////////////////////////////////////////////////////////////////////////////
+// IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
 
-#define CHANGUI 0x100
+//  By downloading, copying, installing or using the software you agree to this license.
+//  If you do not agree to this license, do not download, install,
+//  copy or use the software.
 
-// To do
-// [ ] Use an internal variable to mantain time. When time is set to 0, make time == order of call
-// [ ] check for overlapping chunks (when alloc() is called)
-// [ ] make two different calls per function:
-//     [ ] malloc_enter(), malloc_return()
-//     [ ] free_enter(), free_return()
-//     [ ] realloc_enter(), realloc_return(), 
-//     [ ] etc.
+// This is a implementation of the Logistic Regression algorithm in C++ in OpenCV.
+
+// AUTHOR:
+// Rahul Kavi rahulkavi[at]live[at]com
 //
 
-bool operator<(const HeapChunk &t, const HeapChunk &other) {
-	return ((t.base<other.base) || (t.base==other.base && t.allocTime<other.allocTime));
-}
+// contains a subset of data from the popular Iris Dataset (taken from
+// "http://archive.ics.uci.edu/ml/datasets/Iris")
 
-bool operator<(const HeapRegion &t, const HeapRegion &other) {
-	return ((t.base<other.base) || (t.base==other.base && t.allocTime<other.allocTime));
-}
+// # You are free to use, change, or redistribute the code in any way you wish for
+// # non-commercial purposes, but please maintain the name of the original author.
+// # This code comes with no warranty of any kind.
 
-void HeapRegion::alloc(unsigned int base, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapChunk toFind(base, base+size, time, caller, pid);
+// #
+// # You are free to use, change, or redistribute the code in any way you wish for
+// # non-commercial purposes, but please maintain the name of the original author.
+// # This code comes with no warranty of any kind.
 
-    if (top < toFind.top) {
-        top = toFind.top + CHANGUI;
-        verprintf(3,("Readjusting base to 0x%08x\n", top));
+// # Logistic Regression ALGORITHM
+
+//                           License Agreement
+//                For Open Source Computer Vision Library
+
+// Copyright (C) 2000-2008, Intel Corporation, all rights reserved.
+// Copyright (C) 2008-2011, Willow Garage Inc., all rights reserved.
+// Third party copyrights are property of their respective owners.
+
+// Redistribution and use in source and binary forms, with or without modification,
+// are permitted provided that the following conditions are met:
+
+//   * Redistributions of source code must retain the above copyright notice,
+//     this list of conditions and the following disclaimer.
+
+//   * Redistributions in binary form must reproduce the above copyright notice,
+//     this list of conditions and the following disclaimer in the documentation
+//     and/or other materials provided with the distribution.
+
+//   * The name of the copyright holders may not be used to endorse or promote products
+//     derived from this software without specific prior written permission.
+
+// This software is provided by the copyright holders and contributors "as is" and
+// any express or implied warranties, including, but not limited to, the implied
+// warranties of merchantability and fitness for a particular purpose are disclaimed.
+// In no event shall the Intel Corporation or contributors be liable for any direct,
+// indirect, incidental, special, exemplary, or consequential damages
+// (including, but not limited to, procurement of substitute goods or services;
+// loss of use, data, or profits; or business interruption) however caused
+// and on any theory of liability, whether in contract, strict liability,
+// or tort (including negligence or otherwise) arising in any way out of
+// the use of this software, even if advised of the possibility of such damage.*/
+
+#include <iostream>
+
+#include <opencv2/core.hpp>
+#include <opencv2/ml.hpp>
+#include <opencv2/highgui.hpp>
+
+using namespace std;
+using namespace cv;
+using namespace cv::ml;
+
+static void showImage(const Mat &data, int columns, const String &name)
+{
+    Mat bigImage;
+    for(int i = 0; i < data.rows; ++i)
+    {
+        bigImage.push_back(data.row(i).reshape(0, columns));
     }
-	chunks.insert(toFind);
+    imshow(name, bigImage.t());
 }
 
-void HeapRegion::free(unsigned int base, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapChunk toFind(base, 0, time, caller, pid);
-
-    if (!chunks.size()) return;
-	set<HeapChunk>::iterator a=chunks.lower_bound(toFind);
-	a--;
-
-	if (a->base == toFind.base) {
-		// --a;    verprintf(3,("free found -1: %d 0x%08x %lu %lu\n", a->freeTime == 0.0, a->base, a->allocTime, a->freeTime));    a++;
-		        verprintf(2,("free found  0: %d 0x%08x %lu %lu\n", a->freeTime == 0.0, a->base, a->allocTime, a->freeTime));
-		// ++a;    verprintf(3,("free found +1: %d 0x%08x %lu %lu\n", a->freeTime == 0.0, a->base, a->allocTime, a->freeTime));    a--;
-		if (a->freeTime != 0.0) {
-			qprintf(("Freeing a chunk that's already free: 0x%08x\n", toFind.base));
-		} else {
-			((HeapChunk*)&*a)->setFreeTime(toFind.allocTime);
-			((HeapChunk*)&*a)->setFreeCaller(toFind.allocCaller);
-		}
-	} else {
-		verprintf(2,("Found: 0x%08x %lf\n", a->base, a->allocTime));
-		qprintf(("Freeing a not allocated chunk: 0x%08x\n", toFind.base));
-	}
+static float calculateAccuracyPercent(const Mat &original, const Mat &predicted)
+{
+    return 100 * (float)countNonZero(original == predicted) / predicted.rows;
 }
 
-void HeapRegion::realloc(unsigned int base, unsigned int newBase, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller) {
-    free(base, time, pid, caller);
-    alloc(newBase, size, time, pid, caller);
-}
+int main()
+{
+    const String filename = "../data/data01.xml";
+    cout << "**********************************************************************" << endl;
+    cout << filename
+         << " contains digits 0 and 1 of 20 samples each, collected on an Android device" << endl;
+    cout << "Each of the collected images are of size 28 x 28 re-arranged to 1 x 784 matrix"
+         << endl;
+    cout << "**********************************************************************" << endl;
 
-void HeapRegion::setLimits() {
+    Mat data, labels;
+    {
+        cout << "loading the dataset...";
+        FileStorage f;
+        if(f.open(filename, FileStorage::READ))
+        {
+            f["datamat"] >> data;
+            f["labelsmat"] >> labels;
+            f.release();
+        }
+        else
+        {
+            cerr << "file can not be opened: " << filename << endl;
+            return 1;
+        }
+        data.convertTo(data, CV_32F);
+        labels.convertTo(labels, CV_32F);
+        cout << "read " << data.rows << " rows of data" << endl;
+    }
 
-	set<HeapChunk>::iterator i=chunks.begin();
-
-	minAddr = i->base;
-	maxAddr = i->top;
-	minTime = i->allocTime;
-	maxTime = i->freeTime;
-
-    if (i == chunks.end()) return;
-	for (i++;i != chunks.end(); i++) {
-		if (minAddr > i->base) minAddr = i->base;
-
-		if (maxAddr < i->top) maxAddr = i->top;
-
-		if (minTime > i->allocTime) minTime = i->allocTime;
-
-		if (maxTime < i->allocTime) maxTime = i->allocTime;
-		if (maxTime < i->freeTime) maxTime = i->freeTime;
-	}
-
-	for (i=chunks.begin();i != chunks.end(); i++)
-		if (i->freeTime == 0) 
-			((HeapChunk*)&*i)->setFreeTime(maxTime);
-}
-
-void Heap::mmap(unsigned int base, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapRegion toFind(base, base+size, time, caller, pid);
-
-    if (autoRegions) return;
-    _mmap(base, size, time, pid, caller);
-}
-
-void Heap::_mmap(unsigned int base, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapRegion toFind(base, base+size, time, caller, pid);
-
-    verprintf(1,("[%d] mmap(0x%08x, 0x%08x) [%lu]\n", regions.size(), base, size, time));
-    if (!size) return;
-
-	set<HeapRegion>::iterator a=regions.lower_bound(toFind);
-
-    if (a != regions.end()) {
-        --a;
-
-        // --a; verprintf(3,("mmap found -1: 0x%08x-0x%08x %lu %lu\n", a->base, a->top, a->allocTime, a->freeTime)); a++;
-             verprintf(2,("mmap found  0: 0x%08x-0x%08x %lu %lu\n", a->base, a->top, a->allocTime, a->freeTime));
-        // ++a; verprintf(3,("mmap found +1: 0x%08x-0x%08x %lu %lu\n", a->base, a->top, a->allocTime, a->freeTime)); a--;
-
-        if (a->contains(base-1)) {
-            // new starts inside old
-            if (a->contains(base+size-1)) {
-                // new contained in old, just return
-                verprintf(2,("Old Region included new region: 0x%08x-0x%08x [%lu]\n", a->base, a->top, a->allocTime));
-                return;
-            }
-            if (a->top < base+size) {
-                // new extends old
-                verprintf(2,("Extending up region at 0x%08x-0x%08x [%lu]\n", a->base, a->top, a->allocTime));
-                ((HeapRegion*)&*a)->setTop(base+size);
-                return;
-            }
-        } else if (a->contains(base+size)) {
-            if (a->contains(base)) {
-                // new contained in old, just return
-                verprintf(2,("Old Region included new region: 0x%08x-0x%08x [%lu]\n", a->base, a->top, a->allocTime));
-                return;
-            }
-            if (a->base > base) {
-                // new is right before old (new extends old to lower memory)
-                verprintf(2,("Extending down region at 0x%08x-0x%08x [%lu]\n", a->base, a->top, a->allocTime));
-                ((HeapRegion*)&*a)->setBase(base);
-                return;
-            }
+    Mat data_train, data_test;
+    Mat labels_train, labels_test;
+    for(int i = 0; i < data.rows; i++)
+    {
+        if(i % 2 == 0)
+        {
+            data_train.push_back(data.row(i));
+            labels_train.push_back(labels.row(i));
+        }
+        else
+        {
+            data_test.push_back(data.row(i));
+            labels_test.push_back(labels.row(i));
         }
     }
-    regions.insert(toFind);
-}
+    cout << "training/testing samples count: " << data_train.rows << "/" << data_test.rows << endl;
 
-void Heap::munmap(unsigned int base, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapRegion toFind(base, 0, time, caller, pid);
+    // display sample image
+    showImage(data_train, 28, "train data");
+    showImage(data_test, 28, "test data");
 
-    if (autoRegions) return;
-	verprintf(1,("[%d] munmap(0x%08x) [%lu]\n", pid, base, time));
+    // simple case with batch gradient
+    cout << "training...";
+    //! [init]
+    Ptr<LogisticRegression> lr1 = LogisticRegression::create();
+    lr1->setLearningRate(0.001);
+    lr1->setIterations(10);
+    lr1->setRegularization(LogisticRegression::REG_L2);
+    lr1->setTrainMethod(LogisticRegression::BATCH);
+    lr1->setMiniBatchSize(1);
+    //! [init]
+    lr1->train(data_train, ROW_SAMPLE, labels_train);
+    cout << "done!" << endl;
 
-}
+    cout << "predicting...";
+    Mat responses;
+    lr1->predict(data_test, responses);
+    cout << "done!" << endl;
 
-void Heap::realloc(unsigned int base, unsigned int newBase, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller) {
-	verprintf(1,("[%d] realloc(0x%08x,0x%08x,0x%08x) [%lu]\n", pid, base, newBase, size, time));
+    // show prediction report
+    cout << "original vs predicted:" << endl;
+    labels_test.convertTo(labels_test, CV_32S);
+    cout << labels_test.t() << endl;
+    cout << responses.t() << endl;
+    cout << "accuracy: " << calculateAccuracyPercent(labels_test, responses) << "%" << endl;
 
-    free(base, time, pid, caller);
-    alloc(newBase, size, time, pid, caller);
-}
+    // save the classfier
+    const String saveFilename = "NewLR_Trained.xml";
+    cout << "saving the classifier to " << saveFilename << endl;
+    lr1->save(saveFilename);
 
-void Heap::alloc(unsigned int base, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller, unsigned int dontRecurse) {
-    HeapRegion toFind(base, base+size, time, caller, pid);
+    // load the classifier onto new object
+    cout << "loading a new classifier from " << saveFilename << endl;
+    Ptr<LogisticRegression> lr2 = StatModel::load<LogisticRegression>(saveFilename);
 
-	verprintf(1,("[%d] alloc(%d) [%lu] = 0x%08x\n", pid, size, time, base));
+    // predict using loaded classifier
+    cout << "predicting the dataset using the loaded classfier...";
+    Mat responses2;
+    lr2->predict(data_test, responses2);
+    cout << "done!" << endl;
 
-	set<HeapRegion>::iterator a=regions.lower_bound(toFind);
+    // calculate accuracy
+    cout << labels_test.t() << endl;
+    cout << responses2.t() << endl;
+    cout << "accuracy: " << calculateAccuracyPercent(labels_test, responses2) << "%" << endl;
 
-    if (a != regions.end() && (--a)->contains(base)) {
-
-        // a--; verprintf(3,("region alloc found -1 (%d): 0x%08x-0x%08x %lu %lu\n", a->contains(base), a->base, a->top, a->allocTime, a->freeTime)); a++;
-             verprintf(2,("region alloc found  0 (%d): 0x%08x-0x%08x %lu %lu\n", a->contains(base), a->base, a->top, a->allocTime, a->freeTime));
-        // a++; verprintf(3,("region alloc found +1 (%d): 0x%08x-0x%08x %lu %lu\n", a->contains(base), a->base, a->top, a->allocTime, a->freeTime)); a--;
-
-        a->alloc(base, size, time, pid, caller);
-    } else {
-        if (autoRegions && !dontRecurse) {
-            _mmap(base-CHANGUI,(size+CHANGUI-1+CHANGUI)&~(CHANGUI-1),time,pid,caller);
-            alloc(base, size, time, pid, caller, 1);
-        } else {
-            verprintf(2,("alloc(0x%08x, 0x%08x) in loose region\n", base, size));
-            loose.alloc(base,size,time,pid,caller);
-        }
-    }
-}
-
-void Heap::free(unsigned int base, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapRegion toFind(base, 0, time, caller, pid);
-
-	verprintf(1,("[%d] free(0x%08x) [%lu]\n", toFind.pid, toFind.base,toFind.allocTime));
-
-	set<HeapRegion>::iterator a=regions.lower_bound(toFind);
-
-    if (a != regions.end() && (a--, a->contains(base))) {
-        verprintf(3,("region free found (%d): 0x%08x-0x%08x %lu %lu\n", a->contains(base), a->base, a->top, a->allocTime, a->freeTime));
-        a->free(base, time, pid, caller);
-    } else {
-        verprintf(2,("free(0x%08x) in loose region\n", base));
-        loose.free(base, time, pid, caller);
-    }
+    waitKey(0);
+    return 0;
 }

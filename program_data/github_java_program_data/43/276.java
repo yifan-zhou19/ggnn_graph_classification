@@ -1,143 +1,113 @@
-package com.diwayou.algs.book; /*************************************************************************
- *  Compilation:  javac Stack.java
- *  Execution:    java Stack < input.txt
- *
- *  A generic stack, implemented using a linked list. Each stack
- *  element is of type Item.
- *  
- *  % more tobe.txt 
- *  to be or not to - be - - that - - - is
- *
- *  % java Stack < tobe.txt
- *  to be not that or be (2 left on stack)
- *
- *************************************************************************/
+package com.curioustake.sftm.activity;
 
-import com.diwayou.algs.util.StdIn;
-import com.diwayou.algs.util.StdOut;
+import com.curioustake.sftm.utils.DataValidator;
+import com.curioustake.sftm.utils.RandomDataGenerator;
 
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 
 /**
- *  The <tt>Stack</tt> class represents a last-in-first-out (LIFO) stack of generic items.
- *  It supports the usual <em>push</em> and <em>pop</em> operations, along with methods
- *  for peeking at the top item, testing if the stack is empty, and iterating through
- *  the items in LIFO order.
- *  <p>
- *  All stack operations except iteration are constant time.
- *  <p>
- *  For additional documentation, see <a href="/algs4/13stacks">Section 1.3</a> of
- *  <i>Algorithms, 4th Edition</i> by Robert Sedgewick and Kevin Wayne.
- */
-public class Stack<Item> implements Iterable<Item> {
-    private int N;          // size of the stack
-    private Node first;     // top of stack
+ * Purpose : Sort a given input
+ *
+ * Details: Non-Comparison sort "MOSTLY"
+ *
+ * Complexity (Time): O(n log (n))
+ * */
 
-    // helper linked list class
-    private class Node {
-        private Item item;
-        private Node next;
-    }
+public class P23_BucketSort implements Activity {
 
-   /**
-     * Create an empty stack.
-     */
-    public Stack() {
-        first = null;
-        N = 0;
-    }
+    enum SORT_ORDER { ASCENDING, DESCENDING}
 
-   /**
-     * Is the stack empty?
-     */
-    public boolean isEmpty() {
-        return first == null;
-    }
+    public void invoke(String[] args) {
+        System.out.println( "Execute => " + Arrays.toString(args) );
 
-   /**
-     * Return the number of items in the stack.
-     */
-    public int size() {
-        return N;
-    }
+        final int count = Integer.parseInt(args[1]);
+        final int max = Integer.parseInt(args[2]);
+        final boolean printResults = Boolean.parseBoolean(args[3]);
 
-   /**
-     * Add the item to the stack.
-     */
-    public void push(Item item) {
-        Node oldfirst = first;
-        first = new Node();
-        first.item = item;
-        first.next = oldfirst;
-        N++;
-    }
+        Integer[] original = RandomDataGenerator.getRandomIntegerArray(count, max, printResults);
 
-   /**
-     * Delete and return the item most recently added to the stack.
-     * Throw an exception if no such item exists because the stack is empty.
-     */
-    public Item pop() {
-        if (isEmpty()) throw new RuntimeException("Stack underflow");
-        Item item = first.item;        // save item to return
-        first = first.next;            // delete first node
-        N--;
-        return item;                   // return the saved item
-    }
-
-
-   /**
-     * Return the item most recently added to the stack.
-     * Throw an exception if no such item exists because the stack is empty.
-     */
-    public Item peek() {
-        if (isEmpty()) throw new RuntimeException("Stack underflow");
-        return first.item;
-    }
-
-   /**
-     * Return string representation.
-     */
-    public String toString() {
-        StringBuilder s = new StringBuilder();
-        for (Item item : this)
-            s.append(item + " ");
-        return s.toString();
-    }
-       
-
-   /**
-     * Return an iterator to the stack that iterates through the items in LIFO order.
-     */
-    public Iterator<Item> iterator()  { return new ListIterator();  }
-
-    // an iterator, doesn't implement remove() since it's optional
-    private class ListIterator implements Iterator<Item> {
-        private Node current = first;
-        public boolean hasNext()  { return current != null;                     }
-        public void remove()      { throw new UnsupportedOperationException();  }
-
-        public Item next() {
-            if (!hasNext()) throw new NoSuchElementException();
-            Item item = current.item;
-            current = current.next; 
-            return item;
+        if(count <= 1) {
+            System.out.println("INPUT SIZE TO SMALL ");
+            return;
         }
+
+        // BUCKET SORT ASCENDING
+        Integer[] inputAsc = original.clone();
+        Integer[] outputAsc = sort(inputAsc, SORT_ORDER.ASCENDING);
+        System.out.println("\n###################### BUCKET SORT validateSortAscending ##############################");
+        System.out.println("\nBUCKET SORT ASCENDING SUCCESSFUL? [" + DataValidator.validateSortAscending(original, outputAsc, printResults) + "]\n");
+        System.out.println("############################################################################################\n");
+
+        // BUCKET SORT DESCENDING
+        Integer[] inputDesc = original.clone();
+        Integer[] outputDesc = sort(inputDesc, SORT_ORDER.DESCENDING);
+        System.out.println("\n###################### BUCKET SORT validateSortDescending #############################");
+        System.out.println("\nBUCKET SORT DESCENDING SUCCESSFUL? [" + DataValidator.validateSortDescending(original, outputDesc, printResults) + "]\n");
+        System.out.println("############################################################################################\n");
     }
 
+    private Integer[] sort(Integer[] input, SORT_ORDER sortOrder) {
 
-   /**
-     * A test client.
-     */
-    public static void main(String[] args) {
-        Stack<String> s = new Stack<String>();
-        while (!StdIn.isEmpty()) {
-            String item = StdIn.readString();
-            if (!item.equals("-")) s.push(item);
-            else if (!s.isEmpty()) StdOut.print(s.pop() + " ");
+        if(input.length <= 1)
+            return input;
+
+        final Integer max = Arrays.stream(input).max(Integer::compareTo).get();
+
+        final int maxFactor = getMaxFactor(max);
+
+        final List<List<Integer>> buckets = new ArrayList<>();
+
+        final int maxBucketSize = max/maxFactor;
+
+        for(int i=0; i<=maxBucketSize; i++)
+            buckets.add(new ArrayList<>());
+
+        for(int i=0; i<input.length; i++) {
+            int bucketId = input[i]/maxFactor;
+            buckets.get(bucketId).add(input[i]);
         }
-        StdOut.println("(" + s.size() + " left on stack)");
+
+        for(int i=0; i<buckets.size(); i++) {
+            if(input.length == buckets.get(i).size()) {
+                if(sortOrder.equals(SORT_ORDER.ASCENDING))
+                    Arrays.sort(input);
+                else
+                    Arrays.sort(input, Comparator.reverseOrder());
+                return input;
+            }
+
+            buckets.set(i, Arrays.asList(sort(buckets.get(i).stream().toArray(Integer[]::new), sortOrder)));
+        }
+        return order(buckets, sortOrder);
+    }
+
+    private int getMaxFactor(Integer max) {
+        int maxFactor = 10;
+        while((max/maxFactor) > 10)
+            maxFactor*=10;
+        return maxFactor;
+    }
+
+    private Integer[] order(final List<List<Integer>> sortedBuckets , SORT_ORDER sortOrder) {
+        List<Integer> output = new ArrayList<>();
+        switch (sortOrder) {
+            case ASCENDING:
+                sortedBuckets.stream().forEach(b -> output.addAll(b));
+                break;
+            case DESCENDING:
+                int index = 0;
+                for(int i=sortedBuckets.size()-1; i>=0; i--) {
+                    output.addAll(index, sortedBuckets.get(i));
+                    index = index + sortedBuckets.get(i).size();
+                }
+                break;
+            default:
+                throw new RuntimeException("Invalid sort Order");
+        }
+        return output.toArray(new Integer[output.size()]);
     }
 }
 

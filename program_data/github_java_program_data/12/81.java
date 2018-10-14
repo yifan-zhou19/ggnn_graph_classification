@@ -1,56 +1,30 @@
-/*Implement Merge Sort */
- 
-    public static int[] merge_sort(int arr[]){
-      if(arr.length <= 1) return arr;
-      
-      int middle = arr.length / 2;
-      int leftArray[] = new int[middle];
-      int rightArray[] = new int [arr.length - middle];
-      
-      //Populate left array with left half of input array
-      for(int i = 0; i < middle; i++)
-        leftArray[i] = arr[i];
-      
-      //Populate right array with right half of input array
-      int rIndex = 0;
-      for(int j = middle; j < arr.length; j++)
-       rightArray[rIndex++] = arr[j];
-      
-      //Recursive calls on left array and on right array
-      leftArray = merge_sort(leftArray);
-      rightArray = merge_sort(rightArray);
-      
-      //Merge the results and return
-      return  merge(leftArray, rightArray);
-      
-    }
-    
-    public static int[] merge(int left[],int right[]){
-      int result[]  = new int[left.length + right.length];
-      int lIndex = 0;
-      int rIndex = 0;
-      int resultIndex = 0;
-      
-      while(lIndex < left.length || rIndex < right.length){
-      
-        //Condition 1. We have elements on both sides
-          if(lIndex < left.length && rIndex < right.length){
-            if(left[lIndex] <= right[rIndex])
-              result[resultIndex++] = left[lIndex++];
-            else  
-              result[resultIndex++] = right[rIndex++]; 
-        
-          }else{
-         
-         //Condition 2. We only have elements on left side
-          if(lIndex < left.length)    
-          result[resultIndex++] = left[lIndex++];
-         
-         //Condition 3. We only have elements on the right side
-          if(rIndex < right.length)
-          result[resultIndex++] = right[rIndex++];
-        }
-      }
-      return result;
-    }
+void go(List<Edge> edges, int nvertices) {
+	//(MAXINT/2)-1 to avoid overflow when we sum two non-existing edges
+	int MAXINT = (Integer.MAX_VALUE/2)-1 ;
 
+	//initialize matrix
+	int[][] adjency_matrix = new int[nvertices+1][nvertices+1] ;	
+	for(int i=0 ; i<adjency_matrix.length ; i++) 
+		Arrays.fill(adjency_matrix[i], MAXINT) ; 
+	
+	//fill matrix
+	for(Edge e : edges)
+		adjency_matrix[e.src][e.dst] = e.weight ;
+	
+	floydWarshall(adjency_matrix, nvertices) ;
+	
+	//...do something with the resulting matrix
+}
+
+
+void floydWarshall(int[][] adjency_matrix, int nvertices) {
+	//k -> middle path between i and j
+	for(int k=1 ; k<=nvertices ; k++)
+		for(int i=1 ; i<=nvertices ; i++)
+			for(int j=1 ; j<=nvertices ; j++) {
+				int dist_through_k = adjency_matrix[i][k]+adjency_matrix[k][j] ;
+				//if path through k is lower than previous direct path, update
+				if(dist_through_k < adjency_matrix[i][j]) 
+					adjency_matrix[i][j] = dist_through_k ;
+			}
+}

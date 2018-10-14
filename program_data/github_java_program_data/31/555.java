@@ -1,33 +1,131 @@
-package algorithm.greedy.kruskal;
+package com.ikaver.aagarwal.fjavaexamples;
 
-/**
- *求一个连通无向图的最小生成树的代价（图边权值为正整数）。
-输入：
-第一行是一个整数N（1<=N<=20），表示有多少个图需要计算。以下有N个图，第i图的第一行是一个整数M（1<=M<=50），表示图的顶点数，
-第i图的第2行至1+M行为一个M*M的二维矩阵，其元素ai,j表示图的i顶点和j顶点的连接情况，如果ai,j=0，表示i顶点和j顶点不相连；如果ai,j>0，
-表示i顶点和j顶点的连接权值。
-输出：
-每个用例，用一行输出对应图的最小生成树的代价。
-1
-6
-0 6 1 5 0 0
-6 0 5 0 3 0
-1 5 0 5 6 4
-5 0 5 0 0 2
-0 3 6 0 0 6
-0 0 4 2 6 0
+import com.ikaver.aagarwal.common.FJavaConf;
+import com.ikaver.aagarwal.common.FastStopwatch;
+import com.ikaver.aagarwal.common.problems.MatrixMultiplication;
+import com.ikaver.aagarwal.fjava.FJavaPool;
+import com.ikaver.aagarwal.fjava.FJavaTask;
 
-算法难点：
-（1）边的选择要求从小到大选择，则开始显然要对边进行升序排序。
-（2）选择的边是否需要，则从判断该边加入后是否构成环入手。
-算法设计：
-（1）对边升序排序
-在此采用链式结构，通过插入排序完成。每一结点存放一条边的左右端点序号、权值及后继结点指针
-（2）边的加入是否构成环
-一开始假定各顶点分别为一组，其组号为端点序号。选择某边后，看其两个端点是否在同一组中，即所在组号是否相同，如果是，
-表示构成了环，则舍去。 如果两个端点所在的组不同，则表示可以加入，则将该边两端的组合并成同一组
- *https://www.jianshu.com/p/50f1d4e0555c
- */
-public class Kruskal {
+public class FJavaMatrixMultiplication extends FJavaTask implements
+MatrixMultiplication {
+
+  private FastStopwatch watch;
+  private float[][] A;
+  private float[][] B;
+  private float[][] C;
+  private int aRow, aCol, bRow, bCol, cRow, cCol;
+  private int size;
+
+  private FJavaPool pool;
+
+  public FJavaMatrixMultiplication(FJavaPool pool) {
+    this.pool = pool;
+    // No need to initialize watch here.
+  }
+
+  public FJavaMatrixMultiplication(float[][] A, float[][] B, float[][] C,
+      int size, int rowA, int colA, int rowB, int colB, int rowC, int colC) {
+    this.A = A;
+    this.B = B;
+    this.C = C;
+    this.size = size;
+    this.aRow = rowA;
+    this.aCol = colA;
+    this.bRow = rowB;
+    this.bCol = colB;
+    this.cRow = rowC;
+    this.cCol = colC;
+    if (FJavaConf.shouldTrackStats()) {
+      watch = new FastStopwatch();
+    }
+  }
+
+  public void multiply(float[][] a, float[][] b, float[][] result) {
+    this.pool.run(new FJavaMatrixMultiplication(a, b, result, a.length, 0, 0,
+        0, 0, 0, 0));
+  }
+
+  @Override
+  public void compute() {
+    if (FJavaConf.shouldTrackStats()) {
+      watch.start();
+    }
+    if (size <= FJavaConf.getMatrixMultiplicationSequentialThreshold()) {
+      multiplySeq();
+      if (FJavaConf.shouldTrackStats()) {
+        addComputeTime(watch.end());
+      }
+      return;
+    }
+
+    int mid = size / 2;
+    if (FJavaConf.shouldTrackStats()) {
+      addComputeTime(watch.end());
+    }
+    FJavaSeq seq1 = new FJavaSeq(new FJavaMatrixMultiplication(A, B, C, mid,
+        aRow, aCol, bRow, bCol, cRow, cCol), new FJavaMatrixMultiplication(A,
+            B, C, mid, aRow, aCol + mid, bRow + mid, bCol, cRow, cCol));
+    FJavaSeq seq2 = new FJavaSeq(new FJavaMatrixMultiplication(A, B, C, mid,
+        aRow, aCol, bRow, bCol + mid, cRow, cCol + mid),
+        new FJavaMatrixMultiplication(A, B, C, mid, aRow, aCol + mid, bRow
+            + mid, bCol + mid, cRow, cCol + mid));
+    FJavaSeq seq3 = new FJavaSeq(new FJavaMatrixMultiplication(A, B, C, mid,
+        aRow + mid, aCol, bRow, bCol, cRow + mid, cCol),
+        new FJavaMatrixMultiplication(A, B, C, mid, aRow + mid, aCol + mid,
+            bRow + mid, bCol, cRow + mid, cCol));
+    FJavaSeq seq4 = new FJavaSeq(new FJavaMatrixMultiplication(A, B, C, mid,
+        aRow + mid, aCol, bRow, bCol + mid, cRow + mid, cCol + mid),
+        new FJavaMatrixMultiplication(A, B, C, mid, aRow + mid, aCol + mid,
+            bRow + mid, bCol + mid, cRow + mid, cCol + mid));
+    seq1.runAsync(this);
+    seq2.runAsync(this);
+    seq3.runAsync(this);
+    seq4.runSync(this);
+    sync();
+  }
+
+  @Override
+  public String toString() {
+    return String.format("MMult: %d %d %d %d %d %d (%d)", aRow, aCol, bRow,
+        bCol, cRow, cCol, size);
+  }
+
+  private void multiplySeq() {
+    for (int j = 0; j < size; j += 2) {
+      if(j % 16 == 0) this.tryLoadBalance();
+      for (int i = 0; i < size; i += 2) {
+
+        float[] a0 = A[aRow + i];
+        float[] a1 = A[aRow + i + 1];
+
+        float s00 = 0.0F;
+        float s01 = 0.0F;
+        float s10 = 0.0F;
+        float s11 = 0.0F;
+
+        for (int k = 0; k < size; k += 2) {
+
+          float[] b0 = B[bRow + k];
+
+          s00 += a0[aCol + k] * b0[bCol + j];
+          s10 += a1[aCol + k] * b0[bCol + j];
+          s01 += a0[aCol + k] * b0[bCol + j + 1];
+          s11 += a1[aCol + k] * b0[bCol + j + 1];
+
+          float[] b1 = B[bRow + k + 1];
+
+          s00 += a0[aCol + k + 1] * b1[bCol + j];
+          s10 += a1[aCol + k + 1] * b1[bCol + j];
+          s01 += a0[aCol + k + 1] * b1[bCol + j + 1];
+          s11 += a1[aCol + k + 1] * b1[bCol + j + 1];
+        }
+
+        C[cRow + i][cCol + j] += s00;
+        C[cRow + i][cCol + j + 1] += s01;
+        C[cRow + i + 1][cCol + j] += s10;
+        C[cRow + i + 1][cCol + j + 1] += s11;
+      }
+    }
+  }
 
 }

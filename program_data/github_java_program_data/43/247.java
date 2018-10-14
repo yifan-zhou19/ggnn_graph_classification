@@ -1,49 +1,42 @@
-package idv.workshop.homework;
+package sorting.noncomparison;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
-public class Stack {
-    private Deque elems = new ArrayDeque();
-    private int capacity;
+public class BucketSort {
 
-    public Stack(int capacity) {
-        this.capacity = capacity;
+    public void sort(Double[] A) {
+
+        int n = A.length;
+        List[] B = new ArrayList[n];
+
+        for (int i = 0; i < n; i++)
+            B[i] = new ArrayList<>();
+
+        for (int i = 0; i < n; i++)
+            B[(int) Math.floor(n * A[i])].add(A[i]);
+
+        for (List b : B)
+            Collections.sort(b);
+
+        int i = 0;
+        for (List b : B)
+            for (Object d : b)
+                A[i++] = (Double) d;
+
     }
 
-    public boolean push(Object elem) {
-        if(isFull()) {
-            return false;
-        }
-        return elems.offerLast(elem);
+    public static void main(String... args) {
+
+        Double[] numbers = {0.15, 0.84, 0.36, 0.99, 0.13, 0.34, 0.91, 0.51};
+        BucketSort bucketSort = new BucketSort();
+        bucketSort.sort(numbers);
+
+        Arrays.asList(numbers).stream().forEach(System.out::println);
+
     }
 
-    private boolean isFull() {
-        return elems.size() + 1 > capacity;
-    }
 
-    public Object pop() {
-        return elems.pollLast();
-    }
-
-    public Object peek() {
-        return elems.peekLast();
-    }
-
-    public int size() {
-        return elems.size();
-    }
-
-    public static void main(String[] args) {
-        Stack stack = new Stack(5);
-        stack.push("Kiyomitsu");
-        stack.push("Yasusada");
-        stack.push("Okita");
-
-        System.out.println(stack.pop());
-        System.out.println(stack.pop());
-        System.out.println(stack.pop());
-
-        //從最後進去的開始取出
-    }
 }

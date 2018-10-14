@@ -1,45 +1,91 @@
 #include <iostream>
-#include <cassert>
+#include <vector>
+#include <iterator>
+#include <cstdlib>
+#include <ctime>
+#include <cmath>
+#include <string>
+#include <iomanip>
+#include <limits>
+#include <fstream>
 
-// The following code calls a naive algorithm for computing a Fibonacci number.
-//
-// What to do:
-// 1. Compile the following code and run it on an input "40" to check that it is slow.
-//    You may also want to submit it to the grader to ensure that it gets the "time limit exceeded" message.
-// 2. Implement the fibonacci_fast procedure.
-// 3. Remove the line that prints the result of the naive algorithm, comment the lines reading the input,
-//    uncomment the line with a call to test_solution, compile the program, and run it.
-//    This will ensure that your efficient algorithm returns the same as the naive one for small values of n.
-// 4. If test_solution() reveals a bug in your implementation, debug it, fix it, and repeat step 3.
-// 5. Remove the call to test_solution, uncomment the line with a call to fibonacci_fast (and the lines reading the input),
-//    and submit it to the grader.
+using namespace std;
 
-int fibonacci_naive(int n) {
-    if (n <= 1)
-        return n;
+//Kitty cat proof provided by Paul Conrad.
+int getInt(string prompt)
+{
+	int value;
+	
+	do 
+	{
+		bool validInput;
+		
+		cout << prompt;
 
-    return fibonacci_naive(n - 1) + fibonacci_naive(n - 2);
+		cin >> value;
+		validInput = cin.good();
+		cin.ignore(std::numeric_limits<streamsize>::max(),'\n');
+		
+		// if validInput is true, return from the function with our value from user
+		if (validInput) return value;
+		else
+		{
+			// otherwise, let the user know they did an invalid entry
+			cout << "Invalid Entry! " << endl;
+			
+			// clear the cin object's status (this clears the bad input flag)
+			cin.clear();
+			cin.ignore(std::numeric_limits<streamsize>::max(),'\n');
+		}
+	} while (true);
 }
 
-int fibonacci_fast(int n) {
-    // write your code here
+static vector<int> source, tempo, destin;
 
-    return 0;
-}
-
-void test_solution() {
-    assert(fibonacci_fast(3) == 2);
-    assert(fibonacci_fast(10) == 55);
-    for (int n = 0; n < 20; ++n)
-        assert(fibonacci_fast(n) == fibonacci_naive(n));
-}
+void visuals();
+void move(vector<int> &, vector<int> &, vector<int> &, long);
 
 int main() {
-    int n = 0;
-    std::cin >> n;
+    long n;
+    
+    cout << "Tower of Hanoi " << endl;
+    n = getInt("Enter the number of disks: ");
+    long counter = n;
 
-    std::cout << fibonacci_naive(n) << '\n';
-    //test_solution();
-    //std::cout << fibonacci_fast(n) << '\n';
-    return 0;
+    for (long i = 0; i < n; i++) {
+        source.push_back(counter);
+    counter--;
+    }
+
+    visuals();
+    move(source,destin,tempo,n);
+
+}
+
+void visuals() {
+    cout << "Start: ";
+    for (vector<int >::const_iterator iter = source.begin(); iter != source.end(); iter++)
+        cout << *iter << " ";
+    cout << " | ";
+    cout << "Final: ";
+    for (vector<int >::const_iterator iter = destin.begin(); iter != destin.end(); iter++)
+        cout << *iter << " ";
+    cout << " | ";
+    cout << "Aux: ";
+    for (vector<int >::const_iterator iter = tempo.begin(); iter != tempo.end(); iter++)
+        cout << *iter << " ";
+    cout << endl;
+}
+
+void move(vector<int> &source, vector<int> &destin, vector<int> &tempo, long size) {
+    if (size > 0) 
+	{
+        move(source, tempo, destin, size - 1);
+        system("pause");
+        destin.push_back(source.back());
+        system("CLS");
+        source.pop_back();
+        visuals();
+        move(tempo, destin, source, size - 1);
+    }
 }

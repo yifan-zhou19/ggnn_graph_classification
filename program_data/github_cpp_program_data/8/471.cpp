@@ -1,74 +1,66 @@
+// RUN: %clang_cc1 -fsyntax-only %s
 
-/*
-  Insertion Sort
+template<unsigned I>
+struct FibonacciEval;
 
-  Worst Case Performance: O(n^2)
-    If the array is sorted in the reverse order,
-    every element in the list will need to be compared
-    to every other sorted list element AND swapped
-    with each along the way to the beginning.
-  Best Case Performance: O(n)
-    If the array is already sorted, each pass only
-    does one comparison with the rightmost element
-    of the sorted list.
-  Average Case Performance: O(n^2); O(n) < O(n^2)
-  Worse Case Space Complexity: O(1); in-place
+template<unsigned I>
+struct Fibonacci {
+  enum { value = FibonacciEval<I-1>::value + FibonacciEval<I-2>::value };
+};
 
-  Comparison to other sorts:
-    - Only works really well with small lists.
-    - Performs a lot more swap operations than most.
-    - Adaptive; a partially sorted list takes less time.
-*/
+template<unsigned I>
+struct FibonacciEval {
+  enum { value = Fibonacci<I>::value };
+};
 
-#include <assert.h>
-/* #include <iostream> */
-/* using namespace std; */
+template<> struct Fibonacci<0> {
+  enum { value = 0 };
+};
 
-void swap(int* &array, const int a, const int b) {
-  int c = array[a];
-  array[a] = array[b];
-  array[b] = c;
-}
+template<> struct Fibonacci<1> {
+  enum { value = 1 };
+};
 
-bool arrayEqual(const int* uno, const int* dos, const int len) {
-  for(int i = 0; i < len; i++) {
-    /* cout << uno[i] << " == " << dos[i] << endl; */
-    if(uno[i] != dos[i]) return false;
-  }
-  return true;
-}
+int array5[Fibonacci<5>::value == 5? 1 : -1];
+int array10[Fibonacci<10>::value == 55? 1 : -1];
 
-void insertionSort(int* array, const int len) {
-  for(int index = 1; index < len; index++) {
-    int value = array[index];
-    int left = index - 1;
-    for(int left = index - 1; left >= 0; left--) {
-      if(array[left] < value) break;
-      swap(array, left, left + 1);
-    }
-  }
-}
+template<unsigned I>
+struct FibonacciEval2;
 
-void insertionSortTest() {
-  {
-    int len = 6;
-    int wrong[] = {64, 25, 12, 22, 11, 8};
-    int right[] = {8, 11, 12, 22, 25, 64};
-    insertionSort(wrong, len);
-    assert(arrayEqual(wrong, right, len));
-  }
+template<unsigned I>
+struct Fibonacci2 {
+  static const unsigned value 
+    = FibonacciEval2<I-1>::value + FibonacciEval2<I-2>::value;
+};
 
-  {
-    int len = 5;
-    int wrong[] = {67, 34, 17, 55, 6};
-    int right[] = {6, 17, 34, 55, 67};
-    insertionSort(wrong, len);
-    assert(arrayEqual(wrong, right, len));
-  }
-}
+template<unsigned I>
+struct FibonacciEval2 {
+  static const unsigned value = Fibonacci2<I>::value;
+};
 
-int main() {
-  insertionSortTest();
-  return 0;
-}
+template<> struct Fibonacci2<0> {
+  static const unsigned value = 0;
+};
 
+template<> struct Fibonacci2<1> {
+  static const unsigned value = 1;
+};
+
+int array5_2[Fibonacci2<5>::value == 5? 1 : -1];
+int array10_2[Fibonacci2<10>::value == 55? 1 : -1];
+
+template<unsigned I>
+struct Fibonacci3 {
+  static const unsigned value = Fibonacci3<I-1>::value + Fibonacci3<I-2>::value;
+};
+
+template<> struct Fibonacci3<0> {
+  static const unsigned value = 0;
+};
+
+template<> struct Fibonacci3<1> {
+  static const unsigned value = 1;
+};
+
+int array5_3[Fibonacci3<5>::value == 5? 1 : -1];
+int array10_3[Fibonacci3<10>::value == 55? 1 : -1];

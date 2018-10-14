@@ -1,290 +1,97 @@
+#include "../KNearestNeighbours/KNearestNeighbours.h"
+#include "../../../Utilities/Utilities.h"
+#include "../../Point/IClusteringPoint.h"
+#include "../../GenericVector/GenericVector.h"
+#include "NaiveBayesClassification.h"
+
+#include <vector>
+#include <limits>
 #include <iostream>
-#include <cassert>
 
-using namespace std;
+std::vector<std::vector<std::shared_ptr<IClusteringPoint>>> NaiveBayesClassification::getClassifiedPoints()
+{
+    std::vector<std::vector<std::shared_ptr<IClusteringPoint>>> result;
 
-class link{
-private:
-	link(int x, link * ptr);
-	link();
-	int val;
-	link * next;
-	link * prev;
-	friend class Iterator;
-	friend class List;
-};
+    //Prepping resultingClassifiedPoints 2d vector
+    for (size_t i = 0; i < trainingClusters.size(); i++)
+    {
+        std::vector<std::shared_ptr<IClusteringPoint>> newEmptyCluster;
+        result.push_back(newEmptyCluster);
+    }
 
-class Iterator{
-public:
-	void operator--();
-	void operator++();
-	int & operator*();
-private:
-	Iterator(link * a);
-	link * it;
-	friend class List;
-};
-
-class List{
-	public:
-		List();
-		~List();
-		bool empty();
-		void push_back(int x);
-		void push_front(int x);
-		int size();
-		void pop_back();
-		void pop_front();
-		Iterator begin();
-		Iterator end();
-		void insert(Iterator & i, int x);
-		Iterator erase(Iterator i);
-	private:
-		link * start;
-		link * finish;
-};
-
-link::link(){
-	val = 0;
-	next = nullptr;
-	prev = nullptr;
+    for (std::shared_ptr<IClusteringPoint> &point : inputPoints)
+    {
+        int newClusterIndexForThisPoint = getPredictedClusterForPoint(point);
+        result[newClusterIndexForThisPoint].push_back(point);
+    }
+    return result;
 }
 
-link::link(int x, link * ptr){
-	val = x;
-	next = ptr;
+int NaiveBayesClassification::getPredictedClusterForPoint(std::shared_ptr<IClusteringPoint> &subjectPoint)
+{
+    map<int, double> finalProbabilities;
+    map<int, float> priorProbabilities = createPriorProbabilityMap();
+    map<int, float> neighboursLikelihoods = createNeighbourLikelihoodMap(subjectPoint);
+
+    std::map<int, float>::iterator it;
+    for (it = neighboursLikelihoods.begin(); it != neighboursLikelihoods.end(); ++it)
+    {
+        int currClusterId = it->first;
+        finalProbabilities[currClusterId] = priorProbabilities[currClusterId] * neighboursLikelihoods[currClusterId];
+    }
+
+    //finding cluster with highest final probability, unfortunate loop repitition
+    double highestFinalProbabilityYet = std::numeric_limits<double>::min();
+    int clusterWithHighestFinalProbabilityYet = 0;
+
+    std::map<int, double>::iterator it2;
+    for (it2 = finalProbabilities.begin(); it2 != finalProbabilities.end(); ++it2)
+    {
+        if (it2->second > highestFinalProbabilityYet)
+        {
+            highestFinalProbabilityYet = it2->second;
+            clusterWithHighestFinalProbabilityYet = it2->first;
+        }
+    }
+    return clusterWithHighestFinalProbabilityYet;
 }
 
-Iterator::Iterator(link * a){
-	it = a;
+std::map<int, float> NaiveBayesClassification::createPriorProbabilityMap()
+{
+    std::map<int, float> priorProbabilityMap;
+
+    float sumOfAllClusterSizes = 0;
+    for (std::vector<std::shared_ptr<IClusteringPoint>> cluster : trainingClusters)
+        sumOfAllClusterSizes += cluster.size();
+
+    for (size_t i = 0; i < trainingClusters.size(); i++)
+    {
+        std::vector<shared_ptr<IClusteringPoint>> currCluster = trainingClusters[i];
+        float likelihoodToBeInThisCluster = currCluster.size() / sumOfAllClusterSizes;
+
+        priorProbabilityMap.insert(make_pair(i, likelihoodToBeInThisCluster));
+    }
+    return priorProbabilityMap;
 }
 
-void Iterator::operator++(){
-	it = it->next;
-}
+std::map<int, float> NaiveBayesClassification::createNeighbourLikelihoodMap(std::shared_ptr<IClusteringPoint> &subjectPoint)
+{
+    std::map<int, float> neighbourLikelihoodsPerCluster;
 
-void Iterator::operator--(){
-	it = it->prev;
-}
+    //amount of neighbours was tested manually
+    std::vector<std::shared_ptr<IClusteringPoint>> neighbours = KNearestNeighbours::getNearestNeighbours(subjectPoint, 7, trainingClusters);
 
-int & Iterator::operator*(){
-	return it->val;
-}
+    for (std::shared_ptr<IClusteringPoint> &neighbour : neighbours)
+        neighbourLikelihoodsPerCluster[(*neighbour).getClusterId()] += 1;
 
-List::List(){
-	start = nullptr;
-	finish = nullptr;
-}
+    //dividing neighbour clusterCounts by the total amount of points per cluster
+    std::map<int, float>::iterator it;
+    for (it = neighbourLikelihoodsPerCluster.begin(); it != neighbourLikelihoodsPerCluster.end(); ++it)
+    {
+        int currClusterId = it->first;
+        int totalAmountOfPointsInThisCluster = trainingClusters[currClusterId].size();
 
-List::~List(){
-	if(!empty()){
-		link * ptr = start;
-		while (ptr != finish){
-			ptr = ptr->next;
-			delete ptr->prev;
-		}
-	}
-	delete finish;
-}
-
-bool List::empty(){
-	return (start == nullptr);
-}
-
-void List::push_back(int x){
-	link * a = new link();
-	a->val = x;
-	if (empty()){
-		start = a;
-		finish = a;
-	}
-	finish->next = a;
-	a->prev = finish;
-	finish = a;
-}
-
-void List::push_front(int x){
-	link * a = new link();
-	a->val = x;
-	if(empty()){
-		start = a;
-		finish = a;
-	}
-	a->next = start;
-	start->prev = a;
-	start = a;
-}
-
-int List::size(){
-	int s = 1;
-	link*ptr = start;
-	while(ptr != finish){
-		ptr = ptr->next;
-		s++;
-	}
-	if(start == nullptr) s=0;
-	return s;
-}
-
-void List::pop_back(){
-	if(size() == 1) {
-		delete finish;
-		start = nullptr;
-		finish = nullptr;
-		return;
-	}
-	finish = finish->prev;
-	delete finish->next;
-}
-
-void List::pop_front(){
-	if(size() == 1) {
-		delete start;
-		finish = nullptr;
-		start = nullptr;
-		return;
-	}
-	start = start->next;
-	delete start->prev;
-	}
-
-Iterator List::begin(){
-	if (start == nullptr) return Iterator (nullptr);
-	return Iterator(start);
-}
-
-Iterator List::end(){
-	if (finish == nullptr) return Iterator (nullptr);
-	return Iterator(finish);
-}
-
-void List::insert(Iterator & i, int x){
-	link * a = new link ();
-	a->val = x;
-	if(empty()){
-		start = a;
-		finish = a;
-		i.it = a;
-	}
-	else if(i.it->next == nullptr){
-		a->prev = i.it;
-		i.it->next = a;
-		i.it = a;
-		finish = a;
-	}
-	else{
-		a->prev = i.it;
-		a->next = i.it->next;
-		i.it->next->prev=a;
-		i.it->next = a;
-		i.it = a;
-  }
-}
-
-Iterator List::erase(Iterator i){
-	if(i.it == nullptr) return i;
-	else if(i.it->prev == nullptr && i.it->next == nullptr){
-		start = nullptr;
-		finish = nullptr;
-	Iterator temp = Iterator(nullptr);
-		delete i.it;
-		return temp;
-	}
-	else if(i.it->prev == nullptr){
-		Iterator temp = i.it->next;
-		start = temp.it;
-		temp.it->prev = nullptr;
-		delete i.it;
-		return temp;
-	}
-	else if(i.it->next == nullptr){
-		Iterator temp = i.it->prev;
-		finish = temp.it;
-		temp.it->next = nullptr;
-		delete i.it;
-		return temp;
-	}
-	i.it->next->prev = i.it->prev;
-	i.it->prev->next = i.it->next;
-	Iterator temp = i.it->prev;
-	delete i.it;
-	return temp;
-}
-
-
-int main(int argc, char * args[]) {
-	List a;
-	Iterator it = a.begin();
-
-	//tests for an empty list
-	assert (a.empty());
-	assert (a.size() == 0);
-
-	//tests push_back and push_front functions
-	a.push_back(4);
-	a.push_back(5);
-	it=a.begin(); 
-	assert (*it == 4);
-	++it;
-	assert (*it == 5);
-	--it;
-	assert (*it == 4);
-	assert (a.size() == 2);
-	a.push_front(3);
-	a.push_front(2);
-	a.push_front(1);
-	a.push_back(6);
-	--it;
-	--it;
-	--it;
-	for(int x = 1; x <= 6; x++) {
-		assert(*it == x);
-		++it;
-	}
-
-	//tests pop functions
-	a.pop_front();
-	a.pop_front();
-	it = a.begin();
-	assert(*it == 3);
-	a.pop_back();
-	a.pop_back();
-	it = a.end();
-	assert(*it == 4);
-	a.pop_back();
-	a.pop_front();
-	assert(a.empty());
-
-	//tests insert and erase functions
-	it = a.begin();
-	a.insert(it, 3);
-	a.push_front(1);
-	a.insert(it, 4);
-	it = a.begin(); 
-	a.insert(it, 2);
-	assert(*it == 2);
-	it = a.end();
-	assert (*it==4);
-	--it;
- 	assert (*it==3);
-	--it; 
-	assert(*it == 2);
-	--it;
-	assert(*it == 1);
-	
-	it = a.erase(it);
-	assert(*it == 2);
-	++it;
-	assert(*it == 3);
-	it = a.end();
-	it = a.erase(it);
-	assert(*it == 3);
-	it = a.begin();
-	it = a.erase(it);
-	assert(*it == 3);
-	assert(a.size() == 1);
-	it = a.erase(it);
-	assert(a.empty());
-
-	cout << "all tests passed" << endl;
+        it->second = it->second / totalAmountOfPointsInThisCluster;
+    }
+    return neighbourLikelihoodsPerCluster;
 }

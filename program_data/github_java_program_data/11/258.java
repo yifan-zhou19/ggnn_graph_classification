@@ -1,52 +1,114 @@
-Author: Frederik Wegner
-Time: 22.06.17
-Tests: 11/11
-executeVariant()
-{
-    setIteration(getIteration()+1);
-    if(getIteration() < getNodeQueue().size())
-        setCurrentNode(getNodeQueue().get(getIteration()));
-}
-checkBreakCondition()
-{
-    return getIteration() < getGraph().getNodeList().size();
-}
-preProcess()
-{
-    InvalidInputException exception = new InvalidInputException("");
-    AbstractGraph g = getGraph();
-    if(g == null) throw exception;
-    if(getNodeQueue() == null) throw exception;
-    if(!(getNodeQueue().containsAll(g.getNodeList()) && g.getNodeList().containsAll(getNodeQueue()))) throw exception;
-    
-    setIteration(0);
-    ArrayList<Node<N,E>> nodes = g.getNodeList();
-    AbstractEdgeComparator<E> cmp = g.getComparator();
-    for(Node<N,E> vv : nodes) {
-        int v = getMatrixIndex(vv);
-        for(Node<N,E> ww : nodes) {
-            int w = getMatrixIndex(ww);
-            if(w == v) setM(v,w,cmp.getZero());
-            else setM(v,w,cmp.getMax());
+package paramonov.valentin.fiction.collections;
+
+import java.lang.reflect.Array;
+import java.util.Iterator;
+
+public abstract class QuadTree<T extends QuadTree<T, B>, B extends Block> implements Iterable<T> {
+    private B element;
+    T[] children;
+
+    public boolean add(B block) {
+        if(this.element == null) {
+            this.element = block;
+            return true;
         }
-        for(Edge<N,E> e : (ArrayList<Edge<N,E>>)vv.getFanOut()) {
-            int w = getMatrixIndex(e.getTargetNode());
-            setM(v,w,e.getData());
+
+        if(children == null) {
+            children = (T[]) Array.newInstance(getClass(), 4);
         }
+
+        final int place = findPlace(block);
+        if(place < 0) {
+            return false;
+        }
+
+        if(children[place] == null) {
+            try {
+                children[place] = (T) getClass().newInstance();
+            } catch(InstantiationException | IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        return children[place].add(block);
     }
-    setCurrentNode(getNodeQueue().get(getIteration()));
-}
-doFunctionality()
-{
-    AbstractGraph g = getGraph();
-    AbstractEdgeComparator<E> cmp = g.getComparator();
-    ArrayList<Node<N,E>> nodes = g.getNodeList();
-    
-    for(Node<N,E> vv : nodes)
-        for(Node<N,E> ww : nodes) {
-            int v = getMatrixIndex(vv);
-            int w = getMatrixIndex(ww);
-            int u = getMatrixIndex(getCurrentNode());
-            setM(v,w,cmp.min(getM(v,w), cmp.sum(getM(v,u),getM(u,w))));
+
+    protected final int findPlace(B block) {
+        final B element = this.element;
+        final int elementX = element.getX();
+        final int elementY = element.getY();
+        final int elementW = element.getWidth();
+        final int elementH = element.getHeight();
+        final int blockX = block.getX();
+        final int blockY = block.getY();
+        final int blockW = block.getWidth();
+        final int blockH = block.getHeight();
+
+        return quad(elementX, elementW, blockX, blockW) + 2 * quad(elementY, elementH, blockY, blockH);
+    }
+
+    private int quad(int regionStart, int regionWidth, int blockX, int blockW) {
+        if(regionStart == blockX && regionWidth == blockW) {
+            return -1;
         }
+
+        final int regionEnd = regionStart + regionWidth;
+        final int blockEnd = blockX + blockW;
+
+        if(blockX < regionStart || blockEnd > regionEnd) {
+            throw new BlockDimensionsException();
+        }
+
+        final int regionHalf = (regionStart + regionEnd + 1) / 2;
+
+        if(blockEnd <= regionHalf) {
+            return 0;
+        }
+
+        return 1;
+    }
+
+    public B getElement() {
+        return element;
+    }
+
+    public boolean hasChildren() {
+        if(children == null) {
+            return false;
+        }
+
+        for(T child : children) {
+            if(child != null) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public T[] getChildren() {
+        return children;
+    }
+
+    public final int size() {
+        int size = element != null ? 1 : 0;
+
+        if(!hasChildren()) {
+            return size;
+        }
+
+        for(T child : children) {
+            if(child == null) {
+                continue;
+            }
+            size += child.size();
+        }
+
+        return size;
+    }
+
+    @Override
+    public Iterator<T> iterator() {
+        return new QuadTreeIterator(this);
+    }
 }

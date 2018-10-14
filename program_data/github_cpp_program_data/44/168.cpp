@@ -1,111 +1,238 @@
-#include <bits/stdc++.h>
-#define ADD(a, b) a = (a + (ll)b) % mod
-#define MUL(a, b) a = (a * (ll)b) % mod
-#define MAX(a, b) a = max(a, b)
-#define MIN(a, b) a = min(a, b)
-#define rep(i, a, b) for(int i = (a); i < (b); i++)
-#define rer(i, a, b) for(int i = (a) - 1; i >= (b); i--)
-#define all(a) (a).begin(), (a).end()
-#define sz(v) (int)(v).size()
-#define pb push_back
-#define sec second
-#define fst first
-#define debug(fmt, ...) Debug(__LINE__, ":", fmt, ##__VA_ARGS__)
-using namespace std;
-typedef long long ll;
-typedef pair<int, int> pi;
-typedef pair<ll, ll> pl;
-typedef pair<int, pi> ppi;
-typedef vector<ll> vi;
-typedef vector<vi> mat;
-typedef complex<double> comp;
-void Debug() {cout << '\n'; }
-template<class FIRST, class... REST>void Debug(FIRST arg, REST... rest) { 
-	cout << arg << " "; Debug(rest...); }
-template<class T>ostream& operator<< (ostream& out, const vector<T>& v) {
-	out << "[";if(!v.empty()){rep(i,0,sz(v)-1)out<<v[i]<< ", ";out<<v.back();}out << "]";return out;}
-template<class S, class T>ostream& operator<< (ostream& out, const pair<S, T>& v) {
-	out << "(" << v.first << ", " << v.second << ")";return out;}
-const int MAX_N = 200010;
-const double eps = 1e-6;
-const ll mod = 1000000007;
-const int inf = 1 << 30;
-const ll linf = 1LL << 60;
-const double PI = 3.14159265358979323846;
-///////////////////////////////////////////////////////////////////////////////////////////////////
+/* Jen Hanni [CS163] "prog2csairways.cpp" [Program #2] */
 
+#include "prog1symtable.h"
 
-namespace MF { //init before you use it. when you use double, be careful. O(|F||E|)
+/* Node */
 
-	struct edge {int to; ll cap, rev; };
+node::node() 
+{
+	next = NULL;
+	char * name;
+	char * ticket;
+	char * seat;
+	int status;	// 1 = ticketed, 2 = aboard
+}
 
-	vector<edge> G[MAX_N];
-	bool used[MAX_N];
-
-	void init(int n) {
-		rep(i, 0, n) G[i].clear();
+node::node(char * newname, char * newtype, char * newvalue) 
+{
+	next = NULL;
+	if(newname) {
+		int namelen = strlen(newname) + 1;
+		name = new char[namelen];
+		strncpy(name, newname, namelen);
 	}
-
-	int add_edge(int from, int to, ll cap) {
-		G[from].push_back((edge){to, cap, (int)G[to].size()});
-		G[to].push_back((edge){from, 0, (int)G[from].size() - 1});
-		return (int)G[from].size() - 1;
+	if(newticket) {
+		int ticketlen = strlen(newticket) + 1;
+		ticket = new char[ticketlen];
+		strncpy(ticket, newticket, ticketlen);
 	}
+	if(newseat) {
+		int seatlen = strlen(newseat) + 1;
+		seat = new char[seatlen];
+		strncpy(seat, newseat, seatlen);
+	}
+}
 
-	ll dfs(int v, int t, ll f, bool change = true) { //if you just want to dfs, change = false
-		if(v == t) return f;
-		used[v] = true;
-		for(int i = 0; i < (int)G[v].size(); i++) {
-			edge &e = G[v][i];
-			if(!used[e.to] && e.cap > 0) {
-				int d = dfs(e.to, t, min(f, e.cap), change);
-				if(d > 0) {
-					if(change) {
-						e.cap -= d;
-						G[e.to][e.rev].cap += d;
-					}
-					return d;
-				}
-			}
-		}
+node::node(char * newname)
+{
+	next = NULL;
+	if(newname) {
+		int namelen;
+		namelen = strlen(newname) + 1;
+		name = new char[namelen];
+		strncpy(name, newname, namelen);
+	}
+	char * type;
+	char * value;
+}
+
+node::~node() {
+	delete next; 
+	delete[] name;
+	delete[] type;
+	delete[] value;
+}
+
+int node::compare(node& source) 
+{
+	int temp;
+	temp = strcmp(name, source.name);
+	return temp;
+}
+
+int node::set(node& source)
+{
+	if(source.name) {
+		int namelen = strlen(source.name) + 1;
+		name = NULL;
+		name = new char[namelen];
+		strncpy(name, source.name, namelen);
+	}
+	if(source.type) {
+		int typelen = strlen(source.type) + 1;
+		type = NULL;
+		type = new char[typelen];
+		strncpy(type, source.type, typelen);
+	}
+	if(source.value) {
+		int valuelen = strlen(source.value) + 1;
+		value = NULL;
+		value = new char[valuelen];
+		strncpy(value, source.value, valuelen);
+	}
+	return 0;
+}
+
+/****************/
+/* Symbol Table */
+/****************/
+
+/* symbol table :: constructor */
+
+symbolTable::symbolTable()
+{
+	node * head = NULL;
+}
+
+symbolTable::~symbolTable() {
+	delete head;
+}
+
+/* symbol table :: creates a new symbol, adds it to the list */
+
+// strcmp(str1,str2) returns 0 when the strings are equal
+// strcmp(str1,str2) returns a negative integer when s1 < s2
+// strcmp(str1,str2) returns a positive integer when s1 > s2
+
+int symbolTable::add(char * newname, char * newtype, char * newvalue) 
+{
+	node * symtoadd = new node(newname, newtype, newvalue);
+	node * current = head;
+	if (!current) 
+	{	// if an empty list, make the new symbol the head
+		head = symtoadd; 
+	}
+	else if (current->compare(*symtoadd) == 0)
+	{	// return the symbol already exists
+		return 2;
+	}
+	else if (current->compare(*symtoadd) > 0)
+	{	// if name of the first node is already more than the symtoadd
+		symtoadd->next = current;
+		head = symtoadd;
 		return 0;
 	}
+	else if (current->next->compare(*symtoadd) < 0)
+	{	// traverse if name of curr->next is less than symtoadd name
+		current = current->next;
+		return 0;
+	}
+	else if (current->next->compare(*symtoadd) > 0)
+	{ 	// if name of curr->next is more than symtoadd name
+		symtoadd->next = current->next;
+		current->next = symtoadd;
+		return 0;
+	}
+	else if (current->compare(*symtoadd) < 0 && current->next == '\0')
+	{	// if current is less than symtoaddname but current->next is NULL
+		current->next = symtoadd;
+		symtoadd->next = '\0';
+		return 0;
+	}
+	else { return 1; }
+	
+	return 0;
+}
 
-	ll get(int s, int t) {
-		ll flow = 0;
-		while(true) {
-			memset(used, 0, sizeof(used));
-			int f = dfs(s, t, inf);
-			if(f == 0) return flow;
-			flow += f;
-		}
+int symbolTable::drop(char * nametodrop) 
+{
+	node * symtodrop = new node(nametodrop);
+	node * current = head;
+
+	if (!current) 
+	{ 
+		return 1; 
+	}
+	else if (current->compare(*symtodrop) == 0)
+	{
+		return 0;
+	}
+	else if (find(current->next, symtodrop) == 0)
+	{
+		node * temp = current->next;
+		current->next = current->next->next;
+		delete temp;
+		return 0;
+	}
+	else if (find(current->next, symtodrop) == 1)
+	{
+		return 1;
 	}
 }
 
-void solve() {
-	MF::add_edge(0, 1, 10);
-	MF::add_edge(0, 2, 2);
-	MF::add_edge(1, 2, 6);
-	MF::add_edge(1, 3, 6);
-	MF::add_edge(3, 4, 8);
-	MF::add_edge(2, 4, 5);
-	MF::add_edge(3, 2, 3);
-	debug(MF::get(0, 4));
+void symbolTable::get(char * nametoget)
+{
+	node * symtoget = new node(nametoget);
+	node * current = head;
+
+	if (!current)
+	{
+	cout << "This is an empty list. " << endl;
+	}
+	else if (find(current, symtoget) == 0)
+	{
+	char name[20];
+	current->displayname(*current);
+	cout << "Name: " << name << endl;
+	}
+	else 
+	{
+	cout << "The symbol wasn't found." << endl;
+	}
 }
 
-int main() {
-#ifndef LOCAL
-	ios::sync_with_stdio(false);
-    cin.tie(0);
-#endif
-    cout << fixed;
-	cout.precision(20);
-#ifdef LOCAL
-    freopen("in.txt", "rt", stdin);
-#endif	
-	solve();
-#ifdef LOCAL
-    cerr << "Time elapsed: " << 1.0 * clock() / CLOCKS_PER_SEC << " s.\n";
-#endif
-	return 0;
+char node::displayname(node& source)
+{
+	name = source.name;
+	return *name;
+}
+
+int symbolTable::set(char * newname, char * newtype, char * newvalue) 
+{
+	node * symtoset = new node(newname, newtype, newvalue);
+	node * current = head;
+
+	if (!current) 
+	{ 
+		return 1; // clean up error messages here
+	}
+	else if (find(current, symtoset) == 0)
+	{
+		if (current->set(*symtoset) == 0)
+		{
+		return 0;  // clean up error messages here
+		}
+		else
+		{
+		return 1;  // here as well
+		}
+	}
+	else if (find(current, symtoset) == 1)
+	{
+		return 1;  // here as well
+	}
+}
+
+int symbolTable::find(node * here, node * symtodrop) 
+{
+	int rVal = 1;
+	if (here)
+	{
+		rVal = here->compare(*symtodrop);
+		if (rVal == 1) 
+		{
+		return find(here->next, symtodrop);
+		}
+	}
+	return rVal; // return 0;
 }

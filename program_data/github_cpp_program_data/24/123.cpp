@@ -1,79 +1,96 @@
-/*  Permutation.cpp
- * Copyright (C) 2010, Francisco Claude, all rights reserved.
- *
- * Francisco Claude <fclaude@cs.uwaterloo.ca>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- */
-
-#include <Permutation.h>
-
-namespace cds_static
-{
-
-	Permutation::Permutation() { length = 0; }
-
-	Permutation::~Permutation() {}
-
-	uint Permutation::pi(uint i) const
-	{
-		return pi(i,1);
-	}
-
-	uint Permutation::revpi(uint i) const
-	{
-		return revpi(i,1);
-	}
-
-	uint Permutation::pi(uint i, uint k) const
-	{
-		uint ret = i;
-		while(k-->0)
-			ret = pi(ret);
-		return ret;
-	}
-
-	uint Permutation::revpi(uint i, uint k) const
-	{
-		uint ret = i;
-		while(k-->0)
-			ret = revpi(ret);
-		return ret;
-	}
-
-	size_t Permutation::getLength() const
-	{
-		return length;
-	}
-
-	void Permutation::save(ostream & fp) const
-	{
-		saveValue(fp,length);
-	}
-
-	Permutation * Permutation::load(istream & fp) {
-		uint rd = loadValue<uint>(fp);
-		size_t pos = fp.tellg();
-		fp.seekg(pos - sizeof(uint),ios::beg);
-		switch(rd) {
-			case MRRRPERM: return PermutationMRRR::load(fp);
-			break;
-			case WTPERM: return PermutationWT::load(fp);
-			break;
-		}
-		return NULL;
-	}
-
-};
+    #include <bits/stdc++.h>
+     
+    using namespace std;
+     
+    struct node {
+        int weight;
+        pair<int, int> edge;
+    };
+     
+    struct ds {
+        int val;
+        int size;
+    };
+     
+    bool comparator(const node& node1, const node& node2) {
+        return node1.weight < node2.weight;
+    }
+     
+    vector<ds> Arr;
+     
+    void initialize(int n) {
+        for(int i = 0; i < n; ++i) {
+            ds temp;
+            temp.val = i;
+            temp.size = 1;
+     
+            Arr.push_back(temp);
+        }
+    }
+     
+    int root(int i) {
+        while(Arr.at(i).val != i) {
+            Arr.at(i).val = Arr.at(Arr.at(i).val).val;
+            i = Arr.at(i).val;
+        }
+     
+        return i;
+    }
+     
+    void WeightedUnion(int a, int b) {
+        int r_a = root(a);
+        int r_b = root(b);
+     
+        if(r_a == r_b) 
+            return;
+     
+        if(Arr.at(r_a).size < Arr.at(r_b).size) {
+            Arr.at(r_a).val = Arr.at(r_b).val;
+            Arr.at(r_b).size +=  Arr.at(r_a).size;
+        }
+        else {
+            Arr.at(r_b).val = Arr.at(r_a).val;
+            Arr.at(r_a).size +=  Arr.at(r_b).size;
+        }
+        
+    }
+     
+    int Find(int a, int b) {
+        return root(a) == root(b);
+    }
+     
+    int Kruskal(vector<node>& Graph) {
+        int minCost = 0;
+     
+        for(auto& i : Graph) {
+            
+            if(!Find(i.edge.first, i.edge.second)) {
+                WeightedUnion(i.edge.first, i.edge.second);
+                minCost += i.weight;
+            }    
+        }
+     
+        return minCost;
+    }
+     
+    int main() {
+        int nodes, edges;
+        cin>>nodes>>edges;
+     
+        vector<node> Graph(edges+1);
+        initialize(nodes+1);
+     
+        for(int i = 1; i <= edges; ++i) {
+            int x, y, w;
+            cin>>x>>y>>w;
+     
+            Graph.at(i).weight = w;
+            Graph.at(i).edge = make_pair(x, y);
+        }
+     
+        sort(Graph.begin(), Graph.end(), comparator);
+     
+        cout<<Kruskal(Graph)<<endl;
+        
+        return 0;
+    }

@@ -1,23 +1,34 @@
+/**
+ * 
+ */
+package home.algo.recursion;
 
-import java.util.*;
-import java.math.BigInteger;
+/**
+ * @author smrutis
+ *
+ */
+public class TowerOfHanoi {
 
-public class Fibonacci {
-	static Hashtable<Integer, BigInteger> memo = new Hashtable<>();
-	static BigInteger f;
-	public static void main (String [] args){
-		System.out.println("Enter the n: ");
-		System.out.println("Answer: " + calculateNthFibonacci((new Scanner(System.in)).nextInt()));
+	public String move(int numberOfDisks, int fromPeg, int toPeg, int helperPeg) {
+		if (1 == numberOfDisks)
+			return directMove(numberOfDisks, fromPeg, toPeg);
+		else {
+			String step = move(numberOfDisks - 1, fromPeg, helperPeg, toPeg);
+			step += directMove(numberOfDisks, fromPeg, toPeg);
+			step += move(numberOfDisks - 1, helperPeg, toPeg, fromPeg);
+			return step;
+		}
 	}
 
-	public static BigInteger calculateNthFibonacci(int n){
+	private String directMove(int numberOfDisks, int fromPeg, int toPeg) {
+		return "\nMove disk " + numberOfDisks + " from peg-" + fromPeg
+				+ " to peg-" + toPeg;
+	}
 
-		if(memo.containsKey(n)) return memo.get(n);
-
-		if(n <= 2) f = BigInteger.valueOf(1);
-
-		else f = calculateNthFibonacci(n-1).add(calculateNthFibonacci(n-2));
-		return f;
+	public static void main(String[] args) {
+		TowerOfHanoi towerOfHanoi = new TowerOfHanoi();
+		String step = towerOfHanoi.move(5, 1, 3, 2);
+		System.out.println(step);
 	}
 
 }

@@ -1,312 +1,236 @@
-#include <iostream>
-using namespace std;
+/*
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Written (W) 2011 Sergey Lisitsyn
+ * Copyright (C) 2011 Berlin Institute of Technology and Max-Planck-Society
+ */
 
-class node{
-public:
-	int info;
-	node *next;
-};
+#include <shogun/multiclass/GaussianNaiveBayes.h>
+#include <shogun/features/Features.h>
+#include <shogun/labels/Labels.h>
+#include <shogun/labels/RegressionLabels.h>
+#include <shogun/labels/MulticlassLabels.h>
+#include <shogun/mathematics/Math.h>
+#include <shogun/lib/Signal.h>
 
-class LinkedList{
-	node *head;
-public:
-	LinkedList(){
-		head=NULL;
-	}
+using namespace shogun;
 
-	int isEmpty();
-	void addBeg(int);
-	void addEnd(int);
-	void addAfter(int, int);
-	void delBeg();
-	void delEnd();
-	void delGiven(int);
-	void delList();
-	node* searchElement(int);
-	void traverse();
-	void traverseReverseOrder();
-    void traverseReverse(node *);
-    int lengthList();
-    void swapNodes(int, int);
-    int getNthNode(int);
-    int getNthNodeFromEnd(int);
-    int getMiddle();
-    void reverseList();
-};
-
-int LinkedList::isEmpty(){
-	if(head==NULL)
-		return 1;
-	else 
-		return 0;
-}
-
-void LinkedList::addBeg(int item){
-	node *ptr;
-	ptr=new node;
-	ptr->info=item;
-	if(isEmpty())
-		ptr->next=NULL;
-	else
-		ptr->next=head;
-	head=ptr;
-}
-
-void LinkedList::addEnd(int item){
-	node *ptr,*loc;
-	ptr=new node;
-	ptr->info=item;
-	loc=head;
-	while(loc->next!=NULL){
-		loc=loc->next;
-	}
-	ptr->next=NULL;
-	loc->next=ptr;
-}
-
-void LinkedList::addAfter(int item, int after){
-	node *ptr,*loc;
-	ptr=new node;
-	while(loc!=NULL){
-		if(after==loc->info)
-			break;
-		loc=loc->next;
-	} 
-
-	if(loc==NULL)
-		return; 
-	ptr->info=item;
-	ptr->next=loc->next;
-	loc->next=ptr;
-}
-
-void LinkedList::delBeg(){
-	node *ptr;
-	if(isEmpty()) //list initially empty 
-		return;
-	ptr=head;
-	head=head->next;
-	delete ptr;
-
-}
-
-void LinkedList::delEnd(){
-	node *ptr,*loc;
-	if(isEmpty()) //list initially empty
-		return;
-	loc=head;
-	while((loc->next)->next!=NULL)
-		loc=loc->next;
-	ptr=loc->next;
-	loc->next=NULL;
-	delete ptr;
-}
-
-void LinkedList::delGiven(int item){
-	node *ptr,*loc;
-	if(isEmpty())
-		return;
-	loc=head;
-	while((loc->next)->info !=item){
-		loc=loc->next;
-	}
-	ptr=loc->next;
-	loc->next=ptr->next;
-	delete ptr;
-}
-
-void LinkedList::delList(){
-	if(isEmpty())
-		return;
-	node *ptr;
-	while(head!=NULL){
-		ptr=head;
-		head=head->next;
-		delete ptr; 
-	}
-}
-
-node* LinkedList::searchElement(int item){
-	cout << "SEARCHING STARTED" << endl;
-	node *ptr,*loc;
-	ptr=head;
-	while(ptr->next!=NULL) {
-		if(item==ptr->info) {
-			loc=ptr;
-			cout << "SEARCHING COMPLETED" << endl;
-			return loc;
-		}
-	
-		ptr=ptr->next;
-		
-	}
-	
-	cout << "SEARCHING COMPLETED" << endl;
-	return NULL;
-}
-
-
-void LinkedList::traverse(){
-	node *ptr;
-	ptr=head;
-	while(ptr!=NULL){
-		cout<<ptr->info<<"->";
-		ptr=ptr->next;
-	}
-	cout<<"\n";
-}
-
-void LinkedList::traverseReverseOrder(){
-	traverseReverse(head);
-}
-
-void LinkedList::traverseReverse(node *ptr){
-	if(ptr->next!=NULL)
-		traverseReverse(ptr->next);
-	cout<<ptr->info<<"->";
-}
-
-int LinkedList::lengthList(){
-	node *ptr;
-	int count=0;
-	if(isEmpty())
-		return count;
-	ptr=head;
-	while(ptr!=NULL){
-		ptr=ptr->next;
-		count++;
-	}
-	return count;
-}
-
-void LinkedList::swapNodes(int item1, int item2){
-	node *prev1,*prev2,*curr1,*curr2,*temp;
-	prev1=prev2=NULL;
-	curr1=curr2=head;
-	while(curr1->info != item1){
-		prev1=curr1;
-		curr1=curr1->next;
-	}
-	while(curr2->info != item2){
-		prev2=curr2;
-		curr2=curr2->next;
-	}
-	//if either of the items are not found
-	if(curr1==NULL || curr2==NULL)
-		return;
-
-	// If x is not head of linked list
-	if (prev1 != NULL)
-       prev1->next = curr2;
-    else  //make x as the head 
-       head = curr2;  
-
-   // If y is not head of linked list
-	if (prev2 != NULL)
-       prev2->next = curr1;
-    else //make y as the head
-       head = curr1;
-
-	temp=curr1->next;
-	curr1->next=curr2->next;
-	curr2->next=temp;
-}
-
-int LinkedList::getNthNode(int index){
-	node *ptr;
-	if(isEmpty())
-		return -1;
-	ptr=head;
-	int count=0;
-	while(ptr!=NULL){
-		if(count==index)
-			return ptr->info;
-		ptr=ptr->next;
-		count++;
-	}
-	return -1;
-}
-
-int LinkedList::getNthNodeFromEnd(int index){
-	node *ptr;
-	if(isEmpty())
-		return -1;
-	ptr=head;
-	int len=lengthList();
-	int count=0;
-	while(ptr!=NULL){
-		if(count==len-index-1)
-			return ptr->info;
-		ptr=ptr->next;
-		count++;
-	}
-	return -1;
-}
-
-int LinkedList::getMiddle(){
-	node *ptr,*dbptr;
-	ptr=head;
-	dbptr=head;
-	while(dbptr != NULL && dbptr->next != NULL){
-		dbptr=(dbptr->next)->next;
-		ptr=ptr->next;
-	}
-	return ptr->info;
-}
-
-void LinkedList::reverseList(){
-	node *prev=NULL;
-	node *current=head;
-	node *next;
-	while(current!=NULL){
-		next=current->next;
-		current->next=prev;
-		prev=current;
-		current=next;
-	}
-	head=prev;
-}
-
-//End of function definitions
-
-int main(int argc, char const *argv[])
+CGaussianNaiveBayes::CGaussianNaiveBayes() : CNativeMulticlassMachine(), m_features(NULL),
+	m_min_label(0), m_num_classes(0), m_dim(0), m_means(), m_variances(),
+	m_label_prob(), m_rates()
 {
-	LinkedList l;
-	l.addBeg(1);
-	l.addBeg(2);
-	l.addBeg(3);
-	l.traverse();
-	l.addEnd(4);
-	l.addEnd(5);
-	l.traverse();
-	l.traverseReverseOrder();
-	cout<<"\n";
-	l.addAfter(10,4);
-	l.traverse();
-	cout<<l.lengthList()<<"\n";
-	l.swapNodes(2,10);
-	l.traverse();
-	cout<<l.getNthNode(2)<<"\n";
-	cout<<l.getNthNode(4)<<"\n";
-	cout<<l.getNthNodeFromEnd(4)<<"\n";
-	cout<<l.getNthNodeFromEnd(6)<<"\n";
-	l.traverse();
-	l.reverseList();
-	l.traverse();
 
-	cout<<"Middle element is : "<<l.getMiddle()<<"\n";
+};
 
-	node *n = l.searchElement(4);
-	cout << n->info << endl;
+CGaussianNaiveBayes::CGaussianNaiveBayes(CFeatures* train_examples,
+	CLabels* train_labels) : CNativeMulticlassMachine(), m_features(NULL),
+	m_min_label(0), m_num_classes(0), m_dim(0), m_means(),
+	m_variances(), m_label_prob(), m_rates()
+{
+	ASSERT(train_examples->get_num_vectors() == train_labels->get_num_labels());
+	set_labels(train_labels);
 
-	l.delBeg();
-	l.delEnd();
-	l.traverse();
-	l.delGiven(4);
-	l.traverse();
-	l.delList();
-	l.traverse();
-	cout<<l.lengthList()<<"\n";
+	if (!train_examples->has_property(FP_DOT))
+		SG_ERROR("Specified features are not of type CDotFeatures\n");
 
-	return 0;
+	set_features((CDotFeatures*)train_examples);
+};
+
+CGaussianNaiveBayes::~CGaussianNaiveBayes()
+{
+	SG_UNREF(m_features);
+};
+
+CFeatures* CGaussianNaiveBayes::get_features()
+{
+	SG_REF(m_features);
+	return m_features;
 }
+
+void CGaussianNaiveBayes::set_features(CFeatures* features)
+{
+	if (!features->has_property(FP_DOT))
+		SG_ERROR("Specified features are not of type CDotFeatures\n");
+
+	SG_UNREF(m_features);
+	SG_REF(features);
+	m_features = (CDotFeatures*)features;
+}
+
+bool CGaussianNaiveBayes::train_machine(CFeatures* data)
+{
+	// init features with data if necessary and assure type is correct
+	if (data)
+	{
+		if (!data->has_property(FP_DOT))
+				SG_ERROR("Specified features are not of type CDotFeatures\n");
+		set_features((CDotFeatures*) data);
+	}
+
+	// get int labels to train_labels and check length equality
+	ASSERT(m_labels);
+	ASSERT(m_labels->get_label_type() == LT_MULTICLASS);
+	SGVector<int32_t> train_labels = ((CMulticlassLabels*) m_labels)->get_int_labels();
+	ASSERT(m_features->get_num_vectors()==train_labels.vlen);
+
+	// init min_label, max_label and loop variables
+	int32_t min_label = train_labels.vector[0];
+	int32_t max_label = train_labels.vector[0];
+	int i,j;
+
+	// find minimal and maximal label
+	for (i=1; i<train_labels.vlen; i++)
+	{
+		min_label = CMath::min(min_label, train_labels.vector[i]);
+		max_label = CMath::max(max_label, train_labels.vector[i]);
+	}
+
+	// subtract minimal label from all labels
+	for (i=0; i<train_labels.vlen; i++)
+		train_labels.vector[i]-= min_label;
+
+	// get number of classes, minimal label and dimensionality
+	m_num_classes = max_label-min_label+1;
+	m_min_label = min_label;
+	m_dim = m_features->get_dim_feature_space();
+
+	// allocate memory for distributions' parameters and a priori probability
+	m_means=SGMatrix<float64_t>(m_dim,m_num_classes);
+	m_variances=SGMatrix<float64_t>(m_dim, m_num_classes);
+	m_label_prob=SGVector<float64_t>(m_num_classes);
+
+	// allocate memory for label rates
+	m_rates=SGVector<float64_t>(m_num_classes);
+
+	// make arrays filled by zeros before using
+	m_means.zero();
+	m_variances.zero();
+	m_label_prob.zero();
+	m_rates.zero();
+
+	// number of iterations in all cycles
+	int32_t max_progress = 2 * train_labels.vlen + 2 * m_num_classes;
+	
+	// current progress
+	int32_t progress = 0;	
+	SG_PROGRESS(progress, 0, max_progress);
+
+	// get sum of features among labels
+	for (i=0; i<train_labels.vlen; i++)
+	{
+		SGVector<float64_t> fea = m_features->get_computed_dot_feature_vector(i);
+		for (j=0; j<m_dim; j++)
+			m_means(j, train_labels.vector[i]) += fea.vector[j];
+
+		m_label_prob.vector[train_labels.vector[i]]+=1.0;
+
+		progress++;
+		SG_PROGRESS(progress, 0, max_progress);
+	}
+
+	// get means of features of labels
+	for (i=0; i<m_num_classes; i++)
+	{
+		for (j=0; j<m_dim; j++)
+			m_means(j, i) /= m_label_prob.vector[i];
+
+		progress++;
+		SG_PROGRESS(progress, 0, max_progress);
+	}
+
+	// compute squared residuals with means available
+	for (i=0; i<train_labels.vlen; i++)
+	{
+		SGVector<float64_t> fea = m_features->get_computed_dot_feature_vector(i);
+		for (j=0; j<m_dim; j++)
+		{
+			m_variances(j, train_labels.vector[i]) += 
+				CMath::sq(fea[j]-m_means(j, train_labels.vector[i]));
+		}
+
+		progress++;
+		SG_PROGRESS(progress, 0, max_progress);
+	}	
+
+	// get variance of features of labels
+	for (i=0; i<m_num_classes; i++)
+	{
+		for (j=0; j<m_dim; j++)
+			m_variances(j, i) /= m_label_prob.vector[i] > 1 ? m_label_prob.vector[i]-1 : 1;
+		
+		// get a priori probabilities of labels
+		m_label_prob.vector[i]/= m_num_classes;
+
+		progress++;
+		SG_PROGRESS(progress, 0, max_progress);
+	}
+	SG_DONE();
+
+	return true;
+}
+
+CMulticlassLabels* CGaussianNaiveBayes::apply_multiclass(CFeatures* data)
+{
+	if (data)
+		set_features(data);
+
+	ASSERT(m_features);
+
+	// init number of vectors
+	int32_t num_vectors = m_features->get_num_vectors();
+
+	// init result labels
+	CMulticlassLabels* result = new CMulticlassLabels(num_vectors);
+
+	// classify each example of data
+	SG_PROGRESS(0, 0, num_vectors);
+	for (int i = 0; i < num_vectors; i++)
+	{
+		result->set_label(i,apply_one(i));
+		SG_PROGRESS(i + 1, 0, num_vectors);
+	}
+	SG_DONE();
+	return result;
+};
+
+float64_t CGaussianNaiveBayes::apply_one(int32_t idx)
+{
+	// get [idx] feature vector
+	SGVector<float64_t> feature_vector = m_features->get_computed_dot_feature_vector(idx);
+
+	// init loop variables
+	int i,k;
+
+	// rate all labels
+	for (i=0; i<m_num_classes; i++)
+	{
+		// set rate to 0.0 if a priori probability is 0.0 and continue
+		if (m_label_prob.vector[i]==0.0)
+		{
+			m_rates.vector[i] = 0.0;
+			continue;
+		}
+		else
+			m_rates.vector[i] = CMath::log(m_label_prob.vector[i]);
+	
+		// product all conditional gaussian probabilities
+		for (k=0; k<m_dim; k++)
+			if (m_variances(k,i)!=0.0)
+				m_rates.vector[i]+= CMath::log(0.39894228/CMath::sqrt(m_variances(k, i))) - 
+					0.5*CMath::sq(feature_vector.vector[k]-m_means(k, i))/(m_variances(k, i));
+	}
+
+	// find label with maximum rate
+	int32_t max_label_idx = 0;
+
+	for (i=0; i<m_num_classes; i++)
+	{
+		if (m_rates.vector[i]>m_rates.vector[max_label_idx])
+			max_label_idx = i;
+	}
+
+	return max_label_idx+m_min_label;
+};

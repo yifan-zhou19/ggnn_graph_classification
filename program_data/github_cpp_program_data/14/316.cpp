@@ -1,116 +1,266 @@
-#include <iostream>
-using namespace std;
+#include "LogisticRegression.h"
 
-/*
-	This is an implementation of a max heap.
-	A Max Heap is one in which the value of each element should be greater than or equal to
-	any of its child and smaller than or equal to its parent
-*/
-/*
-	The basic idea is as follows.
-	Each nodes has 2 children left and right
-	Among the node and the children you find out which is maximum
-	if it is the node then lite (else statement)
-	if it is one of the children then exchange it with the node
-	
-	Procede to check the children as the rest will take care of itself
-
-	Also to build a max heap you must start from index N/2 and procede backwards
-
-	It has a complexity of O(log(n))
-*/
-int* max_heapify(int* arr,int i,int N)
+FeaValNode::FeaValNode (void)
 {
-	int left=2*(i+1)-1; //the left child
-	int right=2*(i+1); //the right child
-	int largest=0;
-	if(left<N && arr[left]>arr[i])
-		largest=left;
-	else largest=i;
-	if(right<N && arr[right]>arr[largest])
-		largest=right;
-	if(largest!=i)
+	iFeatureId = -1;
+	dValue = 0.0;
+}
+
+FeaValNode::~FeaValNode (void)
+{
+}
+
+Sample::Sample (void)
+{
+	iClass = -1;
+}
+
+Sample::~Sample (void)
+{
+}
+
+LogisticRegression::LogisticRegression(void)
+{
+}
+
+
+LogisticRegression::~LogisticRegression(void)
+{
+}
+
+// the input format is: iClassId featureid1:featurevalue1 featureid2:featurevalue2 ... 
+bool LogisticRegression::ReadSampleFrmLine (string & sLine, Sample & theSample)
+{
+	istringstream isLine (sLine);
+	if (!isLine)
+		return false;
+
+	// the class index
+	isLine >> theSample.iClass;
+
+	// the feature and its value
+	string sItem;
+	while (isLine >> sItem )
 	{
-		swap(arr[i],arr[largest]);
-		max_heapify(arr,largest,N);
+		FeaValNode theNode;
+		string::size_type iPos = sItem.find (':');
+		theNode.iFeatureId = atoi (sItem.substr(0, iPos).c_str());
+		theNode.dValue = atof (sItem.substr (iPos+1).c_str());
+		theSample.FeaValNodeVec.push_back (theNode);
 	}
-	return arr;
+
+	return true;
 }
-int* build_max_heap(int* arr,int N)
+
+double LogisticRegression::Sigmoid(double x)
 {
-	for(int i=N/2;i>=0;i--)
-		max_heapify(arr,i,N);
+	double dTmpOne = exp (x);
+	double dTmpTwo = dTmpOne + 1;
+	return dTmpOne / dTmpTwo;
 }
-/*
-	This is an implementation of a min heap
-	You should go about thinking just like a max heap
-*/
-int* min_heapify(int* arr,int i,int N)
+
+double LogisticRegression::CalcFuncOutByFeaVec(vector<FeaValNode> & FeaValNodeVec)
 {
-	int left=2*(i+1)-1;
-	int right=2*(i+1);
-	int smallest=0;
-	if(left<N && arr[left]<arr[i])
-		smallest=left;
-	else smallest=i;
-	if(right<N && arr[right]<arr[smallest])
-		smallest=right;
-	if(smallest!=i)
+	double dX = 0.0;
+	vector<FeaValNode>::iterator p = FeaValNodeVec.begin();
+	while (p != FeaValNodeVec.end())
 	{
-		swap(arr[i],arr[smallest]);
-		min_heapify(arr,smallest,N);
+		if (p->iFeatureId < (int)ThetaVec.size())	// all input is evil
+			dX += ThetaVec[p->iFeatureId] * p->dValue;			
+		p++;
+	}
+	double dY = Sigmoid (dX);
+	return dY;
+}
+
+// the update formula is : theta_new = theta_old - dLearningRate * (dY - iClass) * dXi
+void LogisticRegression::UpdateThetaVec(Sample & theSample, double dY, double dLearningRate)
+{
+	vector<FeaValNode>::iterator p = theSample.FeaValNodeVec.begin();
+	while (p != theSample.FeaValNodeVec.end())
+	{
+		if (p->iFeatureId < (int)ThetaVec.size())
+		{
+			double dGradient = (dY - theSample.iClass) * p->dValue;
+			double dDelta = dGradient * dLearningRate;
+			ThetaVec[p->iFeatureId] -= dDelta;
+		}
+		p++;
 	}
 }
-int* build_minheap(int* arr,int N)
+
+// the sample format: classid feature1_value feature2_value...
+bool LogisticRegression::TrainSGDOnSampleFile (
+			const char * sFileName, int iMaxFeatureNum,			// about the samples
+			double dLearningRate = 0.05,						// about the learning
+			int iMaxLoop = 1, double dMinImproveRatio = 0.01	// about the stop criteria
+			)
 {
-	for(int i=N/2;i>=0;i--)
-		min_heapify(arr,i,N);
+	ifstream in (sFileName);
+	if (!in)
+	{
+		cerr << "Can not open the file of " << sFileName << endl;
+		return false;
+	}
+
+	ThetaVec.clear();
+	ThetaVec.resize (iMaxFeatureNum, 0.0);
+
+	double dCost = 0.0;
+	double dPreCost = 1.0;
+	for (int iLoop = 0; iLoop < iMaxLoop; iLoop++)
+	{
+		int iSampleNum = 0;
+		string sLine;
+		while (getline (in, sLine))
+		{
+			Sample theSample;
+			if (ReadSampleFrmLine (sLine, theSample))
+			{
+				double dY = CalcFuncOutByFeaVec (theSample.FeaValNodeVec);
+				UpdateThetaVec (theSample, dY, dLearningRate); 
+
+				// the cost function is : cost = -( iClass * log (dY) + (1.0 - iClass) * log(1.0 - dY) )
+				// that is: cost = log(dY) when iClass is 1, otherwise cost = log(1.0 - dY) when iClass is 0
+				if (theSample.iClass > 0.0)
+					dCost -= log (dY);
+				else
+					dCost -= log (1.0 - dY);
+
+				iSampleNum++;
+			}
+		}
+
+		dCost /= iSampleNum;
+		double dTmpRatio = (dPreCost - dCost) / dPreCost;
+
+		// show info on screen
+		cout << "In loop " << iLoop << ": current cost (" << dCost << ") previous cost (" << dPreCost << ") ratio (" << dTmpRatio << ") "<< endl;
+
+		if (dTmpRatio < dMinImproveRatio)
+			break;
+		else
+		{
+			dPreCost = dCost;
+			dCost = 0.0;
+			//reset the current reading position of file
+			in.clear();
+			in.seekg (0, ios::beg);
+		}
+	}
+
+	return true;
 }
-int main()
+
+bool LogisticRegression::SaveLRModelTxt(const char *sFileName)
 {
-	int n;
-	cin>>n;
-	int arr[n];
-	for(int i=0;i<n;i++)
-		cin>>arr[i];
-	/*int *ans1=build_max_heap(arr,n);
-	for(int i=0;i<n;i++)
-		cout<<arr[i]<<" ";
-	cout<<endl;*/
-	int *ans2=build_minheap(arr,n);
-	for(int i=0;i<n;i++)
-		cout<<arr[i]<<" ";
-	cout<<endl;
+	if (ThetaVec.empty())
+	{
+		cerr << "The Theta vector is empty" << endl;
+		return false;
+	}
+
+	ofstream out (sFileName);
+	if (!out)
+	{
+		cerr << "Can not open the file of " << sFileName << endl;
+		return false;
+	}
+
+	out << (int)ThetaVec.size() << "\n";
+	copy (ThetaVec.begin(), ThetaVec.end(), ostream_iterator<double>(out, "\n"));
+
+	return true;
 }
-/*
-	To insert an element into a heap
-		Step1:
-			stick the new element at the last level of the heap
-		Step2:
-			bubble up the new element by exchanging it with its parent until the heap property is restored
-*/
-/*
-	To extract min:
-		Delete(extract) the root
-		Move the last node to the root
-		Bubble down by exchanging it with the child with a lesser value!
-		Iterate until you have a heap
-	Ex-
-	     4
-	   4   8
-	  9 4   9
-	11 13
-	     13
-	   4    8
-	  9 4    9
-	11 
-	     4
-	   13  8
-	  9 4   9
-	11
-	      4
-	   4     8
-	  9 13     9
-	11
-	taDAA!
-*/
+
+bool LogisticRegression::LoadLRModelTxt (const char * sFileName)
+{
+	ifstream in (sFileName);
+	if (!in)
+	{
+		cerr << "Can not open the file of " << sFileName << endl;
+		return false;
+	}
+
+	ThetaVec.clear();
+
+	int iNum = 0;
+	in >> iNum;
+
+	ThetaVec.resize (iNum, 0.0);
+	for (int i=0; i<iNum; i++)
+	{
+		in >> ThetaVec[i];
+	}
+
+	return true;
+}
+
+int LogisticRegression::PredictOneSample (Sample & theSample)
+{
+	double dY = CalcFuncOutByFeaVec (theSample.FeaValNodeVec);
+	if (dY > 0.5)
+		return 1;
+	else
+		return 0;
+}
+
+bool LogisticRegression::PredictOnSampleFile(const char *sFileIn, const char *sFileOut, const char *sFileLog)
+{
+	ifstream in (sFileIn);
+	ofstream out (sFileOut);
+	ofstream log (sFileLog);
+	if (!in || !out || !log)
+	{
+		cerr << "Can not open the files " << endl;
+		return false;
+	}
+
+	int iSampleNum = 0;
+	int iCorrectNum = 0;
+	string sLine;
+	while (getline (in, sLine))
+	{
+		Sample theSample;
+		if (ReadSampleFrmLine (sLine, theSample))
+		{
+			int iClass = PredictOneSample (theSample);
+
+			if (iClass == theSample.iClass)
+				iCorrectNum++;
+
+			out << iClass << " ";
+			vector<FeaValNode>::iterator p = theSample.FeaValNodeVec.begin();
+			while (p != theSample.FeaValNodeVec.end())
+			{
+				out << p->dValue << " ";
+				p++;
+			}
+			out << endl;
+		}
+		else
+			out << "bad input" << endl;
+
+		iSampleNum++;
+	}
+
+	log << "The total number of sample is : " << iSampleNum << endl;
+	log << "The correct prediction number is : " << iCorrectNum << endl;
+	log << "Precision : " << (double)iCorrectNum / iSampleNum << endl;
+
+	cout << "Precision : " << (double)iCorrectNum / iSampleNum << endl;
+
+	return true;
+}
+
+void LogisticRegression::Test (void)
+{
+	/*TrainSGDOnSampleFile ("..\\Data\\australian_scale_train.txt", 15, 0.01, 100, 0.05);
+	SaveLRModelTxt ("Model\\Mod_001_100_005_scale.txt");
+	LoadLRModelTxt ("Model\\Mod_001_100_005_scale.txt");
+	PredictOnSampleFile ("..\\Data\\australian_scale_test.txt", "Model\\Rslt_001_100_005_scale.txt", "Model\\Log_001_100_005_scale.txt");*/
+
+	/*TrainSGDOnSampleFile ("..\\Data\\australian_train.txt", 15, 0.01, 100, 0.05);
+	SaveLRModelTxt ("Model\\Mod_001_100_005.txt");*/
+}
+

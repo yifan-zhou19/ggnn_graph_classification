@@ -1,25 +1,20 @@
-package generics;// : generics/Fibonacci.java
+public class TowerOfHanoi {
+    private static int num = 0;
 
-// Generate a Fibonacci sequence.
-import net.mindview.util.*;
-
-public class Fibonacci implements Generator<Integer> {
-    private int count = 0;
-
-    public Integer next() {
-        return fib(count++);
+    public static void moveDisk(int n, String fromTow, String toTow, String auxTow) {
+        num++;
+        if (n == 1)
+            System.out.println("Move disk " + n + " from " + fromTow + " to " + toTow
+                + ".");
+        else {
+            moveDisk(n - 1, fromTow, auxTow, toTow);
+            System.out.println("Move disk " + n + " from " + fromTow + " to " + toTow
+                + ".");    //表示将n号盘从form 挪到 to。
+            moveDisk(n - 1, auxTow, toTow, fromTow);
+        }
     }
 
-    private int fib(int n) {
-        if (n < 2) return 1;
-        return fib(n - 2) + fib(n - 1);
+    public static int getNum() {
+        return num;
     }
-
-    public static void main(String[] args) {
-        Fibonacci gen = new Fibonacci();
-        for (int i = 0; i < 18; i++)
-            System.out.print(gen.next() + " ");
-    }
-} /*
-   * Output: 1 1 2 3 5 8 13 21 34 55 89 144 233 377 610 987 1597 2584
-   */// :~
+}

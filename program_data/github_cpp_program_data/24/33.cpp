@@ -1,106 +1,96 @@
-#include <iostream>
-#include <vector>
-#include <cstddef>
-
-using std::vector;
-using std::cout;
-using std::endl;
-
-class PermutationGenerator {
-    private:
-        vector<int> base;
-        size_t size;
-        void swap(vector<int>::iterator a, vector<int>::iterator b) {
-            int tmp = *a;
-            *a = *b;
-            *b = tmp;
+    #include <bits/stdc++.h>
+     
+    using namespace std;
+     
+    struct node {
+        int weight;
+        pair<int, int> edge;
+    };
+     
+    struct ds {
+        int val;
+        int size;
+    };
+     
+    bool comparator(const node& node1, const node& node2) {
+        return node1.weight < node2.weight;
+    }
+     
+    vector<ds> Arr;
+     
+    void initialize(int n) {
+        for(int i = 0; i < n; ++i) {
+            ds temp;
+            temp.val = i;
+            temp.size = 1;
+     
+            Arr.push_back(temp);
         }
-
-    public:
-        PermutationGenerator (size_t n):size(n){}
+    }
+     
+    int root(int i) {
+        while(Arr.at(i).val != i) {
+            Arr.at(i).val = Arr.at(Arr.at(i).val).val;
+            i = Arr.at(i).val;
+        }
+     
+        return i;
+    }
+     
+    void WeightedUnion(int a, int b) {
+        int r_a = root(a);
+        int r_b = root(b);
+     
+        if(r_a == r_b) 
+            return;
+     
+        if(Arr.at(r_a).size < Arr.at(r_b).size) {
+            Arr.at(r_a).val = Arr.at(r_b).val;
+            Arr.at(r_b).size +=  Arr.at(r_a).size;
+        }
+        else {
+            Arr.at(r_b).val = Arr.at(r_a).val;
+            Arr.at(r_a).size +=  Arr.at(r_b).size;
+        }
         
-        vector<int> operator()() {
-            if (base.empty()) {
-                for (size_t i = 0; i < size; ++i) {
-                    base.push_back(i + 1);
-                }
-                return base;
-            }
-
-            // Find the firt ascending order iterator
-            vector<int>::iterator itr = base.end() - 2;
-            while(itr >= base.begin() && *itr > *(itr + 1)) {
-                if (itr == base.begin()) {
-                    return vector<int>{};
-                }
-                --itr;
-            }
+    }
+     
+    int Find(int a, int b) {
+        return root(a) == root(b);
+    }
+     
+    int Kruskal(vector<node>& Graph) {
+        int minCost = 0;
+     
+        for(auto& i : Graph) {
             
-            // Find the next value that bigger than *itr
-            vector<int>::iterator nextBiggerIter = base.end() - 1;
-            while(nextBiggerIter >= base.begin() && *nextBiggerIter < *itr) {
-                nextBiggerIter --;
-            }
-            swap(itr, nextBiggerIter);
-
-            auto left = itr + 1;
-            auto right = base.end() - 1;
-            while (left < right) {
-                swap(left, right);
-                ++left;
-                --right;
-            }
-            
-            return base;
-        }   
-
-};
-
-void print(vector<int> v) {
-    vector<int>::const_iterator citr = v.cbegin();
-    while( citr < v.cend()) {
-        cout<< *citr << "\t" ;
-        advance(citr, 1);
+            if(!Find(i.edge.first, i.edge.second)) {
+                WeightedUnion(i.edge.first, i.edge.second);
+                minCost += i.weight;
+            }    
+        }
+     
+        return minCost;
     }
-    cout << endl;
-}
-
-/** 
- * Using Dynamic Programming to implement fibnacci sequence.
- */
-int fib(int n) {
-    if (n == 1 || n == 2) {
-        return 1;
+     
+    int main() {
+        int nodes, edges;
+        cin>>nodes>>edges;
+     
+        vector<node> Graph(edges+1);
+        initialize(nodes+1);
+     
+        for(int i = 1; i <= edges; ++i) {
+            int x, y, w;
+            cin>>x>>y>>w;
+     
+            Graph.at(i).weight = w;
+            Graph.at(i).edge = make_pair(x, y);
+        }
+     
+        sort(Graph.begin(), Graph.end(), comparator);
+     
+        cout<<Kruskal(Graph)<<endl;
+        
+        return 0;
     }
-    vector<int> bottomUpRes = {1, 1};
-    for (int i = 3; i <= n; ++i) {
-        bottomUpRes.push_back(*(bottomUpRes.end() - 1) + *(bottomUpRes.end() - 2));
-    }
-    return *(bottomUpRes.end() - 1);
-}
-
-int factorial(int n) {
-    return (n == 1 || n == 0) ? 1 : n * factorial(n - 1);
-}
-
-int main() {
-    cout << "fib:" << fib(5) <<endl;
-    cout << "fib:" << fib(8) <<endl;
-    cout << "fib:" << fib(15) <<endl;
-    cout << "fib:" << fib(100) <<endl;
-    cout << factorial(4) <<endl;
-    PermutationGenerator p(3);
-    int num = factorial(3);
-    for (int i = 0; i < num; ++i) {
-        cout << (i + 1) << "th:";
-        print(p());
-    }
-
-    PermutationGenerator p4(4);
-    num = factorial(4);
-    for (int i = 0; i < num; ++i) {
-        cout << (i + 1) << "th:";
-        print(p4());
-    }
-    return 0;
-}

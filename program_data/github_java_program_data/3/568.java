@@ -1,123 +1,63 @@
-package analysis.in.java.chapter5;
+ass Node{
+    int key;
+    int value;
+    Node next;
+    Node prev;
+    public Node(int a, int b){
+        key = a;
+        value = b;
+    }
+}
+public class Solution {
+    HashMap<Integer, Node> map;
+    int capacity;
+    Node head = new Node(-1, -1);
+    Node tail = new Node(-1, -1);
+    // @param capacity, an integer
+    public Solution(int capacity) {
+        // write your code here
+        map = new HashMap<Integer, Node>();
+        this.capacity = capacity;
+        head.next = tail;
+        tail.prev = head;
+    }
 
-public class DoubleHashHashTable<AnyType> implements MyHashTable<AnyType> {
+    // @return an integer
+    public int get(int key) {
+        // write your code here
+        if(!map.containsKey(key)){
+            return -1;
+        }
+        Node crt = map.get(key);
+        //remove crt
+        crt.prev.next = crt.next;
+        crt.next.prev = crt.prev;
+        moveToTail(crt);
+        return crt.value;
+    }
 
-	public DoubleHashHashTable(){
-		this(DEFAULT_SIZE);
-	}
-	
-	public DoubleHashHashTable(int size){
-		allocateArray(size);
-		currentSize=0;
-	}
-	@Override
-	public boolean contains(AnyType x) {
-		int position=getPosition(x);
-		boolean contain=true;
-		if(null==array[position]||!array[position].equals(x)){
-			contain=false;
-		}
-		return contain;
-	}
-
-	@Override
-	public void insert(AnyType x) {
-		int position=getPosition(x);
-		if(null==array[position]){
-			array[position]=x;
-			currentSize++;
-		}
-	}
-
-	@Override
-	public void makeEmpty() {
-		currentSize=0;
-		for(int i=0;i<getTableSize();i++){
-			array[i]=null;
-		}
-	}
-
-	@Override
-	public void remove(AnyType x) {
-		int position=getPosition(x);
-		if(null!=array[position]){
-			array[position]=null;
-			currentSize--;
-		}
-		
-	}
-	
-	private static final int DEFAULT_SIZE=11;
-	
-	private AnyType[] array;
-	private int currentSize;
-	
-	private void allocateArray(int size){
-		if(size<=0){
-			size=DEFAULT_SIZE;
-		}
-		array = (AnyType[])new Object[size]; 
-	}
-	private int getTableSize(){
-		return array.length;
-	}
-	private int myhash(AnyType x){
-		int tableSize=getTableSize();
-		int position=x.hashCode()%tableSize;
-		if(position<0){
-			position+=tableSize;
-		}
-		return position;
-	}
-	private int hash2(int x){
-		return 7-(x%7);
-	}
-	private int getPosition(AnyType element){
-		int position=myhash(element);
-		int temp=0;
-		while(null!=array[position+temp*hash2(position)]&&
-					!array[position+temp*hash2(position)].equals(element)){
-			temp++;
-		}
-		return position+temp*hash2(position);
-	}
-	
-	
-	/**
-	 * Internal method to find a prime number at least as large as n.
-	 * 
-	 * @param n
-	 *            the starting number (must be positive).
-	 * @return a prime number larger than or equal to n.
-	 */
-	private static int nextPrime(int n) {
-		if (n % 2 == 0)
-			n++;
-
-		for (; !isPrime(n); n += 2)
-			;
-		return n;
-	}
-
-	/**
-	 * Internal method to test if a number is prime. Not an efficient algorithm.
-	 * 
-	 * @param n
-	 *            the number to test.
-	 * @return the result of the test.
-	 */
-	private static boolean isPrime(int n) {
-		if (n == 2 || n == 3)
-			return true;
-
-		if (n == 1 || n % 2 == 0)
-			return false;
-
-		for (int i = 3; i * i <= n; i += 2)
-			if (n % i == 0)
-				return false;
-
-		return true;
-	}
-
+    // @param key, an integer
+    // @param value, an integer
+    // @return nothing
+    public void set(int key, int value) {
+        // write your code here
+        if(get(key) != -1){//这里为什么不能直接用hashmap来弄？？？
+            map.get(key).value = value;
+            return;
+        }
+        //exceed the capacity
+        if(map.size() == capacity){
+            map.remove(head.next.key);
+            head.next = head.next.next;
+            head.next.prev = head;
+        }
+        map.put(key, new Node(key, value));
+        moveToTail(map.get(key));
+    }
+    public void moveToTail(Node crt){
+        crt.prev = tail.prev;
+        tail.prev = crt;
+        crt.prev.next = crt;
+        crt.next = tail;
+    }
 }

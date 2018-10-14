@@ -1,13 +1,29 @@
-public <T extends Comparable<T>> void sort(T[] elems) {
- 7         int size = elems.length;
- 8 
- 9         for (int outerLoopIdx = 1; outerLoopIdx < size; ++outerLoopIdx) {
-10             for (int innerLoopIdx = outerLoopIdx; innerLoopIdx > 0; --innerLoopIdx) {
-11                 if (elems[innerLoopIdx - 1].compareTo(elems[innerLoopIdx]) > 0) {
-12                     T temp = elems[innerLoopIdx - 1];
-13                     elems[innerLoopIdx - 1] = elems[innerLoopIdx];
-14                     elems[innerLoopIdx] = temp;
-15                 }
-16             }
-17         }
-18     }
+package oracle.threads;
+
+import static java.lang.System.out;
+
+public class Fibonacci {
+    public static long fibonacci(int n) {
+        if (n <= 1) return n;
+        else return fibonacci(n-1) + fibonacci(n-2);
+    }
+
+    public static void blockingComputation() {
+        int n = 1000;
+        for (int i = 1; i <= n; i++) {
+            out.println(i + ": " + fibonacci(i));
+	    if(Thread.interrupted()) {
+		out.println("interrupted");
+	    	return;
+	    }
+	}
+    }
+
+public static void main(String[] args) throws InterruptedException {
+Thread t = new Thread(Fibonacci::blockingComputation);
+t.start();
+Thread.sleep(5000);//wait for 3 secs
+t.interrupt();//stops computation
+}
+
+}

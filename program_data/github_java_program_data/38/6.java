@@ -1,39 +1,85 @@
-package net.engine.shape;
+// Ilay Raz
+// ilraz
+// CMPS12B-02
+// 2/23/18
+// Queue.java
 
-import net.engine.math.Float2;
+public class Queue implements QueueInterface {
+    private class Node {
+        public Object data;
+        public Node next;
 
-import java.util.ArrayList;
-
-public class ConvexHull extends Shape
-{
-  ArrayList<LineSegment> segments;
-  boolean closed;
-
-  public ConvexHull()
-  {
-    segments = new ArrayList<LineSegment>();
-    closed = false;
-  }
-
-  public void addPoint(Float2 point)
-  {
-    segments.add(new LineSegment(point));
-    if (segments.size() > 1)
-    {
-      LineSegment prev = segments.get(segments.size() - 2);
-      prev.set(prev.start, point);
-      closed = false;
+        public Node(Object myData) {
+            data = myData;
+            next = null;
+        }
     }
-  }
 
-  void close()
-  {
-    if (segments.size() > 2)
-    {
-      LineSegment last = segments.get(segments.size() - 1);
-      LineSegment first = segments.get(0);
-      last.set(last.start, first.start);
-      closed = true;
+    private int size;
+    private Node head;
+    private Node tail;
+
+    public Queue() {
+        size = 0;
+        head = null;
+        tail = null;
     }
-  }
+
+    public boolean isEmpty() {
+        return size == 0;
+    }
+
+    public int length() {
+        return size;
+    }
+
+    public void enqueue(Object newItem) {
+        if (tail == null)
+            head = tail = new Node(newItem);
+        else {
+            tail.next = new Node(newItem);
+            tail = tail.next;
+        }
+        size++;
+    }
+
+    public Object dequeue() throws QueueEmptyException {
+        if (isEmpty())
+            throw new QueueEmptyException("Queue is empty");
+        Node node = head;
+        head = head.next;
+        size--;
+        if (head == null)
+            tail = null;
+        return node.data;
+    }
+
+    public Object peek() throws QueueEmptyException {
+        if (isEmpty())
+            throw new QueueEmptyException("Queue is empty");
+        return head.data;
+    }
+
+    public void dequeueAll() throws QueueEmptyException {
+        if (isEmpty())
+            throw new QueueEmptyException("Queue is empty");
+        head = null;
+        tail = null;
+        size = 0;
+    }
+
+    public Queue clone() {
+        Queue queue = new Queue();
+        for (Node node = head; node != null; node = node.next)
+            queue.enqueue(node.data);
+        return queue;
+    }
+
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+
+        for (Node node = head; node != null; node = node.next)
+            builder.append(node.data.toString() + " ");
+        return builder.toString();
+    }
 }

@@ -1,127 +1,182 @@
-#include "Heap.h"
-#include <iostream>
-#include <cstring>
+#include "LogisticRegression.hpp"
 
-Heap::Heap()
-{
-  table = nullptr;
-  size = 0;
-}
+#include "Utility.hpp"
 
-Heap::~Heap()
-{
-  if(size>0)
-    delete[] table;
-}
+class LogisticRegression::impl{
 
-void Heap::push(int value)
-{
- if(!isInHeap(value))
- {
-  int *newTable = new int[size + 1];
-  std::memcpy(newTable, table, size * sizeof(int));
-  newTable[size] = value;
+    Eigen::VectorXd weights{};
+    std::vector<double> costs{};
+    Eigen::MatrixXd::Index nFeatures = 0;
+    Eigen::MatrixXd::Index nTrainings = 0;
+    double bias = 0;
 
-  delete[] table;
-
-  table = newTable;
-
-  repairHeap();
-
-  size++;
- }
-}
-
-void Heap::pop()
-{
-  int *newTable = new int[size -1];
-  for(int i = 1 ; i<size; i++)
-  {
-    newTable[i-1] = table[i];
-  }
-  delete[]table;
-  table = newTable;
-  repairHeap();
-}
-
-bool Heap::isInHeap(int value)
-{
-  for(int i = 0; i < size; i++)
-  {
-    if(value == table[i])
+    Eigen::MatrixXd computeSigmoid
+    (
+            Eigen::MatrixXd const& a
+    )
     {
-      std::cout<<"Wartosc znajduje sie juz w kopcu"<<std::endl;
-      return true;
+        return 1.0/( (-1.0*a.array()).exp() + 1 );
     }
-  }
-  std::cout<<"Szukanej wartosci nie ma w kopcu"<<std::endl;
-  return false;
-}
-void Heap::printBT(std::string sp, std::string sn, int v)
-{
-	std::string cr, cl, cp ,s;
-	cr = cl = cp = "  ";
-	cr[0] = ' '; cr[1] = ' ';
-	cl[0] = ' '; cl[1] = ' ';
-	cp[0] = ' ';
 
-	if (v < size)
-	{
-		s = sp;
-		if (sn == cr) s[s.length() - 2] = ' ';
-		printBT(s + cp, cr, 2 * v + 2);
+    void initializeParameters ( bool nonZeroRandom );
 
-		s = s.substr(0, sp.length() - 2);
+public:
 
-		std::cout << s << sn << table[v] << std::endl;
+    impl() = default;
 
-		s = sp;
-		if (sn == cl) s[s.length() - 2] = ' ';
-		printBT(s + cp, cl, 2 * v + 1);
-	}
+    void train
+    (
+            Eigen::MatrixXd const& X,
+            Eigen::MatrixXd const& y,
+            double learningRate,
+            Eigen::MatrixXd::Index nIterations
+    );
 
-
-}
-void Heap::display()
-{
-    printBT("","",0);
-}
-
-void Heap::repairHeap()
-{
-  int temporary = 0;
-
-  for(int i = size; 0 < i; i--)
-  {
-    if(table[i - 1] < table[i])
+    Eigen::VectorXd predict
+    (
+            Eigen::MatrixXd const& X
+    );
+    
+    double computeError
+    (
+            Eigen::MatrixXd const& XObservation,
+            Eigen::MatrixXd const& yTarget
+    );
+    
+    std::tuple<Eigen::MatrixXd, double>
+    getParameters() const
     {
-      temporary = table[i - 1];
-      table[i - 1] = table[i];
-      table[i] = temporary;
+        return { weights, bias };
     }
-  }
-}
-void Heap::removeValue(int value)
-{
-  int* newTable = new int[size-1];
 
-  for(int i=0;i<size;i++)
-  {
-    if(table[i] == value)
+    std::vector<double> const&
+    getCosts() const
     {
-      for(int k=0;k<i;k++)
-      {
-        newTable[k] = table[k];
-      }
-      for(int k=i+1;k<size;k++)
-      {
-        newTable[k-1] = table[k];
-      }
-      delete[] table;
-      table = newTable;
-      size--;
-      repairHeap();
-      return;
+        return costs;
     }
-  }
+};
+
+void LogisticRegression::impl::initializeParameters
+( bool nonZeroRandom )
+{
+    if(!nonZeroRandom)
+    {
+        weights = Eigen::VectorXd::Zero(nFeatures);
+        bias = 0.0;
+    }
+    else
+    {
+        auto limit = 1.0/std::sqrt(nFeatures);
+        weights = generateUniform(nFeatures, 1, -limit, limit);
+        bias = generateUniform(1, 1, -limit, limit)(0, 0);
+    }
 }
+
+void LogisticRegression::impl::train
+(         
+        Eigen::MatrixXd const& X,
+        Eigen::MatrixXd const& y,
+        double learningRate,
+        Eigen::MatrixXd::Index nIterations
+)
+{
+    nFeatures = X.cols();
+    nTrainings = X.rows();
+    ASSERT( nTrainings == y.rows() );
+    initializeParameters(false);
+
+    costs = std::vector<double>(nIterations);
+    for (Eigen::MatrixXd::Index i = 0; i < nIterations; ++i)
+    {
+        auto yPredict = computeSigmoid( (X*weights).array() + bias );
+        auto error = yPredict - y;
+        costs[i] = -1*
+                   (
+                           y.array()*yPredict.array().log()
+                           +
+                           (1.0-y.array())*(1.0-yPredict.array()).log()
+                   ).mean();
+        weights -= learningRate * (1.0/nTrainings)*X.transpose()*error;
+        bias -= learningRate * (1.0/nTrainings)*error.sum();
+    }
+}
+
+Eigen::VectorXd LogisticRegression::impl::predict
+(         
+        Eigen::MatrixXd const& X
+)
+{
+    return computeSigmoid
+            (
+                    (X*weights).array() + bias
+            ).unaryExpr
+            (
+                    [](auto value)
+                    {
+                        return value > 0.5 ? 1.0 : 0.0;
+                    }
+            );
+}
+
+double LogisticRegression::impl::computeError
+(         
+        Eigen::MatrixXd const& XObservation,
+        Eigen::MatrixXd const& yTarget
+)
+{
+    auto yPredict = computeSigmoid( (XObservation*weights).array() + bias );
+    return -1*
+           (
+                   yTarget.array()*yPredict.array().log()
+                   +
+                   (1.0-yTarget.array())*(1.0-yPredict.array()).log()
+           ).mean();
+}
+
+void LogisticRegression::train
+(
+        Eigen::MatrixXd const& X,
+        Eigen::MatrixXd const& y,
+        double learningRate,
+        Eigen::MatrixXd::Index nIterations
+)
+{
+    pimpl->train(X, y, learningRate, nIterations);
+}
+
+Eigen::VectorXd LogisticRegression::predict
+(
+        Eigen::MatrixXd const& X
+)
+{
+    return pimpl->predict(X);
+}
+
+double LogisticRegression::computeError
+(
+        Eigen::MatrixXd const& XObservation,
+        Eigen::MatrixXd const& yTarget
+)
+{
+    return pimpl->computeError( XObservation, yTarget );
+}
+
+std::tuple<Eigen::MatrixXd, double>
+LogisticRegression::getParameters() const
+{
+    return pimpl->getParameters();
+}
+
+std::vector<double> const&
+LogisticRegression::getCosts() const
+{
+    return pimpl->getCosts();
+}
+
+LogisticRegression::LogisticRegression()
+                   :pimpl{std::make_unique<impl>()}{
+}
+
+LogisticRegression::~LogisticRegression() = default;
+
+LogisticRegression& LogisticRegression::operator=( LogisticRegression&& ) = default;

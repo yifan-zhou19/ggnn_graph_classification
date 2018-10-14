@@ -1,30 +1,35 @@
-package interviewQuestion;
+/***
+Design and implement a data structure for Least Recently Used (LRU) cache. 
+It should support the following operations: get and set.
 
-import java.util.Hashtable;
+get(key) - Get the value (will always be positive) of the key if the key exists in the cache, 
+otherwise return -1.
+set(key, value) - Set or insert the value if the key is not already present. 
+When the cache reached its capacity, it should invalidate the least recently used item before inserting a new item.
+***/
 
-public class SimpleHashTable {
-	
-	int [] a = new int[5];
-	
-	String [] arrNames = new String[]{"Sumit","Jain","Raghav","Garg","Gaurav","Rishi"};
-	
-	
-	Hashtable<Integer, String> ht = new Hashtable<Integer, String>();
-	
-	public void insertValues(){
-		for(int i=0;i<arrNames.length;i++ ){
-			ht.put(i+1,arrNames[i]);
-		}
-	}
-	
-	public String getValue(int key){
-		return ht.get(key);
-	}
-	public static void main (String [] args){
-		SimpleHashTable sht = new SimpleHashTable();
-		sht.insertValues();
-		System.out.println("All values inserted");
-		System.out.println("Employee with ID 1 is "+ sht.getValue(1));
-		System.out.println("Employee with ID 3 is "+ sht.getValue(6));
-	}
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+public class LRUCache {
+    
+    private Map<Integer, Integer> m;
+    
+    public LRUCache(int capacity) {
+        m = new LinkedHashMap<Integer, Integer>(16, 0.75f, true) {
+            protected boolean removeEldestEntry(
+                    Map.Entry<Integer, Integer> eldest) {
+                return size() > capacity;
+            }
+        };
+    }
+    
+    public int get(int key) {
+        Integer v = m.get(key);
+        return v == null ? -1 : v;
+    }
+    
+    public void set(int key, int value) {
+        m.put(key, value);
+    }
 }

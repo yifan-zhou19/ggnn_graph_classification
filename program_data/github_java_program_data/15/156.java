@@ -1,382 +1,86 @@
-package com.googlecode.dex2jar.ir.ts;
+package EvacSim.jme3tools.navmesh;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.Stack;
-import java.util.TreeSet;
+import EvacSim.jme3tools.navmesh.util.MinHeap;
+import com.jme3.math.Vector3f;
 
-import com.googlecode.dex2jar.ir.IrMethod;
-import com.googlecode.dex2jar.ir.Trap;
-import com.googlecode.dex2jar.ir.ValueBox;
-import com.googlecode.dex2jar.ir.expr.BinopExpr;
-import com.googlecode.dex2jar.ir.expr.Exprs;
-import com.googlecode.dex2jar.ir.stmt.JumpStmt;
-import com.googlecode.dex2jar.ir.stmt.LabelStmt;
-import com.googlecode.dex2jar.ir.stmt.LookupSwitchStmt;
-import com.googlecode.dex2jar.ir.stmt.Stmt;
-import com.googlecode.dex2jar.ir.stmt.Stmt.ST;
-import com.googlecode.dex2jar.ir.stmt.StmtList;
-import com.googlecode.dex2jar.ir.stmt.Stmts;
-import com.googlecode.dex2jar.ir.stmt.TableSwitchStmt;
+/**
+ * A NavigationHeap is a priority-ordered list facilitated by the STL heap
+ * functions. This class is also used to hold the current path finding session
+ * ID and the desired goal point for NavigationCells to query. Thanks to Amit J.
+ * Patel for detailing the use of STL heaps in this way. It's much faster than a
+ * linked list or multimap approach.
+ * 
+ * Portions Copyright (C) Greg Snook, 2000
+ * 
+ * @author TR
+ * 
+ */
+class Heap implements java.io.Serializable {
 
-public class TopologicalSort implements Transformer {
-    @Override
-    public void transform(IrMethod irMethod) {
-        if (irMethod.traps.size() > 0) {
-            // FIXME
-            return;
-        }
-        StmtList stmts = irMethod.stmts;
-        // 1. generate graph
-        init(stmts, irMethod.traps);
+    private MinHeap nodes = new MinHeap();
+    private int sessionID;
+    private Vector3f goal;
 
-        // 2.remove any loop in the graph
-        removeLoop(stmts);
-
-        // 3. topological sorting algorithms
-        List<Stmt> out = topologicalSort(stmts);
-
-        stmts.clear();
-        // 4. rebuild stmts
-        rebuild(stmts, out);
+    int getSessionID() {
+        return sessionID;
     }
 
-    private void rebuild(StmtList stmts, List<Stmt> out) {
-        List<JumpStmt> gotos = new ArrayList<JumpStmt>();
-        for (int i = 0; i < out.size(); i++) {
-            Stmt stmt = out.get(i);
-            stmts.add(stmt);
-            Stmt orgNext = stmt._ts_default_next;
-            if (orgNext != null && orgNext.st == ST.LABEL) {
-                if (i + 1 < out.size()) {
-                    Stmt next = out.get(i + 1);
-                    if (next != orgNext) {
-                        if (stmt.st == ST.IF) {
-                            JumpStmt jumpStmt = (JumpStmt) stmt;
-                            if (jumpStmt.target == next) {
-                                reverseIF(jumpStmt);
-                            } else {
-                                JumpStmt gotoStmt = Stmts.nGoto((LabelStmt) orgNext);
-                                gotos.add(gotoStmt);
-                                stmts.add(gotoStmt);
-                            }
-                        } else {
-                            JumpStmt gotoStmt = Stmts.nGoto((LabelStmt) orgNext);
-                            gotos.add(gotoStmt);
-                            stmts.add(gotoStmt);
-                        }
-                    }
-                } else {
-                    JumpStmt gotoStmt = Stmts.nGoto((LabelStmt) orgNext);
-                    gotos.add(gotoStmt);
-                    stmts.add(gotoStmt);
-                }
-            }
-        }
-
-        /**
-         * deal with
-         * 
-         * <pre>
-         * GOTO L2
-         * L0:
-         * L1:
-         * L2:
-         * </pre>
-         * 
-         * remove the GOTO L2
-         */
-        for (JumpStmt gotoStmt : gotos) {
-            Stmt t = gotoStmt.getNext();
-            while (t != null && t.st == ST.LABEL) {
-                if (t == gotoStmt.target) {
-                    stmts.remove(gotoStmt);
-                    break;
-                }
-                t = t.getNext();
-            }
-        }
+    Vector3f getGoal() {
+        return goal;
     }
 
-    private List<Stmt> topologicalSort(StmtList stmts) {
-
-        List<Stmt> out = new ArrayList<Stmt>(stmts.getSize());
-        Stack<Stmt> stack = new Stack<Stmt>();
-        stack.push(stmts.getFirst());
-
-        boolean visitedFlag = false;
-
-        while (!stack.empty()) {
-            Stmt stmt = stack.pop();
-            if (stmt._cfg_visited == visitedFlag) {
-                continue;
-            }
-            if (stmt._cfg_froms.size() == 0 || stack.size() == 0) {
-                stmt._cfg_visited = visitedFlag;
-                out.add(stmt);
-                for (Stmt t : stmt._cfg_tos) {
-                    t._cfg_froms.remove(stmt);
-                    if (t._cfg_visited != visitedFlag) {
-                        stack.push(t);
-                    }
-                }
-            }
-        }
-        return out;
+    void initialize(int sessionID, Vector3f goal) {
+        this.goal = goal;
+        this.sessionID = sessionID;
+        nodes.clear();
     }
 
-    private static class Item {
-        public Stmt stmt;
-        public Iterator<Stmt> it;
-        public boolean visitedAdded = false;
-    }
-
-    private Item buildItem(Stmt stmt) {
-        Item item = new Item();
-        item.stmt = stmt;
-        item.it = new ArrayList<Stmt>(stmt._cfg_tos).iterator();
-        return item;
+    void addCell(Cell pCell) {
+        Node newNode = new Node(pCell, pCell.getTotalCost());
+        nodes.add(newNode);
     }
 
     /**
-     * A graph has a cycle if and only if depth-first search produces a back edge if there are
-     * 
-     * @param stmts
+     * Adjust a cell in the heap to reflect it's updated cost value. NOTE: Cells
+     * may only sort up in the heap.
      */
-    private void removeLoop(StmtList stmts) {
-        if (stmts.getSize() < 50) {// use Recursive if no more than 50 stmts
-            dfsRecursiveCallRemove(stmts.getFirst(), new HashSet<Stmt>());
-        } else {
-            dfsStackRemove(stmts.getFirst(), new HashSet<Stmt>());
+    void adjustCell(Cell pCell) {
+        Node n = findNodeIterator(pCell);
+
+        if (n != nodes.lastElement()) {
+            // update the node data
+            n.cell = pCell;
+            n.cost = pCell.getTotalCost();
+
+            nodes.sort();
         }
     }
 
     /**
-     * Remove loop by store value in stack
-     * 
-     * @param stmt
-     * @param visited
+     * @return true if the heap is not empty
      */
-    private void dfsStackRemove(Stmt stmt, Set<Stmt> visited) {
-        Stack<Item> stack = new Stack<Item>();
-        stack.push(buildItem(stmt));
-        while (!stack.empty()) {
-            Item item = stack.peek();
-            stmt = item.stmt;
-            item.stmt._cfg_visited = true;
-            if (!item.visitedAdded) {
-                visited.add(item.stmt);
-                item.visitedAdded = true;
-            }
-            boolean needPop = true;
-            Iterator<Stmt> it = item.it;
-            while (it.hasNext()) {
-                Stmt to = it.next();
-                if (visited.contains(to)) {// a loop here
-                    // cut the loop
-                    to._cfg_froms.remove(stmt);
-                    stmt._cfg_tos.remove(to);
-                } else {
-                    if (!to._cfg_visited) {
-                        needPop = false;
-                        stack.push(buildItem(to));
-                        break;
-                    }
-                }
-            }
-            if (needPop) {
-                if (item.visitedAdded) {
-                    visited.remove(stmt);
-                    stack.pop();
-                }
-            }
-        }
+    boolean isNotEmpty() {
+        return !nodes.isEmpty();
     }
 
     /**
-     * Remove Loop by Recursive Method Call, if there are 500+ stmt, we got a out-of-stack error
-     * 
-     * @param stmt
-     * @param visited
+     * Pop the top off the heap and remove the best value for processing.
      */
-    private void dfsRecursiveCallRemove(Stmt stmt, Set<Stmt> visited) {
-        if (stmt._cfg_visited) {// make sure every node in visited once
-            return;
-        } else {
-            stmt._cfg_visited = true;
-        }
-        visited.add(stmt);
-        // copy the _ts_tos, so we can modify the collection
-        List<Stmt> tos = new ArrayList<Stmt>(stmt._cfg_tos);
-        for (Stmt to : tos) {
-            if (visited.contains(to)) {// a loop here
-                // cut the loop
-                to._cfg_froms.remove(stmt);
-                stmt._cfg_tos.remove(to);
-            } else {
-                dfsRecursiveCallRemove(to, visited);
-            }
-        }
-        visited.remove(stmt);
-    }
-
-    private static void link(Stmt from, Stmt to) {
-        if (to == null) {// last stmt is a LabelStmt
-            return;
-        }
-        from._cfg_tos.add(to);
-        to._cfg_froms.add(from);
+    Node getTop() {
+        return (Node) nodes.deleteMin();
     }
 
     /**
-     * 1. init _ts_default_next, 2. insert label after IF stmt, 3. insert label before GOTO stmt.
-     * 
-     * @param stmts
-     * @param stmt
+     * Search the container for a given cell. May be slow, so don't do this
+     * unless nessesary.
      */
-    private void init_ts_default_next(StmtList stmts, Stmt stmt) {
-        switch (stmt.st) {
-        case IF:
-            Stmt n = stmt.getNext();
-            if (n != null && n.st != ST.LABEL) {
-                LabelStmt ls = Stmts.nLabel();
-                stmts.insertAfter(stmt, ls);
-            }
-            stmt._ts_default_next = stmt.getNext();
-            break;
-        case GOTO: {
-            Stmt pre = stmt.getPre();
-            if (pre == null || pre.st != ST.LABEL) {
-                LabelStmt ls = Stmts.nLabel();
-                stmts.insertBefore(stmt, ls);
-                if (pre != null) {
-                    init_ts_default_next(stmts, pre);
-                }
-                init_ts_default_next(stmts, ls);
-            }
-        }// pass through
-        case RETURN:
-        case RETURN_VOID:
-        case TABLE_SWITCH:
-        case LOOKUP_SWITCH:
-        case THROW:
-            stmt._ts_default_next = null;
-            break;
-        default:
-            stmt._ts_default_next = stmt.getNext();
-            break;
-        }
-    }
+    Node findNodeIterator(Cell pCell) {
+        for (Object n : nodes) {
 
-    private void init(StmtList stmts, List<Trap> traps) {
-        // 1. init _ts_default_next
-        for (Stmt stmt = stmts.getFirst(); stmt != null; stmt = stmt.getNext()) {
-            init_ts_default_next(stmts, stmt);
-        }
-        // 2. init cfg
-        for (Stmt stmt = stmts.getFirst(); stmt != null; stmt = stmt.getNext()) {
-            if (stmt._cfg_froms == null) {
-                stmt._cfg_froms = new TreeSet<Stmt>(stmts);
-            } else {
-                stmt._cfg_froms.clear();
-            }
-            if (stmt._cfg_tos == null) {
-                stmt._cfg_tos = new TreeSet<Stmt>(stmts);
-            } else {
-                stmt._cfg_tos.clear();
+            if (((Node) n).cell.equals(pCell)) {
+                return ((Node) n);
             }
         }
-        // 2.1 link exception handler
-        for (Trap t : traps) {
-            for (Stmt s = t.start; s != t.end; s = s.getNext()) {
-                for (LabelStmt handler : t.handlers) {
-                    link(s, handler);
-                }
-            }
-        }
-        // 2.2 link normal
-        for (Stmt stmt = stmts.getFirst(); stmt != null; stmt = stmt.getNext()) {
-            switch (stmt.st) {
-            case GOTO:
-                link(stmt, ((JumpStmt) stmt).target);
-                break;
-            case IF:
-                link(stmt, ((JumpStmt) stmt).target);
-                link(stmt, stmt.getNext());
-                break;
-            case LOOKUP_SWITCH:
-                LookupSwitchStmt lss = (LookupSwitchStmt) stmt;
-                link(stmt, lss.defaultTarget);
-                for (LabelStmt ls : lss.targets) {
-                    link(stmt, ls);
-                }
-                break;
-            case TABLE_SWITCH:
-                TableSwitchStmt tss = (TableSwitchStmt) stmt;
-                link(stmt, tss.defaultTarget);
-                for (LabelStmt ls : tss.targets) {
-                    link(stmt, ls);
-                }
-                break;
-            case THROW:
-            case RETURN:
-            case RETURN_VOID:
-                break;
-            default:
-                link(stmt, stmt.getNext());
-                break;
-            }
-        }
-        // 3. remove goto
-        for (Stmt stmt = stmts.getFirst(); stmt != null; stmt = stmt.getNext()) {
-            stmt._cfg_visited = false;
-            switch (stmt.st) {
-            case GOTO:
-                JumpStmt js = (JumpStmt) stmt;
-                for (Stmt f : stmt._cfg_froms) {
-                    f._cfg_tos.remove(stmt);
-                    f._cfg_tos.addAll(stmt._cfg_tos);
-                    f._ts_default_next = js.target;
-                }
-
-                for (Stmt t : stmt._cfg_tos) {
-                    t._cfg_froms.remove(stmt);
-                    t._cfg_froms.addAll(stmt._cfg_froms);
-                }
-                break;
-            }
-        }
-    }
-
-    private void reverseIF(JumpStmt js) {
-        ValueBox op = js.op;
-        BinopExpr e2 = (BinopExpr) op.value;
-
-        switch (e2.vt) {
-        case GE:
-            op.value = Exprs.nLt(e2.op1.value, e2.op2.value, e2.type);
-            break;
-        case GT:
-            op.value = Exprs.nLe(e2.op1.value, e2.op2.value, e2.type);
-            break;
-        case LT:
-            op.value = Exprs.nGe(e2.op1.value, e2.op2.value, e2.type);
-            break;
-        case LE:
-            op.value = Exprs.nGt(e2.op1.value, e2.op2.value, e2.type);
-            break;
-        case EQ:
-            op.value = Exprs.nNe(e2.op1.value, e2.op2.value, e2.type);
-            break;
-        case NE:
-            op.value = Exprs.nEq(e2.op1.value, e2.op2.value, e2.type);
-            break;
-        }
-        LabelStmt tmp = js.target;
-        js.target = (LabelStmt) js._ts_default_next;
-        js._ts_default_next = tmp;
+        return (Node) nodes.lastElement();
     }
 }

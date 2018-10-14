@@ -1,193 +1,123 @@
-#include "Heap.hpp"
+#include"logistic-regression.h"
+#include<vector>
+#include<omp.h>
+#include<numeric>
+using Eigen::MatrixXd;
+using Eigen::VectorXi;
+using Eigen::VectorXd;
 
-#define CHANGUI 0x100
-
-// To do
-// [ ] Use an internal variable to mantain time. When time is set to 0, make time == order of call
-// [ ] check for overlapping chunks (when alloc() is called)
-// [ ] make two different calls per function:
-//     [ ] malloc_enter(), malloc_return()
-//     [ ] free_enter(), free_return()
-//     [ ] realloc_enter(), realloc_return(), 
-//     [ ] etc.
-//
-
-bool operator<(const HeapChunk &t, const HeapChunk &other) {
-	return ((t.base<other.base) || (t.base==other.base && t.allocTime<other.allocTime));
+LogisticRegression::LogisticRegression() {
+	learning_rate_ = 0.001;
+	train_epochs_ = 100;
+	regularization_parameter_ = 0;
 }
 
-bool operator<(const HeapRegion &t, const HeapRegion &other) {
-	return ((t.base<other.base) || (t.base==other.base && t.allocTime<other.allocTime));
+LogisticRegression::LogisticRegression(double learning_rate, double regularization_parameter, int train_epochs)
+	: learning_rate_(learning_rate), regularization_parameter_(regularization_parameter), train_epochs_(train_epochs) {}
+
+double LogisticRegression::learning_rate() const {
+	return learning_rate_;
 }
 
-void HeapRegion::alloc(unsigned int base, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapChunk toFind(base, base+size, time, caller, pid);
-
-    if (top < toFind.top) {
-        top = toFind.top + CHANGUI;
-        verprintf(3,("Readjusting base to 0x%08x\n", top));
-    }
-	chunks.insert(toFind);
+void LogisticRegression::learning_rate(double learning_rate) {
+	this->learning_rate_ = learning_rate;
 }
 
-void HeapRegion::free(unsigned int base, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapChunk toFind(base, 0, time, caller, pid);
+int LogisticRegression::train_epochs() const {
+	return train_epochs_;
+}
 
-    if (!chunks.size()) return;
-	set<HeapChunk>::iterator a=chunks.lower_bound(toFind);
-	a--;
+void LogisticRegression::train_epochs(int train_epochs) {
+	this->train_epochs_ = train_epochs;
+}
 
-	if (a->base == toFind.base) {
-		// --a;    verprintf(3,("free found -1: %d 0x%08x %lu %lu\n", a->freeTime == 0.0, a->base, a->allocTime, a->freeTime));    a++;
-		        verprintf(2,("free found  0: %d 0x%08x %lu %lu\n", a->freeTime == 0.0, a->base, a->allocTime, a->freeTime));
-		// ++a;    verprintf(3,("free found +1: %d 0x%08x %lu %lu\n", a->freeTime == 0.0, a->base, a->allocTime, a->freeTime));    a--;
-		if (a->freeTime != 0.0) {
-			qprintf(("Freeing a chunk that's already free: 0x%08x\n", toFind.base));
-		} else {
-			((HeapChunk*)&*a)->setFreeTime(toFind.allocTime);
-			((HeapChunk*)&*a)->setFreeCaller(toFind.allocCaller);
+double LogisticRegression::regularization_parameter() const {
+	return regularization_parameter_;
+}
+
+void LogisticRegression::regularization_parameter(double regularization_parameter) {
+	this->regularization_parameter_ = regularization_parameter;
+}
+
+void LogisticRegression::SerialTrain(const MatrixXd &x, const VectorXi &y) {
+	size_t num_examples = x.rows();
+	size_t num_features = x.cols();
+	theta_.setZero(num_features);
+
+	for (size_t epoch = 0; epoch < train_epochs_; epoch++) {
+		VectorXd gradient = VectorXd::Zero(num_features);
+		for (size_t i = 0; i < num_examples; i++) {
+			auto gradient_i = (Sigmoid(x.row(i) * theta_) - y(i)) * x.row(i);
+			gradient += gradient_i;
 		}
-	} else {
-		verprintf(2,("Found: 0x%08x %lf\n", a->base, a->allocTime));
-		qprintf(("Freeing a not allocated chunk: 0x%08x\n", toFind.base));
+		regularize(gradient);
+		gradient *= 1.0 / num_examples;
+		theta_ -= learning_rate_ * gradient;
 	}
 }
 
-void HeapRegion::realloc(unsigned int base, unsigned int newBase, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller) {
-    free(base, time, pid, caller);
-    alloc(newBase, size, time, pid, caller);
-}
+void LogisticRegression::ParallelTrain(const MatrixXd &x, const VectorXi &y) {
+	size_t num_examples = x.rows();
+	size_t num_features = x.cols();
+	theta_.setZero(num_features);
+	VectorXd gradient = VectorXd::Zero(num_features);
 
-void HeapRegion::setLimits() {
+	auto num_processors = omp_get_num_procs();
+	size_t section_size = num_examples / num_processors;
+	std::vector<VectorXd> partial_gradient(num_processors);
+	std::vector<size_t> iterator(num_processors);
 
-	set<HeapChunk>::iterator i=chunks.begin();
-
-	minAddr = i->base;
-	maxAddr = i->top;
-	minTime = i->allocTime;
-	maxTime = i->freeTime;
-
-    if (i == chunks.end()) return;
-	for (i++;i != chunks.end(); i++) {
-		if (minAddr > i->base) minAddr = i->base;
-
-		if (maxAddr < i->top) maxAddr = i->top;
-
-		if (minTime > i->allocTime) minTime = i->allocTime;
-
-		if (maxTime < i->allocTime) maxTime = i->allocTime;
-		if (maxTime < i->freeTime) maxTime = i->freeTime;
+	for (size_t epoch = 0; epoch < train_epochs_; epoch++) {
+		gradient.setZero(num_features);
+		for (auto &item : partial_gradient) item.setZero(num_features);
+		
+#pragma omp parallel for
+		for (int i = 0; i < num_processors; i++) {
+			size_t &j = iterator[i];
+			size_t left_bound = i * section_size;
+			size_t right_bound = std::min((i + 1) * section_size, num_examples);
+			for (j = left_bound; j < right_bound; j++) {
+				auto gradient_row = (Sigmoid(x.row(j) * theta_) - y(j)) * x.row(j);
+				partial_gradient[i] += gradient_row;
+			}
+		}
+		gradient = std::accumulate(partial_gradient.begin(), partial_gradient.end(), gradient);
+		regularize(gradient);
+		gradient *= 1.0 / num_examples;
+		theta_ -= learning_rate_ * gradient;
 	}
-
-	for (i=chunks.begin();i != chunks.end(); i++)
-		if (i->freeTime == 0) 
-			((HeapChunk*)&*i)->setFreeTime(maxTime);
 }
 
-void Heap::mmap(unsigned int base, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapRegion toFind(base, base+size, time, caller, pid);
+void LogisticRegression::CacheUnfriendlyParallelTrain(const Eigen::MatrixXd & x, const Eigen::VectorXi & y) {
+	size_t num_examples = x.rows();
+	size_t num_features = x.cols();
+	theta_.setZero(num_features);
 
-    if (autoRegions) return;
-    _mmap(base, size, time, pid, caller);
+	for (size_t epoch = 0; epoch < train_epochs_; epoch++) {
+		VectorXd gradient = VectorXd::Zero(num_features);
+#pragma omp parallel for
+		for (int i = 0; i < num_examples; i++) {
+			auto gradient_i = (Sigmoid(x.row(i) * theta_) - y(i)) * x.row(i);
+#pragma omp critical
+			gradient += gradient_i;
+		}
+		regularize(gradient);
+		gradient *= 1.0 / num_examples;
+		theta_ -= learning_rate_ * gradient;
+	}
 }
 
-void Heap::_mmap(unsigned int base, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapRegion toFind(base, base+size, time, caller, pid);
-
-    verprintf(1,("[%d] mmap(0x%08x, 0x%08x) [%lu]\n", regions.size(), base, size, time));
-    if (!size) return;
-
-	set<HeapRegion>::iterator a=regions.lower_bound(toFind);
-
-    if (a != regions.end()) {
-        --a;
-
-        // --a; verprintf(3,("mmap found -1: 0x%08x-0x%08x %lu %lu\n", a->base, a->top, a->allocTime, a->freeTime)); a++;
-             verprintf(2,("mmap found  0: 0x%08x-0x%08x %lu %lu\n", a->base, a->top, a->allocTime, a->freeTime));
-        // ++a; verprintf(3,("mmap found +1: 0x%08x-0x%08x %lu %lu\n", a->base, a->top, a->allocTime, a->freeTime)); a--;
-
-        if (a->contains(base-1)) {
-            // new starts inside old
-            if (a->contains(base+size-1)) {
-                // new contained in old, just return
-                verprintf(2,("Old Region included new region: 0x%08x-0x%08x [%lu]\n", a->base, a->top, a->allocTime));
-                return;
-            }
-            if (a->top < base+size) {
-                // new extends old
-                verprintf(2,("Extending up region at 0x%08x-0x%08x [%lu]\n", a->base, a->top, a->allocTime));
-                ((HeapRegion*)&*a)->setTop(base+size);
-                return;
-            }
-        } else if (a->contains(base+size)) {
-            if (a->contains(base)) {
-                // new contained in old, just return
-                verprintf(2,("Old Region included new region: 0x%08x-0x%08x [%lu]\n", a->base, a->top, a->allocTime));
-                return;
-            }
-            if (a->base > base) {
-                // new is right before old (new extends old to lower memory)
-                verprintf(2,("Extending down region at 0x%08x-0x%08x [%lu]\n", a->base, a->top, a->allocTime));
-                ((HeapRegion*)&*a)->setBase(base);
-                return;
-            }
-        }
-    }
-    regions.insert(toFind);
+VectorXd LogisticRegression::PredictProbability(MatrixXd &x) const {
+	VectorXd result = (x * theta_).unaryExpr(std::ptr_fun(LogisticRegression::Sigmoid));
+	return std::move(result);
 }
 
-void Heap::munmap(unsigned int base, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapRegion toFind(base, 0, time, caller, pid);
-
-    if (autoRegions) return;
-	verprintf(1,("[%d] munmap(0x%08x) [%lu]\n", pid, base, time));
-
+double LogisticRegression::Sigmoid(double x) {
+	return 1.0 / (1.0 + std::exp(-x));
 }
 
-void Heap::realloc(unsigned int base, unsigned int newBase, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller) {
-	verprintf(1,("[%d] realloc(0x%08x,0x%08x,0x%08x) [%lu]\n", pid, base, newBase, size, time));
-
-    free(base, time, pid, caller);
-    alloc(newBase, size, time, pid, caller);
-}
-
-void Heap::alloc(unsigned int base, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller, unsigned int dontRecurse) {
-    HeapRegion toFind(base, base+size, time, caller, pid);
-
-	verprintf(1,("[%d] alloc(%d) [%lu] = 0x%08x\n", pid, size, time, base));
-
-	set<HeapRegion>::iterator a=regions.lower_bound(toFind);
-
-    if (a != regions.end() && (--a)->contains(base)) {
-
-        // a--; verprintf(3,("region alloc found -1 (%d): 0x%08x-0x%08x %lu %lu\n", a->contains(base), a->base, a->top, a->allocTime, a->freeTime)); a++;
-             verprintf(2,("region alloc found  0 (%d): 0x%08x-0x%08x %lu %lu\n", a->contains(base), a->base, a->top, a->allocTime, a->freeTime));
-        // a++; verprintf(3,("region alloc found +1 (%d): 0x%08x-0x%08x %lu %lu\n", a->contains(base), a->base, a->top, a->allocTime, a->freeTime)); a--;
-
-        ((HeapRegion)(*a)).alloc(base, size, time, pid, caller);
-    } else {
-        if (autoRegions && !dontRecurse) {
-            _mmap(base-CHANGUI,(size+CHANGUI-1+CHANGUI)&~(CHANGUI-1),time,pid,caller);
-            alloc(base, size, time, pid, caller, 1);
-        } else {
-            verprintf(2,("alloc(0x%08x, 0x%08x) in loose region\n", base, size));
-            loose.alloc(base,size,time,pid,caller);
-        }
-    }
-}
-
-void Heap::free(unsigned int base, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapRegion toFind(base, 0, time, caller, pid);
-
-	verprintf(1,("[%d] free(0x%08x) [%lu]\n", toFind.pid, toFind.base,toFind.allocTime));
-
-	set<HeapRegion>::iterator a=regions.lower_bound(toFind);
-
-    if (a != regions.end() && (a--, a->contains(base))) {
-        verprintf(3,("region free found (%d): 0x%08x-0x%08x %lu %lu\n", a->contains(base), a->base, a->top, a->allocTime, a->freeTime));
-        ((HeapRegion)(*a)).free(base, time, pid, caller);
-    } else {
-        verprintf(2,("free(0x%08x) in loose region\n", base));
-        loose.free(base, time, pid, caller);
-    }
+void LogisticRegression::regularize(VectorXd & gradient) {
+	size_t length = gradient.rows();
+	VectorXd theta_without_bias = theta_.block(1, 0, length - 1, 1);
+	gradient.block(1, 0, length - 1, 1) += regularization_parameter_ * theta_without_bias;
 }

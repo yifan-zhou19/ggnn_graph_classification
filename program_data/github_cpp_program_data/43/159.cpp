@@ -1,31 +1,20 @@
-#include "stack.h"
-#include <assert.h>
-
-//Constructor
-template <class T> Stack<T>::Stack(){
-  sz = 0;
-  index = NULL;
-}
-//Push
-template <class T> void Stack<T>::push(T value){ 
-  Nodo* tmp = new Nodo(value,index);  //Se inicializa un nuevo espacio de memoria apuntando a index y con valor igual a "value"
-  index = tmp;                        //Index ahora apunta al espacio recien inicializado
-  ++sz;                               //La pila crece en 1
-}
-//Pop
-template <class T> void Stack<T>::pop(){ 
-   assert(index != NULL);             //Si la pila esta vacia, regresa SEGMENTATION FAULT
-   Nodo* tmp = index;                 //tmp apunta a index
-   index = index->nxt;                //Index apunta al siguiente en la pila
-   delete tmp;                        //tmp borra el primer elemento de la memoria
-   --sz;                              //La pila decrece en 1
-}
-//Top
-template <class T> T Stack<T>::top(){
-  assert(index != NULL);              //Si la pila esta vacia, regresa SEGMENTATION FAULT
-  return index->val;                  //Regresa el valor dentro de index
-}
-//Size
-template <class T> int Stack<T>::size(){
-  return sz;                          //Regresa la cantidad de elementos en la pila
-}
+class Solution {
+public:
+    vector<int> topKFrequent(vector<int>& nums, int k) {
+        map<int, int> m;
+        for (int n : nums) m[n]++;
+        int n = nums.size();
+        map<int, vector<int>> freq;
+        for (auto p : m) {
+            if (freq.find(p.second) == freq.end()) freq[p.second] = vector<int>(1, p.first);
+            else freq[p.second].push_back(p.first);
+        }
+        vector<int> res;
+        for (int i = n; i > 0 && res.size() < k; i--) {
+            if (freq.find(i) != freq.end() && freq[i].size() > 0) {
+                for (int j = 0; j < freq[i].size() && res.size() < k; j++) res.push_back(freq[i][j]);
+            }
+        }
+        return res;
+    }
+};

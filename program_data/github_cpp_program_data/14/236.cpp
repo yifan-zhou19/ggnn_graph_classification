@@ -1,63 +1,124 @@
-//Implemented as min-heap
-//TODO: pop implmentation is almost there, but does not delete popped nodes
-//and leaves '0' as empty placeholders
-#include <vector>
 #include <iostream>
-#include <climits>
-struct Node {
-    int val;
-    Node* left, *right;
 
-    Node(int val) : val(val), left(nullptr), right(nullptr){}
-};
-class Heap {
-    std::vector<Node> vec;
+#include <opencv2/core.hpp>
+#include <opencv2/ml.hpp>
+#include <opencv2/highgui.hpp>
 
-    public:
-    Heap() {}
+using namespace std;
+using namespace cv;
+using namespace cv::ml;
 
-    void swap(int& a, int& b) {
-        int temp = a;
-        a = b;
-        b = temp;
+static void showImage(const Mat &data, int columns, const String &name)
+{
+    Mat bigImage;
+    for(int i = 0; i < data.rows; ++i)
+    {
+        bigImage.push_back(data.row(i).reshape(0, columns));
     }
-    void insert(int val) {
-        vec.push_back(Node(val));
-        int currIndex = vec.size() - 1;
-        int parentIndex = (vec.size() - 1) / 2;
-        while (vec[currIndex].val < vec[parentIndex].val) {
-            swap(vec[currIndex].val, vec[parentIndex].val);
+    imshow(name, bigImage.t());
+}
 
-            currIndex = parentIndex;
-            parentIndex = (currIndex - 1) / 2;
+static float calculateAccuracyPercent(const Mat &original, const Mat &predicted)
+{
+    return 100 * (float)countNonZero(original == predicted) / predicted.rows;
+}
+
+int main()
+{
+    const String filename = "./data01.xml";
+    cout << "**********************************************************************" << endl;
+    cout << filename
+         << " contains digits 0 and 1 of 20 samples each, collected on an Android device" << endl;
+    cout << "Each of the collected images are of size 28 x 28 re-arranged to 1 x 784 matrix"
+         << endl;
+    cout << "**********************************************************************" << endl;
+
+    Mat data, labels;
+    {
+        cout << "loading the dataset...";
+        FileStorage f;
+        if(f.open(filename, FileStorage::READ))
+        {
+            f["datamat"] >> data;
+            f["labelsmat"] >> labels;
+            f.release();
+        }
+        else
+        {
+            cerr << "file can not be opened: " << filename << endl;
+            return 1;
+        }
+        data.convertTo(data, CV_32F);
+        labels.convertTo(labels, CV_32F);
+        cout << "read " << data.rows << " rows of data" << endl;
+    }
+
+    Mat data_train, data_test;
+    Mat labels_train, labels_test;
+    for(int i = 0; i < data.rows; i++)
+    {
+        if(i % 2 == 0)
+        {
+            data_train.push_back(data.row(i));
+            labels_train.push_back(labels.row(i));
+        }
+        else
+        {
+            data_test.push_back(data.row(i));
+            labels_test.push_back(labels.row(i));
         }
     }
-    int pop() {
-        int currValue = vec[0].val;
+    cout << "training/testing samples count: " << data_train.rows << "/" << data_test.rows << endl;
 
-        return currValue;
-    }
-    int peek() {return vec[0].val;}
-    //Prints breadth-first
-    void print() {
-        for (Node node : vec)
-            std::cout << node.val << ' ';
-        std::cout << '\n';
-    }
-};
+    // display sample image
+    showImage(data_train, 28, "train data");
+    showImage(data_test, 28, "test data");
 
-int main() {
-    Heap heap;
-    heap.insert(3);
-    heap.insert(1);
-    heap.insert(2);
-    heap.insert(4);
-    heap.insert(10);
-    heap.insert(9);
-    heap.insert(7);
-    heap.insert(23);
-    for (int i = 0; i < 5; i++){
-        std::cout << heap.pop() << '\n';
-        heap.print();
-    }
+    // simple case with batch gradient
+    cout << "training...";
+    //! [init]
+    Ptr<LogisticRegression> lr1 = LogisticRegression::create();
+    lr1->setLearningRate(0.001);
+    lr1->setIterations(10);
+    lr1->setRegularization(LogisticRegression::REG_L2);
+    lr1->setTrainMethod(LogisticRegression::BATCH);
+    lr1->setMiniBatchSize(1);
+    //! [init]
+    lr1->train(data_train, ROW_SAMPLE, labels_train);
+    cout << "done!" << endl;
+
+    cout << "predicting...";
+    Mat responses;
+    lr1->predict(data_test, responses);
+    cout << "done!" << endl;
+
+    // show prediction report
+    cout << "original vs predicted:" << endl;
+    labels_test.convertTo(labels_test, CV_32S);
+    cout << labels_test.t() << endl;
+    cout << responses.t() << endl;
+    cout << "accuracy: " << calculateAccuracyPercent(labels_test, responses) << "%" << endl;
+
+    // save the classfier
+    const String saveFilename = "NewLR_Trained.xml";
+    cout << "saving the classifier to " << saveFilename << endl;
+    lr1->save(saveFilename);
+
+    // load the classifier onto new object
+    cout << "loading a new classifier from " << saveFilename << endl;
+    Ptr<LogisticRegression> lr2 = StatModel::load<LogisticRegression>(saveFilename);
+
+    // predict using loaded classifier
+    cout << "predicting the dataset using the loaded classfier...";
+    Mat responses2;
+    lr2->predict(data_test, responses2);
+    cout << "done!" << endl;
+
+    // calculate accuracy
+    cout << labels_test.t() << endl;
+    cout << responses2.t() << endl;
+    cout << "accuracy: " << calculateAccuracyPercent(labels_test, responses2) << "%" << endl;
+
+    waitKey(0);
+    return 0;
 }

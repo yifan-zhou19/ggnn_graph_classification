@@ -1,30 +1,79 @@
-package interviewQuestion;
+public class LRUCache {
+    class ListNode {
+        int key;
+        int val;
+        ListNode next;
+        ListNode(int k,int x) {
+            key = k;
+            val = x;
+            next = null;
+        }
+        ListNode() {
+            key = 0;
+            val = 0;
+            next = null;
+        }
+    }
+    ListNode head;
+    ListNode tail;
+    int capacity;
+    int size;
+    public LRUCache(int capacity) {
+        head = new ListNode();
+        this.capacity = capacity;
+        size=0;
+    }
 
-import java.util.Hashtable;
+    public int get(int key) {
+        ListNode p = head;
+        while(p.next!=null){
+            if(p.next.key==key){
+                //operate
+                ListNode cur=p.next;
+                tail.next=cur;
+                tail=cur;
+                p.next=cur.next;
+                tail.next=null;
+                return cur.val;
+            }
+            p=p.next;
+        }
+        return -1;
+    }
 
-public class SimpleHashTable {
-	
-	int [] a = new int[5];
-	
-	String [] arrNames = new String[]{"Sumit","Jain","Raghav","Garg","Gaurav","Rishi"};
-	
-	
-	Hashtable<Integer, String> ht = new Hashtable<Integer, String>();
-	
-	public void insertValues(){
-		for(int i=0;i<arrNames.length;i++ ){
-			ht.put(i+1,arrNames[i]);
-		}
-	}
-	
-	public String getValue(int key){
-		return ht.get(key);
-	}
-	public static void main (String [] args){
-		SimpleHashTable sht = new SimpleHashTable();
-		sht.insertValues();
-		System.out.println("All values inserted");
-		System.out.println("Employee with ID 1 is "+ sht.getValue(1));
-		System.out.println("Employee with ID 3 is "+ sht.getValue(6));
-	}
+    public void set(int key, int value) {
+        //first set
+        if(size==0){
+            head.next=new ListNode(key,value);
+            tail=head.next;
+            size++;
+            return;
+        }
+        //if existed
+        ListNode p = head;
+        while(p.next!=null){
+            if(p.next.key==key){
+                //operate
+                ListNode cur=p.next;
+                tail.next=cur;
+                tail=cur;
+                p.next=cur.next;
+                tail.next=null;
+                cur.val=value;
+                return;
+            }
+            p=p.next;
+        }
+        //not existed
+        if(size<capacity){
+            tail.next=new ListNode(key, value);
+            tail=tail.next;
+            size++;
+            return;
+        }
+        //size==capacity
+        tail.next=new ListNode(key, value);
+        tail=tail.next;
+        head.next=head.next.next;
+    }
 }

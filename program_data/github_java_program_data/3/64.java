@@ -1,123 +1,99 @@
-package analysis.in.java.chapter5;
+public class LRUCache {
+    private class ListNode {
+        int key;
+        int value;
+        ListNode prev;
+        ListNode next;
 
-public class DoubleHashHashTable<AnyType> implements MyHashTable<AnyType> {
+        public ListNode(int key, int value) {
+            this.key = key;
+            this.value = value;
+        }
+    }
 
-	public DoubleHashHashTable(){
-		this(DEFAULT_SIZE);
-	}
-	
-	public DoubleHashHashTable(int size){
-		allocateArray(size);
-		currentSize=0;
-	}
-	@Override
-	public boolean contains(AnyType x) {
-		int position=getPosition(x);
-		boolean contain=true;
-		if(null==array[position]||!array[position].equals(x)){
-			contain=false;
-		}
-		return contain;
-	}
+    private ListNode head;
+    private ListNode tail;
+    private HashMap<Integer, ListNode> map;
+    private int count;
+    private int capacity;
 
-	@Override
-	public void insert(AnyType x) {
-		int position=getPosition(x);
-		if(null==array[position]){
-			array[position]=x;
-			currentSize++;
-		}
-	}
+    public LRUCache(int capacity) {
+        count = 0;
+        this.capacity = capacity;
+        map = new HashMap<Integer, ListNode>();
+    }
 
-	@Override
-	public void makeEmpty() {
-		currentSize=0;
-		for(int i=0;i<getTableSize();i++){
-			array[i]=null;
-		}
-	}
+    private ListNode moveToLast(ListNode node) {
+        if (node.next == null) {
+            return node;
+        }
 
-	@Override
-	public void remove(AnyType x) {
-		int position=getPosition(x);
-		if(null!=array[position]){
-			array[position]=null;
-			currentSize--;
-		}
-		
-	}
-	
-	private static final int DEFAULT_SIZE=11;
-	
-	private AnyType[] array;
-	private int currentSize;
-	
-	private void allocateArray(int size){
-		if(size<=0){
-			size=DEFAULT_SIZE;
-		}
-		array = (AnyType[])new Object[size]; 
-	}
-	private int getTableSize(){
-		return array.length;
-	}
-	private int myhash(AnyType x){
-		int tableSize=getTableSize();
-		int position=x.hashCode()%tableSize;
-		if(position<0){
-			position+=tableSize;
-		}
-		return position;
-	}
-	private int hash2(int x){
-		return 7-(x%7);
-	}
-	private int getPosition(AnyType element){
-		int position=myhash(element);
-		int temp=0;
-		while(null!=array[position+temp*hash2(position)]&&
-					!array[position+temp*hash2(position)].equals(element)){
-			temp++;
-		}
-		return position+temp*hash2(position);
-	}
-	
-	
-	/**
-	 * Internal method to find a prime number at least as large as n.
-	 * 
-	 * @param n
-	 *            the starting number (must be positive).
-	 * @return a prime number larger than or equal to n.
-	 */
-	private static int nextPrime(int n) {
-		if (n % 2 == 0)
-			n++;
+        if (node.prev != null) {
+            node.prev.next = node.next;
+        } else {
+            head = node.next;
+        }
 
-		for (; !isPrime(n); n += 2)
-			;
-		return n;
-	}
+        node.next.prev = node.prev;
+        node.prev = tail;
+        node.next = null;
+        tail.next = node;
+        tail = node;
 
-	/**
-	 * Internal method to test if a number is prime. Not an efficient algorithm.
-	 * 
-	 * @param n
-	 *            the number to test.
-	 * @return the result of the test.
-	 */
-	private static boolean isPrime(int n) {
-		if (n == 2 || n == 3)
-			return true;
+        return node;
+    }
 
-		if (n == 1 || n % 2 == 0)
-			return false;
+    public int get(int key) {
+        if (map.containsKey(key)) {
+            return moveToLast(map.get(key)).value;
+        } else {
+            return -1;
+        }
+    }
 
-		for (int i = 3; i * i <= n; i += 2)
-			if (n % i == 0)
-				return false;
+    public void set(int key, int value) {
+        if (capacity == 0) {
+            return;
+        }
 
-		return true;
-	}
+        if (map.containsKey(key)) {
+            moveToLast(map.get(key)).value = value;
+            return;
+        }
 
+        ListNode newNode = new ListNode(key, value);
+        if (count == 0) {
+            head = newNode;
+            tail = newNode;
+            count = 1;
+            map.put(key, newNode);
+            return;
+        }
+
+        if (count == capacity) {
+            ListNode newHead = head.next;
+            head.next = null;
+            map.remove(head.key);
+            if (newHead != null) {
+                newHead.prev = null;
+            }
+
+            head = newHead;
+            if (head == null) {
+                tail = null;
+            }
+            count--;
+        }
+
+        if (tail == null) {
+            set(key, value);
+            return;
+        }
+
+        count++;
+        tail.next = newNode;
+        newNode.prev = tail;
+        tail = newNode;
+        map.put(key, newNode);
+    }
 }

@@ -1,206 +1,148 @@
-#include <stdio.h>
-#include <iostream>
-#include <stdlib.h>
-#include <queue>
-#include <fstream>
-#include <string>
-using namespace std;
+/*++
+Copyright (c) 2007 Microsoft Corporation
 
-struct node {
-    int v;
-    node *next;
-    int c, f, cf;
-    node (int j, node *t, int temp_c) {
-        v = j; 
-        next = t;
-        c = temp_c;
-        f = 0;
-        cf = c - f;
-    }
-};
-typedef node *linkSt;
+Module Name:
 
-void Print_list (linkSt);
-void Print_residual_network (vector<linkSt>, int);
-bool Find_adj_vertex (int, int, vector<linkSt>);
-bool Augmenting_path (vector<linkSt>, int, int, int, int*);
+    stack.cpp
 
-void Print_list (linkSt head) {
-    while (head != NULL) {
-        cout << "link with: " << head->v << " c = " << head->c << " f = " << head->f << " cf = " << head->cf << "; ";
-        head = head->next;
-    }
-    cout << "\n";
+Abstract:
+    Low level stack (aka stack-based allocator).
+
+Author:
+
+    Leonardo (leonardo) 2011-02-27
+
+Notes:
+
+--*/
+#include"stack.h"
+#include"page.h"
+#include"tptr.h"
+
+inline void stack::store_mark(size_t m) {
+    reinterpret_cast<size_t*>(m_curr_ptr)[0] = m;
+    m_curr_ptr += sizeof(size_t);
 }
 
-void Print_residual_network(vector<linkSt> adj, int v) {
-    for (int i = 0; i < v; i++) {
-        cout << i << ": "; 
-        Print_list(adj[i]);
-        cout << "\n";
+inline size_t stack::top_mark() const {
+    return reinterpret_cast<size_t*>(m_curr_ptr)[-1];
+}
+
+inline size_t ptr2mark(void * ptr, bool external) {
+    return reinterpret_cast<size_t>(ptr) | static_cast<size_t>(external);
+}
+
+#define MASK (static_cast<size_t>(-1) - 1)
+
+inline char * mark2ptr(size_t m) {
+    return reinterpret_cast<char *>(m & MASK);
+}
+
+inline bool external_ptr(size_t m) {
+    return static_cast<bool>(m & 1);
+}
+
+inline void stack::allocate_page(size_t m) {
+    m_curr_page     = allocate_default_page(m_curr_page, m_free_pages);
+    m_curr_ptr      = m_curr_page;
+    m_curr_end_ptr  = end_of_default_page(m_curr_page);
+    store_mark(m);
+}
+
+inline void stack::store_mark(void * ptr, bool external) {
+    SASSERT(m_curr_ptr < m_curr_end_ptr || m_curr_ptr == m_curr_end_ptr); // mem is aligned
+    if (m_curr_ptr + sizeof(size_t) > m_curr_end_ptr) {
+        SASSERT(m_curr_ptr == m_curr_end_ptr);
+        // doesn't fit in the current page
+        allocate_page(ptr2mark(ptr, external));
+    }
+    else {
+        store_mark(ptr2mark(ptr, external));
     }
 }
 
-bool Find_adj_vertex(int i, int j, vector<linkSt> *adj) {
-    linkSt vertex_view = (*adj)[j];
-    
-    while (vertex_view != NULL) {           // прохожусь по списку для вершины j и ищу связь с вершиной i
-        if (vertex_view->v == i)
-            return true;
-        vertex_view = vertex_view->next;
-    }
-    
-    return false;
+stack::stack() {
+    m_curr_page    = 0;
+    m_curr_ptr     = 0;
+    m_curr_end_ptr = 0;
+    m_free_pages   = 0;
+    allocate_page(0);
+    SASSERT(empty());
 }
 
-bool Augmenting_path (vector<linkSt> adj, int v, int source, int sink, vector<int> *way) {
-    // Готовим граф к поиску в глубинну
-    queue<int> myqueue;
-    vector<string> color;   // цвет вершин
-    vector<int> distance;   // длина пути до вершины из начальной
-    vector<int> min_way;    // сам путь
-    int u;
-    
-    for (int i = 0; i < v; i++) {
-        color.push_back("White");
-        distance.push_back(-1);
-        min_way.push_back(-1);
-    }
-    color[source] = "Gray";
-    distance[source] = 0;
-    myqueue.push(source);
-    
-    // Граф готов!
-    
-    while (!myqueue.empty()) {
-        u = myqueue.front();
-        myqueue.pop();
-        for (linkSt t = adj[u]; t != NULL; t = t->next) {
-            if ((color[t->v] == "White") && (t->cf > 0)) {
-                color[t->v] = "Gray";
-                distance[t->v] = distance[u] + 1;
-                min_way[t->v] = u;
-                myqueue.push(t->v);
-            }
-        }
-        color[u] = "BLACK";
-    }
-    
-    u = min_way[sink];
-    way->push_back(sink);
-    while (u != -1) {
-        way->push_back(u);
-        u = min_way[u];
-    }
-    int temp_swap;
-    for (size_t i = 0; i < way->size() / 2; i++) {
-        temp_swap = (*way)[i];
-        (*way)[i] = (*way)[way->size() - i - 1];
-        (*way)[way->size() - i - 1] = temp_swap;
-    }
-    
-    if (distance[sink] != -1)
-        return true;
-    else
-        return false;
+stack::~stack() {
+    reset();
+    del_pages(m_curr_page);
+    del_pages(m_free_pages);
 }
-    
 
-int main() {
-    const int MAXFLOW = 10000;
-    ifstream File("GrafExKormen.txt");
-    int j, i, c;
-    int v;                      // кол-во вершин
-    vector<linkSt> adj;         // список смежности графа
-    File >> v; 
-    for (i = 0; i < v; i++)
-        adj.push_back(NULL);    
-    
-    // Создание исходного графа
-    while (true) {
-        File >> i >> j >> c;    // вершина i соединена с j ребром с пропускной способностью c
-        if (i == -1)            // условие окончания считывания информации из файла
-            break;
-        adj[i] = new node (j, adj[i], c);
-    }
-    
-    // Модификация графа - создание остаточной сети
-    
-    for (i = 0; i < v; i++) {               // проход по всем вершинам
-        linkSt vertex_view = adj[i];        // взял вершину, например, 1, смотрю с кем она связана, и прохожусь по связанным вершинам         
-        while (vertex_view != NULL) {       
-            if (Find_adj_vertex(i, vertex_view->v, &adj) == false)              // проверяю есть ли обратная связь
-                adj[vertex_view->v] = new node (i, adj[vertex_view->v], 0);     // если нет, то создаю обратную дугу с пропускной способностью 0
-            vertex_view = vertex_view->next;
-        }
-    }
-    
-    // Остаточная сеть создана. Граф готов к работе!
-    
-    int source, sink;
-    File >> source >> sink;
-    
-    
-    vector<int> way;                        // хранит увеличивающий путь из истока в сток
-    int cf_min = MAXFLOW;
-    linkSt list_f = NULL, list_back = NULL; // list_forvard - список смежности для вершины way[i] на увеличивающем пути
-                                            // list_back - список смежности для вершины way[i+1] на увеличивающем пути, нужен чтобы при 
-                                            // увеличении потока на ребре (i, j) на cf_min, пустить по ребру (j, i) поток -cf_min
-    int max_flow = 0;
-    
-    while (Augmenting_path(adj, v, source, sink, &way) == true) {
-        cout << "way : ";
-        for (size_t i = 0; i < way.size(); i++)
-            cout << way[i] << "  ";
-        printf("\n");
-        
-        // ищу на увеличивающем пути min(cf, принадлежащих увел пути) 
-        for (size_t i = 0; i + 1 < way.size(); i++) {
-            list_f= adj[way[i]];
-            while (list_f != NULL) {
-                if (list_f->v == way[i+1]) {
-                    if (list_f->cf < cf_min)
-                        cf_min = list_f->cf;
-                    break;
-                }
-                list_f = list_f->next;
-            }
-        }
-        // нашел, теперь пускаю по этому пути поток
-        printf("cf_min = %d\n\n", cf_min);
-        max_flow += cf_min;
-        list_f = NULL;
-        list_back = NULL;
-        for (size_t i = 0; i + 1 < way.size(); i++) {           //прохожусь по всем ребрам увел пути и обновляю поток
-            list_f = adj[way[i]];
-            while (list_f != NULL) {                            //ищу в списке смежности для вершины way[i] ребро,связывающее ее с way[i+1]
-                if (list_f->v == way[i+1]) {
-                    list_f->f += cf_min;
-                    list_f->cf = list_f->c - list_f->f;
-                    
-                    list_back = adj[way[i+1]];                  //список смежности для вершины way[i+1]
-                    
-                    while (list_back != NULL) {                     //ищу в списке смежности для вершины way[i+1] ребро,связывающее ее с way[i]
-                        if (list_back->v == way[i]) {
-                            list_back->f += (-1) * cf_min;
-                            list_back->cf = list_back->c - list_back->f;
-                            break;
-                        }
-                        list_back = list_back->next;
-                    }
-                    break;
-                }
-                list_f = list_f->next;
-            }
-        }
-        
-        Print_residual_network(adj, v);         // вывод остаточной сети
-        printf("--------------------------------------------------------------------------------\n\n");
-        way.clear();
-        cf_min = MAXFLOW;
-    }
-    
-    printf("RESULT: max fow = %d\n", max_flow);
-    
-    return 0;
+void stack::reset() {
+    while(!empty())
+        deallocate();
 }
+
+void * stack::top() const {
+    SASSERT(!empty());
+    size_t m = top_mark();
+    void * r = mark2ptr(m);
+    if (external_ptr(m)) 
+        r = reinterpret_cast<void**>(r)[0];
+    return r;
+}
+
+void * stack::allocate_small(size_t size, bool external) {
+    SASSERT(size < DEFAULT_PAGE_SIZE);
+    char * new_curr_ptr = m_curr_ptr + size;
+    char * result;
+    if (new_curr_ptr < m_curr_end_ptr) {
+        result = m_curr_ptr;
+        m_curr_ptr = ALIGN(char *, new_curr_ptr);
+    }
+    else {
+        allocate_page(top_mark()); 
+        result = m_curr_ptr;
+        m_curr_ptr += size;
+        m_curr_ptr = ALIGN(char *, m_curr_ptr);
+    }
+    store_mark(result, external);
+    SASSERT(m_curr_ptr > m_curr_page);
+    SASSERT(m_curr_ptr <= m_curr_end_ptr);
+    return result;
+}
+
+void * stack::allocate_big(size_t size) {
+    char * r   = alloc_svect(char, size);
+    void * mem = allocate_small(sizeof(char*), true);
+    reinterpret_cast<char**>(mem)[0] = r;
+    SASSERT(m_curr_ptr > m_curr_page);
+    SASSERT(m_curr_ptr <= m_curr_end_ptr);
+    return r;
+}
+    
+void stack::deallocate() {
+    SASSERT(m_curr_ptr > m_curr_page);
+    SASSERT(m_curr_ptr <= m_curr_end_ptr);
+    size_t m = top_mark();
+    SASSERT(m != 0);
+    if (m_curr_ptr == m_curr_page + sizeof(size_t)) {
+        // mark is in the beginning of the page
+        char * prev = prev_page(m_curr_page);
+        recycle_page(m_curr_page, m_free_pages);
+        m_curr_page    = prev;
+        m_curr_ptr     = mark2ptr(m);
+        m_curr_end_ptr = end_of_default_page(m_curr_page);
+        SASSERT(m_curr_ptr >  m_curr_page);
+        SASSERT(m_curr_ptr <= m_curr_end_ptr);
+    }
+    else {
+        // mark is in the middle of the page
+        m_curr_ptr = mark2ptr(m);
+        SASSERT(m_curr_ptr < m_curr_end_ptr);
+    }
+    if (external_ptr(m)) {
+        dealloc_svect(reinterpret_cast<char**>(m_curr_ptr)[0]);
+    }
+    SASSERT(m_curr_ptr > m_curr_page);
+}
+
+

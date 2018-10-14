@@ -1,96 +1,72 @@
 #include <iostream>
-#include <vector>
+#include <algorithm>
 
 using namespace std;
 
-class Solution {
-    public:
-        void print(vector<int> nums) 
-        {
-            int i;
-            for(i=0; i<nums.size(); i++)
-            {
-                cout << nums[i] << " ";
-            }
+const long long maxx =1e4+5;
+pair <long long , pair <int, int> > adj[maxx];
+int main_root[maxx];
+int nodes, edges;
 
-            cout << endl; 
-
-            return;
-        }
-
-        vector<vector<int> > permute(vector<int>& nums)
-        {
-            vector<vector<int> > res;
-            if (nums.size() == 1)
-            {
-                res.push_back(nums);
-                return res;
-            }
-
-            int i, j;
-            for (i=0; i<nums.size(); i++)
-            {
-                //cout << "i = " << i << endl;
-                vector<int> v;
-                for(j=0; j<nums.size(); j++)
-                {
-                    if (j != i)
-                        v.push_back(nums[j]);
-
-                }
-                //print(v);
-                //cout << endl;
-
-                vector<vector <int> > r = permute(v);
-
-                for(j=0; j<r.size(); j++)
-                {
-                    int k;
-                    vector<int> r2;
-                    // push nums[i]
-                    r2.push_back(nums[i]);
-                    // concatenate nums[i] + r[j]
-                    for(k=0; k<r[j].size(); k++)
-                    {
-                       r2.push_back(r[j][k]); 
-                    }
-
-                    //print(r2);
-                    //cout << endl;
-
-                    res.push_back(r2);          
-                }
-            }
-
-            return res;
-        }
-};
-
-void print(vector<vector<int> > v)
+int root(int x)
 {
-    int i, j;
-    for(i=0; i<v.size(); i++)
+    while(main_root[x]!=x)
     {
-        for(j=0; j<v[i].size(); j++)
-        {
-            cout << v[i][j] << " ";
-        }
-        cout << endl;
+        main_root[x]=main_root[main_root[x]];
+        x=main_root[x];
     }
-    cout << endl;
+    return x;
 }
+
+void unions(int x, int y)
+{
+    main_root[root(y)] = main_root[root(x)];
+}
+
+long long  MST(pair <long long , pair <int, int> > adj[])
+{
+    int i, x, y;
+    long long weight=0, w;
+
+    for(i=0; i<edges; i++)
+    {
+        x = adj[i].second.first;
+        y = adj[i].second.second;
+        w = adj[i].first;
+
+        if(root(x)!=root(y))
+        {
+            weight += w;
+            unions(x,y);
+        }
+    }
+    return weight;
+}
+
 
 int main()
 {
-    int a[3] = {1, 2, 3};
-    int n = 3;
-    vector<int> nums(a, a+n);
+    int i;
+    cin>>nodes>>edges;
 
-    Solution sol;
-    vector<vector<int> > res = sol.permute(nums);
-    //cout << res.size() << endl;
+    for(i=0; i<edges; i++)
+    {
+        int x,y;
+        long long w;
+        cin>>x>>y>>w;
+        adj[i] = make_pair(w, make_pair(x, y));
+    }
 
-    //print(res);
+    for(i=0; i<=maxx; i++)
+        main_root[i]=i;
+
+    sort(adj , adj + edges);
+    cout<<MST(adj)<<endl;
+
+    /*
+    for(i=0; i<=5; i++)
+        cout<<main_root[i]<<" ";
+        */
 
     return 0;
 }

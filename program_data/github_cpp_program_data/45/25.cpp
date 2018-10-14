@@ -1,67 +1,81 @@
-#include <bits/stdc++.h>
+#include <cstdio>
+#include <algorithm>
+#include <vector>
+#define MAXM 212345
+#define MAXN 112345
 using namespace std;
+typedef vector<int> vi;
+typedef vector<vi> graph;
 
-// Fuente: club de algoritmia ESCOM
-// Autor: Ethan Jiménez
+const int INF = 0x3f3f3f3f;
 
-const int INF = (1 << 30);
+struct edge{
+    int to, f, c;
+}  e[MAXM];
 
-// Segment Tree version dinamica. Para generar el
-// arbol completo deben llamar a la funcion Construir.
-// CUIDADO: Para usarlo deben especificar el tipo de
-// dato a utilizar; SegTree<int> por ejemplo.
+graph g;
 
-template<class T>
-struct SegTree {
-  T dato; int i, d;
-  SegTree* izq, *der;
+int TC=0, cur = 0, seen[MAXN];
+void addge(int a , int b, int cp, int rc)
+{
+    e[cur].to = b, e[cur].f  = 0, e[cur].c = cp;
+    g[a].push_back(cur++);
+    e[cur].to = a, e[cur].f = 0, e[cur].c = rc;
+    g[b].push_back(cur++);
+}
 
-  SegTree(int I, int D) : izq(NULL), der(NULL), i(I), d(D), dato() {}
-  
-  ~SegTree() {
-    if (izq) delete izq;
-    if (der) delete der;
-  }
-  
-  T Construir() {
-    if (i == d) return dato = T();
-    int m = (i + d) >> 1;
-    izq = new SegTree(i, m);
-    der = new SegTree(m + 1, d);
-    return dato = izq->Construir() + der->Construir();
-  }
-  
-  T Actualizar(int a, T v) {
-    if (a < i || d < a) return dato;
-    if (a == i && d == a) return dato = v;
-    if (!izq) {
-      int m = (i + d) >> 1;
-      izq = new SegTree(i, m);
-      der = new SegTree(m + 1, d);
+int dfs(int s, int t, int flow)
+{
+    if(s==t) return flow;
+
+    seen[s] = TC;
+    int resf, v;
+    for(int i : g[s])
+    {
+        v = e[i].to;
+        resf = e[i].c-e[i].f;
+        if(seen[v]<TC && resf>0)
+        {
+            if(resf = dfs(v,t, min(resf, flow)))
+            {
+                e[i].f+=resf;
+                e[i^1].f-=resf;
+                return resf;
+            }
+        }
     }
-    return dato = izq->Actualizar(a, v) + der->Actualizar(a, v);
-  }
-  
-  T Query(int a, int b) {
-    if (b < i || d < a) return T();
-    if (a <= i && d <= b) return dato;
-    return izq? izq->Query(a, b) + der->Query(a, b): T();
-  }
-};
 
-// A continuación se ejemplifica como sobrecargar
-// el operador + dentro de una estructura para poder
-// reutilizar el codigo del Segment Tree facilmente.
-// El ejemplo sobrecarga el + por la funcion de maximo.
-// Es MUY IMPORTANTE tener un constructor por defecto.
+    return 0;
+}
 
-struct MaxInt {
-  int d; MaxInt(int D) : d(D) {}
-  MaxInt() : d(-INF) {} // IMPORTANTE!
-  MaxInt operator+(const MaxInt& o) {
-    return MaxInt(max(d, o.d));
-  }
-};
-int main(){
-  return 0;
+int maxflow(int s, int t)
+{
+    int flow = 0, a;
+    ++TC;
+    while(a = dfs(s,t,INF))
+    {
+        flow+=a;
+        ++TC;
+    }
+
+    return flow;
+}
+
+
+int main()
+{
+    int n, m,u,v,w,s,t;
+    scanf("%d %d", &n, &m);
+    g.assign(n+1, vi());
+
+    while(m--)
+    {
+        scanf("%d %d %d", &u, &v, &w);
+        addge(u,v,w, 0);
+    }
+    scanf("%d %d", &s, &t);
+
+    m = maxflow(s,t);
+
+    printf("%d\n", m);
 }

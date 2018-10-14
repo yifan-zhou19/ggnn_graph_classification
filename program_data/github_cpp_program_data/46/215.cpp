@@ -1,31 +1,63 @@
-﻿#include "stdafx.h" //добавление библиотеки
-#include <iostream> //добавление библиотеки
-using namespace std; //обявление пространства имён std
- 
-int main(int argc, char* argv[]) //начало программы
-{
-    const int size_array = 10; //объявлена переменная константа, которой присвоено значение 10
-    int array_[size_array] = {-8, -7, -6, -6, -4, 2, 6, 7, 8, 15 }; // объявление одномерного массива
-    cout << "array[" << size_array << "] = { ";
-    for (int counter = 0; counter < size_array; counter++) // начало цила for
-    {
-     cout << array_[counter] << " "; // печать элементов одномерного массива array1
-    }
-    cout << " }"; // конец оформление вывода массива
-    int average_index = 0, // переменная для индекса среднего элемента массива
-        first_index   = 0, // индекс первого элемента в массиве
-        last_index    = size_array -1, // индекс последнего элемента в массиве
-        search_value  = 15; // искомое значение
-    if (last_index == -1) cout << "\narray is empty" << endl; // если индекс последнего элемента равен -1 то, тогда массив пуст
- 
-    while (first_index < last_index)// начало цикла while
-    {
-        average_index = first_index + (last_index - first_index) / 2; // средний элемент = первый + (последний - первый)
-        search_value <= array_[average_index] ? last_index = average_index : first_index = average_index + 1;    // найден ключевой элемент или нет и присвоение найденому значению last_index
-    }
-    if ( array_[last_index] == search_value) // начало цикла if else
-        cout << "\nvalue is found" << "\nindex = " << last_index << endl;
-    else
-        cout << "\nvalue is not found" << endl;
-    return 0; // возвращение значения 0
+#include <iostream>
+
+using namespace std;
+
+template<int MAXN>
+struct SegmentTree {
+	int idx[4 * MAXN + 10];
+	int bs;
+
+	SegmentTree() {
+		for (int i = 0; i < 4 * MAXN + 10; i++) {
+			idx[i] = 0;
+		}
+
+		for (bs = 1; bs <= MAXN; bs *= 2) {}
+	}
+	
+	void update(int x, int v) {
+		x += bs;
+		while (x) {
+			idx[x] += v;
+			x /= 2;
+		}
+	}
+
+	int sum(int x, int y) {
+		int res = 0;
+
+		x += bs;
+		y += bs;
+
+		while (x < y) {
+			if (x % 2 == 1) {
+				res += idx[x];	
+				x++;
+			}
+
+			if (y % 2 == 0) {
+				res += idx[y];
+				y--;
+			}
+			x /= 2;
+			y /= 2;
+		}
+
+		if (x == y) {
+			res += idx[x];
+		}
+
+		return res;
+	}
+};
+
+int main() {
+	SegmentTree<10> tree;
+	for (int i = 0; i < 10; i++) {
+		tree.update(i, i+1);
+	}
+
+	cout << tree.sum(0, 9) << endl;
+	
+	return 0;
 }

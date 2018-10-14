@@ -1,95 +1,82 @@
-#include "Heap.hpp"
+#include "logistic-regression.hpp"
+#include "dataset.hpp"
 
-int log(const char *format,...);
+#include <cmath>
+#include <cstdlib>
 
-map<unsigned int, Heap *>heaps;
+LogisticRegression::LogisticRegression(double gradStep, size_t itersCount) :
+    m_gradStep(gradStep),
+    m_itersCount(itersCount)
+{
 
-HeapChunk *Heap::malloc(unsigned int pid, unsigned int chunk_base, unsigned int size, unsigned int time) {
-    HeapChunk *newChunk;
-
-    if (!time) time = gettime();
-    newChunk = new HeapChunk(pid, chunk_base, chunk_base+size, time);
-
-    openChunks[chunk_base] = newChunk;
-    chunks.push_back(newChunk);
-
-    if (top < newChunk->top)   top  = newChunk->top;
-    if (base > newChunk->base) base = newChunk->base;
-
-    return newChunk;
 }
 
-HeapChunk *Heap::free(unsigned int pid, unsigned int chunk_base, unsigned int time) {
-    HeapChunk *freeChunk;
-
-    if (!time) time = gettime();
-
-    if (openChunks.find(chunk_base) == openChunks.end()) {
-        // addEvent("Double free", time);
-        return NULL;
+void LogisticRegression::fit(const DataSet& data)
+{
+    m_dim = data.colsCount();
+    m_w.resize(m_dim+1);
+    // Generating random weights
+    for (int i=0; i<m_dim+1; i++)
+    {
+        m_w[i] = double(rand() - RAND_MAX/2) / RAND_MAX;
     }
 
-    freeChunk = openChunks[chunk_base];
+    if (m_itersCount == 0)
+    {
+        m_itersCount = double(data.rowsCount())/m_gradStep;
+    }
 
-    // if (freeChunk->pid != pid)
-    //     addEvent("Chunk freed from different PID.", time);
-    openChunks.erase(chunk_base);
-    freeChunk->freeTime = time;
-
-    return freeChunk;
+    for (size_t i=0; i<m_itersCount; i++)
+    {
+        makeStochasticIteration(data);
+    }
 }
 
-HeapChunk *Heap::realloc(unsigned int pid, unsigned int old_base, unsigned int new_base, unsigned int new_size, unsigned int time) {
-    if (!time) time = gettime();
-
-    free(pid, old_base, time);
-    return malloc(pid, new_base, new_size, time);
+void LogisticRegression::predict(DataSet& data)
+{
+    for (size_t i=0; i<data.rowsCount(); i++)
+    {
+        const double* x = data[i];
+        data.answer(i) = getDist(x) > 0.0 ? 1.0 : -1.0;
+    }
 }
 
-void Heap::addEvent(char *comment, unsigned int time) {
-    HeapChunk *newChunk;
-
-    if (!time) time = gettime();
-    events.push_back(new HeapEvent(comment, time));
-	log("%s\n", comment);
+double LogisticRegression::sigma(double M)
+{
+    return 1 / (1+exp(-M));
 }
 
-Heap *getHeap(unsigned int handle) {
-	if (heaps.find(handle) == heaps.end())
-        heaps[handle] = new Heap();
+void LogisticRegression::makeStochasticIteration(const DataSet& data)
+{
+    // Getting random element to optimize it
+    size_t row = rand() % data.rowsCount();
 
-    return heaps[handle];
+    /*
+     * W_(t+1) = W_(t) + step * y_row * x_row * ( 1-sigma( <x_row*w> * y_row ) )
+     */
+
+    const double *x = data[row];
+    double answer = data.answer(row);
+
+    double M = getDist(x) * answer;
+
+    double brace = (1 - sigma(M));
+    double k = m_gradStep * answer * brace;
+
+    for (size_t i=0; i<data.colsCount(); i++)
+    {
+        m_w[i] += k * x[i];
+    }
+    m_w.back() += k * (-1.0);
 }
 
-void Heap::clear() {
-	HeapChunk *c;
-
-	for (ts_vector<HeapChunk *>::iterator chunk = chunks.begin(); chunk != chunks.end(); ++chunk)
-		delete  *chunk;
-	chunks.clear();
-
-    for (ts_vector<HeapEvent *>::iterator event = events.begin(); event!= events.end(); ++event) 
-        delete (*event);
-	events.clear();
-
-	openChunks.clear();
-	allocTime = gettime();
-	base = 0xffffffff;
-	top  = 0;
-}
-
-void clearHeap(unsigned int handle) {
-	if (heaps.find(handle) == heaps.end())
-        return;
-
-	heaps[handle]->clear();
-}
-
-void clearHeaps() {
-    map<unsigned int, Heap *>::iterator heap;
-
-	for (heap = heaps.begin(); heap != heaps.end(); ++heap)
-		heap->second->clear();
-
-	heaps.clear();
+double LogisticRegression::getDist(const double x[])
+{
+    double M = 0.0;
+    for (int i = 0; i<m_dim; i++)
+    {
+        M += x[i] * m_w[i];
+    }
+    M += -1 * m_w.back();
+    return M;
 }

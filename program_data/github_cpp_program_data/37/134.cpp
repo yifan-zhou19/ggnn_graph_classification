@@ -1,105 +1,50 @@
-#include<stdio.h>
-void EnQueue();
-void DeQueue();
-void Display();
+#include<bits/stdc++.h>
+using namespace std;
 
-#define size 5
-int queue[size];
-int front=-1;
-int rear=-1;
+int max(int x,int y,int z)
+{
+	return max(max(x,y),max(y,z));
+}
+int function_rec(int a[],int n)
+{
+   
+   if(n<0)
+   	return 0;
+    int res=0;
+	for(int i=0;i<n;i++)
+	{
+		res=max(res,a[i]+function_rec(a,n-i-1));
+	}
+  return res;
+}
 
+
+int dp_function(int l,int a[])
+{
+  
+  int dp[l+1];
+  dp[0]=0;
+
+  for(int i=1;i<=l;i++)
+  { int max_val=INT_MIN;
+  	for(int j=0;j<i;j++)
+  		max_val=max(max_val,dp[i-j-1]+a[j]);
+     dp[i]=max_val;
+  }
+
+  return dp[l];
+}
 
 int main()
 {
-	int choice;
-	int n;
-	printf("\n\tQUEUE SIZE : 5\n\n");
-	while(1)
-	{
-		
-		printf("\n\n\t*************************************");
-		printf("\n\t\t\tMENU\n");
-		printf("\n\t  1) Insert elements in queue ");
-		printf("\n\t  2) Delete elements in queue ");
-		printf("\n\t  3) Display all elements of queue ");
-		printf("\n\t  4) Exit  ");
-		printf("\n\nt*************************************");
-		printf("\n\n Enter your choice : ");
-		scanf("%d", &choice);
-		switch(choice)
-		{
-			case 1:
-					
-					EnQueue();
-					break;
-			case 2: 
-					DeQueue();
-					break;
-			case 3:
-					Display();
-					break;
-			case 4:
-					return 0;
-			default : printf("\nwrong choice");
-					break;
-		}
-	}
+	int l;
+	cin>>l;
+	int a[l];
+
+	for(int i=0;i<l;i++)
+        cin>>a[i];
+   cout<<dp_function(l,a)<<endl;
+   return 0;
 }
-void EnQueue()
-{
-	int value;
-	if(rear==size-1)
-	{
-		printf("\n Queue is full");
-	}
-	else
-	{
-		if(front==-1)
-			front=0;
-		printf("\n\n Enter the element : ");
-		scanf("%d",&value);	
-		rear = rear+1;
-		queue[rear] = value;
-		printf("\n Insertion successful");
-		
-	
-	}
-}
-void DeQueue()
-{
-	if(front==-1)
-	{
-		printf("\n Queue is empty");
-		
-	}
-	else
-	{
-		printf("\n %d is deleted ", queue[front]);
-		if(front==rear)
-		{
-			front=rear=-1;
-		}
-		else
-		{
-			front++;
-		}
-		
-	}
-}
-void Display()
-{
-	if(rear==-1)
-	{
-		printf("\n Queue is empty");
-	}
-	else
-	{
-		printf("\n Queue elements are : \n");
-		printf("___________________________________\n ");
-		for(int i=front; i<=rear; i++)
-		{
-			printf("%d	", queue[i]);
-		}
-		printf("\n___________________________________\n");
-	}
-}
+
+

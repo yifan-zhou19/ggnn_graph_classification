@@ -1,50 +1,33 @@
-/**
- * Incorrect code to identify palindromes
- */
+//
+//  binary-search
+//  https://leetcode.com/problems/binary-search/
+//
+//  Created by smilingpoplar on 15/6/7.
+//  Copyright (c) 2015年 YangLe. All rights reserved.
+//
 
 #include <iostream>
-#include <sstream>
-#include <cstring> 
+#include <vector>
 
 using namespace std;
 
-bool helper(stringstream &input, int len)
-{
-	char prev;
+class Solution {
+public:
+    int search(vector<int>& nums, int target) {
+        int l = -1, u = nums.size();
+        while (l + 1 < u) {
+            int mid = l + (u - l) / 2;
+            if (nums[mid] >= target) {
+                u = mid;
+            } else {
+                l = mid;
+            }
+        }
+        if (u < nums.size() && nums[u] == target) return u;
+        return -1;
+    }
+};
 
-	//if we are at the midpoint of the string, return true.
-	if (len == 0) return true;
-
-	/**
-	 * If the length of the string is odd, and the next
-	 * character is the midpoint of the string, consume it
-	 * and return true.
-	 */
-	input >> prev;
-	if (len == 1) return true;
-
-	bool val = helper(input, len-2);
-
-	//make your changes below this line.
-	char next;
-	input>>next;
-	if (val&&prev==next){//check if word[mid-n] = word[mid+n]
-		return true;	
-	} 
-	return false;
-}
-
-//do not change the main function.
-int main(int argc, char* argv[])
-{
-  if(argc < 2){
-    cerr << "Please provide a string of characters." << endl;
-    return 1;
-  }
-  stringstream ss;
-  ss << argv[1];
-  if(helper(ss, strlen(argv[1])))
-	  cout << "Palindrome" << endl;
-  else cout << "Not a Palindrome" << endl;
-  return 0;
+int main(int argc, const char * argv[]) {
+    return 0;
 }

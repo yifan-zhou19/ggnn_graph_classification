@@ -1,108 +1,113 @@
-/*
- * Stack.java July 2006
- *
- * Copyright (C) 2006, Niall Gallagher <niallg@users.sf.net>
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or 
- * implied. See the License for the specific language governing 
- * permissions and limitations under the License.
- */
+package com.curioustake.sftm.activity;
 
-package org.simpleframework.xml.stream;
+import com.curioustake.sftm.utils.DataValidator;
+import com.curioustake.sftm.utils.RandomDataGenerator;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 
 /**
- * The <code>Stack</code> object is used to provide a lightweight 
- * stack implementation. To ensure top performance this stack is not
- * synchronized and keeps track of elements using an array list. 
- * A null from either a <code>pop</code> or <code>top</code> means
- * that the stack is empty. This allows the stack to be peeked at
- * even if it has not been populated with anything yet.
+ * Purpose : Sort a given input
  *
- * @author Niall Gallagher
- */ 
-class Stack<T> extends ArrayList<T> {
+ * Details: Non-Comparison sort "MOSTLY"
+ *
+ * Complexity (Time): O(n log (n))
+ * */
 
-   /**
-    * Constructor for the <code>Stack</code> object. This is used 
-    * to create a stack that can be used to keep track of values
-    * in a first in last out manner. Typically this is used to 
-    * determine if an XML element is in or out of context.
-    * 
-    * @param size this is the initial size of the stack to use
-    */         
-   public Stack(int size) {
-      super(size);
-   }
+public class P23_BucketSort implements Activity {
 
-   /**
-    * This is used to remove the element from the top of this 
-    * stack. If the stack is empty then this will return null, as
-    * such it is not advisable to push null elements on the stack.
-    *
-    * @return this returns the node element the top of the stack
-    */ 
-   public T pop() {
-      int size = size();
-      
-      if(size <= 0) {
-         return null;               
-      }           
-      return remove(size - 1);
-   }
-   
-   /**
-    * This is used to peek at the element from the top of this 
-    * stack. If the stack is empty then this will return null, as
-    * such it is not advisable to push null elements on the stack.
-    *
-    * @return this returns the node element the top of the stack
-    */  
-   public T top() {
-      int size = size();
-      
-      if(size <= 0) {
-         return null;              
-      }           
-      return get(size - 1);
-   }
-   
-   /**
-    * This is used to acquire the node from the bottom of the stack.
-    * If the stack is empty then this will return null, as such it
-    * is not advisable to push null elements on the stack.
-    *
-    * @return this returns the element from the bottom of the stack
-    */ 
-   public T bottom() {
-      int size = size();
-      
-      if(size <= 0) {
-         return null;              
-      }           
-      return get(0);           
-   }
-   
-   /**
-    * This method is used to add an element to the top of the stack. 
-    * Although it is possible to add a null element to the stack it 
-    * is not advisable, as null is returned when the stack is empty.
-    *
-    * @param value this is the element to add to the stack
-    * 
-    * @return this returns the actual node that has just been added
-    */ 
-   public T push(T value) {
-      add(value);
-      return value;
-   }
+    enum SORT_ORDER { ASCENDING, DESCENDING}
+
+    public void invoke(String[] args) {
+        System.out.println( "Execute => " + Arrays.toString(args) );
+
+        final int count = Integer.parseInt(args[1]);
+        final int max = Integer.parseInt(args[2]);
+        final boolean printResults = Boolean.parseBoolean(args[3]);
+
+        Integer[] original = RandomDataGenerator.getRandomIntegerArray(count, max, printResults);
+
+        if(count <= 1) {
+            System.out.println("INPUT SIZE TO SMALL ");
+            return;
+        }
+
+        // BUCKET SORT ASCENDING
+        Integer[] inputAsc = original.clone();
+        Integer[] outputAsc = sort(inputAsc, SORT_ORDER.ASCENDING);
+        System.out.println("\n###################### BUCKET SORT validateSortAscending ##############################");
+        System.out.println("\nBUCKET SORT ASCENDING SUCCESSFUL? [" + DataValidator.validateSortAscending(original, outputAsc, printResults) + "]\n");
+        System.out.println("############################################################################################\n");
+
+        // BUCKET SORT DESCENDING
+        Integer[] inputDesc = original.clone();
+        Integer[] outputDesc = sort(inputDesc, SORT_ORDER.DESCENDING);
+        System.out.println("\n###################### BUCKET SORT validateSortDescending #############################");
+        System.out.println("\nBUCKET SORT DESCENDING SUCCESSFUL? [" + DataValidator.validateSortDescending(original, outputDesc, printResults) + "]\n");
+        System.out.println("############################################################################################\n");
+    }
+
+    private Integer[] sort(Integer[] input, SORT_ORDER sortOrder) {
+
+        if(input.length <= 1)
+            return input;
+
+        final Integer max = Arrays.stream(input).max(Integer::compareTo).get();
+
+        final int maxFactor = getMaxFactor(max);
+
+        final List<List<Integer>> buckets = new ArrayList<>();
+
+        final int maxBucketSize = max/maxFactor;
+
+        for(int i=0; i<=maxBucketSize; i++)
+            buckets.add(new ArrayList<>());
+
+        for(int i=0; i<input.length; i++) {
+            int bucketId = input[i]/maxFactor;
+            buckets.get(bucketId).add(input[i]);
+        }
+
+        for(int i=0; i<buckets.size(); i++) {
+            if(input.length == buckets.get(i).size()) {
+                if(sortOrder.equals(SORT_ORDER.ASCENDING))
+                    Arrays.sort(input);
+                else
+                    Arrays.sort(input, Comparator.reverseOrder());
+                return input;
+            }
+
+            buckets.set(i, Arrays.asList(sort(buckets.get(i).stream().toArray(Integer[]::new), sortOrder)));
+        }
+        return order(buckets, sortOrder);
+    }
+
+    private int getMaxFactor(Integer max) {
+        int maxFactor = 10;
+        while((max/maxFactor) > 10)
+            maxFactor*=10;
+        return maxFactor;
+    }
+
+    private Integer[] order(final List<List<Integer>> sortedBuckets , SORT_ORDER sortOrder) {
+        List<Integer> output = new ArrayList<>();
+        switch (sortOrder) {
+            case ASCENDING:
+                sortedBuckets.stream().forEach(b -> output.addAll(b));
+                break;
+            case DESCENDING:
+                int index = 0;
+                for(int i=sortedBuckets.size()-1; i>=0; i--) {
+                    output.addAll(index, sortedBuckets.get(i));
+                    index = index + sortedBuckets.get(i).size();
+                }
+                break;
+            default:
+                throw new RuntimeException("Invalid sort Order");
+        }
+        return output.toArray(new Integer[output.size()]);
+    }
 }
+

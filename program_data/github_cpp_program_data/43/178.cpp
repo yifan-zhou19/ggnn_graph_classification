@@ -1,103 +1,58 @@
+/**
+ * 	author: satyajith
+ * 	algorithm: bucket sort
+ */
+
+#include <cmath>
 #include <iostream>
-using namespace std;
+#include <list>
+#include <vector>
 
-const int MAX_SIZE = 100;
+// constants
+#define N 10
 
-class StackOverFlowException 
-{
-    public:
-        StackOverFlowException() 
-        {
-            cout << "Stack overflow" << endl;
-        }
-};
+// function declarations
+std::list< float >* bucket_sort(float[]);
 
-class StackUnderFlowException 
-{
-    public:
-        StackUnderFlowException() 
-        {
-            cout << "Stack underflow" << endl;
-        }
-};
+// operator overloading to print a list
+std::ostream& operator<<(std::ostream& ostr, const std::list< float >& list) {
+	for (auto& i : list)
+		ostr << " " << i;
+	return ostr;
+}
 
-class ArrayStack 
-{
-	private:
-	int data[MAX_SIZE];
-	int top;
-	
-	public:
-	ArrayStack()
-	{
-		top = -1;
+int main(int argc, char const* argv[]) {
+	// input array
+	float arr[ N ] = {0.78, 0.17, 0.39, 0.26, 0.72, 0.94, 0.21, 0.12, 0.23, 0.68};
+
+	std::list< float >* final = bucket_sort(arr);
+	std::cout << * final;						   // print final list
+	final->erase(final->begin(), final->end());	// erase all elements
+
+	delete final;	// free the memory
+	return 0;
+}
+
+// the bucket sort routine definition
+std::list< float >* bucket_sort(float arr[]) {
+	int i;
+	std::vector< std::list< float > > B(N);	// initialize a vector of lists
+
+	for (i = 0; i < N; ++i)
+		B[ floor(N * arr[ i ]) ].push_back(arr[ i ]);	// distribute into buckets
+
+	for (i = 0; i < N; ++i)
+		B[ i ].sort();	// sort each list in ascending order
+
+	std::list< float >* final = new std::list< float >;	// final list of concatenated buckets
+	auto iter = final->begin();							   // iterator to final list
+
+	for (i = 0; i < N; ++i) {
+		final->splice(iter, B[ i ]);	// concatenate all buckets
+		iter = final->end();
 	}
-	int Pop();
-	void Push(int number);
-	int Top();
-	int Size();
-	bool isEmpty();
-	
-};
 
-int ArrayStack::Pop() {
-	if ( top == -1 ) 
-            {            
-                throw new StackUnderFlowException();            
-            }            
-    return data[top--];   
+	B.erase(B.begin(), B.end());	// erase all data from the vector of lists
+
+	return final;
 }
-
-void ArrayStack::Push(int number)
-{
-	if ( top >= MAX_SIZE ) 
-    {            
-        throw new StackOverFlowException();
-    }                   
-    data[++top] = number; 
-}
-
-int ArrayStack::Top()
-{
-	return data[top];      
-	
-}
-
-int ArrayStack::Size()
-{
-	return top + 1;
-}
-
-bool ArrayStack::isEmpty()
-{
-	if (top == -1) {
-		return true;
-	} else {
-		return false;
-	}
-}
-int main() {
-	 
-	 ArrayStack s;
-	 if ( s.isEmpty() ) 
-            {
-            cout << "Stack is empty" << endl;    
-            }
-        // Push elements    
-        s.Push(100);    
-        s.Push(200);    
-        // Size of stack
-        cout << "Size of stack = " << s.Size() << endl;
-        // Top element    
-        cout << s.Top() << endl;    
-        // Pop element    
-        cout << s.Pop() << endl;
-        // Pop element    
-        cout << s.Pop() << endl;
-        // Pop element    
-     
-}
-
-
-
-

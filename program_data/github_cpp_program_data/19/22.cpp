@@ -1,169 +1,78 @@
-/*
- * Copyright 1993-2010 NVIDIA Corporation.  All rights reserved.
- *
- * Please refer to the NVIDIA end user license agreement (EULA) associated
- * with this source code for terms and conditions that govern your use of
- * this software. Any use, reproduction, disclosure, or distribution of
- * this software and related documentation outside the terms of the EULA
- * is strictly prohibited.
- *
- */
+// Algorithm: Searching for Patterns
+// @author: Kushashwa Ravi Shrimali
+// KMP Algo - O(n) 
+//
 
-#include <oclUtils.h>
-#include <math.h>
-#include "HMM.h"
+#include <bits/stdc++.h>
+#include <string.h>
 
-double executionTime(cl_event &event);
+using namespace std;
 
-// constructer
-//*****************************************************************************
-HMM::HMM(cl_context GPUContext, 
-         cl_command_queue CommandQue, 
-         float *initProb, 
-         float *mtState, 
-         float *mtEmit, 
-         int numState, 
-         int numEmit,
-		 int numObs,
-         const char *path,
-		 int workgroupSize) :
-         cxGPUContext(GPUContext),
-		 cqCommandQue(CommandQue),
-         nState(numState),
-         nEmit(numEmit),
-		 nObs(numObs),
-         tKernel(0.0),
-		 wgSize(workgroupSize)
-{
-    cl_int err;
-    d_mtState  = clCreateBuffer(cxGPUContext, CL_MEM_READ_ONLY, sizeof(float)*nState*nState, NULL, &err);
-    err |= clEnqueueWriteBuffer(cqCommandQue, d_mtState, CL_TRUE, 0, sizeof(float)*nState*nState, mtState, 0, NULL, NULL);
-    d_mtEmit   = clCreateBuffer(cxGPUContext, CL_MEM_READ_ONLY, sizeof(float)*nEmit*nState, NULL, &err);
-    err |= clEnqueueWriteBuffer(cqCommandQue, d_mtEmit, CL_TRUE, 0, sizeof(float)*nEmit*nState, mtEmit, 0, NULL, NULL);
-    oclCheckErrorEX(err, CL_SUCCESS, NULL);
+// computes lps Array  
+void lpsArrayCompute(string pat, int index, int* lpsArray);
 
-    size_t szKernelLength; // Byte size of kernel code
-    char *cViterbi = oclLoadProgSource(shrFindFilePath("Viterbi.cl", path), "// My comment\n", &szKernelLength);
-    oclCheckErrorEX(cViterbi == NULL, false, NULL);
-    cpProgram = clCreateProgramWithSource(cxGPUContext, 1, (const char **)&cViterbi, &szKernelLength, &err);
-    err = clBuildProgram(cpProgram, 0, NULL, "-cl-fast-relaxed-math", NULL, NULL);
-    if (err != CL_SUCCESS)
-    {
-        // write out standard error, Build Log and PTX, then cleanup and exit
-        shrLogEx(LOGBOTH | ERRORMSG, (double)err, STDERROR);
-        oclLogBuildInfo(cpProgram, oclGetFirstDev(cxGPUContext));
-        oclLogPtx(cpProgram, oclGetFirstDev(cxGPUContext), "Viterbi.ptx");
-		shrEXIT(0, NULL);
-    }
+// return occurences of pattern in the text
+void search_kmp(string text, string pattern) {
+	// lengths of text and pattern
+	int len_text = text.length();
+	int len_pattern = pattern.length();
+	int M = len_text;
+	int N = len_pattern;
 
-    d_maxProbNew = clCreateBuffer(cxGPUContext, CL_MEM_READ_WRITE, sizeof(float)*nState, NULL, &err);
-    d_maxProbOld = clCreateBuffer(cxGPUContext, CL_MEM_READ_WRITE, sizeof(float)*nState, NULL, &err);
-    err |= clEnqueueWriteBuffer(cqCommandQue, d_maxProbOld, CL_TRUE, 0, sizeof(float)*nState, initProb, 0, NULL, NULL);
-    
-    ckViterbiOneStep = clCreateKernel(cpProgram, "ViterbiOneStep", &err);
-    ckViterbiPath    = clCreateKernel(cpProgram, "ViterbiPath", &err);
-    oclCheckErrorEX(err, CL_SUCCESS, NULL);
-    
-    cl_device_id device;
-    err = clGetCommandQueueInfo(cqCommandQue, CL_QUEUE_DEVICE, sizeof(cl_device_id), &device, NULL);
-    oclCheckErrorEX(err, CL_SUCCESS, NULL);
-    size_t maxWgSize;
-    err = clGetKernelWorkGroupInfo(ckViterbiOneStep, device, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), &maxWgSize, NULL);
-    oclCheckErrorEX(err, CL_SUCCESS, NULL);
-    if (maxWgSize == 64) smallBlock = true;
-    else smallBlock = false;
-       
-	d_path = clCreateBuffer(cxGPUContext, CL_MEM_READ_WRITE, sizeof(int)*(nObs-1)*nState, NULL, &err);
+	// create lps array and compute
+	int* lpsArray = new int[len_text];
 
-    free(cViterbi);
-    
+	// compute lps array 
+	lpsArrayCompute(pattern, len_text, lpsArray);
+
+	// initialize indexes for searching sub-patterns in the text
+	int i = 0;
+	int j = 0;
+	while(i < len_pattern) {
+		if(pattern[j] == text[i]) {
+			i++; 
+			j++;
+		}
+
+		if(j == M) {
+			printf("Found pattern at: %d", i - j);
+			j = lpsArray[j-1];
+		} 
+		else if(i < N && pattern[j] != text[i]) {
+			// mismatch
+			if(j != 0)
+				j = lpsArray[j -1];
+			else
+				i += 1;
+		}
+	}
 }
 
-// destructor
-//*****************************************************************************
-HMM::~HMM()
-{
-    cl_int err;
-    err  = clReleaseMemObject(d_mtState);
-	err |= clReleaseMemObject(d_path);
-    err |= clReleaseMemObject(d_mtEmit);
-    err |= clReleaseMemObject(d_maxProbNew);
-    err |= clReleaseMemObject(d_maxProbOld);
-    err |= clReleaseKernel(ckViterbiOneStep);
-    err |= clReleaseKernel(ckViterbiPath);
-    err |= clReleaseProgram(cpProgram);
-	oclCheckErrorEX(err, CL_SUCCESS, NULL);
+void lpsArrayCompute(string pat, int text_length, int* lpsArray) {
+	int len = 0; // length of previous lps
+	lpsArray[0] = 0; // initialize
+
+	int i = 1; 
+	while(i < text_length) {
+		if(pat[i] == pat[len]) {
+			len++;
+			lpsArray[i] = len;
+			i++;
+		}
+		else {
+			if(len != 0) {
+				len = lpsArray[len - 1];
+			}
+			else {
+				lpsArray[i] = 0;
+				i++;
+			}
+		}
+	}
 }
 
-
-// wrapper for the Viterbi kernel
-//*****************************************************************************
-size_t HMM::ViterbiOneStep(const int &obs, const int &iObs)
-{
-    cl_int err;
-	size_t globalWorkSize[2] = {1,1}, localWorkSize[2] = {1,1};
-    if (nState >= 256)
-    {
-		if (smallBlock) 
-			localWorkSize[0] = 64;
-		else 
-			localWorkSize[0] = wgSize;
-		globalWorkSize[0] = localWorkSize[0]*256;
-		globalWorkSize[1] = nState/256;
-    } else {
-        localWorkSize[0] = (int)pow(2.0f, (int)(log((float)nState)/log(2.0f))); // the largest 2^n number smaller than nState
-        globalWorkSize[0] = localWorkSize[0]*nState;
-    }
-
-    err  = clSetKernelArg(ckViterbiOneStep, 0, sizeof(cl_mem), (void*)&d_maxProbNew);
-    err |= clSetKernelArg(ckViterbiOneStep, 1, sizeof(cl_mem), (void*)&d_path);
-    err |= clSetKernelArg(ckViterbiOneStep, 2, sizeof(cl_mem), (void*)&d_maxProbOld);
-    err |= clSetKernelArg(ckViterbiOneStep, 3, sizeof(cl_mem), (void*)&d_mtState);
-    err |= clSetKernelArg(ckViterbiOneStep, 4, sizeof(cl_mem), (void*)&d_mtEmit);
-    err |= clSetKernelArg(ckViterbiOneStep, 5, sizeof(float)*localWorkSize[0], NULL);
-    err |= clSetKernelArg(ckViterbiOneStep, 6, sizeof(int)*localWorkSize[0], NULL);
-    err |= clSetKernelArg(ckViterbiOneStep, 7, sizeof(int), (void*)&nState);
-    err |= clSetKernelArg(ckViterbiOneStep, 8, sizeof(int), (void*)&obs);
-    err |= clSetKernelArg(ckViterbiOneStep, 9, sizeof(int), (void*)&iObs);
-
-	err |= clEnqueueNDRangeKernel(cqCommandQue, ckViterbiOneStep, 2, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL);
-	err = clEnqueueCopyBuffer(cqCommandQue, d_maxProbNew, d_maxProbOld, 0, 0, sizeof(float)*nState, 0, NULL, NULL);
-    oclCheckErrorEX(err, CL_SUCCESS, NULL);
-
-    return localWorkSize[0];
-}
-
-// Main routine of the Viterbi algorithm.
-// Calls the Viterbi search kernel for every given observations in the input sequence.
-//*****************************************************************************
-size_t HMM::ViterbiSearch(cl_mem vProb, cl_mem vPath, int *obs)
-{
-    size_t szWorkgroup;
-
-    for (int iObs = 1; iObs < nObs; iObs++)
-    {
-        szWorkgroup = ViterbiOneStep(obs[iObs], iObs);
-    }
-   
-
-    ViterbiPath(vProb, vPath);
-
-    return szWorkgroup;
-}
-
-void HMM::ViterbiPath(cl_mem vProb, cl_mem vPath)
-{
-    cl_int err;
-    size_t globalWorkSize[1] = {1}, localWorkSize[1] = {1};
-
-    err  = clSetKernelArg(ckViterbiPath, 0, sizeof(cl_mem), (void*)&vProb);
-    err |= clSetKernelArg(ckViterbiPath, 1, sizeof(cl_mem), (void*)&vPath);
-    err |= clSetKernelArg(ckViterbiPath, 2, sizeof(cl_mem), (void*)&d_maxProbNew);
-    err |= clSetKernelArg(ckViterbiPath, 3, sizeof(cl_mem), (void*)&d_path);
-    err |= clSetKernelArg(ckViterbiPath, 4, sizeof(int), (void*)&nState);
-    err |= clSetKernelArg(ckViterbiPath, 5, sizeof(int), (void*)&nObs);
-
-    err |= clEnqueueNDRangeKernel(cqCommandQue, ckViterbiPath, 1, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL);
-    oclCheckErrorEX(err, CL_SUCCESS, NULL);
-  
+int main() {
+	string text = "ABABDABACDABABCABAB";
+	string pattern = "ABAB";
+	search_kmp(pattern, text);
 }

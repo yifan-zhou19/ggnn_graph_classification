@@ -1,55 +1,20 @@
-#include "stdafx.h"
-#include "Stack.h"
-
-
-
-Stack::Stack() : Lista()
-{
-}
-
-
-Stack::~Stack()
-{
-}
-
-void Stack::push(Elemento* e)
-{
-	insertarUltimo(e);
-}
-
-Elemento* Stack::peek()
-{
-	return getUltimo();
-}
-
-Elemento* Stack::pop()
-{
-	Elemento* auxiliar = getUltimo();
-	moverUltimo();
-	return auxiliar;
-}
-
-ostream & operator<<(ostream & out, Stack& a) { //sobrecarga del operador <<
-	a.imprimir(a.peek(), out, 1);
-	return out;
-}
-
-
-void Stack::imprimir(Elemento * e, ostream & out, int posicion)  //se imprime el primer elemento y asi se continua hacia abajo un elemento por fila.
-{
-	if (e != NULL)
-	{
-		e->imprimir(out);
-		cout << "       Posicion numero: " << posicion << endl;
-		
-		if (peek() != NULL)
-		{
-			pop();
-			imprimir(peek(), out, posicion + 1);
-		}
-
-			
-
-		
-	}
-}
+class Solution {
+public:
+    vector<int> topKFrequent(vector<int>& nums, int k) {
+        map<int, int> m;
+        for (int n : nums) m[n]++;
+        int n = nums.size();
+        map<int, vector<int>> freq;
+        for (auto p : m) {
+            if (freq.find(p.second) == freq.end()) freq[p.second] = vector<int>(1, p.first);
+            else freq[p.second].push_back(p.first);
+        }
+        vector<int> res;
+        for (int i = n; i > 0 && res.size() < k; i--) {
+            if (freq.find(i) != freq.end() && freq[i].size() > 0) {
+                for (int j = 0; j < freq[i].size() && res.size() < k; j++) res.push_back(freq[i][j]);
+            }
+        }
+        return res;
+    }
+};

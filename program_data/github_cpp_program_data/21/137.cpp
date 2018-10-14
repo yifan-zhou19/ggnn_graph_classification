@@ -1,89 +1,41 @@
-#include <iostream>
+//
+// Given two words word1 and word2, find the minimum number of steps required to convert word1 to word2. (each operation is counted as 1 step.)
+//
+//
+//
+// You have the following 3 operations permitted on a word:
+//
+//
+//
+// a) Insert a character
+// b) Delete a character
+// c) Replace a character
+//
 
-const int buffSize = 1000000;
 
-class Heap {
-  
-    int* buff_;
-    int size_;
-     
-     void siftDown(int i) {
-        while (2 * i + 1 < size_) {
-            int k = 2 * i + 1;
-            if ((2 * i + 2 < size_) && (buff_[2 * i + 2] < buff_[2 * i + 1]))
-                k = 2 * i + 2;
-            if (buff_[i] > buff_[k]) {
-                std::swap(buff_[i], buff_[k]);
-                i = k;
-            } else
-                break;
+class Solution {
+public:
+    int minDistance(string word1, string word2) {
+        int dp[word1.size()+1][word2.size()+1];
+        int cost;
+        dp[0][0]=0;
+        for (int i=1; i<=word1.size(); i++) {
+            dp[i][0]=i; 
         }
-    }
-
-    void siftUp(int i) {
-        while (buff_[i] < buff_[(i - 1) / 2]) {
-            std::swap(buff_[i], buff_[(i - 1) / 2]);
-            i = (i - 1) / 2;
+        for (int i=1; i<=word2.size(); i++) {
+            dp[0][i]=i;
         }
-    }
-
-    void build(int* arr, int size_) {
-        for (int j = 0; j < size_; ++j) {
-            buff_[j] = arr[j];
-            siftUp(j);
+        for (int i=1; i<=word1.size(); i++) {
+            for (int j=1; j<=word2.size(); j++) {
+                if (word1[i-1]==word2[j-1]) {
+                    cost=0;
+                }
+                else {
+                    cost=1;
+                }
+                dp[i][j]=min(min(dp[i-1][j]+1,dp[i][j-1]+1),dp[i-1][j-1]+cost);
+            }
         }
-    }
-    
-  public:
-
-    ~Heap() {
-        delete[] buff_;
-    }
-
-    Heap(int elemnumber = 0, int* arr = nullptr) { 
-        size_ = elemnumber;
-        buff_ = new int[buffSize];
-        build(arr, size_);
-    }
-
-    int size() const {
-        return size_;
-    }
-
-    int erase() {
-        int min = buff_[0];
-        buff_[0] = buff_[size_ - 1];
-        --size_;
-        siftDown(0);
-        return min;
-    }
-
-    void add(int newElem) {
-        ++size_;
-        buff_[size_ - 1] = newElem;
-        siftUp(size_ - 1);
-    }
-
-    int get () const {
-        return buff_[0];
+        return dp[word1.size()][word2.size()];
     }
 };
-
-void heapSort(int* arr, int elemNumber) {
-    Heap h = Heap(elemNumber, arr);
-    for (int i = 0; i < elemNumber; ++i)
-        arr[i] = h.erase();
-}
-
-int main () {
-    int elemNumber;
-    std::cin >> elemNumber;
-    int* arr = new int[elemNumber];
-    for (int i = 0; i < elemNumber; ++i)
-        std::cin >> arr[i];
-    heapSort(arr, elemNumber);
-    for (int i = 0; i < elemNumber; ++i)
-        std::cout << arr[i] << " ";
-    delete[] arr;
-    return 0;
-} 

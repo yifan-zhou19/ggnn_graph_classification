@@ -1,36 +1,35 @@
-//============================================================================
-// Name        : shell-sort.cpp
-// Author      : Peng Li
-// Date        : Sep 24, 2014
-// Copyright   : 
-// Description : Implementation of shell sort in C++
-//============================================================================
+#include<bits/stdc++.h>
+#define REP(i,a,b) for (int i = (a); i <= (b); i++)
+#define pb push_back
+namespace std;
+typedef pair<int, int> ii;
+typedef vector<int> vi;
+typedef vector<ii> vii;
 
-#include "sort.h"
-#include <iostream>
+vi pset(1000);
 
-inline int next_gap(int gap){
-    if (gap == 2) return 1;
-    else return (int) (gap/2.0);
+void initSet(int N){
+	REP(i,0,N)
+		pset[i] = i;
 }
 
-void
-ShellSort::sort(int A[], int size)
-{
-  /* Complete this function with the implementation of shell sort algorithm 
-  Record number of comparisons in variable num_cmps of class Sort
-  */
-    resetNumCmps(); // reset number of comparisons
-    int gap = size/2;
-    for (; gap > 0; gap = next_gap(gap)) {
-        for (int i = gap; i < size; i++) {
-            int tmp = A[i];
-            int j = i;
-            while (j >= gap && (num_cmps++,tmp < A[j-gap])) {
-                A[j] = A[j-gap];
-                j -= gap;
-            }
-            A[j] = tmp;
-        }
-    }
+int findSet(int i){
+	return (pset[i] == i) ? i : pset[i] = findSet(pset[i]);
 }
+
+void unionSet(int i, int j){
+	pset[findSet(i)] = findSet(j);
+}
+
+int isSameSet(int i, int j){
+	return findSet(i) == findSet(j);
+}
+
+vector< pair<int, ii> > EdgeList;
+
+int main(){
+
+ return 0;
+}
+
+

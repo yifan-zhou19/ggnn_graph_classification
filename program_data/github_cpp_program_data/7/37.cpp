@@ -1,30 +1,44 @@
-
-//          Copyright Oliver Kowalke 2014.
-// Distributed under the Boost Software License, Version 1.0.
-//    (See accompanying file LICENSE_1_0.txt or copy at
-//          http://www.boost.org/LICENSE_1_0.txt)
-
-#include <cstdlib>
 #include <iostream>
+#include <vector>
+#ifdef ALG_MAIN
 
-#include <boost/coroutine2/all.hpp>
+using namespace std;
+
+class Solution {
+public:
+    vector<string> res;
+
+    void move(int n, char from, char buffer, char to) {
+        if (n == 1) {
+            char *tmp = new char[10];
+            sprintf(tmp, "from %c to %c", from, to);
+            res.emplace_back(tmp);
+            return;
+        }
+        move(n - 1, from, to, buffer);
+        move(1, from, buffer, to);
+        move(n - 1, buffer, from, to);
+    }
+
+    /**
+     * @param n: the number of disks
+     * @return: the order of moves
+     */
+    vector<string> towerOfHanoi(int n) {
+        move(n, 'A', 'B', 'C');
+        return res;
+    }
+};
 
 int main() {
-    boost::coroutines2::coroutine< int >::pull_type source(
-        []( boost::coroutines2::coroutine< int >::push_type & sink) {
-            int first = 1, second = 1;
-            sink( first);
-            sink( second);
-            for ( int i = 0; i < 8; ++i) {
-                int third = first + second;
-                first = second;
-                second = third;
-                sink( third);
-            }
-        });
-    for ( auto i : source) {
-        std::cout << i <<  " ";
+    int n;
+    while (cin >> n) {
+        Solution solo;
+        auto res = solo.towerOfHanoi(n);
+        for (auto &iter : res) {
+            cout << iter << endl;
+        }
     }
-    std::cout << "\nDone" << std::endl;
-    return EXIT_SUCCESS;
 }
+
+#endif

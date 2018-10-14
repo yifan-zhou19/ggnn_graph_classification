@@ -1,114 +1,69 @@
-package paramonov.valentin.fiction.collections;
+package dfs;
 
-import java.lang.reflect.Array;
-import java.util.Iterator;
+import java.util.List;
 
-public abstract class QuadTree<T extends QuadTree<T, B>, B extends Block> implements Iterable<T> {
-    private B element;
-    T[] children;
+import common.Constants;
+import common.DFileID;
 
-    public boolean add(B block) {
-        if(this.element == null) {
-            this.element = block;
-            return true;
-        }
+public abstract class DFS {
 
-        if(children == null) {
-            children = (T[]) Array.newInstance(getClass(), 4);
-        }
+	protected boolean _format;
+	protected String _volName;
 
-        final int place = findPlace(block);
-        if(place < 0) {
-            return false;
-        }
+	/**
+	 * @volName: Explicitly overwrite volume name
+	 * @format: If format is true, the system should earse the underlying disk
+	 *          contents and reinialize the volume.
+	 */
 
-        if(children[place] == null) {
-            try {
-                children[place] = (T) getClass().newInstance();
-            } catch(InstantiationException | IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
-        }
+	DFS(String volName, boolean format) {
+		_volName = volName;
+		_format = format;
+	}
 
-        return children[place].add(block);
-    }
+	DFS(boolean format) {
+		this(Constants.vdiskName, format);
+	}
 
-    protected final int findPlace(B block) {
-        final B element = this.element;
-        final int elementX = element.getX();
-        final int elementY = element.getY();
-        final int elementW = element.getWidth();
-        final int elementH = element.getHeight();
-        final int blockX = block.getX();
-        final int blockY = block.getY();
-        final int blockW = block.getWidth();
-        final int blockH = block.getHeight();
+	DFS() {
+		this(Constants.vdiskName, false);
+	}
 
-        return quad(elementX, elementW, blockX, blockW) + 2 * quad(elementY, elementH, blockY, blockH);
-    }
+	/**
+	 * Initialize all the necessary structures with sizes as specified in the
+	 * common/Constants.java
+	 */
+	public abstract void init();
 
-    private int quad(int regionStart, int regionWidth, int blockX, int blockW) {
-        if(regionStart == blockX && regionWidth == blockW) {
-            return -1;
-        }
+	/**
+	 * creates a new DFile and returns the DFileID, which is useful to uniquely
+	 * identify the DFile
+	 */
+	public abstract DFileID createDFile();
 
-        final int regionEnd = regionStart + regionWidth;
-        final int blockEnd = blockX + blockW;
+	/** destroys the file specified by the DFileID */
+	public abstract void destroyDFile(DFileID dFID);
 
-        if(blockX < regionStart || blockEnd > regionEnd) {
-            throw new BlockDimensionsException();
-        }
+	/**
+	 * reads the file dfile named by DFileID into the buffer starting from the
+	 * buffer offset startOffset; at most count bytes are transferred
+	 */
+	public abstract int read(DFileID dFID, byte[] buffer, int startOffset, int count);
 
-        final int regionHalf = (regionStart + regionEnd + 1) / 2;
+	/**
+	 * writes to the file specified by DFileID from the buffer starting from the
+	 * buffer offset startOffset; at most count bytes are transferred
+	 */
+	public abstract int write(DFileID dFID, byte[] buffer, int startOffset, int count);
 
-        if(blockEnd <= regionHalf) {
-            return 0;
-        }
+	/** returns the size in bytes of the file indicated by DFileID. */
+	public abstract int sizeDFile(DFileID dFID);
 
-        return 1;
-    }
+	/**
+	 * List all the existing DFileIDs in the volume
+	 */
+	public abstract List<DFileID> listAllDFiles();
 
-    public B getElement() {
-        return element;
-    }
-
-    public boolean hasChildren() {
-        if(children == null) {
-            return false;
-        }
-
-        for(T child : children) {
-            if(child != null) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public T[] getChildren() {
-        return children;
-    }
-
-    public final int size() {
-        int size = element != null ? 1 : 0;
-
-        if(!hasChildren()) {
-            return size;
-        }
-
-        for(T child : children) {
-            if(child == null) {
-                continue;
-            }
-            size += child.size();
-        }
-
-        return size;
-    }
-
-    @Override
-    public Iterator<T> iterator() {
-        return new QuadTreeIterator(this);
-    }
+	/** Write back all dirty blocks to the volume, and wait for completion. */
+	public abstract void sync();
 }

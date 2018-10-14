@@ -1,45 +1,49 @@
 #include <iostream>
 #include <cassert>
+#include "algol/perf/benchmark.hpp"
 
-// The following code calls a naive algorithm for computing a Fibonacci number.
-//
-// What to do:
-// 1. Compile the following code and run it on an input "40" to check that it is slow.
-//    You may also want to submit it to the grader to ensure that it gets the "time limit exceeded" message.
-// 2. Implement the fibonacci_fast procedure.
-// 3. Remove the line that prints the result of the naive algorithm, comment the lines reading the input,
-//    uncomment the line with a call to test_solution, compile the program, and run it.
-//    This will ensure that your efficient algorithm returns the same as the naive one for small values of n.
-// 4. If test_solution() reveals a bug in your implementation, debug it, fix it, and repeat step 3.
-// 5. Remove the call to test_solution, uncomment the line with a call to fibonacci_fast (and the lines reading the input),
-//    and submit it to the grader.
+void tower_of_hanoi (char from, char to, char spare, std::size_t disks)
+{
+  using namespace std::literals::string_literals;
 
-int fibonacci_naive(int n) {
-    if (n <= 1)
-        return n;
-
-    return fibonacci_naive(n - 1) + fibonacci_naive(n - 2);
+  if (disks < 1)
+    throw std::domain_error{"tower of hanoi is defined only for positive numbers of disks"s};
+  if (disks == 1) {
+    //std::cout << from << " -> " << to << std::endl;
+    return;
+  }
+  tower_of_hanoi(from, spare, to, disks - 1);
+  tower_of_hanoi(from, to, spare, 1);
+  tower_of_hanoi(spare, to, from, disks - 1);
 }
 
-int fibonacci_fast(int n) {
-    // write your code here
-
-    return 0;
-}
-
-void test_solution() {
-    assert(fibonacci_fast(3) == 2);
-    assert(fibonacci_fast(10) == 55);
-    for (int n = 0; n < 20; ++n)
-        assert(fibonacci_fast(n) == fibonacci_naive(n));
-}
-
-int main() {
-    int n = 0;
-    std::cin >> n;
-
-    std::cout << fibonacci_naive(n) << '\n';
-    //test_solution();
-    //std::cout << fibonacci_fast(n) << '\n';
-    return 0;
+int main ()
+{
+  using benchmark = algol::perf::benchmark<std::chrono::nanoseconds>;
+  //tower_of_hanoi('A', 'B', 'C', 3);
+  {
+    auto result = benchmark::run_n(50000, tower_of_hanoi, 'A', 'B', 'C', 4);
+    assert(result.size() == 50000);
+    auto average = benchmark::run_average(result);
+    std::cout << average << " 15 moves -> " << (average.duration.count() / 15) << " ns" << std::endl;
+  }
+  {
+    auto result = benchmark::run_n(50000, tower_of_hanoi, 'A', 'B', 'C', 6);
+    assert(result.size() == 50000);
+    auto average = benchmark::run_average(result);
+    std::cout << average << " 63 moves -> " << (average.duration.count() / 63) << " ns" << std::endl;
+  }
+  {
+    auto result = benchmark::run_n(50000, tower_of_hanoi, 'A', 'B', 'C', 8);
+    assert(result.size() == 50000);
+    auto average = benchmark::run_average(result);
+    std::cout << average << " 255 moves -> " << (average.duration.count() / 255) << " ns" << std::endl;
+  }
+  {
+    auto result = benchmark::run_n(50000, tower_of_hanoi, 'A', 'B', 'C', 12);
+    assert(result.size() == 50000);
+    auto average = benchmark::run_average(result);
+    std::cout << average << " 4095 moves -> " << (average.duration.count() / 4095) << " ns" << std::endl;
+  }
+  return 0;
 }

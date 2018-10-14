@@ -1,44 +1,74 @@
-import java.io.*;
-import java.util.*;
+/**
+ * Sorting algorithms
+ */
+package com.anuragkapur.sorting;
 
-class DFS{
+/**
+ * Insertion Sort
+ * 
+ * @author anurag.kapur
+ */
+public class InsertionSort {
 
-    static Stack<Integer> stack = new Stack<>();
-    static Map<Integer,Stack<Integer>> map = new HashMap<Integer,Stack<Integer>>();
+    public void sort(int a[]) {
 
-    static class Graph{
-        public void addEdge(int node1,int node2){
-            map.putIfAbsent(node1,new Stack<>());
-            map.get(node1).add(node2);
+        if(a == null || a.length <= 1) {
+            return;
         }
-        public void printEdges(){
-            map.forEach((id, val) -> System.out.println(val));
-        }
+
+        insertNumberAtIndexInSortedArray(a, 1);
     }
 
-    static void iterateGraph(int startNode){
-        stack.add(startNode);
-        System.out.println(startNode);
-        while(stack.size() > 0){
-            int n = stack.peek();
-            if(map.get(n) == null && map.get(n).size() > 0){
-                int num = map.get(n).pop();
-                System.out.println(num);
-                stack.push(num);
-            }else{
-                stack.pop();
+    private void insertNumberAtIndexInSortedArray(int a[], int index) {
+
+        if (index == a.length) {
+            return;
+        }
+
+        int number = a[index];
+        int i;
+        for (i=index-1; i >= 0; i--) {
+            if (number < a[i]) {
+                a[i+1] = a[i];
+            } else {
+                break;
             }
         }
+
+        a[i+1] = number;
+
+        insertNumberAtIndexInSortedArray(a, index+1);
     }
 
-    public static void main(String[] args){
-        Graph graph = new Graph();
-        graph.addEdge(2,1);
-        graph.addEdge(1,3);
-        graph.addEdge(2,4);
-        graph.addEdge(2,5);
-        graph.addEdge(2,6);
-        iterateGraph(2);
-    }
+	/**
+	 * Iterative version of insertion sort.
+     *
+     * Running time:
+     *  Best case: O(n)
+     *  Worst Case: O(n^2)
+     *
+	 * @param args
+	 */
+	public static void main(String[] args) {
+		
+		// Array of numbers to sort
+		int a[] = {5,1,4,3,8,6,9,10,7,2};
+
+        // Insertion sort algo
+		for (int i = 1; i < a.length; i++) {
+			int key = a[i];
+			int j = i - 1;
+			while(j >= 0 && a[j] > key) {
+				a[j + 1] = a[j];
+				j --;
+			}
+			a[j + 1] = key;
+		}
+		
+		// Output the sorted array
+		for (int i = 0; i < a.length; i++) {
+			System.out.println(a[i]);
+		}
+	}
 
 }

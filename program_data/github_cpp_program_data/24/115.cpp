@@ -1,172 +1,143 @@
-#include <bits/stdc++.h>
+// A C / C++ program for Prim's Minimum Spanning Tree (MST) algorithm. 
+// The program is for adjacency matrix representation of the graph
+// http://www.geeksforgeeks.org/greedy-algorithms-set-5-prims-minimum-spanning-tree-mst-2/
 
-using namespace std;
+#include <stdio.h>
+#include <limits.h>
+#include <vector>
+#include <iostream>
 
-typedef char permType;
-typedef int dataType;
+class Graph{
+private:
+    int V;
+    std::vector<std::vector<int> > graph;
 
-class Fenwick {
-	private:
-		const static int MAXN = 105000;
-		int N;
-		dataType B1[MAXN], B2[MAXN];
-		
-		int LSOne(int S){
-			return (S & (-S));
-		}
-		void build(int n){
-			N = n+10;
-			memset(B1, 0, sizeof B1);
-			memset(B2, 0, sizeof B2);
-		}
-		void build(dataType *A, int n){
-			build(n);
-			for (int i=0; i<n; i++){
-				updateRange(i+1, i+1, A[i]);
-			}
-		}
-		dataType query1(int b){
-			dataType sum = 0;
-			for (; b; b -= LSOne(b)) sum += B1[b];
-			return sum;
-		}
-		dataType query2(int b){
-			dataType sum = 0;
-			for (; b; b -= LSOne(b)) sum += B2[b];
-			return sum;
-		}
-		dataType query(int b){
-			return query1(b) * b - query2(b);
-		}
-		void update1(int k, dataType v){
-			for (; k <= N; k += LSOne(k)) B1[k] += v;
-		}
-		void update2(int k, dataType v){
-			for (; k <= N; k += LSOne(k)) B2[k] += v;
-		}
+    int min_key(std::vector<int>, std::vector<bool>);
 
-	public:
-		Fenwick(int n){
-			build(n);
-		}
-		Fenwick(dataType *A, int n){
-			build(A, n);
-		}
-		dataType queryRange(int i, int j){
-			return query(j) - query(i - 1);
-		}
-		void updateRange(int i, int j, dataType v){
-			update1(i, v);
-			update1(j + 1, -v);
-			update2(i, v * (i - 1));
-			update2(j + 1, -v * j);
-		}
+public:
+    Graph(int);
+    void add_edge(int, int, int);
+    void delete_edge(int, int);
+    void print_graph();
+
+    void prim_mst();
+    void printMST(std::vector<int>);
 };
 
-class Permutation {
-    private:
-        vector<int> getFactoradic(long long x, int len){
-            vector<int> v;
-            int i = 1;
-            long long n = x;
-            while (n != 0){
-                v.push_back(n % i);
-                n /= i;
-                i++;
-            }
-            while (v.size() < len){
-                v.push_back(0);
-            }
-            reverse(v.begin(), v.end());
-            return v;
-        }
 
-    public:
-        vector<permType> getPermutation(vector<permType> str, long long n){
-            sort(str.begin(), str.end());
-            vector<int> factoradic = getFactoradic(n, str.size());
-            vector<permType> ret;
-            bool used[str.size()+5];
-            memset(used, 0, sizeof used);
-            int count;
-            for (int i=0; i<factoradic.size(); i++){
-                count = -1;
-                for (int j=0; j<str.size(); j++){
-                    if (!used[j]){
-                        count++;
-                        if (count == factoradic[i]){
-                            used[j] = 1;
-                            ret.push_back(str[j]);
-                        }
-                    }
-                }
-            }
-            return ret;
-        }
+Graph::Graph(int i) {
+    this->V = i;
+    std::vector<int> temp (i, 0);
+    for(int k=0; k<i; k++)
+        graph.push_back(temp);
 
-        vector<permType> getPermutation2(vector<permType> str, long long n){
-            sort(str.begin(), str.end());
-            vector<int> factoradic = getFactoradic(n, str.size());
-            vector<permType> ret;
-            Fenwick fen(str.size());
-            for (int i=0; i<str.size(); i++){
-				fen.updateRange(i+1, i+1, 1);
-			}
-			int pos,val,low,high,mid;
-            for (int i=0; i<factoradic.size(); i++){
-                pos = str.size() + 10;
-                low = 0;
-                high = str.size()-1;
-                while (low <= high){
-                    mid = (low + high) / 2;
-                    val = fen.queryRange(1, mid+1);
-                    if (val == 1 + factoradic[i]){
-                        pos = min(pos, mid);
-                    }
-                    if (val < 1 + factoradic[i]){
-                        low = mid + 1;
-                    } else {
-                        high = mid - 1;
-                    }
-                }
-                ret.push_back(str[pos]);
-                fen.updateRange(pos+1, pos+1, -1);
-            }
-            return ret;
-        }
-};
-
-int main(){
-    Permutation perm;
-    string s;
-    cin >> s;
-    vector<char> c;
-    for (int i=0; i<s.length(); i++){
-        c.push_back(s[i]);
-    }
-    long long n;
-    cin >> n;
-    
-    clock_t start;
-    clock_t end;
-
-    start = clock();
-    vector<char> x = perm.getPermutation(c, n);
-    end = clock();
-    cout << float( end - start ) /  CLOCKS_PER_SEC << endl;
-    for (int i=0; i<x.size(); i++){
-        cout << x[i];
-    }
-    cout << endl;
-
-    start = clock();
-    vector<char> x2 = perm.getPermutation2(c, n);
-    end = clock();
-    cout << float( end - start ) /  CLOCKS_PER_SEC << endl;
-    for (int i=0; i<x2.size(); i++){
-        cout << x2[i];
-    }
-    cout << endl;
-    return 0;
+    for(int k=0; k<i; k++)
+        graph[k][k] = 0;
 }
 
+void Graph::print_graph() {
+    for(int i = 0; i<V; i++) {
+        for (int k = 0; k < V; k++)
+            std::cout << graph[i][k] << " ";
+    std::cout << std::endl;
+    }
+}
+
+void Graph::add_edge(int v1, int v2, int weight) {
+    if (v1 == v2)
+        return;
+
+    graph[v1][v2] = weight;
+    graph[v2][v1] = weight;
+}
+
+void Graph::delete_edge(int v1, int v2) {
+    if (v1 == v2)
+        return;
+
+    graph[v1][v2] = 0;
+    graph[v2][v1] = 0;
+}
+
+/* =================================================== */
+int Graph::min_key(std::vector<int> key, std::vector<bool> mstSet) {
+    // Initialize min value
+    int min = INT_MAX, min_index;
+
+    for (int v = 0; v < V; v++)
+        if (mstSet[v] == false && key[v] <= min)
+            min = key[v], min_index = v;
+
+    return min_index;
+}
+
+void Graph::printMST(std::vector<int> parent) {
+    printf("Edge   Weight\n");
+    for (int i = 1; i < V; i++)
+        printf("%d - %d    %d \n", parent[i], i, graph[i][parent[i]]);
+}
+
+void Graph::prim_mst() {
+    // Array to store constructed MST
+    std::vector<int> parent(V);
+
+    // Key values used to pick minimum weight edge in cut
+    std::vector<int> key(V);
+
+    // To represent set of vertices not yet included in MST
+    std::vector<bool> mstSet(V);
+
+    // Initialize all keys as INFINITE
+    for (int i = 0; i < V; i++)
+        key[i] = INT_MAX, mstSet[i] = false;
+
+    // Always include first 1st vertex in MST.
+    // Make key 0 so that this vertex is picked as first vertex
+    key[0] = 0;
+
+    // First node is always root of MST
+    parent[0] = -1;
+
+    // The MST will have V vertices
+    for (int count = 0; count < V-1; count++)
+    {
+        // Pick the minimum key vertex from the set of vertices
+        // not yet included in MST
+        int u = min_key(key, mstSet);
+
+        // Add the picked vertex to the MST Set
+        mstSet[u] = true;
+
+        // Update key value and parent index of the adjacent vertices of
+        // the picked vertex. Consider only those vertices which are not yet
+        // included in MST
+        for (int v = 0; v < V; v++)
+
+            // graph[u][v] is non zero only for adjacent vertices of m
+            // mstSet[v] is false for vertices not yet included in MST
+            // Update the key only if graph[u][v] is smaller than key[v]
+            if (graph[u][v] && mstSet[v] == false && graph[u][v] <  key[v])
+                parent[v]  = u, key[v] = graph[u][v];
+    }
+
+    // print the constructed MST
+    printMST(parent);
+}
+
+int main()
+{
+    Graph g(5);
+
+    g.add_edge(0,1,2);
+    g.add_edge(0,3,6);
+    g.add_edge(1,2,3);
+    g.add_edge(1,3,8);
+    g.add_edge(1,4,5);
+    g.add_edge(2,4,7);
+    g.add_edge(3,4,9);
+
+    g.print_graph();
+    g.prim_mst();
+
+    return 0;
+}

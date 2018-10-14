@@ -1,193 +1,531 @@
-#include "Heap.hpp"
-
-#define CHANGUI 0x100
-
-// To do
-// [ ] Use an internal variable to mantain time. When time is set to 0, make time == order of call
-// [ ] check for overlapping chunks (when alloc() is called)
-// [ ] make two different calls per function:
-//     [ ] malloc_enter(), malloc_return()
-//     [ ] free_enter(), free_return()
-//     [ ] realloc_enter(), realloc_return(), 
-//     [ ] etc.
+//
+//  LogisticRegression.cpp
+//  hog2 glut
+//
+//  Created by Nathan Sturtevant on 5/19/14.
+//  Copyright (c) 2014 University of Denver. All rights reserved.
 //
 
-bool operator<(const HeapChunk &t, const HeapChunk &other) {
-	return ((t.base<other.base) || (t.base==other.base && t.allocTime<other.allocTime));
+#include "LogisticRegression.h"
+#include <math.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <assert.h>
+#include <string.h>
+#include "LinearRegression.h"
+#include "SwapEndian.h"
+
+static const float VERSION = 1.1;
+static const float MINVERSION = 1.0;
+
+LogisticRegression::LogisticRegression(int _inputs, int _outputs, double _rate)
+{
+	useBinary = false;
+	outputActivation = kExponential;
+	inputs = _inputs;
+	outputs = _outputs;
+	rate = _rate;
+	weight.resize(0);
+	updates.resize(0);
+	//weight = 0;
+	allocateMemory();
 }
 
-bool operator<(const HeapRegion &t, const HeapRegion &other) {
-	return ((t.base<other.base) || (t.base==other.base && t.allocTime<other.allocTime));
+LogisticRegression::LogisticRegression(LogisticRegression *perp)
+{
+	useBinary = perp->useBinary;
+	//	inputs = perp->inputs;
+	outputs = perp->outputs;
+	rate = perp->rate;
+	outputActivation = perp->outputActivation;
+	weight.resize(0);
+	updates.resize(0);
+	//weight = 0;
+	//allocateMemory(perp->inputs);
+	load(perp);
 }
 
-void HeapRegion::alloc(unsigned int base, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapChunk toFind(base, base+size, time, caller, pid);
-
-    if (top < toFind.top) {
-        top = toFind.top + CHANGUI;
-        verprintf(3,("Readjusting base to 0x%08x\n", top));
-    }
-	chunks.insert(toFind);
+LogisticRegression::LogisticRegression(char *f)
+{
+	useBinary = false;
+	weight.resize(0);
+	updates.resize(0);
+	//weight = 0;
+	inputs = outputs = -1;
+	load(f);
 }
 
-void HeapRegion::free(unsigned int base, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapChunk toFind(base, 0, time, caller, pid);
+LogisticRegression::LogisticRegression(FunctionApproximator *fa)
+{
+	LogisticRegression *perp = (LogisticRegression *)fa;
+	useBinary = perp->useBinary;
+	inputs = perp->inputs;
+	outputs = perp->outputs;
+	outputActivation = perp->outputActivation;
+	rate = perp->rate;
+	weight.resize(0);
+	updates.resize(0);
+	//weight = 0;
+	//allocateMemory();
+	load(perp);
+}
 
-    if (!chunks.size()) return;
-	set<HeapChunk>::iterator a=chunks.lower_bound(toFind);
-	a--;
+LogisticRegression::~LogisticRegression()
+{
+	freeMemory();
+}
 
-	if (a->base == toFind.base) {
-		// --a;    verprintf(3,("free found -1: %d 0x%08x %lu %lu\n", a->freeTime == 0.0, a->base, a->allocTime, a->freeTime));    a++;
-		        verprintf(2,("free found  0: %d 0x%08x %lu %lu\n", a->freeTime == 0.0, a->base, a->allocTime, a->freeTime));
-		// ++a;    verprintf(3,("free found +1: %d 0x%08x %lu %lu\n", a->freeTime == 0.0, a->base, a->allocTime, a->freeTime));    a--;
-		if (a->freeTime != 0.0) {
-			qprintf(("Freeing a chunk that's already free: 0x%08x\n", toFind.base));
-		} else {
-			((HeapChunk*)&*a)->setFreeTime(toFind.allocTime);
-			((HeapChunk*)&*a)->setFreeCaller(toFind.allocCaller);
+void LogisticRegression::resizeInputs(int newSize, double newVal)
+{
+	if (newSize < inputs)
+	{
+		for (int x = 0; x < outputs; x++)
+		{
+			weight[x][newSize] = weight[x][inputs];
+			weight[x].resize(newSize+1);
+			updates[x].resize(newSize);
 		}
-	} else {
-		verprintf(2,("Found: 0x%08x %lf\n", a->base, a->allocTime));
-		qprintf(("Freeing a not allocated chunk: 0x%08x\n", toFind.base));
+	}
+	else if (newSize == inputs)
+	{
+		return;
+	}
+	else {
+		for (int x = 0; x < outputs; x++)
+		{
+			weight[x].resize(newSize+1);// = new double[inputs+1];
+			weight[x][newSize] = weight[x][inputs];
+			for (int y = inputs; y < newSize; y++)
+				weight[x][y] = newVal;
+			
+			updates[x].resize(newSize);// = new double[inputs+1];
+		}
+	}
+	inputs = newSize;
+}
+
+void LogisticRegression::resizeInputs(int newSize)
+{
+	if (newSize < inputs)
+	{
+		for (int x = 0; x < outputs; x++)
+		{
+			weight[x][newSize] = weight[x][inputs];
+			weight[x].resize(newSize+1);
+			updates[x].resize(newSize);
+		}
+	}
+	else if (newSize == inputs)
+	{
+		return;
+	}
+	else {
+		for (int x = 0; x < outputs; x++)
+		{
+			weight[x].resize(newSize+1);// = new double[inputs+1];
+			weight[x][newSize] = weight[x][inputs];
+			for (int y = inputs; y < newSize; y++)
+				weight[x][y] = ((double)2*random()/RAND_MAX-1)/(double)newSize;
+			
+			updates[x].resize(newSize);// = new double[inputs+1];
+		}
+	}
+	inputs = newSize;
+}
+
+void LogisticRegression::allocateMemory()
+{
+	//	if (weight.size() != 0)
+	//		freeMemory();
+	weight.resize(outputs);// = new double*[outputs];
+	updates.resize(outputs);
+	for (int x = 0; x < outputs; x++)
+	{
+		weight[x].resize(inputs+1);// = new double[inputs+1];
+		updates[x].resize(inputs);
+		for (int y = 0; y <= inputs; y++)
+			weight[x][y] = 30;//((double)2*random()/RAND_MAX-1)/(double)inputs;
+		weight[x][inputs] = 0;
+	}
+	output.resize(outputs);// = new double[outputs];
+}
+
+void LogisticRegression::freeMemory()
+{
+	//	if (weight != 0)
+	//	{
+	////		for (int x = 0; x < outputs; x++)
+	////			delete [] weight[x];
+	////		delete [] weight;
+	////		delete [] output;
+	weight.resize(0);
+	updates.resize(0);
+	//		//weight = 0;
+	//	}
+}
+
+void LogisticRegression::load(const char *fname)
+{
+	FILE *f;
+	f = fopen(fname, "r");
+	if (f == 0)
+	{
+		fprintf(stderr, "LOG_REGR Error: could not open file '%s' for loading; trying once more.\n", fname);
+		sleep(1);
+		f = fopen(fname, "r");
+		if (f == 0)
+		{
+			fprintf(stderr, "LOG_REGR Error: could not open file '%s' for loading.\n", fname);
+			exit(0);
+			return;
+		}
+	}
+	load(f);
+	fclose(f);
+}
+
+void LogisticRegression::load(FILE *f)
+{
+	int inputs1, outputs1;
+	float version;
+	int res = fscanf(f, "LOG_REGR %f %d %d\n", &version, &inputs1, &outputs1);
+	if (res != 3)
+	{
+		printf("Error: unrecognized LogisticRegression file. Expected header 'PERP <version> <inputs> <outputs>'.");
+		exit(0);
+	}
+	if (version > VERSION)
+	{
+		printf("Error: loaded network is %1.2f, but code can only handle %1.2f to %1.2f.",
+			   version, MINVERSION, VERSION);
+		exit(0);
+	}
+	if (VERSION >= 1.1)
+	{
+		char text[25];
+		res = fscanf(f, "%s\n", text);
+		assert(res == 1);
+		if (strcmp(text, "binary") == 0)
+			useBinary = true;
+		else //if (strcmp(text, "text") == 0)
+			useBinary = false;
+	}
+	
+	if ((inputs1 != inputs) || (outputs1 != outputs))
+	{
+		freeMemory();
+		inputs = inputs1;
+		outputs = outputs1;
+		allocateMemory();
+	}
+	
+	for (int y = 0; y < outputs; y++)
+	{
+		for (int x = 0; x <= inputs; x++)
+		{
+			if (useBinary)
+			{
+				float shrunk;
+				fread(&shrunk, sizeof(float), 1, f);
+				//fread(&weight[y][x], sizeof(double), 1, f);
+				little2machine(shrunk);
+				weight[y][x] = shrunk;
+			}
+			else
+				fscanf(f, "%le ", &weight[y][x]);
+		}
 	}
 }
 
-void HeapRegion::realloc(unsigned int base, unsigned int newBase, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller) {
-    free(base, time, pid, caller);
-    alloc(newBase, size, time, pid, caller);
-}
-
-void HeapRegion::setLimits() {
-
-	set<HeapChunk>::iterator i=chunks.begin();
-
-	minAddr = i->base;
-	maxAddr = i->top;
-	minTime = i->allocTime;
-	maxTime = i->freeTime;
-
-    if (i == chunks.end()) return;
-	for (i++;i != chunks.end(); i++) {
-		if (minAddr > i->base) minAddr = i->base;
-
-		if (maxAddr < i->top) maxAddr = i->top;
-
-		if (minTime > i->allocTime) minTime = i->allocTime;
-
-		if (maxTime < i->allocTime) maxTime = i->allocTime;
-		if (maxTime < i->freeTime) maxTime = i->freeTime;
+void LogisticRegression::load(const LogisticRegression *p)
+{
+	if (p && ((p->inputs != inputs) || (p->outputs != outputs)))
+	{
+		freeMemory();
+		inputs = p->inputs;
+		outputs = p->outputs;
+		outputActivation = p->outputActivation;
+		
+		allocateMemory();
 	}
-
-	for (i=chunks.begin();i != chunks.end(); i++)
-		if (i->freeTime == 0) 
-			((HeapChunk*)&*i)->setFreeTime(maxTime);
+	
+	if (p)
+	{
+		for (int y = 0; y < outputs; y++)
+		{
+			for (int x = 0; x <= inputs; x++)
+			{
+				weight[y][x] = p->weight[y][x];
+			}
+		}
+	}
 }
 
-void Heap::mmap(unsigned int base, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapRegion toFind(base, base+size, time, caller, pid);
-
-    if (autoRegions) return;
-    _mmap(base, size, time, pid, caller);
+bool LogisticRegression::validSaveFile(char *fname)
+{
+	FILE *f;
+	f = fopen(fname, "r");
+	if (f == 0)
+	{
+		return false;
+	}
+	int finput, foutput;
+	float version;
+	int res = fscanf(f, "LOG_REGR %f %d %d\n", &version, &finput, &foutput);
+	fclose(f);
+	if (res != 3)
+	{
+		return false;
+	}
+	if (version > VERSION)
+	{
+		return false;
+	}
+	return true;
 }
 
-void Heap::_mmap(unsigned int base, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapRegion toFind(base, base+size, time, caller, pid);
-
-    verprintf(1,("[%d] mmap(0x%08x, 0x%08x) [%lu]\n", regions.size(), base, size, time));
-    if (!size) return;
-
-	set<HeapRegion>::iterator a=regions.lower_bound(toFind);
-
-    if (a != regions.end()) {
-        --a;
-
-        // --a; verprintf(3,("mmap found -1: 0x%08x-0x%08x %lu %lu\n", a->base, a->top, a->allocTime, a->freeTime)); a++;
-             verprintf(2,("mmap found  0: 0x%08x-0x%08x %lu %lu\n", a->base, a->top, a->allocTime, a->freeTime));
-        // ++a; verprintf(3,("mmap found +1: 0x%08x-0x%08x %lu %lu\n", a->base, a->top, a->allocTime, a->freeTime)); a--;
-
-        if (a->contains(base-1)) {
-            // new starts inside old
-            if (a->contains(base+size-1)) {
-                // new contained in old, just return
-                verprintf(2,("Old Region included new region: 0x%08x-0x%08x [%lu]\n", a->base, a->top, a->allocTime));
-                return;
-            }
-            if (a->top < base+size) {
-                // new extends old
-                verprintf(2,("Extending up region at 0x%08x-0x%08x [%lu]\n", a->base, a->top, a->allocTime));
-                ((HeapRegion*)&*a)->setTop(base+size);
-                return;
-            }
-        } else if (a->contains(base+size)) {
-            if (a->contains(base)) {
-                // new contained in old, just return
-                verprintf(2,("Old Region included new region: 0x%08x-0x%08x [%lu]\n", a->base, a->top, a->allocTime));
-                return;
-            }
-            if (a->base > base) {
-                // new is right before old (new extends old to lower memory)
-                verprintf(2,("Extending down region at 0x%08x-0x%08x [%lu]\n", a->base, a->top, a->allocTime));
-                ((HeapRegion*)&*a)->setBase(base);
-                return;
-            }
-        }
-    }
-    regions.insert(toFind);
+void LogisticRegression::save(const char *fname)
+{
+	FILE *f;
+	f = fopen(fname, "w+");
+	if (f == 0)
+	{
+		fprintf(stderr, "Error: could not open file for saving.\n");
+		return;
+	}
+	save(f);
+	fclose(f);
 }
 
-void Heap::munmap(unsigned int base, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapRegion toFind(base, 0, time, caller, pid);
-
-    if (autoRegions) return;
-	verprintf(1,("[%d] munmap(0x%08x) [%lu]\n", pid, base, time));
-
+void LogisticRegression::save(FILE *f)
+{
+	fprintf(f, "LOG_REGR %1.2f %d %d\n", VERSION, inputs, outputs);
+	if (useBinary)
+		fprintf(f, "binary\n");
+	else
+		fprintf(f, "text\n");
+	
+	for (int y = 0; y < outputs; y++)
+	{
+		for (int x = 0; x <= inputs; x++)
+		{
+			if (useBinary)
+			{
+				float val = weight[y][x];
+				little2machine(val);
+				fwrite(&val, sizeof(float), 1, f);
+			}
+			else {
+				fprintf(f, "%le ", weight[y][x]);
+			}
+		}
+		if (!useBinary)
+			fprintf(f, "\n");
+	}
+}
+double LogisticRegression::g(double a)
+{
+	return (1/(1+exp(-a)));
 }
 
-void Heap::realloc(unsigned int base, unsigned int newBase, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller) {
-	verprintf(1,("[%d] realloc(0x%08x,0x%08x,0x%08x) [%lu]\n", pid, base, newBase, size, time));
-
-    free(base, time, pid, caller);
-    alloc(newBase, size, time, pid, caller);
+double LogisticRegression::dg(double a)
+{
+	double g_a = g(a);
+	return g_a*(1-g_a);
 }
 
-void Heap::alloc(unsigned int base, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller, unsigned int dontRecurse) {
-    HeapRegion toFind(base, base+size, time, caller, pid);
-
-	verprintf(1,("[%d] alloc(%d) [%lu] = 0x%08x\n", pid, size, time, base));
-
-	set<HeapRegion>::iterator a=regions.lower_bound(toFind);
-
-    if (a != regions.end() && (--a)->contains(base)) {
-
-        // a--; verprintf(3,("region alloc found -1 (%d): 0x%08x-0x%08x %lu %lu\n", a->contains(base), a->base, a->top, a->allocTime, a->freeTime)); a++;
-             verprintf(2,("region alloc found  0 (%d): 0x%08x-0x%08x %lu %lu\n", a->contains(base), a->base, a->top, a->allocTime, a->freeTime));
-        // a++; verprintf(3,("region alloc found +1 (%d): 0x%08x-0x%08x %lu %lu\n", a->contains(base), a->base, a->top, a->allocTime, a->freeTime)); a--;
-
-        ((HeapRegion)(*a)).alloc(base, size, time, pid, caller);
-    } else {
-        if (autoRegions && !dontRecurse) {
-            _mmap(base-CHANGUI,(size+CHANGUI-1+CHANGUI)&~(CHANGUI-1),time,pid,caller);
-            alloc(base, size, time, pid, caller, 1);
-        } else {
-            verprintf(2,("alloc(0x%08x, 0x%08x) in loose region\n", base, size));
-            loose.alloc(base,size,time,pid,caller);
-        }
-    }
+double LogisticRegression::outputerr(std::vector<double> &out, std::vector<double> &expected, int which)
+{
+	double err = (expected[which]-out[which]);
+	err *= dg(out[which]);
+	
+	return err;
+//	double err = (out[which]-expected[which]);
+//	//printf("Output error: %1.2f\n", err);
+//	return err;
 }
 
-void Heap::free(unsigned int base, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapRegion toFind(base, 0, time, caller, pid);
+double LogisticRegression::train(std::vector<unsigned int> &input, std::vector<double> &target)
+{
+	double totalErr = 0;
+	test(input);
+	for (int x = 0; x < outputs; x++)
+	{
+		double err = outputerr(output,target,x);
+		totalErr+=err*err;
+		double rateTimesError = rate*err;
+		for (unsigned int y = 0; y < input.size(); y++)
+		{
+			weight[x][input[y]] -= rateTimesError;
+			updateData &val = updates[x][input[y]];
+			val.n++;
+			//			double delta = err-val.mean;
+			double delta = rateTimesError-val.mean;
+			val.mean = val.mean+delta/val.n;
+			val.S += delta*(err-val.mean);
+			val.totErr += rateTimesError*rateTimesError;
+		}
+		weight[x][inputs] -= rateTimesError; // bias
+	}
+	return totalErr;
+}
 
-	verprintf(1,("[%d] free(0x%08x) [%lu]\n", toFind.pid, toFind.base,toFind.allocTime));
+double LogisticRegression::train(std::vector<double> &input, std::vector<double> &target)
+{
+	double totalErr = 0;
+	test(input);
+	for (int x = 0; x < outputs; x++)
+	{
+		double err = outputerr(output,target,x);
+		totalErr+=err*err;
+		double rateTimesError = rate*err;
+		for (int y = 0; y < inputs; y++)
+		{
+			weight[x][y] += rateTimesError*input[y];
+			
+			updateData &val = updates[x][y];
+			val.n++;
+			//			double delta = err-val.mean;
+			double delta = rateTimesError-val.mean;
+			val.mean = val.mean+delta/val.n;
+			val.S += delta*(err-val.mean);
+			val.totErr += rateTimesError*rateTimesError;
+		}
+		weight[x][inputs] += rateTimesError*(1); // bias
+	}
+	return totalErr;
+}
 
-	set<HeapRegion>::iterator a=regions.lower_bound(toFind);
+double *LogisticRegression::test(const std::vector<unsigned int> &input)
+{
+	for (int y = 0; y < outputs; y++)
+	{
+		output[y] = weight[y][inputs]; // bias
+		for (unsigned int x = 0; x < input.size(); x++)
+		{
+			output[y] += weight[y][input[x]];
+		}
+		output[y] = g(output[y]);
+	}
+	return &output[0];
+}
 
-    if (a != regions.end() && (a--, a->contains(base))) {
-        verprintf(3,("region free found (%d): 0x%08x-0x%08x %lu %lu\n", a->contains(base), a->base, a->top, a->allocTime, a->freeTime));
-        ((HeapRegion)(*a)).free(base, time, pid, caller);
-    } else {
-        verprintf(2,("free(0x%08x) in loose region\n", base));
-        loose.free(base, time, pid, caller);
-    }
+double *LogisticRegression::test(const std::vector<double> &input)
+{
+	for (int y = 0; y < outputs; y++)
+	{
+		output[y] = weight[y][inputs];
+		for (int x = 0; x < inputs; x++)
+		{
+			output[y] += weight[y][x]*input[x];
+		}
+		output[y] = g(output[y]);
+	}
+	return &output[0];
+}
+
+void LogisticRegression::getWeightUpdateVariance(std::vector<double> &var, unsigned int which)
+{
+	assert(which < weight.size());
+	var.resize(weight[which].size()-1);
+	for (unsigned int x = 0; x < weight[which].size()-1; x++) // ignore bias!
+	{
+		updateData &val = updates[which][x];
+		if (val.n > 1)
+			var[x] = val.S/(val.n-1);
+		else
+			var[x] = 0;
+	}
+}
+
+double LogisticRegression::getWeightUpdateVariance(unsigned int weightNum, unsigned int whichOutput)
+{
+	assert(whichOutput < weight.size());
+	assert(weightNum < weight[whichOutput].size());
+	
+	updateData &val = updates[whichOutput][weightNum];
+	if (val.n > 1)
+		return val.S/(val.n-1);
+	return 0;
+}
+
+void LogisticRegression::getWeightUpdateAverage(std::vector<double> &var, unsigned int which)
+{
+	assert(which < weight.size());
+	var.resize(weight[which].size()-1);
+	for (unsigned int x = 0; x < weight[which].size()-1; x++) // ignore bias!
+	{
+		updateData &val = updates[which][x];
+		if (val.n > 1)
+			var[x] = val.totErr/val.n;
+		else
+			var[x] = 0;
+	}
+}
+
+double LogisticRegression::getWeightUpdateAverage(unsigned int weightNum, unsigned int whichOutput)
+{
+	assert(whichOutput < weight.size());
+	assert(weightNum < weight[whichOutput].size());
+	
+	updateData &val = updates[whichOutput][weightNum];
+	if (val.n > 1)
+		return val.totErr/val.n;
+	return 0;
+}
+
+void LogisticRegression::getWeightUpdateSum(std::vector<double> &var, unsigned int which)
+{
+	assert(which < weight.size());
+	var.resize(weight[which].size()-1);
+	for (unsigned int x = 0; x < weight[which].size()-1; x++) // ignore bias!
+	{
+		var[x] = updates[which][x].totErr;
+	}
+}
+
+double LogisticRegression::getWeightUpdateSum(unsigned int weightNum, unsigned int whichOutput)
+{
+	assert(whichOutput < weight.size());
+	assert(weightNum < weight[whichOutput].size());
+	
+	return updates[whichOutput][weightNum].totErr;
+}
+
+void LogisticRegression::resetWeightVariance(unsigned int weightNum, unsigned int whichOutput)
+{
+	updates[whichOutput][weightNum].reset();
+}
+
+void LogisticRegression::resetWeightVariance()
+{
+	for (unsigned int y = 0; y < updates.size(); y++)
+	{
+		for (unsigned int x = 0; x < updates[y].size(); x++)
+		{
+			updates[y][x].reset();
+		}
+	}
+}
+
+int LogisticRegression::getWeightFrequency(unsigned int weightNum, unsigned int whichOutput)
+{
+	return updates[whichOutput][weightNum].n;
+}
+
+void LogisticRegression::setInputWeight(double value, unsigned int weightNum, unsigned int whichOutput)
+{
+	updates[whichOutput][weightNum].reset();
+	weight[whichOutput][weightNum] = value;
+}
+
+void LogisticRegression::Print()
+{
+	for (int y = 0; y < outputs; y++)
+		for (int x = 0; x <= inputs; x++)
+		{
+			printf("%1.3f  ", weight[y][x]);
+		}
+	printf("\n");
 }

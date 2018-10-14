@@ -1,140 +1,58 @@
+#include <cstdio>
 
-#include <vector>
-#include <iostream>
-using namespace std;
+//#include "z.h"
 
-ostream& operator<<(ostream& o, const vector<int>& v) {
-    for (size_t i = 0; i < v.size(); ++i) {
-        o << v[i] << " ";
+#define root(l, r) (~(l!=r-1)&(l+r))
+#define MX 500001
+
+const int ap[]={1,2,4,6,12,24,36,48,60,120,180,240,360,720,840,1260,1680,2520,5040,7560,10080,15120,20160,25200,27720,45360,50400,55440,83160,110880,166320,221760,277200,332640,498960,554400,665280};
+const int fn[]={1,2,3,4,6,8,9,10,12,16,18,20,24,30,32,36,40,48,60,64,72,80,84,90,96,100,108,120,128,144,160,168,180,192,200,216,224}; 
+
+char name[MX][11];
+int next[MX];
+int sum[MX<<1];
+
+int update(int l, int r, int x) {
+    int rt = root(l, r);
+    if (l == r-1) {
+        sum[rt] = 1;
+        return l;
     }
-    return o;
-}
-
-int SearchRecImpl(const vector<int>& v, int x, size_t start, size_t end) {
-    if (end <= start) {
-        return v[start] == x ? start : -1;
-    }
-    int mid = start + (end - start) / 2;
-    if (v[mid] > x) {
-        return SearchRecImpl(v, x, start, mid - 1);
-    } else if (v[mid] < x) {
-        return SearchRecImpl(v, x, mid + 1, end);
+    int m = (l+r)>>1;
+    int ret;
+    if (m - l - sum[root(l, m)] > x) {
+        ret = update(l, m, x);
     } else {
-        return mid;
+        ret = update(m, r, x - (m - l - sum[root(l, m)]));
     }
-}
-
-int SearchRec(const vector<int>& v, int x) {
-    return SearchRecImpl(v, x, 0, v.size() - 1);
-}
-
-int SearchIter(const vector<int>& v, int x) {
-    size_t start = 0;
-    size_t end = v.size() - 1;
-    while (true) {
-        if (end <= start) {
-            return v[start] == x ? start : -1;
-        }
-        int mid = start + (end - start) / 2;
-        if (v[mid] > x) {
-            end = mid - 1;
-        } else if (v[mid] < x) {
-            start = mid + 1;
-        } else {
-            return mid;
-        }
-    }
-    return -1;
-}
-
-void Shift(vector<int>& v, size_t shift) {
-    vector<int> tmp(v.end() - shift, v.end());
-    for (int i = v.size() - 1; i >= shift; --i) {
-        v[i] = v[i-shift];
-    }
-    for (int i = 0; i < shift; ++i) {
-        v[i] = tmp[i];
-    }
-}
-
-int FindShift(const vector<int>& v) {
-    // find minimal element that is smaller than first one
-    size_t start = 0;
-    size_t end = v.size() - 1;
-    while (true) {
-        if (end == start) {
-            return 0;
-        }
-        if (end == start + 1) {
-            return v[start] > v[end] ? end : 0;
-        }
-        int mid = start + (end - start) / 2;
-        if (v[mid] > v[0]) {
-            start = mid; 
-        } else {
-            end = mid;
-        }
-    }
-    return -1;
+    sum[rt] = sum[root(l, m)] + sum[root(m, r)];
+    return ret;
 }
 
 int main() {
-    vector<int> v;
-    int x;
-
-    v.push_back(2);
-    v.push_back(3);
-    v.push_back(5);
-    v.push_back(6);
-    v.push_back(7);
-    v.push_back(9);
-    v.push_back(10);
-    v.push_back(14);
-    v.push_back(15);
-    v.push_back(16);
-    v.push_back(18);
-    v.push_back(20);
-    cout << v << endl;
-
-    x = 5;
-    cout << x << ": " << SearchRec(v, x) << endl;
-    cout << x << ": " << SearchIter(v, x) << endl;
-
-    x = 20;
-    cout << x << ": " << SearchRec(v, x) << endl;
-    cout << x << ": " << SearchIter(v, x) << endl;
-
-    x = 2;
-    cout << x << ": " << SearchRec(v, x) << endl;
-    cout << x << ": " << SearchIter(v, x) << endl;
-
-    x = 15;
-    cout << x << ": " << SearchRec(v, x) << endl;
-    cout << x << ": " << SearchIter(v, x) << endl;
-
-    x = 8;
-    cout << x << ": " << SearchRec(v, x) << endl;
-    cout << x << ": " << SearchIter(v, x) << endl;
-
-    size_t shift;
-
-    cout << v << endl;
-    cout << "shift: " << FindShift(v) << endl;
-
-    shift = 1;
-    Shift(v, shift);
-    cout << v << endl;
-    cout << "shift: " << FindShift(v) << endl;
-
-    shift = 3;
-    Shift(v, shift);
-    cout << v << endl;
-    cout << "shift: " << FindShift(v) << endl;
-
-    shift = 7;
-    Shift(v, shift);
-    cout << v << endl;
-    cout << "shift: " << FindShift(v) << endl;
-
+    int n, k;
+    while (~scanf("%d %d", &n, &k)) {
+        k--;
+        for (int i = 0; i < n; i++) {
+            scanf("%s %d", name[i], next+i);
+        }
+        int ans = 0, num = 0;
+        for (int i = sizeof(ap)/sizeof(int)-1; i >= 0; i--) {
+            if (ap[i] <= n) {
+                num = ap[i];
+                ans = fn[i];
+                break;
+            }
+        }
+        int order = 0, who = 0;
+        for (int i = 0; i < num; i++) {
+            order = ((order + k) % (n-i) + n-i) % (n-i);
+            who = update(0, n, order);
+            //VV(order, who, name[who]);
+            k = next[who]-1;
+            if (k < 0) k++;
+        }
+        printf("%s %d\n", name[who], ans);
+    }
     return 0;
 }

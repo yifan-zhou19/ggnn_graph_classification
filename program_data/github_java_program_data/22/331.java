@@ -1,48 +1,58 @@
-package cuiods.list.skiplist;
+public class HeapSortJava {
 
-/**
- * 跳转表节点
- * @author cuiods
- */
-public class SkipListNode<T extends Comparable<? super T>> {
-    private T data;
-    /**
-     * 用数组保存其他节点的引用
-     */
-    private SkipListNode[] next;
+    public void heapify(int arr[], int n, int root) {
+        int largestNumber = root;
+        int left = 2 * root + 1;
+        int right = 2 * root + 2;
 
-    /**
-     * @param data
-     *      节点保存的数据
-     * @param maxLevel
-     *      若跳转表最多保存n个数据，则最多的层次为[log2(n)]
-     */
-    public SkipListNode(T data, int maxLevel) {
-        this.data = data;
-        next = new SkipListNode[maxLevel];
+        if (left < n && arr[left] > arr[largestNumber]) {
+            largestNumber = left;
+        }
+
+        if (right < n && arr[right] > arr[largestNumber]) {
+            largestNumber = right;
+        }
+
+        if (largestNumber != root) {
+            int swap = arr[root];
+            arr[root] = arr[largestNumber];
+            arr[largestNumber] = swap;
+            heapify(arr, n,largestNumber);
+        }
     }
 
-    public T getData() {
-        return data;
+    public void sort(int arr[]) {
+        int len = arr.length;
+
+        for (int i = n / 2 - 1; i >= 0; i--) {
+            heapify(arr, n, i);
+        }
+
+        for (int i = n - 1; i >= 0; i--) {
+            int temp = arr[0];
+            arr[0] = arr[i];
+            arr[i] = temp;
+
+            heapify(arr, i, 0);
+        }
     }
 
-    public void setData(T data) {
-        this.data = data;
+    static void printArray(int arr[]) {
+        int len = arr.length;
+        for (int i = 0; i < len; i++) {
+            System.out.println(arr[i] + " ");
+        }
+        System.out.println();
     }
 
-    public SkipListNode[] getNext() {
-        return next;
-    }
+    public static void main(String args[]) {
+        int arr[] = {34, 33, 75, 44, 89, 01};
+        int len = arr.length;
 
-    public SkipListNode getNext(int index) {
-        return next[index];
-    }
+        HeapSort heapSort = new HeapSort();
+        heapSort.sort(arr);
 
-    public void setNext(SkipListNode[] next) {
-        this.next = next;
-    }
-
-    public void setNext(SkipListNode next, int i) {
-        this.next[i] = next;
+        System.out.println("Sorted array is ");
+        printArray(arr);
     }
 }

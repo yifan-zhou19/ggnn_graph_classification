@@ -1,222 +1,182 @@
-#include "Heap.h"
+#include "LogisticRegression.hpp"
 
-/**
- *�������ʾ��
- */
-Heap::Heap(int *initArray, int initLength) {
-	this->length = initLength;
-	this->array = new int[length];
-	for (int i = 0; i < length; i++) {
-		this->array[i] = initArray[i];
-	}
-}
-/**
- *����ڴ�
- */
-Heap::~Heap() {
-	delete[]this->array;
-	this->length = 0;
-}
+#include "Utility.hpp"
 
-/**
- *��ȡ���ڵ�
- */
-int Heap::getParent(int index) {
-	if (index < 1) {
-		cout << "THE INDEX IS ROOT, NO PARENT!" << endl;
-		return NULL;
-	}
-	else
-	{
-		return (index - 1) / 2;
-		/*
-		if (index % 2 == 0) {
-			return index / 2 - 1;
-		}
-		else {
-			return index / 2;
-		}*/
-	}
-}
-/**
- *��ȡ������
- */
-int Heap::getLeftChild(int index) {
-	return 2 * index + 1;
-}
-/**
- *��ȡ������
- */
-int Heap::getRightChild(int index) {
-	return 2 * index + 2;
-}
+class LogisticRegression::impl{
 
-/**
- *���ö�
- */
-void Heap::setArray(int *initArray) {
-	this->array = initArray;
-}
-/**
- *��ȡ��
- */
-int* Heap::getArray() {
-	return this->array;
-}
-/**
- *���öѵĳ���
- */
-void Heap::setLength(int initLength) {
-	this->length = initLength;
-}
-/**
- *��ȡ�ѵĳ���
- */
-int Heap::getLength() {
-	return this->length;
-}
-/**
-*��ӡ��
-*/
-void Heap::showHeap() {
-	for (int i = 0; i < this->getLength(); i++) {
-		cout << array[i] << " ";
-	}
-	cout << endl;
+    Eigen::VectorXd weights{};
+    std::vector<double> costs{};
+    Eigen::MatrixXd::Index nFeatures = 0;
+    Eigen::MatrixXd::Index nTrainings = 0;
+    double bias = 0;
+
+    Eigen::MatrixXd computeSigmoid
+    (
+            Eigen::MatrixXd const& a
+    )
+    {
+        return 1.0/( (-1.0*a.array()).exp() + 1 );
+    }
+
+    void initializeParameters ( bool nonZeroRandom );
+
+public:
+
+    impl() = default;
+
+    void train
+    (
+            Eigen::MatrixXd const& X,
+            Eigen::MatrixXd const& y,
+            double learningRate,
+            Eigen::MatrixXd::Index nIterations
+    );
+
+    Eigen::VectorXd predict
+    (
+            Eigen::MatrixXd const& X
+    );
+    
+    double computeError
+    (
+            Eigen::MatrixXd const& XObservation,
+            Eigen::MatrixXd const& yTarget
+    );
+    
+    std::tuple<Eigen::MatrixXd, double>
+    getParameters() const
+    {
+        return { weights, bias };
+    }
+
+    std::vector<double> const&
+    getCosts() const
+    {
+        return costs;
+    }
+};
+
+void LogisticRegression::impl::initializeParameters
+( bool nonZeroRandom )
+{
+    if(!nonZeroRandom)
+    {
+        weights = Eigen::VectorXd::Zero(nFeatures);
+        bias = 0.0;
+    }
+    else
+    {
+        auto limit = 1.0/std::sqrt(nFeatures);
+        weights = generateUniform(nFeatures, 1, -limit, limit);
+        bias = generateUniform(1, 1, -limit, limit)(0, 0);
+    }
 }
 
-/**
- *ʹ��������ֵ����ѵĶ���
- *�ٶ������������������������ѵĶ���
- *�����½�������������ֵ����ѵ�����
- */
-void Heap::maxHeapify(int index) {
-	int left = this->getLeftChild(index);
-	int right = this->getRightChild(index);
-	int largest;
-	if (left < this->getLength() && right < this->getLength()) {
-		if (this->array[left] > this->array[right]) {
-			largest = left;
-		}
-		else {
-			largest = right;
-		}
-	}
-	else if (left < this->getLength() && right >= this->getLength()) {
-		largest = left;
-	}
-	else if (left >= this->getLength()) {
-		largest = index;
-	}
-	if (this->array[index] < this->array[largest]) {
-		int temp = this->array[index];
-		this->array[index] = this->array[largest];
-		this->array[largest] = temp;
+void LogisticRegression::impl::train
+(         
+        Eigen::MatrixXd const& X,
+        Eigen::MatrixXd const& y,
+        double learningRate,
+        Eigen::MatrixXd::Index nIterations
+)
+{
+    nFeatures = X.cols();
+    nTrainings = X.rows();
+    ASSERT( nTrainings == y.rows() );
+    initializeParameters(false);
 
-		maxHeapify(largest);
-	}
+    costs = std::vector<double>(nIterations);
+    for (Eigen::MatrixXd::Index i = 0; i < nIterations; ++i)
+    {
+        auto yPredict = computeSigmoid( (X*weights).array() + bias );
+        auto error = yPredict - y;
+        costs[i] = -1*
+                   (
+                           y.array()*yPredict.array().log()
+                           +
+                           (1.0-y.array())*(1.0-yPredict.array()).log()
+                   ).mean();
+        weights -= learningRate * (1.0/nTrainings)*X.transpose()*error;
+        bias -= learningRate * (1.0/nTrainings)*error.sum();
+    }
 }
-/**
- *��������
- *ֻ���һ���Ԫ�ؽ���maxHeapify
- *��벿�־�Ϊ��Ҷ���ɿ��ɶ����Ķ�
- *��ǰ�벿�ֿ�ʼ���Զѽ��е���
- */
-void Heap::buildMaxHeap() {
-	for (int i = (this->getLength()) / 2; i >= 0; i--) {
-		maxHeapify(i);
-	}
-}
-/**
- *���ж�����
- *�Ƚ�������
- *����Ԫ����ѵ����һ��Ԫ�ؽ��л���
- *�Ի������ĵ�һ��Ԫ�ؽ��ж����ʵ�ά��
- */
-void Heap::heapSort() {
-	this->buildMaxHeap();
-	int initLength = this->getLength();
-	int index = this->getLength() - 1;
-	for (; index > 0; index--) {
-		int temp = this->array[0];
-		this->array[0] = this->array[index];
-		this->array[index] = temp;
 
-		this->setLength(index);
-		maxHeapify(0);
-	}
-	this->setLength(initLength);
+Eigen::VectorXd LogisticRegression::impl::predict
+(         
+        Eigen::MatrixXd const& X
+)
+{
+    return computeSigmoid
+            (
+                    (X*weights).array() + bias
+            ).unaryExpr
+            (
+                    [](auto value)
+                    {
+                        return value > 0.5 ? 1.0 : 0.0;
+                    }
+            );
 }
-/**
- *��ȡ���е����Ԫ�ز�ά���ѵ�����
- */
-int Heap::heapExtractMax() {
-	if (this->getLength() < 1) {
-		cout << "HEAP UNDERFLOW" << endl;
-		return NULL;
-	}
-	int max = this->array[0];
-	this->array[0] = this->array[this->getLength() - 1];
-	this->setLength(this->getLength() - 1);
-	maxHeapify(0);
-	return max;
-}
-/**
- *����������ֵ�滻��ά���ѵ�����
- */
-void Heap::heapIncreaseKey(int index, int key) {
-	if (key < this->array[index]) {
-		cout << "NEW KEY IS SMALLER THAN CURRENT KEY!" << endl;
-	}
-	else {
-		this->array[index] = key;
-		while (index > 0 && this->array[this->getParent(index)] < this->array[index]) {
-			int temp = this->array[this->getParent(index)];
-			this->array[this->getParent(index)] = this->array[index];
-			this->array[index] = temp;
-			index = this->getParent(index);
-		}
-	}
-}
-/**
- *�Զ����һ��Ԫ�ز�ά���ѵ�����
- */
-void Heap::maxHeapInsert(int key) {
-	int _length = this->getLength();
-	int newLength = this->getLength() + 1;
-	int *temp = new int[newLength];
-	for (int i = 0; i < _length; i++) {
-		temp[i] = this->array[i];
-	}
-	delete[]this->array;
-	this->setArray(temp);
-	this->setLength(newLength);
-	this->heapIncreaseKey(newLength - 1, key);
-}
-/*
- *ɾ��ָ��Ԫ��
- *��Ҫɾ����Ԫ������е����һ��Ԫ�ػ���
- *�����һ��ɾ���Ի������Ԫ�ؽ���heapify
- */
-void Heap::heapDelete(int index) {
-	int temp1 = this->array[this->getLength() - 1];
-	this->array[this->getLength() - 1] = this->array[index];
-	this->array[index] = temp1;
 
-	int key = this->array[index];
-	int _length = this->getLength();
-	int newLength = this->getLength() - 1;
-	this->setLength(newLength);
-
-	if (key <= this->array[this->getParent(index)]) {
-		this->maxHeapify(index);
-	}
-	else {
-		while (index >= 0 && this->array[this->getParent(index)] < this->array[index]) {
-			int temp = this->array[this->getParent(index)];
-			this->array[this->getParent(index)] = this->array[index];
-			this->array[index] = temp;
-			index = this->getParent(index);
-		}
-	}
+double LogisticRegression::impl::computeError
+(         
+        Eigen::MatrixXd const& XObservation,
+        Eigen::MatrixXd const& yTarget
+)
+{
+    auto yPredict = computeSigmoid( (XObservation*weights).array() + bias );
+    return -1*
+           (
+                   yTarget.array()*yPredict.array().log()
+                   +
+                   (1.0-yTarget.array())*(1.0-yPredict.array()).log()
+           ).mean();
 }
+
+void LogisticRegression::train
+(
+        Eigen::MatrixXd const& X,
+        Eigen::MatrixXd const& y,
+        double learningRate,
+        Eigen::MatrixXd::Index nIterations
+)
+{
+    pimpl->train(X, y, learningRate, nIterations);
+}
+
+Eigen::VectorXd LogisticRegression::predict
+(
+        Eigen::MatrixXd const& X
+)
+{
+    return pimpl->predict(X);
+}
+
+double LogisticRegression::computeError
+(
+        Eigen::MatrixXd const& XObservation,
+        Eigen::MatrixXd const& yTarget
+)
+{
+    return pimpl->computeError( XObservation, yTarget );
+}
+
+std::tuple<Eigen::MatrixXd, double>
+LogisticRegression::getParameters() const
+{
+    return pimpl->getParameters();
+}
+
+std::vector<double> const&
+LogisticRegression::getCosts() const
+{
+    return pimpl->getCosts();
+}
+
+LogisticRegression::LogisticRegression()
+                   :pimpl{std::make_unique<impl>()}{
+}
+
+LogisticRegression::~LogisticRegression() = default;
+
+LogisticRegression& LogisticRegression::operator=( LogisticRegression&& ) = default;

@@ -1,193 +1,201 @@
-#include "Heap.hpp"
+/*******************************************************
+ * Copyright (c) 2014, ArrayFire
+ * All rights reserved.
+ *
+ * This file is distributed under 3-clause BSD license.
+ * The complete license agreement can be obtained at:
+ * http://arrayfire.com/licenses/BSD-3-Clause
+ ********************************************************/
 
-#define CHANGUI 0x100
+#include <arrayfire.h>
+#include <stdio.h>
+#include <vector>
+#include <string>
+#include <af/util.h>
+#include <math.h>
+#include "mnist_common.h"
 
-// To do
-// [ ] Use an internal variable to mantain time. When time is set to 0, make time == order of call
-// [ ] check for overlapping chunks (when alloc() is called)
-// [ ] make two different calls per function:
-//     [ ] malloc_enter(), malloc_return()
-//     [ ] free_enter(), free_return()
-//     [ ] realloc_enter(), realloc_return(), 
-//     [ ] etc.
-//
+using namespace af;
 
-bool operator<(const HeapChunk &t, const HeapChunk &other) {
-	return ((t.base<other.base) || (t.base==other.base && t.allocTime<other.allocTime));
+float accuracy(const array& predicted, const array& target)
+{
+    array val, plabels, tlabels;
+    max(val, tlabels, target, 1);
+    max(val, plabels, predicted, 1);
+
+    return 100 * count<float>(plabels == tlabels) / tlabels.elements();
 }
 
-bool operator<(const HeapRegion &t, const HeapRegion &other) {
-	return ((t.base<other.base) || (t.base==other.base && t.allocTime<other.allocTime));
+float abserr(const array& predicted, const array& target)
+{
+    return 100 * sum<float>(abs(predicted - target)) / predicted.elements();
 }
 
-void HeapRegion::alloc(unsigned int base, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapChunk toFind(base, base+size, time, caller, pid);
-
-    if (top < toFind.top) {
-        top = toFind.top + CHANGUI;
-        verprintf(3,("Readjusting base to 0x%08x\n", top));
-    }
-	chunks.insert(toFind);
+// Predict based on given parameters
+array predict(const array &X, const array &Weights)
+{
+    array Z = matmul(X, Weights);
+    return sigmoid(Z);
 }
 
-void HeapRegion::free(unsigned int base, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapChunk toFind(base, 0, time, caller, pid);
+void cost(array &J, array &dJ, const array &Weights,
+          const array &X, const array &Y, double lambda = 1.0)
+{
+    // Number of samples
+    int m = Y.dims(0);
 
-    if (!chunks.size()) return;
-	set<HeapChunk>::iterator a=chunks.lower_bound(toFind);
-	a--;
+    // Make the lambda corresponding to Weights(0) == 0
+    array lambdat = constant(lambda, Weights.dims());
 
-	if (a->base == toFind.base) {
-		// --a;    verprintf(3,("free found -1: %d 0x%08x %lu %lu\n", a->freeTime == 0.0, a->base, a->allocTime, a->freeTime));    a++;
-		        verprintf(2,("free found  0: %d 0x%08x %lu %lu\n", a->freeTime == 0.0, a->base, a->allocTime, a->freeTime));
-		// ++a;    verprintf(3,("free found +1: %d 0x%08x %lu %lu\n", a->freeTime == 0.0, a->base, a->allocTime, a->freeTime));    a--;
-		if (a->freeTime != 0.0) {
-			qprintf(("Freeing a chunk that's already free: 0x%08x\n", toFind.base));
-		} else {
-			((HeapChunk*)&*a)->setFreeTime(toFind.allocTime);
-			((HeapChunk*)&*a)->setFreeCaller(toFind.allocCaller);
-		}
-	} else {
-		verprintf(2,("Found: 0x%08x %lf\n", a->base, a->allocTime));
-		qprintf(("Freeing a not allocated chunk: 0x%08x\n", toFind.base));
-	}
+    // No regularization for bias weights
+    lambdat(0, span) = 0;
+
+    // Get the prediction
+    array H = predict(X, Weights);
+
+    // Cost of misprediction
+    array Jerr =  -sum(Y * log(H) + (1 - Y) * log(1 - H));
+
+    // Regularization cost
+    array Jreg = 0.5 * sum(lambdat * Weights * Weights);
+
+    // Total cost
+    J = (Jerr + Jreg) / m;
+
+    // Find the gradient of cost
+    array D = (H - Y);
+    dJ = (matmulTN(X, D) + lambdat * Weights) / m;
 }
 
-void HeapRegion::realloc(unsigned int base, unsigned int newBase, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller) {
-    free(base, time, pid, caller);
-    alloc(newBase, size, time, pid, caller);
-}
+array train(const array &X, const array &Y,
+            double alpha = 0.1,
+            double lambda = 1.0,
+            double maxerr = 0.01,
+            int maxiter = 1000,
+            bool verbose = false)
+{
 
-void HeapRegion::setLimits() {
+    // Initialize parameters to 0
+    array Weights = constant(0, X.dims(1), Y.dims(1));
 
-	set<HeapChunk>::iterator i=chunks.begin();
+    array J, dJ;
+    float err = 0;
 
-	minAddr = i->base;
-	maxAddr = i->top;
-	minTime = i->allocTime;
-	maxTime = i->freeTime;
+    for (int i = 0; i < maxiter; i++) {
 
-    if (i == chunks.end()) return;
-	for (i++;i != chunks.end(); i++) {
-		if (minAddr > i->base) minAddr = i->base;
+        // Get the cost and gradient
+        cost(J, dJ, Weights, X, Y, lambda);
 
-		if (maxAddr < i->top) maxAddr = i->top;
-
-		if (minTime > i->allocTime) minTime = i->allocTime;
-
-		if (maxTime < i->allocTime) maxTime = i->allocTime;
-		if (maxTime < i->freeTime) maxTime = i->freeTime;
-	}
-
-	for (i=chunks.begin();i != chunks.end(); i++)
-		if (i->freeTime == 0) 
-			((HeapChunk*)&*i)->setFreeTime(maxTime);
-}
-
-void Heap::mmap(unsigned int base, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapRegion toFind(base, base+size, time, caller, pid);
-
-    if (autoRegions) return;
-    _mmap(base, size, time, pid, caller);
-}
-
-void Heap::_mmap(unsigned int base, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapRegion toFind(base, base+size, time, caller, pid);
-
-    verprintf(1,("[%d] mmap(0x%08x, 0x%08x) [%lu]\n", regions.size(), base, size, time));
-    if (!size) return;
-
-	set<HeapRegion>::iterator a=regions.lower_bound(toFind);
-
-    if (a != regions.end()) {
-        --a;
-
-        // --a; verprintf(3,("mmap found -1: 0x%08x-0x%08x %lu %lu\n", a->base, a->top, a->allocTime, a->freeTime)); a++;
-             verprintf(2,("mmap found  0: 0x%08x-0x%08x %lu %lu\n", a->base, a->top, a->allocTime, a->freeTime));
-        // ++a; verprintf(3,("mmap found +1: 0x%08x-0x%08x %lu %lu\n", a->base, a->top, a->allocTime, a->freeTime)); a--;
-
-        if (a->contains(base-1)) {
-            // new starts inside old
-            if (a->contains(base+size-1)) {
-                // new contained in old, just return
-                verprintf(2,("Old Region included new region: 0x%08x-0x%08x [%lu]\n", a->base, a->top, a->allocTime));
-                return;
-            }
-            if (a->top < base+size) {
-                // new extends old
-                verprintf(2,("Extending up region at 0x%08x-0x%08x [%lu]\n", a->base, a->top, a->allocTime));
-                ((HeapRegion*)&*a)->setTop(base+size);
-                return;
-            }
-        } else if (a->contains(base+size)) {
-            if (a->contains(base)) {
-                // new contained in old, just return
-                verprintf(2,("Old Region included new region: 0x%08x-0x%08x [%lu]\n", a->base, a->top, a->allocTime));
-                return;
-            }
-            if (a->base > base) {
-                // new is right before old (new extends old to lower memory)
-                verprintf(2,("Extending down region at 0x%08x-0x%08x [%lu]\n", a->base, a->top, a->allocTime));
-                ((HeapRegion*)&*a)->setBase(base);
-                return;
-            }
+        err = max<float>(abs(J));
+        if (err < maxerr) {
+            printf("Iteration %4d Err: %.4f\n", i + 1, err);
+            printf("Training converged\n");
+            return Weights;
         }
-    }
-    regions.insert(toFind);
-}
 
-void Heap::munmap(unsigned int base, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapRegion toFind(base, 0, time, caller, pid);
-
-    if (autoRegions) return;
-	verprintf(1,("[%d] munmap(0x%08x) [%lu]\n", pid, base, time));
-
-}
-
-void Heap::realloc(unsigned int base, unsigned int newBase, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller) {
-	verprintf(1,("[%d] realloc(0x%08x,0x%08x,0x%08x) [%lu]\n", pid, base, newBase, size, time));
-
-    free(base, time, pid, caller);
-    alloc(newBase, size, time, pid, caller);
-}
-
-void Heap::alloc(unsigned int base, unsigned int size, unsigned int time, unsigned int pid, unsigned int caller, unsigned int dontRecurse) {
-    HeapRegion toFind(base, base+size, time, caller, pid);
-
-	verprintf(1,("[%d] alloc(%d) [%lu] = 0x%08x\n", pid, size, time, base));
-
-	set<HeapRegion>::iterator a=regions.lower_bound(toFind);
-
-    if (a != regions.end() && (--a)->contains(base)) {
-
-        // a--; verprintf(3,("region alloc found -1 (%d): 0x%08x-0x%08x %lu %lu\n", a->contains(base), a->base, a->top, a->allocTime, a->freeTime)); a++;
-             verprintf(2,("region alloc found  0 (%d): 0x%08x-0x%08x %lu %lu\n", a->contains(base), a->base, a->top, a->allocTime, a->freeTime));
-        // a++; verprintf(3,("region alloc found +1 (%d): 0x%08x-0x%08x %lu %lu\n", a->contains(base), a->base, a->top, a->allocTime, a->freeTime)); a--;
-
-        ((HeapRegion)(*a)).alloc(base, size, time, pid, caller);
-    } else {
-        if (autoRegions && !dontRecurse) {
-            _mmap(base-CHANGUI,(size+CHANGUI-1+CHANGUI)&~(CHANGUI-1),time,pid,caller);
-            alloc(base, size, time, pid, caller, 1);
-        } else {
-            verprintf(2,("alloc(0x%08x, 0x%08x) in loose region\n", base, size));
-            loose.alloc(base,size,time,pid,caller);
+        if (verbose && ((i + 1) % 10 == 0)) {
+            printf("Iteration %4d Err: %.4f\n", i + 1, err);
         }
+
+        // Update the parameters via gradient descent
+        Weights = Weights - alpha * dJ;
     }
+
+    printf("Training stopped after %d iterations\n", maxiter);
+    return Weights;
 }
 
-void Heap::free(unsigned int base, unsigned int time, unsigned int pid, unsigned int caller) {
-    HeapRegion toFind(base, 0, time, caller, pid);
+void benchmark_logistic_regression(const array &train_feats,
+                                   const array &train_targets,
+                                   const array test_feats)
+{
+    timer::start();
+    array Weights = train(train_feats, train_targets, 0.1, 1.0, 0.01, 1000);
+    af::sync();
+    printf("Training time: %4.4lf s\n", timer::stop());
 
-	verprintf(1,("[%d] free(0x%08x) [%lu]\n", toFind.pid, toFind.base,toFind.allocTime));
-
-	set<HeapRegion>::iterator a=regions.lower_bound(toFind);
-
-    if (a != regions.end() && (a--, a->contains(base))) {
-        verprintf(3,("region free found (%d): 0x%08x-0x%08x %lu %lu\n", a->contains(base), a->base, a->top, a->allocTime, a->freeTime));
-        ((HeapRegion)(*a)).free(base, time, pid, caller);
-    } else {
-        verprintf(2,("free(0x%08x) in loose region\n", base));
-        loose.free(base, time, pid, caller);
+    timer::start();
+    const int iter = 100;
+    for (int i = 0; i < iter; i++) {
+        array test_outputs  = predict(test_feats , Weights);
+        test_outputs.eval();
     }
+    af::sync();
+    printf("Prediction time: %4.4lf s\n", timer::stop() / iter);
+}
+
+// Demo of one vs all logistic regression
+int logit_demo(bool console, int perc)
+{
+    array train_images, train_targets;
+    array test_images, test_targets;
+    int num_train, num_test, num_classes;
+
+    // Load mnist data
+    float frac = (float)(perc) / 100.0;
+    setup_mnist<true>(&num_classes, &num_train, &num_test,
+                      train_images, test_images,
+                      train_targets, test_targets, frac);
+
+    // Reshape images into feature vectors
+    int feature_length = train_images.elements() / num_train;
+    array train_feats = moddims(train_images, feature_length, num_train).T();
+    array test_feats  = moddims(test_images , feature_length, num_test ).T();
+
+    train_targets = train_targets.T();
+    test_targets  = test_targets.T();
+
+    // Add a bias that is always 1
+    train_feats = join(1, constant(1, num_train, 1), train_feats);
+    test_feats  = join(1, constant(1, num_test , 1), test_feats );
+
+    // Train logistic regression parameters
+    array Weights = train(train_feats, train_targets,
+                          0.1,  // learning rate (aka alpha)
+                          1.0,  // regularization constant (aka weight decay, aka lamdba)
+                          0.01, // maximum error
+                          1000, // maximum iterations
+                          true);// verbose
+
+    // Predict the results
+    array train_outputs = predict(train_feats, Weights);
+    array test_outputs  = predict(test_feats , Weights);
+
+    printf("Accuracy on training data: %2.2f\n",
+           accuracy(train_outputs, train_targets ));
+
+    printf("Accuracy on testing data: %2.2f\n",
+           accuracy(test_outputs , test_targets ));
+
+    printf("Maximum error on testing data: %2.2f\n",
+           abserr(test_outputs , test_targets ));
+
+    benchmark_logistic_regression(train_feats, train_targets, test_feats);
+
+    if (!console) {
+        test_outputs = test_outputs.T();
+        // Get 20 random test images.
+        display_results<true>(test_images, test_outputs, test_targets.T(), 20);
+    }
+
+    return 0;
+}
+
+int main(int argc, char** argv)
+{
+    int device   = argc > 1 ? atoi(argv[1]) : 0;
+    bool console = argc > 2 ? argv[2][0] == '-' : false;
+    int perc     = argc > 3 ? atoi(argv[3]) : 60;
+
+    try {
+
+        af::setDevice(device);
+        af::info();
+        return logit_demo(console, perc);
+
+    } catch (af::exception &ae) {
+        std::cerr << ae.what() << std::endl;
+    }
+
+    return 0;
 }

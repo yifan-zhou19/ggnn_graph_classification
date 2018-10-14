@@ -1,82 +1,53 @@
-package boyer01261512.queue;
+package interview.dynamic;
 
-import battlecode.common.GameActionException;
-import boyer01261512.broadcaster.*;
+/**
+ * http://www.geeksforgeeks.org/dynamic-programming-set-13-cutting-a-rod/
+ */
+public class CuttingRod {
 
-public class Queue {
-	
-	private final int countOffset = 0;
-	private final int queueOffset = 1;
-	private final int queueIndex = 2;
-
-	public Broadcaster broadcaster;
-	public int startingIndex = 10000;
-	
-	public Queue() {
-		
-		
-		
-	}
-	
-	// MARK: Manipulation
-	
-	public void enqueue(int value) throws GameActionException {
-		
-		this.broadcaster.broadcast(this.nextQueueIndex(), value);
-		this.setCount(this.count() + 1);
-		this.incrementQueueOffset();
-		
-	}
-	
-	public int dequeue() throws GameActionException {
-		
-		if (this.count() <= 0) return Integer.MAX_VALUE;
-
-		int value = this.peek();
-		this.setCount(this.count() - 1);
-		return value;
-		
-	}
-	
-	public int peek() throws GameActionException {
-
-		if (this.count() <= 0) return Integer.MAX_VALUE;
-		return this.broadcaster.readBroadcast(this.nextQueueIndex() - this.count());
-		
-	}
-	
-	// MARK: Offsets
-	
-	private void incrementQueueOffset() throws GameActionException {
-
-		this.broadcaster.broadcast(this.startingIndex + this.queueOffset, this.broadcaster.readBroadcast(this.startingIndex + this.queueOffset) + 1);
-		
-	}
-	
-	private int queueOffset() throws GameActionException {
-		
-		return this.broadcaster.readBroadcast(this.startingIndex + this.queueOffset);
-		
-	}
-	
-	private int nextQueueIndex() throws GameActionException {
-
-		return this.startingIndex + this.queueIndex + this.queueOffset();
-		
-	}
-	
-	// MARK: Getters & Setters
-	
-	private void setCount(int count) throws GameActionException {
-
-		this.broadcaster.broadcast(this.startingIndex + this.countOffset, count);
-		
-	}
-	
-	public int count() throws GameActionException {
-		
-		return this.broadcaster.readBroadcast(this.startingIndex + this.countOffset);
-		
-	}
-
+    public int maxValue(int price[]){
+        int max[] = new int[price.length+1];
+        for(int i=1; i <= price.length; i++){
+            for(int j=i; j <= price.length; j++){
+                max[j] = Math.max(max[j], max[j-i] + price[i-1]);
+            }
+        }
+        return max[price.length];
+    }
+    
+    public int maxValue1(int price[]){
+        int max[] = new int[price.length+1];
+        for(int i=1; i <= price.length; i++){
+            max[i] = price[i-1];
+        }
+        for(int i=1 ; i <= price.length; i++){
+            for(int j=1; j < i ; j++){
+                max[i] = Math.max(max[i], max[i-j] + max[j]);
+            }
+        }
+        return max[price.length];
+    }
+    
+    public int recursiveMaxValue(int price[],int len){
+        if(len <= 0){
+            return 0;
+        }
+        int maxValue = 0;
+        for(int i=0; i < len;i++){
+            int val = price[i] + recursiveMaxValue(price, len-i-1);
+            if(maxValue < val){
+                maxValue = val;
+            }
+        }
+        return maxValue;
+    }
+    public static void main(String args[]){
+        CuttingRod cr =new CuttingRod();
+        int[] price = {3,5,8,9,10,20,22,25};
+        long t1 = System.currentTimeMillis();
+        int r = cr.recursiveMaxValue(price,8);
+        long t2 = System.currentTimeMillis();
+        System.out.println(r);
+        System.out.println(t2 - t1);
+    }
 }

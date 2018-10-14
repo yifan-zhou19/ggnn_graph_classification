@@ -1,66 +1,30 @@
-// RUN: %clang_cc1 -fsyntax-only %s
-
-template<unsigned I>
-struct FibonacciEval;
-
-template<unsigned I>
-struct Fibonacci {
-  enum { value = FibonacciEval<I-1>::value + FibonacciEval<I-2>::value };
+//from http://forums.devshed.com/c-programming-42/c-towers-of-hanoi-using-templates-424148.html
+template<int height, int from, int to, int temp>
+class Hanoi
+{
+public:
+    Hanoi()
+    {
+        Hanoi<height-1, from, temp, to> before;
+        Hanoi<height-1, temp, to, from> after;
+        ostringstream os;
+        os << before.instructions << "Move " <<
+              from << " to " << to << endl << after.instructions;
+        instructions = os.str();
+    }
+    string instructions;
 };
 
-template<unsigned I>
-struct FibonacciEval {
-  enum { value = Fibonacci<I>::value };
+template<int from, int to, int temp>
+class Hanoi<0, from, to, temp>
+{
+public:
+    string instructions;
 };
 
-template<> struct Fibonacci<0> {
-  enum { value = 0 };
-};
-
-template<> struct Fibonacci<1> {
-  enum { value = 1 };
-};
-
-int array5[Fibonacci<5>::value == 5? 1 : -1];
-int array10[Fibonacci<10>::value == 55? 1 : -1];
-
-template<unsigned I>
-struct FibonacciEval2;
-
-template<unsigned I>
-struct Fibonacci2 {
-  static const unsigned value 
-    = FibonacciEval2<I-1>::value + FibonacciEval2<I-2>::value;
-};
-
-template<unsigned I>
-struct FibonacciEval2 {
-  static const unsigned value = Fibonacci2<I>::value;
-};
-
-template<> struct Fibonacci2<0> {
-  static const unsigned value = 0;
-};
-
-template<> struct Fibonacci2<1> {
-  static const unsigned value = 1;
-};
-
-int array5_2[Fibonacci2<5>::value == 5? 1 : -1];
-int array10_2[Fibonacci2<10>::value == 55? 1 : -1];
-
-template<unsigned I>
-struct Fibonacci3 {
-  static const unsigned value = Fibonacci3<I-1>::value + Fibonacci3<I-2>::value;
-};
-
-template<> struct Fibonacci3<0> {
-  static const unsigned value = 0;
-};
-
-template<> struct Fibonacci3<1> {
-  static const unsigned value = 1;
-};
-
-int array5_3[Fibonacci3<5>::value == 5? 1 : -1];
-int array10_3[Fibonacci3<10>::value == 55? 1 : -1];
+int main()
+{
+    Hanoi<3, 1, 3, 2> h;
+    cout << h.instructions << endl;
+    return 0;
+}

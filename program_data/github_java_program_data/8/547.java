@@ -1,40 +1,34 @@
+
 /**
- * @author Luca Castelli Aleardi (Ecole Polytechnique, INF311, 2014) 
  * 
- * This class provides an implementation of insertion sorting algorithm
- */
-public class InsertionSort implements SortingAlgorithm {
-
-	final ElementComparator c; // comparator defining a total order
-	final Element[] t; // array of elements to sort
-	//Draw d = new Draw("InsertionSort", 1000, 200); // useful for drawings and
-													// animations
-	public InsertionSort(Element[] t, ElementComparator c) {
-		this.t = t;
-		this.c = c;
-		//d.draw(t);
-	}
-
-	/**
-	 * Copy the input element e at position k in the array this.t
-	 */
-	public void replace(int k, Element e) {
-		//d.erase(k, t[k]);
-		t[k] = e; // recopie finale
-		//d.blink(k, t[k]);
-	}
-
-	public void run() {
-		for(int i = 1; i < t.length; i++){
-			Element tmps = t[i];
-			int k=i;
-			while((k > 0) && (tmps.isSmaller(t[k-1],c))){
-				t[k]=t[k-1];
-				k=k-1;
-			}
-			replace(k,tmps);
-			//d.draw(t);
+ * 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89 - it is Fibonacci sequence
+ * O, O, E, O, O, E,  O,  O,  E,  O,  O - it is Fibonacci sequence, where even numbers - E,
+ * and odd numbers - O. You can see that every third number - even number, 
+ * for this reason, parity check of all numbers is unnecessary
+ * 
+ * @author Sluva
+ *
+ */ 
+public class Fibonacci {
+	public static void main (String[] args) {
+		// the first three values
+		int first = 1; int second = 1; int third = 2;
+		// the limit calculations
+		int limit = 4_000_000;
+		// the initial value of the sum
+		int sum = 0;
+		// summation until the value is less than limit
+		while (third <= limit) {
+			// addition of even value to the result
+			sum += third;
+			// calculation of the first odd value
+			first = second + third;
+			// calculation of the second odd value
+			second = third + first;
+			// calculation of the even value
+			third = first + second;
 		}
+		// output sum
+		System.out.println(sum);
 	}
-	
 }

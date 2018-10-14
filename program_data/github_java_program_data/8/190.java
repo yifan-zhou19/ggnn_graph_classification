@@ -1,13 +1,23 @@
-public <T extends Comparable<T>> void sort(T[] elems) {
- 7         int size = elems.length;
- 8 
- 9         for (int outerLoopIdx = 1; outerLoopIdx < size; ++outerLoopIdx) {
-10             for (int innerLoopIdx = outerLoopIdx; innerLoopIdx > 0; --innerLoopIdx) {
-11                 if (elems[innerLoopIdx - 1].compareTo(elems[innerLoopIdx]) > 0) {
-12                     T temp = elems[innerLoopIdx - 1];
-13                     elems[innerLoopIdx - 1] = elems[innerLoopIdx];
-14                     elems[innerLoopIdx] = temp;
-15                 }
-16             }
-17         }
-18     }
+package com.Hellel.PSoloid.homework3;
+
+/**
+ * Created by Morozov on 30.06.2015.
+ */
+public class Fibonacci {
+
+    public static long run(int n) {
+        long [] row = new long[n];
+        if (n <= 0) return 0L;
+            else if (n == 1) return 1L;
+            else {
+                row[0] = 0L;
+                row[1] = 1L;
+                row[2] = 1L;
+                for (int i = 2; i < n; i++) {
+                    row[i] = row[i-1] + row[i-2];
+                }
+                return row[n-1];
+
+        }
+    }
+}

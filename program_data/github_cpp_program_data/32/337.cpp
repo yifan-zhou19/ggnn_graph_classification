@@ -1,71 +1,62 @@
-#include<iostream>
-#include<vector>
-#include<cstdlib>
-#include<ctime>
+#include <algorithm>
+#include <functional>
+#include <vector>
+#include <iostream>
 
-using namespace std;
+#include "DisJointSets.hpp"
+ 
 
-int size;
+class Edge{
 
-template<class T>
-void shell_sort(vector<T> &array)
-{
-    int i,j,h=1;
-    T temp;
-    while(h<size/3)
-    h=3*h+1;                                //following the knuth series
-    while(h>0)
-    {
-        for(i=h;i<size;i+=h)
-        {
-            for(j=i;j>0;j-=h)
-            {
-                if(array[j]<array[j-h])
-                {
-                    temp=array[j-h];          //swapping of the elements
-                    array[j-h]=array[j];
-                    array[j]=temp;
-                }
-                else break;
-            }
-        }
-        h/=3;                                  //reducing the back step
+public:
+  int v1,v2;
+  int w;
+  Edge(int v1,int v2,int w) : v1(v1),v2(v2),w(w){}
+  Edge() : v1(-1),v2(-1),w(-1){}
+};
+
+struct edge_cmp{
+  
+  inline bool operator() (const Edge& e1, const Edge& e2){
+    if(e1.w != e2.w)
+      return e1.w < e2.w;
+    e1.v1+e1.v2+e1.w <= e2.v1+e2.v2+e2.w;
+  }
+};
+
+int kruskal(std::vector<Edge>& edges,int n){
+
+  int sum = 0;
+  int nedges = 0;
+
+  DisJointSets sets = DisJointSets(n);
+   
+  
+  for(auto it = edges.begin();it != edges.end() && nedges < n-1; it++){
+    Edge e = *it;
+    if(sets.find(e.v1) != sets.find(e.v2) ){
+      sets.union_sets(e.v1,e.v2);
+      nedges++;
+      sum +=e.w;
     }
+  }
+  return sum;
 }
+int main(){
+  
+  int n,m;
+  std::cin >> n >> m;
+  
+  std::vector<Edge> edges = std::vector<Edge>(m);
+  for(int i = 0;i<m;i++){
+    int v1,v2,w;
+    std::cin >> v1 >> v2 >> w;
+    std::cout << i<<" "<<n<< " "<<m<<"\n";
+    edges[i] = Edge(v1,v2,w);
+  }
+  std::sort(edges.begin(),edges.end(),edge_cmp());
 
-template<class T>
-double time_it(void (*action)(vector<T>&), vector<T> &arg) {
-  clock_t start_time = clock();
-  action(arg);
-  clock_t finis_time = clock();
-  return ((double) (finis_time - start_time)) / CLOCKS_PER_SEC;
-}
-int main(int argc, char *argv[])
-{
-    try
-    {
-        double exetime;
-        cin>>size;
-        vector<int> vec(size); //Change vector parameter as required
-        int i;
-        for(i=0;i<size;i++)
-        {
-            cin>>vec[i];
-        }
-        exetime=time_it(shell_sort,vec);
-        //shell_sort(vec);
-        cout<<"The sorted array is: ";
-        for(i=0;i<size;i++)
-        {
-            cout<<vec[i]<<" ";
-        }
-        cout<<endl;
-        cout << "sorted under " << exetime<< " seconds." << endl;
-    }
-    catch(...)
-    {
-        cout<<"An error has occurred , check the input"<<endl;
-        return 1;
-    }
-    return 0;
+  std::cout << kruskal(edges,n) << "\n";
+  
+  return 0;
 }

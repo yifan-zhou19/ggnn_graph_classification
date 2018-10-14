@@ -1,112 +1,110 @@
-#include<stdio.h>
-#include<string.h>
-#include<algorithm>
-#include<limits>
-#include<stdlib.h>
-using namespace std;
+/*
+ * Copyright 2012, The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-#define N 3
-#define W 50
+#define LOG_NDEBUG 1
+#define LOG_TAG "LinearRegression"
+#include <utils/Log.h>
 
-typedef struct item{
-  item():value(0), weight(0) {}
-  int value;
-  int weight;
-} Item;
+#include <wifidisplay/LinearRegression.h>
 
-int knapsack1(int n, int w, int dp[][W+1], const Item *data){
-  if(n==0||w==0) return 0;
-  if(w<0) return numeric_limits<int>::min();
+#include <math.h>
+#include <string.h>
 
-  if(dp[n][w]>0) return dp[n][w];
+namespace android {
 
-  int weight = data[n-1].weight;
-  int value = data[n-1].value;
-  dp[n][w] = max( knapsack1(n-1,w,dp,data), (knapsack1(n-1,w-weight,dp, data)+value) );
-  return dp[n][w];
+LinearRegression::LinearRegression(size_t historySize)
+    : mHistorySize(historySize),
+      mCount(0),
+      mHistory(new Point[mHistorySize]),
+      mSumX(0.0),
+      mSumY(0.0) {
 }
 
-int knapsack2(int n, int w, int *dp, const Item *data){
-  for(int i=0;i<N;++i){
-    int weight = data[i].weight;
-    int value = data[i].value;
-    for(int j=w;j-weight>=0;--j){
-      dp[j] = max(dp[j], dp[j-weight]+value);
+LinearRegression::~LinearRegression() {
+    delete[] mHistory;
+    mHistory = NULL;
+}
+
+void LinearRegression::addPoint(float x, float y) {
+    if (mCount == mHistorySize) {
+        const Point &oldest = mHistory[0];
+
+        mSumX -= oldest.mX;
+        mSumY -= oldest.mY;
+
+        memmove(&mHistory[0], &mHistory[1], (mHistorySize - 1) * sizeof(Point));
+        --mCount;
     }
-  }
-  return dp[w];
+
+    Point *newest = &mHistory[mCount++];
+    newest->mX = x;
+    newest->mY = y;
+
+    mSumX += x;
+    mSumY += y;
 }
 
-int knapsack2U(int n, int w, int *dp, const Item *data){
-  int last[W+1] = {0};
-  for(int i=0;i<N;++i){
-    int weight = data[i].weight;
-    int value = data[i].value;
-    for(int j=weight;j<=w;++j){
-      if(dp[j-weight] + value > dp[j]) last[j] = i;
-      dp[j] = max(dp[j], dp[j-weight]+value);
+bool LinearRegression::approxLine(float *n1, float *n2, float *b) const {
+    static const float kEpsilon = 1.0E-4;
+
+    if (mCount < 2) {
+        return false;
     }
-  }
 
-  int m = w;
-  printf("put: ");
-  while(m>=0){
-    printf("%d ",last[m]);
-    m -= data[last[m]].weight;
-  }
-  printf("\n");
+    float sumX2 = 0.0f;
+    float sumY2 = 0.0f;
+    float sumXY = 0.0f;
 
-  return dp[w];
-}
+    float meanX = mSumX / (float)mCount;
+    float meanY = mSumY / (float)mCount;
 
-int knapsack3(int n, int w, int *dp, const Item *data, bool put[][W+1]){
-  for(int i=0;i<n;++i){
-    int weight = data[i].weight;
-    int value = data[i].value;
-    for(int j=w;j-weight>=0;--j){
-      if(dp[j] < dp[j-weight]+value){
-        dp[j] = dp[j-weight]+value;
-        put[i][j] = true;
-      }
+    for (size_t i = 0; i < mCount; ++i) {
+        const Point &p = mHistory[i];
+
+        float x = p.mX - meanX;
+        float y = p.mY - meanY;
+
+        sumX2 += x * x;
+        sumY2 += y * y;
+        sumXY += x * y;
     }
-  }
 
-  for(int i=n-1, j=w;i>=0;--i){
-    if(put[i][j]){
-      printf("put %d\n",i);
-      j -= data[i].weight;
+    float T = sumX2 + sumY2;
+    float D = sumX2 * sumY2 - sumXY * sumXY;
+    float root = sqrt(T * T * 0.25 - D);
+
+    float L1 = T * 0.5 - root;
+
+    if (fabs(sumXY) > kEpsilon) {
+        *n1 = 1.0;
+        *n2 = (2.0 * L1 - sumX2) / sumXY;
+
+        float mag = sqrt((*n1) * (*n1) + (*n2) * (*n2));
+
+        *n1 /= mag;
+        *n2 /= mag;
+    } else {
+        *n1 = 0.0;
+        *n2 = 1.0;
     }
-  }
 
-  return dp[w];
+    *b = (*n1) * meanX + (*n2) * meanY;
+
+    return true;
 }
 
-int main(){
-  int cost[N] = {60,100,120};
-  int weight[N] = {10,20,30};
-  for(int i=0;i<N;++i){
-    printf("item %d: (v:%d, w:%d)\n",i,cost[i],weight[i]);
-  }
+}  // namespace android
 
-  int dp[N+1][W+1] = {0};
-  Item data[3];
-  for(int i=0;i<N;++i){
-    data[i].value = cost[i];
-    data[i].weight = weight[i];
-  }
-  printf("0/1 top: %d\n",knapsack1(N,W,dp,data));
-
-  int dp2[W+1] = {0};
-  printf("0/1 bot: %d\n",knapsack2(N,W,dp2,data));
-
-  int dp2u[W+1] = {0};
-  printf("Unbound: %d\n",knapsack2U(N,W,dp2u,data));
-
-  int dp3[W+1] = {0};
-  bool put[N][W+1];
-  memset(put, false, sizeof(put));
-  printf("0/1 bot, put: %d\n",knapsack3(N,W,dp3,data,put));
-
-
-  return 0;
-}

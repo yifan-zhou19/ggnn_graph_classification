@@ -1,26 +1,35 @@
-package Algorithm;
+class selection-sort{
+public static int findMin(int[] array, int index)
+{
+    int min = index - 1;
+    if (index < array.length - 1)
+        min = findMin(array, index + 1);
+    if (array[index] < array[min])
+        min = index;
+    return min;
+}
 
-/**
- * Created by tonytan on 12/1/2017.
- *
- * Bucket sort: cost most memory
- */
-public class BucketSort {
+public static void selectionSort(int[] array)
+{
+    selectionSort(array, 0);
+}
 
-    static int[] data = {1,2,7,4,6,3,9};//assume all data < 10
-    static int[] bucket = new int[10];
-
-    public static void bucketSort(int[] data){
-        for (int i=0; i<data.length; i++){
-            bucket[data[i]] = data[i];
-        }
+public static void selectionSort(int[] array, int left)
+{
+    if (left < array.length - 1)
+    {
+        swap(array, left, findMin(array, left));
+        selectionSort(array, left+1);
     }
+}
 
-    public static void main(String[] args){
-        bucketSort(data);
-        for (int i:bucket) {
-            if (i==0) continue;
-            System.out.print(i);
-        }
-    }
+public static void swap(int[] array, int index1, int index2)
+{
+    int temp = array[index1];
+    array[index1] = array[index2];
+    array[index2] = temp;
+}
+
+
+
 }

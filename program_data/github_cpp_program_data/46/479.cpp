@@ -1,60 +1,60 @@
-// Sample/test file
+/* HDU 1166 Partial Code */
 
-/**************************
-*   COSC 220
-***************************
-*
-*   binary-search.cpp
-*/
+struct ST{
+    struct Node{
+        int value,lazy;
+        Node *lc,*rc;
+        Node():lc(NULL),rc(NULL),lazy(0){}
+        void pull(){ value = lc->value + rc->value; }
+        void push(){
+            if(!lazy) return;
+            if(lc){ lc->lazy = lazy;lc->value += lazy; }
+            if(rc){ rc->lazy = lazy;rc->value += lazy; }
+            lazy = 0;
+        }
+    };
+    
+    vector<int> A;
 
-#include <iostream>
-#include "console.h"
-#include "simpio.h"
-#include "vector.h"
+    Node* build(int L,int R){
+        Node *node = new Node();
+        if(L == R){
+            node->value = A[L];
+            return node;
+        }
+        int mid = (L+R)>>1;
+        node->lc = build(L,mid);
+        node->rc = build(mid+1,R);
+        node->pull();
+        return node;
+    }
 
-using namespace std;
+    void modify(Node *node,int L,int R,int ql,int qr,int d){
+        if(R < ql || qr < L) return;
+        if(ql <= L && R <= qr){
+            node->lazy += d;
+            node->value += d;
+            return;
+        }
+        node->push();
+        int mid = (L+R)>>1;
+        modify(node->lc,L,mid,ql,qr,d);
+        modify(node->rc,mid+1,R,ql,qr,d);
+        node->pull();
+    }
 
-// Recursive implementation of binary search
-int bSearch(int target, Vector<int> & v, int start, int end) {
-    if (start > end)
-        return -1; // "not found" signal
-    int middle = (start + end) / 2;
-    if (v[middle] == target)
-        return middle;
-    if (v[middle] < target)
-        return bSearch(target, v, middle + 1, end);
-    return bSearch(target, v, start, middle - 1);
+    int query(Node* node,int L,int R,int ql,int qr){
+        if(R < ql || qr < L) return 0;
+        if(ql <= L && R <= qr) return node->value;
+        node->push();
+        int mid = (L+R)>>1;
+        return query(node->lc,L,mid,ql,qr) + query(node->rc,mid+1,R,ql,qr);
+    }
 
-}
-
-// Wrapper function; calls recursive function to do real work.
-// Returns the index in v at which target is found, or -1 if
-// not found.
-int bSearch(int target, Vector<int> & v) {
-    return bSearch(target, v, 0, v.size() - 1);
-}
-
-
-int main() {
-    setConsoleSize(500, 500);
-    setConsoleFont("Monospaced-14");
-    setConsoleExitProgramOnClose(true);
-    setConsolePrintExceptions(true);
-    /////////////////////////////////////////////////
-
-    Vector<int> v;
-    v += 1, 4, 7, 10, 15, 88, 99; // vector must be in sorted order!
-    cout << bSearch(0, v) << endl;      // expect -1
-    cout << bSearch(1, v) << endl;      // expect 0
-    cout << bSearch(4, v) << endl;      // expect 1
-    cout << bSearch(99, v) << endl;     // expect 6
-    cout << bSearch(45, v) << endl;     // expect -1
-    cout << bSearch(138, v) << endl;    // expect -1
-
-    /////////////////////////////////////////////////
-    cout << endl;
-    getLine("Press [Enter] to close the window... ");
-    //closeConsoleAndExit();
-    return 0;
-}
-
+    void delete_(Node* now){
+        if(!now) return;
+        delete_(now->lc);
+        delete_(now->rc);
+        delete now;
+    }
+};

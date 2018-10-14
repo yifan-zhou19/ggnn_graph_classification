@@ -1,58 +1,55 @@
-//============================================================================
-// Name        : radix-sort.cpp
-// Author      : Peng Li    
-// Date        : Sep 24, 2014
-// Copyright   : 
-// Description : Implementation of radix sort in C++
-//============================================================================
+/* Bubble Sort of the given array elements */
 
-#include "sort.h"
-#include <cstdlib>
 #include <iostream>
-#include <cmath>
-const int base = 10;
+#include <vector>
+using namespace std;
 
-int digit(int k, int num) {
-    int r;
-    r = num/(int) std::pow(base, k); /* integer division */
-    return (r % base)+9;
+void bubble_sort(vector<int>, int);
+int main()
+{
+	vector <int> nums;
+	nums.push_back(2);
+	nums.push_back(7);
+	nums.push_back(4);
+	nums.push_back(1);
+	nums.push_back(5);
+	nums.push_back(3);
+	int length = nums.size();
+	cout<<"Array before bubble sort: "<<endl;
+	for(int i = 0; i < length; i++)
+		{
+			cout<<nums[i]<<" ";
+		}
+		cout<<endl;
+	bubble_sort(nums,length);	
+
 }
 
-void
-RadixSort::sort(int A[], int size)
+void bubble_sort(vector<int>nums, int length)
 {
-  /*
-     Complete this function with the implementation of radix sort
-     algorithm.
-  */
-    // find max number
-    int max = 0;
-    for (int i=0; i<size; i++) {
-        max = (abs(A[i]) > abs(max))? A[i]: max;
-    }
-    
-    // count digits
-    int digits = 0;
-    //    if (max < 0) digits = 1; // remove this line if '-' counts as a digit
-    while (max) {
-        max /= 10;
-        digits++;
-    }
-    
-    int i, j, m;
-    int *C  = new int[base+9];// from -9 to 9
-    int *B = new int[size];
-    for (m=0; m<digits; m++) {
-        for (i=0; i<base+9; i++) C[i] = 0;
-        for (j=0; j<size; j++) C[digit(m,A[j])]++;
-        for (i=1; i<base+9; i++) C[i] += C[i-1];
-        for (j = size-1; j >= 0; j--) {
-            i = --C[digit(m, A[j])];
-            B[i] = A[j];
-        } /* copy B -> A */
-        for (j = 0; j < size; j++) A[j] = B[j];
-    }
-    delete [] B; delete [] C;
-
-
+	int flag, temp;
+	
+	for(int k = 1; k < length-1; k++)
+	{
+		flag = 0;
+		for(int i = 0; i <= length - k -1; i++)
+		{
+			if(nums[i] > nums[i+1])
+			{
+				temp = nums[i];
+				nums[i] = nums[i+1];
+				nums[i+1] = temp;
+				flag = 1;
+			}
+		}
+		if(flag == 0)
+				break;
+	}
+	cout<<"Array after bubble sort: "<<endl;
+	for(int i = 0; i < length; i++)
+		{
+			cout<<nums[i]<<" ";
+		}
+		cout<<endl;
+	
 }

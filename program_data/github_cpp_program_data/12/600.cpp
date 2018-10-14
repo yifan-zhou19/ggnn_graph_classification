@@ -1,72 +1,106 @@
-#include <iostream>
-#include <vector>
+#include<iostream>
+#include<limits.h>
+#include<string.h>
 
-using std::cout;
-using std::vector;
+using namespace std;
 
-template <typename T>
-void split(const vector<T>& list, vector<T>& first_list, vector<T>& second_list) {
-  vector<T>* first = &first_list;
-  vector<T>* second = &second_list;
+//Wrapper class for storing a graph
+class Graph{
+	public:
+	int vertexNum;
+	int** edges;
 
-  for (const T& element : list) {
-    first->push_back(element);
-    swap(first, second);
-  }
+	//Constructs a graph with V vertices and E edges
+	Graph(int V){
+		this->vertexNum = V;
+		this->edges =(int**) malloc(V * sizeof(int*));
+		for(int i=0; i<V; i++){
+			this->edges[i] = (int*) malloc(V * sizeof(int));
+			for(int j=0; j<V; j++)
+				this->edges[i][j] = INT_MAX;
+			this->edges[i][i] = 0;
+		}		
+	}
+
+	//Adds the given edge to the graph 
+	void addEdge(int src, int dst, int weight){
+		this->edges[src][dst] = weight;
+	}
+	
+
+};
+
+
+//Utility function to print distances
+void print(int dist[], int V){
+	cout<<"\nThe Distance matrix for Floyd - Warshall"<<endl;
+	for(int i = 0; i < V; i++){
+		for(int j=0; j<V; j++){
+
+		if(dist[i*V+j] != INT_MAX)	
+			cout<<dist[i*V+j]<<"\t";
+		else
+			cout<<"INF"<<"\t";
+		}
+		cout<<endl;
+	}
 }
 
-template <typename T>
-vector<T> merge(const vector<T>& first_list, const vector<T>& second_list) {
-  vector<T> result;
+//The main function that finds the shortest path from a vertex
+//to all other vertices using Floyd-Warshall Algorithm.
+void FloydWarshall(Graph graph){
+	int V = graph.vertexNum;
+	int dist[V][V];
+	
+	//Initialise distance array
+	for(int i=0; i<V; i++)
+		for(int j=0; j<V; j++)
+			dist[i][j] = graph.edges[i][j];	
+			
+	
+	//Calculate distances
+	for(int k=0; k<V; k++)
+	//Choose an intermediate vertex
 
-  int i = 0, j = 0;
-  while (i < first_list.size() && j < second_list.size()) {
-    if (first_list[i] < second_list[j]) {
-      result.push_back(first_list[i]);
-      ++i;
-    } else {
-      result.push_back(second_list[j]);
-      ++j;
-    }
-  }
+		for(int i=0; i<V; i++)	
+		//Choose a source vertex for given intermediate
 
-  while (i < first_list.size()) {
-    result.push_back(first_list[i]);
-    ++i;
-  }
+			for(int j=0; j<V; j++)
+			//Choose a destination vertex for above source vertex
 
-  while (j < second_list.size()) {
-    result.push_back(second_list[j]);
-    ++j;
-  }
+				if(dist[i][k] != INT_MAX && dist[k][j] != INT_MAX && dist[i][k] + dist[k][j] < dist[i][j])
+				//If the distance through intermediate vertex is less than direct edge then update value in distance array
+					dist[i][j] = dist[i][k] + dist[k][j];
 
-  return result;
-}
+	
+	//Convert 2d array to 1d array for print
+	int dist1d[V*V];	
+	for(int i=0; i<V; i++)
+		for(int j=0; j<V; j++)
+			dist1d[i*V+j] = dist[i][j];
+	
+	print(dist1d,V);	
+	}
 
-template <typename T>
-vector<T> merge_sort(const vector<T>& list) {
-  if (list.size() < 2) {
-    return list;
-  }
+//Driver Function
+int main(){
+	int V,E;
+	int src,dst,weight;
+	cout<<"Enter number of vertices: ";
+	cin>>V;
+	cout<<"Enter number of edges: ";
+	cin>>E;
+	Graph G(V);
+	for(int i=0; i<E; i++){
+		cout<<"\nEdge "<<i+1<<"\nEnter source: ";
+		cin>>src;
+		cout<<"Enter destination: ";
+		cin>>dst;
+		cout<<"Enter weight: ";
+		cin>>weight;
+		G.addEdge(src, dst, weight);
+	}
+	FloydWarshall(G);
 
-  vector<T> first_list, second_list;
-  split(list, first_list, second_list);
-
-  return merge(merge_sort(first_list), merge_sort(second_list));
-}
-
-template <typename T>
-void print(const vector<T>& list) {
-  for (const T& element : list) {
-    cout << element << ' ';
-  }
-  cout << '\n';
-}
-
-int main() {
-  vector<int> list = {42, 3, 21, 5, 1};
-
-  print(merge_sort(list));
-
-  return 0;
+	return 0;
 }

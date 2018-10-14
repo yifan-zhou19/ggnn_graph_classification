@@ -1,34 +1,31 @@
-package wit.lk.algorithm.ch03;
+import java.util.Arrays;
 
-public class BucketSort {
-	private int[] buckets;
-	private int[] array;
-	
-	public BucketSort(int range,int[] array){
-		buckets = new int[range];
-		this.array = array;
-	}
-	
-	/**
-	 * ����
-	 */
-	public void sort(){
-		if(array != null && array.length > 1){
-			for(int i = 0; i < array.length; i++){
-				buckets[array[i]]++;
-			}
-		}
-	}
-	
-	/**
-	 * �Ӵ�С����
-	 */
-	public void print(){
-		//�����������
-		for(int i = buckets.length - 1; i >= 0; i--){
-			for(int j = 0; j < buckets[i]; j++){
-				System.out.println(i);
-			}
-		}
-	}
+public class JavaSelectionSort{
+
+  public int[] selectionSort(int[] arr){
+    int n = arr.length;
+    for(int i=0;i<n-1;i++){
+      int index=i;
+      for(int j=i+1;j<n;j++){
+        if(arr[j] < arr[index]){
+          index=j;
+        }
+        int temp = arr[i];
+        arr[i] = arr[index];
+        arr[index] = temp;
+      }
+    }
+    return arr;
+  }
+
+  public static void main(String args[]){
+    JavaSelectionSort jss = new JavaSelectionSort();
+    int[] arr = {6,5,7,9,2,0,4,20,15};
+    print(arr);
+    arr = jss.selectionSort(arr);
+    print(arr);
+  }
+  public static void print(int[] arr){
+    System.out.println(Arrays.toString(arr));
+  }
 }

@@ -1,77 +1,58 @@
+/**
+ * 	author: satyajith
+ * 	algorithm: bucket sort
+ */
 
-using namespace std;
+#include <cmath>
+#include <iostream>
+#include <list>
+#include <vector>
 
-// =========================================================
+// constants
+#define N 10
 
-//HW1P2 stack(vector)
-//Your name: Christopher Wendling
-//Complier:  g++
-//File type: implimentation file stack.cpp
+// function declarations
+std::list< float >* bucket_sort(float[]);
 
-//================================================================
-
-#include "stack.h"
-
-//Object Constructor will do nothing
-stack::stack()
-{}
-//Object Destructor calls clear function and destroys all elements of vector.
-stack::~stack()
-{ 
-	clearIt();
+// operator overloading to print a list
+std::ostream& operator<<(std::ostream& ostr, const std::list< float >& list) {
+	for (auto& i : list)
+		ostr << " " << i;
+	return ostr;
 }
-// 	PURPOSE: isEmpty checks vector size and returns true if empty, false otherwise.
-bool stack::isEmpty()
-{ 
-	if(el.size() == 0) 
-		return true; 
-	else 
-		return false; 
-}    
-// PURPOSE: Return false, stack will never be full.
-bool stack::isFull()
-{ 
-	return false;
+
+int main(int argc, char const* argv[]) {
+	// input array
+	float arr[ N ] = {0.78, 0.17, 0.39, 0.26, 0.72, 0.94, 0.21, 0.12, 0.23, 0.68};
+
+	std::list< float >* final = bucket_sort(arr);
+	std::cout << * final;						   // print final list
+	final->erase(final->begin(), final->end());	// erase all elements
+
+	delete final;	// free the memory
+	return 0;
 }
-// PURPOSE: adds an element to el
-void stack::push(el_t elem)
-{ 
-	el.push_back(elem);
-}
-// PURPOSE: pop calls isEmpty and if true, throws an exception (Underflow)
-//  Otherwise, removes an element from el and gives it back.
-void stack::pop(el_t& elem)
-{ 
-	if(isEmpty())
-	  throw Underflow();
-    else{ 
-		elem = el[el.size() - 1]; 
-		el.pop_back();
+
+// the bucket sort routine definition
+std::list< float >* bucket_sort(float arr[]) {
+	int i;
+	std::vector< std::list< float > > B(N);	// initialize a vector of lists
+
+	for (i = 0; i < N; ++i)
+		B[ floor(N * arr[ i ]) ].push_back(arr[ i ]);	// distribute into buckets
+
+	for (i = 0; i < N; ++i)
+		B[ i ].sort();	// sort each list in ascending order
+
+	std::list< float >* final = new std::list< float >;	// final list of concatenated buckets
+	auto iter = final->begin();							   // iterator to final list
+
+	for (i = 0; i < N; ++i) {
+		final->splice(iter, B[ i ]);	// concatenate all buckets
+		iter = final->end();
 	}
-}
-// PURPOSE: topElem calls isEmpty and if true, throws an exception (underflow)
-//    Otherwise, gives back the top element from el.
-void stack::topElem(el_t& elem)
-{ 
-	if(isEmpty()) 
-		throw Underflow();
-    else{ 
-		elem = el[el.size() - 1];		
-	}
-}
-//dislayAll calls isEmpty and if true, displays [ empty ].
-//  Otherwise, diplays the elements vertically.
-void stack::displayAll()
-{  
-	if(isEmpty()) 
-		cout << ".[ empty ].";
-    else 
-		for(int i = el.size() - 1; i>=0; --i){ 
-			cout << el[i] << endl; 
-		}
-}
-//  PURPOSE: destroys all elements of vector
-void stack::clearIt()
-{
-	el.clear();
+
+	B.erase(B.begin(), B.end());	// erase all data from the vector of lists
+
+	return final;
 }

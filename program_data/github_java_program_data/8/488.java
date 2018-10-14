@@ -1,28 +1,29 @@
-package sorting;
-import java.util.Arrays;
+package edu.lmu.cs.msutton.util;
 
-import sorting.BubbleSort;
+/**
+ * A quick class to test the recursive Fibonacci calls for exercise 10.6
+ * @author Kelly Sutton
+ * @author Garrett Shannon
+ */
 
-public class InsertionSort {
+public class Fibonacci {
 
+	private static int counter = 0;
+	
+	public static void main(String args[]){
+		System.out.println(fibonacci(8));
+		System.out.println(counter - 1); //the - 1 is for the initial call
+										 //the problem wants to know how many _recursive_ calls are made
+	}
+	
 	/**
-	 * @param args
+	 * Lame recursive fibonacci method copied from our Data Structures book
 	 */
-	public static void main(String[] args) {
-		int arr[] = BubbleSort.takeInput();
-		iSort(arr, arr.length);
-		System.out.println(Arrays.toString(arr));
+	private static int fibonacci(int n){
+		counter++;
+		if ( n < 1 ) return 0;
+		if ( n < 3 ) return 1;	
+		return fibonacci(n - 1) + fibonacci(n - 2);
 	}
-
-	private static void iSort(int[] arr, int n) {
-		int i, j, temp;
-		for(i = 0; i < n-1; i++){
-			for(j = i+1; j >= 1 && arr[j] < arr[j-1]; j--){
-				temp = arr[j];
-				arr[j] = arr[j-1];
-				arr[j-1] = temp;
-			}
-		}
-	}
-
+	
 }

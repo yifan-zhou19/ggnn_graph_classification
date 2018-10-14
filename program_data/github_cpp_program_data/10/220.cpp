@@ -1,206 +1,126 @@
-/********************************************************************
-**                Image Component Library (ICL)                    **
-**                                                                 **
-** Copyright (C) 2006-2013 CITEC, University of Bielefeld          **
-**                         Neuroinformatics Group                  **
-** Website: www.iclcv.org and                                      **
-**          http://opensource.cit-ec.de/projects/icl               **
-**                                                                 **
-** File   : ICLMath/demos/quad-tree/quad-tree.cpp                  **
-** Module : ICLMath                                                **
-** Authors: Christof Elbrechter                                    **
-**                                                                 **
-**                                                                 **
-** GNU LESSER GENERAL PUBLIC LICENSE                               **
-** This file may be used under the terms of the GNU Lesser General **
-** Public License version 3.0 as published by the                  **
-**                                                                 **
-** Free Software Foundation and appearing in the file LICENSE.LGPL **
-** included in the packaging of this file.  Please review the      **
-** following information to ensure the license requirements will   **
-** be met: http://www.gnu.org/licenses/lgpl-3.0.txt                **
-**                                                                 **
-** The development of this software was supported by the           **
-** Excellence Cluster EXC 277 Cognitive Interaction Technology.    **
-** The Excellence Cluster EXC 277 is a grant of the Deutsche       **
-** Forschungsgemeinschaft (DFG) in the context of the German       **
-** Excellence Initiative.                                          **
-**                                                                 **
-********************************************************************/
+//=======================================================================
+// Copyright 1997, 1998, 1999, 2000 University of Notre Dame.
+// Authors: Andrew Lumsdaine, Lie-Quan Lee, Jeremy G. Siek
+//
+// Distributed under the Boost Software License, Version 1.0. (See
+// accompanying file LICENSE_1_0.txt or copy at
+// http://www.boost.org/LICENSE_1_0.txt)
+//=======================================================================
+#include <boost/config.hpp>
+#include <assert.h>
+#include <iostream>
+
+#include <vector>
+#include <algorithm>
+#include <utility>
 
 
-#include <ICLQt/Common.h>
-#include <ICLUtils/Random.h>
-#include <ICLMath/QuadTree.h>
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/depth_first_search.hpp>
+#include <boost/graph/visitors.hpp>
 
-#if 0
-template<int N>
-int p2() { return 2*p2<N-1>(); }
-template<> int p2<1>(){ return 2; }
-template<> int p2<0>(){ return 1; }
+/*
+  This calculates the discover finishing time.
 
-/// Always uses 2^32 resolution
-template<int TREE_LEVELS=6,int LEAVE_LEVELS=4>
-struct QuadTree2{
-  typedef FixedColVector<int,2> Pt;
-  struct Node{
-    Node():children(0),on(0){}
-    Node *children;
-    bool *on;
-  };
-  
-  Node *root;
+  Sample Output
 
-  QuadTree2() { 
-    root = new Node;
+  Tree edge: 0 --> 2
+  Tree edge: 2 --> 1
+  Back edge: 1 --> 1
+  Finish edge: 1 --> 1
+  Tree edge: 1 --> 3
+  Back edge: 3 --> 1
+  Finish edge: 3 --> 1
+  Tree edge: 3 --> 4
+  Back edge: 4 --> 0
+  Finish edge: 4 --> 0
+  Back edge: 4 --> 1
+  Finish edge: 4 --> 1
+  Forward or cross edge: 2 --> 3
+  Finish edge: 2 --> 3
+  Finish edge: 0 --> 2
+  1 10
+  3 8
+  2 9
+  4 7
+  5 6
+
+ */
+
+using namespace boost;
+using namespace std;
+
+
+template <class VisitorList>
+struct edge_categorizer : public dfs_visitor<VisitorList> {
+  typedef dfs_visitor<VisitorList> Base;
+
+  edge_categorizer(const VisitorList& v = null_visitor()) : Base(v) { }
+
+  template <class Edge, class Graph>
+  void tree_edge(Edge e, Graph& G) {
+    cout << "Tree edge: " << source(e, G) <<
+      " --> " <<  target(e, G) << endl;
+    Base::tree_edge(e, G);
   }
-  
-  void insert(const Pt &p){
-    insert(p[0],p[1]);
+  template <class Edge, class Graph>
+  void back_edge(Edge e, Graph& G) {
+    cout << "Back edge: " << source(e, G)
+         << " --> " <<  target(e, G) << endl;
+    Base::back_edge(e, G);
   }
-  
-  void insert(int x, int y){
-    Node *n = root;
-    for(int i=0;i<TREE_LEVELS;++i){
-      if(!n->children) n->children = new Node[4];
-      n = n->children + (x&1 + 2 * y&1);
-      x >>= 1;
-      y >>= 1;
-    }
-    static const int X = p2<LEAVE_LEVELS>();
-    
-    if(!n->on){
-      n->on = new bool[X*X];
-      memset(n->on,0,X*X);
-    }
-    n->on[x + X * y] = true;
+  template <class Edge, class Graph>
+  void forward_or_cross_edge(Edge e, Graph& G) {
+    cout << "Forward or cross edge: " << source(e, G)
+         << " --> " <<  target(e, G) << endl;
+    Base::forward_or_cross_edge(e, G);
   }
-  
-  int nn(int x, int y){
-    // dunno!
-  }
+  template <class Edge, class Graph> 
+  void finish_edge(Edge e, Graph& G) { 
+    cout << "Finish edge: " << source(e, G) << 
+      " --> " <<  target(e, G) << endl; 
+    Base::finish_edge(e, G); 
+  } 
 };
-#endif
-
-Time t;
-std::string what;
-inline void tic(const std::string &what){
-  ::what = what;
-  t = Time::now();
+template <class VisitorList>
+edge_categorizer<VisitorList>
+categorize_edges(const VisitorList& v) {
+  return edge_categorizer<VisitorList>(v);
 }
 
-inline void toc(){
-  std::cout << "Time for " << what << ": " << t.age().toMilliSecondsDouble() << "ms" << std::endl;
+int 
+main(int , char* [])
+{
+
+  using namespace boost;
+  
+  typedef adjacency_list<> Graph;
+  
+  Graph G(5);
+  add_edge(0, 2, G);
+  add_edge(1, 1, G);
+  add_edge(1, 3, G);
+  add_edge(2, 1, G);
+  add_edge(2, 3, G);
+  add_edge(3, 1, G);
+  add_edge(3, 4, G);
+  add_edge(4, 0, G);
+  add_edge(4, 1, G);
+
+  typedef graph_traits<Graph>::vertex_descriptor Vertex;
+  typedef graph_traits<Graph>::vertices_size_type size_type;
+
+  std::vector<size_type> d(num_vertices(G));  
+  std::vector<size_type> f(num_vertices(G));
+  int t = 0;
+  depth_first_search(G, visitor(categorize_edges(
+                     make_pair(stamp_times(&d[0], t, on_discover_vertex()),
+                               stamp_times(&f[0], t, on_finish_vertex())))));
+
+  std::vector<size_type>::iterator i, j;
+  for (i = d.begin(), j = f.begin(); i != d.end(); ++i, ++j)
+    cout << *i << " " << *j << endl;
+
+  return 0;
 }
 
-void init(){
-  HBox gui;
-  
-  gui << Plot().handle("plot").minSize(64*0.7,48*0.7) << Show();
-  
-  PlotHandle plot = gui["plot"];
-  
-  //GRandClip rx(320,3*32, Range64f(0,640));
-  //GRandClip ry(240,3*24, Range64f(0,480));
-  URand rx(0,639), ry(0,479);
-  
-  typedef QuadTree<icl32s,32,1,1024> QT;
-  typedef QT::Pt Pt;
-  QT t(Size::VGA);
-  //  QuadTree2<> t2;
-  
-  // create data
-  std::vector<Pt> ps(100*1000);
-  for(size_t i=0;i<ps.size();++i){
-    ps[i] = Pt(rx,ry);
-  }
-  
-  // insert data into the QuadTree
-  ::tic("insertion");
-  for(size_t i=0;i<ps.size();++i){
-    t.insert(ps[i]);
-  }
-  ::toc();
-
-#if 0
-  ::tic("insertion t2");
-  for(size_t i=0;i<ps.size();++i){
-    t2.insert(ps[i]);
-  }
-  ::toc();
-#endif
-  
-  //  t.printStructure();
-  
-  plot->sym('x');  
-  plot->scatter(ps.data(),ps.size());
-  
-  
-  /// Query a huge rectangular region with 57% coverage
-  Rect r(100,100,500,350);
-  ::tic("query");
-  for(int i=0;i<100;++i){
-    ps = t.query(r);
-  }
-  ::toc();
-
-
-  // visualize
-  plot->color(0,255,0);
-  plot->rect(r);
-  plot->scatter(ps.data(),ps.size());
-  plot->setDataViewPort(Rect32f(0,0,640,480));
-  plot->setPropertyValue("tics.x-distance",50);
-  plot->setPropertyValue("tics.y-distance",50);
-
-  plot->nofill();
-  plot->color(0,100,255);
-  VisualizationDescription d = t.vis();
-  plot->draw(d);
-  plot->color(255,100,0);
-
-
-  // create seed points for nn-search
-  ps.resize(1000);
-  for(size_t i=0;i<ps.size();++i){
-    ps[i] = Pt(rx,ry);
-  }
-  std::vector<Pt> nn(ps.size());
-
-  // precaching ...
-  for(size_t i=0;i<ps.size();++i){
-    nn[i] = t.nn(ps[i]);
-  }
-
- /// for each seed point: find nn
-  ::tic("approx nearest neighbor search");
-  for(size_t i=0;i<ps.size();++i){
-    nn[i] = t.nn_approx(ps[i]);
-  }
-  ::toc();
-
-#if 1
-  /// for each seed point: find nn
-  ::tic("nearest neighbor search");
-  for(size_t i=0;i<ps.size();++i){
-    nn[i] = t.nn(ps[i]);
-  }
-  ::toc();
-#endif
- 
-
-
-  // visualize nn-search results
-  plot->sym('o');
-  plot->linewidth(2);
-  plot->scatter(ps.data(),ps.size());
-  for(size_t i=0;i<ps.size();++i){
-    Pt p = ps[i], n = nn[i];
-    plot->line(p[0],p[1],n[0],n[1]);
-  }
-}
-
-
-int main(int n, char **ppc){
-  return ICLApp(n,ppc,"",init).exec();
-}

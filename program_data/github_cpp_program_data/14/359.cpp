@@ -1,157 +1,143 @@
+#include <iostream>
+#include <cmath>
+#include <cassert>
+#include <fstream>
+#include <vector>
+#include "armadillo.hpp"
 
-/**
- * @file heap.cpp
- * Implementation of a heap class.
- */
 
-template <class T, class Compare>
-size_t heap<T, Compare>::root() const
+arma::Col<double> gradient(arma::Mat<double> x, arma::Col<short> y, arma::Col<double> w);
+arma::Col<double> new_w(arma::Col<double> w, double alpha, arma::Mat<double> x, arma::Col<short> y);
+arma::Col<double> regression(arma::Col<double> w, double alpha, arma::Mat<double> x, arma::Col<short> y);
+
+int main()
 {
-    // @TODO Update to return the index you are choosing to be your root.
-    return 1;
-}
+	std::vector <double> dataX;
+	std::vector <double> dataY;
+	std::vector <double> test;
+	double storage;
+	short storagei;
 
-template <class T, class Compare>
-size_t heap<T, Compare>::leftChild(size_t currentIdx) const
-{
-    // @TODO Update to return the index of the left child.
-    return currentIdx*2;
-}
-
-template <class T, class Compare>
-size_t heap<T, Compare>::rightChild(size_t currentIdx) const
-{
-    // @TODO Update to return the index of the right child.
-    return currentIdx*2+1;
-}
-
-template <class T, class Compare>
-size_t heap<T, Compare>::parent(size_t currentIdx) const
-{
-    // @TODO Update to return the index of the parent.
-    return currentIdx/2;
-}
-
-template <class T, class Compare>
-bool heap<T, Compare>::hasAChild(size_t currentIdx) const
-{
-    // @TODO Update to return whether the given node has a child
-    return currentIdx*2<_elems.size();
-}
-
-template <class T, class Compare>
-size_t heap<T, Compare>::maxPriorityChild(size_t currentIdx) const
-{
-    // @TODO Update to return the index of the child with highest priority
-    ///   as defined by higherPriority()
-    if(hasAChild(currentIdx)){
-       if(2*currentIdx+1>=_elems.size())
-	        return leftChild(currentIdx);
-      if(higherPriority(_elems[leftChild(currentIdx)],_elems[rightChild(currentIdx)])){
-        return leftChild(currentIdx);
-      }else{
-        return rightChild(currentIdx);
-      }
-    }
-    return 0;
-}
-
-template <class T, class Compare>
-void heap<T, Compare>::heapifyDown(size_t currentIdx)
-{
-    // @TODO Implement the heapifyDown algorithm.
-    if(hasAChild(currentIdx)==false){
-      return;
-    }
-    size_t minChildIndex = maxPriorityChild(currentIdx);
-    if(!higherPriority(_elems[currentIdx],_elems[minChildIndex])){
-      std::swap(_elems[currentIdx],_elems[minChildIndex]);
-      heapifyDown(minChildIndex);
-    }
-}
-
-template <class T, class Compare>
-void heap<T, Compare>::heapifyUp(size_t currentIdx)
-{
-    if (currentIdx == root())
-        return;
-    size_t parentIdx = parent(currentIdx);
-    if (higherPriority(_elems[currentIdx], _elems[parentIdx])) {
-        std::swap(_elems[currentIdx], _elems[parentIdx]);
-        heapifyUp(parentIdx);
-    }
-}
-
-template <class T, class Compare>
-heap<T, Compare>::heap()
-{
-    // @TODO Depending on your implementation, this function may or may
-    ///   not need modifying
-    _elems.push_back(T());
-}
-
-template <class T, class Compare>
-heap<T, Compare>::heap(const std::vector<T>& elems)
-{
-    // @TODO Construct a heap using the buildHeap algorithm
-    _elems.push_back(T());
-    for(size_t i = 0; i < elems.size(); i++)
+	// reading dataX
+	std::ifstream read_file("dataX.dat");
+	assert(read_file.is_open());
+	while (!read_file.eof())
 	{
-		_elems.push_back(elems[i]);
+		read_file >> storage;
+		dataX.push_back(storage);
 	}
-	for(size_t i = parent(_elems.size()); i >0 ; i--)
+	read_file.close();
+
+	// reading dataY
+	read_file.open("dataY.dat");
+	assert(read_file.is_open());
+	while (!read_file.eof())
 	{
-		heapifyDown(i);
+		read_file >> storagei;
+		dataY.push_back(storagei);
+	}
+	read_file.close();
+
+	// reading dataXtest
+	read_file.open("dataXtest.dat");
+	assert(read_file.is_open());
+	while (!read_file.eof())
+	{
+		read_file >> storage;
+		test.push_back(storage);
+	}
+	read_file.close();
+
+	int lenX;
+	lenX = dataX.end() - dataX.begin() - 1;
+	int lenY;
+	lenY = dataY.end() - dataY.begin() - 1;
+	int lenTest;
+	lenTest = test.end() - test.begin() - 1;
+	int XY;
+	XY = lenX / lenY;
+
+	// Converting dataX to arma matrix
+	arma::mat X(lenY, XY, arma::fill::none);
+	for (int i = 0; i < lenY; i++)
+	{
+		for (int j = 0; j < XY; j++)
+		{
+			X(i, j) = dataX[XY*i + j];
+		}
 	}
 
+	int test_rows = lenTest / XY;
+
+	// Converting test to arma matrix
+	arma::mat Xtest(test_rows, XY, arma::fill::none);
+	for (int i = 0; i < test_rows; i++)
+	{
+		for (int j = 0; j < XY; j++)
+		{
+			Xtest(i, j) = test[XY*i + j];
+		}
+	}
+
+	// Converting dataY to arma vector
+	arma::Col<short> Y(lenY);
+	for (int i = 0; i < lenY; i++)
+	{
+		Y(i) = dataY[i];
+	}
+	
+	arma::Col<double> w = arma::zeros(X.n_cols);
+	// sign
+	arma::Col<double> y(Xtest.n_rows);
+	arma::Col<int> out(Xtest.n_rows);
+	y = Xtest*regression(w, 0.9, X, Y);
+
+	for (int i = 0; i < Xtest.n_rows; i++)
+	{
+		if (y(i) > 0)
+		{
+			out(i) = 1;
+		}
+		else
+		{
+			out(i) = -1;
+		}
+	}
+	//out.print();
+
+	std::ofstream write_file("LogReg.dat");
+	for (int h = 0; h < Xtest.n_rows; h++)
+	{
+		write_file << out[h] << "\n";
+	}
+	return 0;
 }
 
-template <class T, class Compare>
-T heap<T, Compare>::pop()
+
+arma::Col<double> gradient(arma::Mat<double> x, arma::Col<short> y, arma::Col<double> w)
 {
-    // @TODO Remove, and return, the element with highest priority
-    if(!empty()){
-      T temp = _elems[1];
-      _elems[1] = _elems[_elems.size()-1];
-      _elems.pop_back();
-      heapifyDown(1);
-      return temp;
-    }
-    return T();
+	arma::vec out(x.n_cols);
+	out.fill(0);
+	for (int i = 0; i < x.n_rows; i++)
+	{
+		out -= (y[i] * x.row(i).t()/(1+exp(y[i] *x.row(i)*w)[0]));
+	}
+	return out/x.n_rows;
 }
 
-template <class T, class Compare>
-T heap<T, Compare>::peek() const
+arma::Col<double> new_w(arma::Col<double> w, double alpha, arma::Mat<double> x, arma::Col<short> y)
 {
-    // @TODO Return, but do not remove, the element with highest priority
-    if(!empty()){
-      return _elems[1];
-    }
-    return T();
+	return w - alpha*gradient(x, y, w);
 }
 
-template <class T, class Compare>
-void heap<T, Compare>::push(const T& elem)
+arma::Col<double> regression(arma::Col<double> w, double alpha, arma::Mat<double> x, arma::Col<short> y)
 {
-    // @TODO Add elem to the heap
-    _elems.push_back(elem);
-    heapifyUp(_elems.size()-1);
+	int count = 0;
+	while (norm(gradient(x,y,w)) > pow(10,-7) & count <100000)
+	{
+		w = new_w(w, alpha, x, y);
+		count++;
+	}
+	return w;
 }
 
-template <class T, class Compare>
-bool heap<T, Compare>::empty() const
-{
-    // @TODO Determine if the heap is empty
-    if(_elems.size() > 1){
-      return false;
-    }
-    return true;
-}
-
-template <class T, class Compare>
-void heap<T, Compare>::getElems(std::vector<T> & heaped) const
-{
-    for (size_t i = root(); i < _elems.size(); i++) {
-        heaped.push_back(_elems[i]);
-    }
-}

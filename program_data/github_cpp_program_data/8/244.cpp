@@ -1,22 +1,30 @@
-// https://rosettacode.org/wiki/Sorting_algorithms/Insertion_sort
 
-#include <algorithm>
+//          Copyright Oliver Kowalke 2014.
+// Distributed under the Boost Software License, Version 1.0.
+//    (See accompanying file LICENSE_1_0.txt or copy at
+//          http://www.boost.org/LICENSE_1_0.txt)
+
+#include <cstdlib>
 #include <iostream>
-#include <iterator>
 
-template <typename RandomAccessIterator, typename Predicate>
-void insertion_sort(RandomAccessIterator begin, RandomAccessIterator end,
-                    Predicate p) {
-  for (auto i = begin; i != end; ++i) {
-    std::rotate(std::upper_bound(begin, i, *i, p), i, i + 1);
-  }
+#include <boost/coroutine2/all.hpp>
+
+int main() {
+    boost::coroutines2::coroutine< int >::pull_type source(
+        []( boost::coroutines2::coroutine< int >::push_type & sink) {
+            int first = 1, second = 1;
+            sink( first);
+            sink( second);
+            for ( int i = 0; i < 8; ++i) {
+                int third = first + second;
+                first = second;
+                second = third;
+                sink( third);
+            }
+        });
+    for ( auto i : source) {
+        std::cout << i <<  " ";
+    }
+    std::cout << "\nDone" << std::endl;
+    return EXIT_SUCCESS;
 }
-
-template <typename RandomAccessIterator>
-void insertion_sort(RandomAccessIterator begin, RandomAccessIterator end) {
-  insertion_sort(
-      begin, end,
-      std::less<
-          typename std::iterator_traits<RandomAccessIterator>::value_type>());
-}
-

@@ -1,90 +1,50 @@
-#include <QColor>
-#include <QApplication>
+#include<iostream>
+#include<vector>
+#include<stdio.h>
+using namespace std;
 
-#include <boost/optional.hpp>
+vector<int> adj[10000];
+int  ti, dis[10000], fin[10000], color[10000];
 
-#include <cg/visualization/viewer_adapter.h>
-#include <cg/visualization/draw_util.h>
-
-#include <cg/io/point.h>
-
-#include <cg/primitives/point.h>
-
-
-#include "node.h"
-
-
-using cg::point_2;
-using cg::point_2f;
-
-struct qdt_viewer : cg::visualization::viewer_adapter
+void dfs(int source)
 {
-   qdt_viewer()
-   {
-	root = new Node<double>();
-   }
-
-   void draw_node(Node<double> *node, cg::visualization::drawer_type & drawer) const
-   {
-
-    drawer.set_color(Qt::green);
-    drawer.draw_point(node->point, 3);
-	
-	if(node->children[0] == NULL)
-		return;
-
-    drawer.set_color(Qt::white);
-
-    point_2t<double> c = node->boundary.position;
-    double d = node->boundary.dimension;
-
-    point_2 p1(c.x + d, c.y+d/2);
-    point_2 p2(c.x + d/2, c.y+d);
-    point_2 p3(c.x, c.y+d/2);
-    point_2 p4(c.x+d/2, c.y);
-
-	drawer.draw_line(p1, p3);
-	drawer.draw_line(p2, p4);
-
-	draw_node(node->children[0], drawer);
-	draw_node(node->children[1], drawer);
-	draw_node(node->children[2], drawer);
-	draw_node(node->children[3], drawer);
-   }
-
-    // draws all the points and lines
-   void draw(cg::visualization::drawer_type & drawer) const
-   {
-      draw_node(root, drawer);
-   }
-
-    // print in the corner
-   void print(cg::visualization::printer_type & p) const
-   {
-      p.corner_stream() << "press mouse rbutton to add point" << cg::visualization::endl
-                        << "points: " << pts_.size() << cg::visualization::endl;
-   }
-
-
-    // mouse rbutton click
-   bool on_release(const point_2f & p)
-   {
-     root->insert(point_2t<double>(p.x, p.y));
-	pts_.push_back(p);
-
-      return true;
-   }
-
-private:
-
-   Node<double>* root;
-   std::vector<point_2> pts_;
-};
-
-int main(int argc, char ** argv)
-{
-    // TODO: specify canva's size!!
-   QApplication app(argc, argv);
-   qdt_viewer viewer;
-   cg::visualization::run_viewer(&viewer, "quad-tree");
+    int u = source;
+    ti = ti + 1;
+    dis[u] = ti;
+    color[u] = 1;
+    for(int i=0;i<adj[u].size();i++){
+        int v = adj[u][i];
+        if(color[v]==0){
+            printf("%d ",v);
+            dfs(v);
+        }
+    }
+    color[u] = 2;
+    ti = ti + 1;
+    fin[u] = ti;
 }
+
+int main()
+{
+    int i, j, k, n, e, u, v, source;
+    printf("Please Enter number of vertices: ");
+    scanf("%d",&n);
+    printf("Please Enter number of edges: ");
+    scanf("%d",&e);
+    printf("Please Enter the edges:\n");
+    for(i=0;i<e;i++){
+        scanf("%d%d",&u,&v);
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    printf("Please Enter the source: ");
+    scanf("%d",&source);
+
+    printf("Visited nodes are %d ",source);
+    dfs(source);
+
+    return 0;
+
+}
+
+

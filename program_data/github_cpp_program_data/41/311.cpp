@@ -1,32 +1,40 @@
-/* 选择排序
-每一次从待排序的数据元素中选出最小（或最大）的一个元素，存放在序列的起始位置，直到全部待排序的数据元素排完  
-*/
-
-#include <iostream>
-#include "SortUtils.h"
-using namespace std;
-
-void selectionSort(int arr[], int len)
+struct node
 {
-	for(int i = 0; i < len; i++){
-		int minIndex = i;  // 在区间 [i,len) 里寻找最小值
-		for(int j = i + 1; j < len; j++)
-			if(arr[j] < arr[minIndex])
-				minIndex = j;			
-			
-		swap(arr[i], arr[minIndex]);
-	}
-}
+int info; //Информационное поле
+node *l, *r;//Левая и Правая часть дерева
+};
+class bitree{
+public:
 
-int main() {
 
-	int n = 10000;
-	int *arr = SortUtils::generateRandomArray(n, 0, n);
-	//selectionSort(arr, n);
-	//SortUtils::printArray(arr, n);
+    node * tree=NULL; //Объявляем переменную, тип которой структура Дерево
 
-	SortUtils::testSort("SelectionSort", selectionSort, arr, n);
-	// 释放 arr开的数组空间
-	delete[] arr;
-    return 0;
-}
+    /*ФУНКЦИЯ ЗАПИСИ ЭЛЕМЕНТА В БИНАРНОЕ ДЕРЕВО*/
+    void push(int a,node **t)
+    {
+        if ((*t)==NULL) //Если дерева не существует
+        {
+            (*t)=new node; //Выделяем память
+            (*t)->info=a; //Кладем в выделенное место аргумент a
+            (*t)->l=(*t)->r=NULL; //Очищаем память для следующего роста
+            return; //Заложили семечко, выходим
+        }
+           //Дерево есть
+            if (a>(*t)->info) push(a,&(*t)->r); //Если аргумент а больше чем текущий элемент, кладем его вправо
+            else push(a,&(*t)->l); //Иначе кладем его влево
+    }
+
+    /*ФУНКЦИЯ ОТОБРАЖЕНИЯ ДЕРЕВА НА ЭКРАНЕ*/
+    void print (node *t,int u)
+    {
+        if (t==NULL) return; //Если дерево пустое, то отображать нечего, выходим
+        else //Иначе
+        {
+        print(t->l,++u);//С помощью рекурсивного посещаем левое поддерево
+        for (int i=0;i<u;++i) cout<<"-";
+        cout<<t->info<<endl; //И показываем элемент
+        u--;
+        }
+        print(t->r,++u); //С помощью рекурсии посещаем правое поддерево
+    }
+};

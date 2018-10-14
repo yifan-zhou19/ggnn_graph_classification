@@ -1,154 +1,137 @@
-package hard;
+package com.interview.graph;
 
-//Java Program to show segment tree operations like construction,
-//query and update
-public class SegmentTree 
-{
- int st[]; // The array that stores segment tree nodes
+import java.util.*;
 
- /* Constructor to construct segment tree from given array. This
-    constructor  allocates memory for segment tree and calls
-    constructSTUtil() to  fill the allocated memory */
- SegmentTree(int arr[], int n)
- {
-     // Allocate memory for segment tree
-     //Height of segment tree
-     int x = (int) (Math.ceil(Math.log(n) / Math.log(2)));
+/**
+ * Date 04/14/2014
+ * @author Tushar Roy
+ *
+ * Ford fulkerson method Edmonds Karp algorithm for finding max flow
+ *
+ * Capacity - Capacity of an edge to carry units from source to destination vertex
+ * Flow - Actual flow of units from source to destination vertex of an edge
+ * Residual capacity - Remaining capacity on this edge i.e capacity - flow
+ * AugmentedPath - Path from source to sink which has residual capacity greater than 0
+ *
+ * Time complexity is O(VE^2)
+ *
+ * References:
+ * http://www.geeksforgeeks.org/ford-fulkerson-algorithm-for-maximum-flow-problem/
+ * https://en.wikipedia.org/wiki/Edmonds%E2%80%93Karp_algorithm
+ */
+public class FordFulkerson {
 
-     //Maximum size of segment tree
-     int max_size = 2 * (int) Math.pow(2, x) - 1;
+    public int maxFlow(int capacity[][], int source, int sink){
 
-     st = new int[max_size]; // Memory allocation
+        //declare and initialize residual capacity as total avaiable capacity initially.
+        int residualCapacity[][] = new int[capacity.length][capacity[0].length];
+        for (int i = 0; i < capacity.length; i++) {
+            for (int j = 0; j < capacity[0].length; j++) {
+                residualCapacity[i][j] = capacity[i][j];
+            }
+        }
 
-     constructSTUtil(arr, 0, n - 1, 0);
- }
+        //this is parent map for storing BFS parent
+        Map<Integer,Integer> parent = new HashMap<>();
 
- // A utility function to get the middle index from corner indexes.
- int getMid(int s, int e) {
-     return s + (e - s) / 2;
- }
+        //stores all the augmented paths
+        List<List<Integer>> augmentedPaths = new ArrayList<>();
 
- /*  A recursive function to get the sum of values in given range
-     of the array.  The following are parameters for this function.
+        //max flow we can get in this network
+        int maxFlow = 0;
 
-   st    --> Pointer to segment tree
-   si    --> Index of current node in the segment tree. Initially
-             0 is passed as root is always at index 0
-   ss & se  --> Starting and ending indexes of the segment represented
-                 by current node, i.e., st[si]
-   qs & qe  --> Starting and ending indexes of query range */
- int getSumUtil(int ss, int se, int qs, int qe, int si)
- {
-     // If segment of this node is a part of given range, then return
-     // the sum of the segment
-     if (qs <= ss && qe >= se)
-         return st[si];
+        //see if augmented path can be found from source to sink.
+        while(BFS(residualCapacity, parent, source, sink)){
+            List<Integer> augmentedPath = new ArrayList<>();
+            int flow = Integer.MAX_VALUE;
+            //find minimum residual capacity in augmented path
+            //also add vertices to augmented path list
+            int v = sink;
+            while(v != source){
+                augmentedPath.add(v);
+                int u = parent.get(v);
+                if (flow > residualCapacity[u][v]) {
+                    flow = residualCapacity[u][v];
+                }
+                v = u;
+            }
+            augmentedPath.add(source);
+            Collections.reverse(augmentedPath);
+            augmentedPaths.add(augmentedPath);
 
-     // If segment of this node is outside the given range
-     if (se < qs || ss > qe)
-         return 0;
+            //add min capacity to max flow
+            maxFlow += flow;
 
-     // If a part of this segment overlaps with the given range
-     int mid = getMid(ss, se);
-     return getSumUtil(ss, mid, qs, qe, 2 * si + 1) +
-             getSumUtil(mid + 1, se, qs, qe, 2 * si + 2);
- }
+            //decrease residual capacity by min capacity from u to v in augmented path
+            // and increase residual capacity by min capacity from v to u
+            v = sink;
+            while(v != source){
+                int u = parent.get(v);
+                residualCapacity[u][v] -= flow;
+                residualCapacity[v][u] += flow;
+                v = u;
+            }
+        }
+        printAugmentedPaths(augmentedPaths);
+        return maxFlow;
+    }
 
- /* A recursive function to update the nodes which have the given 
-    index in their range. The following are parameters
-     st, si, ss and se are same as getSumUtil()
-     i    --> index of the element to be updated. This index is in
-              input array.
-    diff --> Value to be added to all nodes which have i in range */
- void updateValueUtil(int ss, int se, int i, int diff, int si)
- {
-     // Base Case: If the input index lies outside the range of 
-     // this segment
-     if (i < ss || i > se)
-         return;
+    /**
+     * Prints all the augmented path which contribute to max flow
+     */
+    private void printAugmentedPaths(List<List<Integer>> augmentedPaths) {
+        System.out.println("Augmented paths");
+        augmentedPaths.forEach(path -> {
+            path.forEach(i -> System.out.print(i + " "));
+            System.out.println();
+        });
+    }
 
-     // If the input index is in range of this node, then update the
-     // value of the node and its children
-     st[si] = st[si] + diff;
-     if (se != ss) {
-         int mid = getMid(ss, se);
-         updateValueUtil(ss, mid, i, diff, 2 * si + 1);
-         updateValueUtil(mid + 1, se, i, diff, 2 * si + 2);
-     }
- }
+    /**
+     * Breadth first search to find augmented path
+     */
+    private boolean BFS(int[][] residualCapacity, Map<Integer,Integer> parent,
+            int source, int sink){
+        Set<Integer> visited = new HashSet<>();
+        Queue<Integer> queue = new LinkedList<>();
+        queue.add(source);
+        visited.add(source);
+        boolean foundAugmentedPath = false;
+        //see if we can find augmented path from source to sink
+        while(!queue.isEmpty()){
+            int u = queue.poll();
+            for(int v = 0; v < residualCapacity.length; v++){
+                //explore the vertex only if it is not visited and its residual capacity is
+                //greater than 0
+                if(!visited.contains(v) &&  residualCapacity[u][v] > 0){
+                    //add in parent map saying v got explored by u
+                    parent.put(v, u);
+                    //add v to visited
+                    visited.add(v);
+                    //add v to queue for BFS
+                    queue.add(v);
+                    //if sink is found then augmented path is found
+                    if ( v == sink) {
+                        foundAugmentedPath = true;
+                        break;
+                    }
+                }
+            }
+        }
+        //returns if augmented path is found from source to sink or not
+        return foundAugmentedPath;
+    }
+    
+    public static void main(String args[]){
+        FordFulkerson ff = new FordFulkerson();
+        int[][] capacity = {{0, 3, 0, 3, 0, 0, 0},
+                            {0, 0, 4, 0, 0, 0, 0},
+                            {3, 0, 0, 1, 2, 0, 0},
+                            {0, 0, 0, 0, 2, 6, 0},
+                            {0, 1, 0, 0, 0, 0, 1},
+                            {0, 0, 0, 0, 0, 0, 9},
+                            {0, 0, 0, 0, 0, 0, 0}};
 
- // The function to update a value in input array and segment tree.
-// It uses updateValueUtil() to update the value in segment tree
- void updateValue(int arr[], int n, int i, int new_val)
- {
-     // Check for erroneous input index
-     if (i < 0 || i > n - 1) {
-         System.out.println("Invalid Input");
-         return;
-     }
-
-     // Get the difference between new value and old value
-     int diff = new_val - arr[i];
-
-     // Update the value in array
-     arr[i] = new_val;
-
-     // Update the values of nodes in segment tree
-     updateValueUtil(0, n - 1, i, diff, 0);
- }
-
- // Return sum of elements in range from index qs (quey start) to
-// qe (query end).  It mainly uses getSumUtil()
- int getSum(int n, int qs, int qe)
- {
-     // Check for erroneous input values
-     if (qs < 0 || qe > n - 1 || qs > qe) {
-         System.out.println("Invalid Input");
-         return -1;
-     }
-     return getSumUtil(0, n - 1, qs, qe, 0);
- }
-
- // A recursive function that constructs Segment Tree for array[ss..se].
- // si is index of current node in segment tree st
- int constructSTUtil(int arr[], int ss, int se, int si)
- {
-     // If there is one element in array, store it in current node of
-     // segment tree and return
-     if (ss == se) {
-         st[si] = arr[ss];
-         return arr[ss];
-     }
-
-     // If there are more than one elements, then recur for left and
-     // right subtrees and store the sum of values in this node
-     int mid = getMid(ss, se);
-     st[si] = constructSTUtil(arr, ss, mid, si * 2 + 1) +
-              constructSTUtil(arr, mid + 1, se, si * 2 + 2);
-     return st[si];
- }
-
- // Driver program to test above functions
- public static void main(String args[])
- {
-     int arr[] = {1, 3, 5, 7, 9, 11};
-     int n = arr.length;
-     SegmentTree  tree = new SegmentTree(arr, n);
-
-     // Build segment tree from given array
-
-     // Print sum of values in array from index 1 to 3
-     System.out.println("Sum of values in given range = " +
-                        tree.getSum(n, 1, 3));
-
-     // Update: set arr[1] = 10 and update corresponding segment
-     // tree nodes
-     tree.updateValue(arr, n, 1, 10);
-
-     // Find sum after the value is updated
-     System.out.println("Updated sum of values in given range = " +
-             tree.getSum(n, 1, 3));
- }
+        System.out.println("\nMaximum capacity " + ff.maxFlow(capacity, 0, 6));
+    }
 }
-//This code is contributed by Ankur Narain Verma
-

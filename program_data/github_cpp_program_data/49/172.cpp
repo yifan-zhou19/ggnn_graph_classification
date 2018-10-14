@@ -1,62 +1,88 @@
-#include <iostream>
-#include <vector>
-#include <map>
+/* 
+ * File:   LinearRegression.cpp
+ * Author: rodrigo
+ * 
+ * Created on 4 de Novembro de 2015, 10:42
+ */
 
-using std::vector;
-using std::map;
+#include <string>
+#include "LinearRegression.h"
+#include "Logger.h"
 
-int optimal_weight_v1(int W, const vector<int> &w) {
-	//write your code here
-	int current_weight = 0;
-	for (size_t i = 0; i < w.size(); ++i) {
-		if (current_weight + w[i] <= W) {
-			current_weight += w[i];
-		}
-	}
-	return current_weight;
+LinearRegression::LinearRegression(float learning_rate, float regularization_factor, int hash_size) 
+{
+    alpha = learning_rate;
+    lambda = regularization_factor;
+    hash_space = hash_size;
+    helper_sum = new float[hash_space];
+    weights = new float[hash_space];
 }
 
-int optimal_weight_util(int target, const vector<int> &w, int n_size, map<int,int> dict ) {
-	//write your code here
-	int values;
-	// find W in the pair
-	if (dict.count(target) > 0) {
-		return dict[target];
-	}
-	
-	// W NOT in the pair
-	dict[target] = 0;
-	int v_i = 1;
-	for (int i = 0; i < n_size; i++) {
-		if (w[i] < target) {
-			values = optimal_weight_util(target- w[i], w, i-1, dict) + v_i;
-			if (values > dict[target]) {
-				dict[target] = values;
-			}
-		}
-		
-	}
-	
-	dict[target] = values;
-	
-	return dict[target];
+void LinearRegression::train(int epochs, training_data * x)
+{
+    int rows = x->length;
+    float cost_function = 0;
+    for(int epoch =1; epoch<= epochs; epoch++)
+    {        
+        for(int row = 0; row< rows; row++)
+        {
+            training_instance * instance = x->instances + row;
+            float y = *(x->values + row);
+            float prediction = predict(instance);
+            float instance_error = prediction - y;
+            
+            cost_function += instance_error * instance_error;
+            
+            update(instance, instance_error);
+        }
+        
+        weights[0] = weights[0] - (alpha/rows*helper_sum[0]); //biased term
+        
+        float weights_cost = 0;
+        for(auto iterator = used_indices.begin(); iterator != used_indices.end(); iterator ++)
+        {
+            int index = * iterator;            
+            weights_cost += weights[index] * weights[index];
+            weights[index] = weights[index] * (1-alpha*lambda/rows) - (alpha*helper_sum[index]/rows);            
+        }  
+        
+        cost_function += lambda * weights_cost;
+        cost_function = cost_function/(2*rows);
+        
+        char text[80];
+        sprintf(text, "Epoch = %d ; Cost Function = %f",epoch,cost_function);
+        
+        Logger::Log(std::string(text));
+        helper_sum = new float[hash_space];        
+    }
 }
 
-int optimal_weight(int target, const vector<int> &w) {
-	int n_size = w.size();
-	// sort w
-	sort(w.begin(), w.end());
-	
-	map<int, int> dict;	
-	return optimal_weight_util(target, w, n_size, dict);
+void LinearRegression::update(training_instance * instance, float instance_prediction_error)
+{
+    helper_sum[0] = instance_prediction_error;//biased term
+    for(int i = 0; i < instance->features->size(); i++ )
+    {
+        int index = hash_trick(instance->features[i]);
+        helper_sum[index] += instance_prediction_error * instance->feature_values[index];
+        used_indices.insert(index);
+    }
 }
 
-int main() {
-	int n, W;
-	std::cin >> W >> n;
-	vector<int> w(n);
-	for (int i = 0; i < n; i++) {
-		std::cin >> w[i];
-	}
-	std::cout << optimal_weight(W, w) << '\n';
+float LinearRegression::predict(training_instance * x)
+{
+    float result = weights[0];//biased term
+    for(int i = 0; i < x->features->size(); i++ )
+    {
+        int index = hash_trick(x->features[i]);
+        result += weights[index] * x->feature_values[index];
+    }
+    return result;
 }
+int LinearRegression::hash_trick(std::string feature)
+{
+    return std::hash<std::string>()(feature) % hash_space;
+}
+LinearRegression::~LinearRegression() 
+{
+}
+

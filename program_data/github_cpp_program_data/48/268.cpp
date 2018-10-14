@@ -1,63 +1,51 @@
-/*
- * LinearRegression.cpp
- *
- *  Created on: 27 Aug 2011
- *      Author: root
- */
+//Author: Alex King
+//Last Modified: 9/12/18
+//This program take text input from the user and says whether or not it's a palindrome. It uses character arrays and converts all letters to lowercase and removes any other characters.
+//then it checks whether the character array is the same backwards and forwards. 
 
-#include "LinearRegression.h"
-
-LinearRegression::LinearRegression(const unsigned int &_size) {
-	size = _size;
-	Sx = 0;
-	Sxx = 0;
-	for (unsigned int i = 1; i<=size; i++){
-		Sx += i;
-		Sxx += (i*i);
-	}
-}
-
-/*
- * Applies linear regression on the elements of the long long array buffer x_0 to x_{n-1} and
- * returns the prediction for x_n
- */
-long long LinearRegression::apply(const long long *buffer) {
-	Sy = 0;
-	Syy = 0;
-	Sxy = 0;
-	for (unsigned int i = 0; i<size; i++){
-		Sy += buffer[i];
-		Syy += (buffer[i] * buffer[i]);
-		Sxy += (i+1) * buffer[i];
-	}
-
-	double a = (double)(size * Sxy - Sx * Sy) / (double)(size * Sxx - Sx * Sx);
-	double b = (double)(Sy - a * Sx) / (double)size;
-
-	// y = ax + b, return y for x = size + 1
-	return a * (size+1) + b;
-}
-
-LinearRegression::~LinearRegression() {
-
-}
-
-/*
-// Testing program - usage
 #include <iostream>
+#include <cstring>
+
 using namespace std;
-int main() {
-	LinearRegression *l = new LinearRegression(10);
-	long long buffer[10] = {24,23,25,32,19,27,167,34,26,24};
 
+main() {
+  char input[81];
+  char rvString[81];
+  while(true) {
+    cout << "Please enter no more than 80 characters of text ";
+    cin.get(input, 81);
+    while(cin.get() != '\n'); //eats characters until a return is reached, eats the return then stops
+    char string[81];
+    int j = 0;
+    for(int i = 0; i < strlen(input) + 1; i++) { //steps the number of time of the length of input + 1 for the null terminating character
+      //friend: Nathan class: C++ Programming 5
+      //I am using their idea to check what type of character a character is using ASCII ranges
+      //This code checks whether a character is a capital or lowercase letter
+      if(input[i] >= 65 && input[i] <= 90) { // it's a capital letter 
+	string[j] = input[i] + 32; //converts the letter into a lowercase before copying it over into string
+	j++;
+      } else if (input[i] >= 97 && input[i] <= 122) { //it's a lowercase letter
+	string[j] = input[i];
+	j++;
+	//End of code where I used idea
+      } else if (input[i] == '\0') { // it's a null terminating character
+	string[j] = input[i];
+      }
+    }
+    for (int i = 0; i < strlen(string); i++) { //copy the character array into another character array backwards, leaving out the null terminating character 
+	rvString[strlen(string) - 1 - i] = string[i];
+      }
+    rvString[strlen(string)] = '\0';
+    //parent: Steve
+    //I am using their idea to use check if a character array is empty and to do it with strlen
+    //The code (part of next line) checks if a character array is empty
+    if(strcmp(string, rvString) != 0 || strlen(string) == 0) { //check if the character array and the reverse character array are not the same, and if the character array is empty
+      //End of code where idea is used
+      cout << "not a palindrome" << "\n";
+    } else {
+      cout << "palindrome" << "\n";
+    }
+		      
+  }
 
-	for (unsigned int i = 0; i<10; i++) {
-		cout << buffer[i] << " ";
-	}
-	cout << endl;
-	long long pred = l->apply(buffer);
-	cout << pred << endl;
-	assert(pred == 56);
-	return 0;
 }
-*/

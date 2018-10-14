@@ -1,976 +1,293 @@
-/*
- Copyright 2017 - 2018 Navigator Data (Pty) Ltd
-
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
- http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
-*/
-
-#include <stdio.h>
+#include <iostream>
 #include <stdlib.h>
-#include <string.h>
-#include "logging/logging.hpp"
-#include "linked-list.hpp"
+#include <math.h>
+#include <fstream>
+#include <sstream>
+#include <string>
 
-#define TRACE_ENABLED 0
-#define DEBUG_ENABLED 0
+using namespace std;
 
-LinkedList::LinkedList(NavDBClientLogger* logger)
+class Classfic
 {
-    this->logger = logger;
-}
+private:
+    string gender;
+    float weight, height;
+    string _class;
 
-// Linked list new/delete functions
+public:
+    void SetGender(string A)
+    {gender=A;}
+    void SetHeight(float q)
+    {height=q;}
+    void SetWeight(float t)
+    {weight=t;}
+    void SetClass(string B)
+    {_class=B;}
 
-int LinkedList::create(unsigned int data_copy_type)
+    string GetGender()
+    {return gender;}
+    float GetHeight()
+    {return height;}
+    float GetWeight()
+    {return weight;}
+    string GetClass()
+    {return _class;}
+};
+
+class MeanVar
 {
-    data = (linked_list_data_struct*)malloc(sizeof(struct linked_list_data_struct));
-    if (data == NULL)
+private:
+    float htmean, htvar;
+    float wtmean, wtvar;
+public:
+    MeanVar()
     {
-        EPRINT(logger,
-               EPRINT_ERROR__FAILED,
-               "malloc");
-        return RET_ERROR;
+        htmean=0;htvar=0;wtmean=0;wtvar=0;
     }
-    memset(data, 0, sizeof(struct linked_list_data_struct));
+    void SetHtMean(float q)
+    {htmean=q;}
+    void SetHtVar(float t)
+    {htvar=t;}
+    void SetWtMean(float p)
+    {wtmean=p;}
+    void SetWtVar(float v)
+    {wtvar=v;}
 
-    data->count = 0;
-    data->data_copy_type = data_copy_type;
-    first = NULL;
-    last = NULL;
+    float GetHtMean()
+    {return htmean;}
+    float GetHtVar()
+    {return htvar;}
+    float GetWtMean()
+    {return wtmean;}
+    float GetWtVar()
+    {return wtvar;}
+};
 
-    return RET_OK;
-}
+MeanVar Under, Normal, Over;
 
-int LinkedList::destroy(bool delete_data)
+void CalculateMean(Classfic cal[], int limit);
+float CalculateVar(float mean, Classfic _data[], string _classed, int total, int totalloop, char ch);
+float Probab(float ht, float wt, char cht);
+void ResultMain(float, float, float, float, float, float);
+
+int main()
 {
-    TPRINT(logger, "");
-    if (delete_all_nodes(delete_data) == RET_ERROR)
+    Classfic Buildd[62];
+	string input_file_name;
+	int COUNTER=0;
+	float UnderWeightProb, NormalWeightProb, OverWeightProb;
+	float UnderWtCon, NormalWtCon, OverWtCon;
+	float UserINPUTHt, UserINPUTWt;
+
+	cout << "Give name of input file : ";
+	cin >> input_file_name;
+
+	ifstream input_stream(input_file_name.c_str());
+
+	if(input_stream == '\0')
     {
-        EPRINT(logger,
-               EPRINT_ERROR__FAILED,
-               "");
-        return RET_ERROR;
-    }
-
-    TPRINT(logger, "");
-    free(data);
-    data = NULL;
-
-    TPRINT(logger, "");
-    return RET_OK;
-}
-
-// Linked list navigation functions
-
-LinkedListNode* LinkedList::get_first()
-{
-    return first;
-}
-
-LinkedListNode* LinkedList::get_last()
-{
-    return last;
-}
-
-bool LinkedList::loop_start_to_end(LinkedListNode** node)
-{
-    if (get_count() == 0)
-    {
-        return false;
-    }
-
-    if (*node == NULL)
-    {
-        *node = first;
-    } else
-    {
-        *node = (*node)->get_next();
-    }
-
-    if (*node != NULL)
-    {
-        return true;
-    }
-
-    return false;
-}
-
-bool LinkedList::loop_end_to_start(LinkedListNode** node)
-{
-    if (get_count() == 0)
-    {
-        return false;
+        cout<<"Could not open file";
+        exit(0);
     }
 
-    if (*node == NULL)
+    string tempt[4];
+	string buffer;
+    string line;
+
+    while(getline(input_stream,line))
     {
-        *node = last;
-    } else
-    {
-        *node = (*node)->get_prev();
-    }
+        int countme=0;
+        stringstream  lineStream(line);
+        string        cell;
 
-    if (*node != NULL)
-    {
-        return true;
-    }
-
-    return false;
-}
-
-// Linked list get functions
-
-size_t LinkedList::get_count()
-{
-    return data->count;
-}
-
-int LinkedList::get_index_by_node(bool* found,
-                                  size_t* ret_index,
-                                  LinkedListNode* linked_list_node)
-{
-    // Start at the linked list's first node
-    LinkedListNode* lle = first;
-
-    *found = false;
-    *ret_index = 0;
-    size_t index = 0;
-    while (lle != NULL)
-    {
-        // Test node
-        if (lle == linked_list_node)
+        while(getline(lineStream,cell,','))
         {
-            *found = true;
-            *ret_index = index;
-            return RET_OK;
+            tempt[countme]=cell;
+            countme++;
         }
-
-        // Go to the next node
-        lle = lle->get_next();
-        index++;
-    }
-
-    return RET_OK;
-}
-
-int LinkedList::get_node_by_index(bool* found,
-                                  LinkedListNode** linked_list_node,
-                                  size_t get_index)
-{
-    // Start at the linked list's first node
-    LinkedListNode* lle = first;
-
-    *found = false;
-    size_t index = 0;
-    *linked_list_node = NULL;
-    while (lle != NULL)
-    {
-        // Test node
-        DPRINT(logger,
-               "if (index: %llu == get_index: %llu)",
-               index,
-               get_index);
-
-        if (index == get_index)
+        if(COUNTER>0)
         {
-            *found = true;
-            *linked_list_node = lle;
-            return RET_OK;
+            Buildd[COUNTER].SetGender(tempt[0]);
+            Buildd[COUNTER].SetHeight(atof(tempt[1].c_str()));
+            Buildd[COUNTER].SetWeight(atof(tempt[2].c_str()));
+            Buildd[COUNTER].SetClass(tempt[3]);
         }
-
-        // Go to the next node
-        lle = lle->get_next();
-        index++;
+        COUNTER++;
     }
 
-    return RET_OK;
+    //Proir
+    int CU=0, CN=0, CO=0;
+    for(int i=1; i<=COUNTER; i++)
+    {
+       // cout<<Buildd[i].GetClass();
+        if(Buildd[i].GetClass()=="underweight")
+                CU++;
+        else if(Buildd[i].GetClass()=="normal")
+            CN++;
+        else if(Buildd[i].GetClass()=="overweight")
+            CO++;
+        else
+        {}
+    }
+    UnderWeightProb=float(CU)/60;
+    NormalWeightProb=float(CN)/60;
+    OverWeightProb=float(CO)/60;
+    //PriorEnd
+
+    CalculateMean(Buildd, COUNTER);
+
+    input_stream.close();
+    cout<<"Success";
+    //MOCK_DATA.csv
+    //Main Program
+    cout<<"Enter Height";
+    cin>>UserINPUTHt;
+    cout<<"Enter Weight";
+    cin>>UserINPUTWt;
+
+    UnderWtCon= Probab(UserINPUTHt, UserINPUTWt, 'u');
+    NormalWtCon= Probab(UserINPUTHt, UserINPUTWt, 'n');
+    OverWtCon= Probab(UserINPUTHt, UserINPUTWt, 'o');
+
+    //nowthefinaaley
+    ResultMain(UnderWeightProb, NormalWeightProb, OverWeightProb, UnderWtCon, NormalWtCon, OverWtCon);
+
+	return 0;
 }
 
-LinkedListNode* LinkedList::get_node_by_index(size_t get_index)
+void ResultMain(float a, float b, float c, float x, float y, float z)
 {
-    LinkedListNode* node = NULL;
-    bool found = false;
+    float tmpUnder, tmpNormal, tmpOver;
 
-    if (get_node_by_index(&found,
-                          &node,
-                          get_index) == RET_ERROR)
-    {
-        EPRINT(logger,
-               EPRINT_ERROR__FAILED,
-               "");
-        return NULL;
-    }
-
-    return node;
+    float total=0;
+    total=(a*x)+(b*y)+(c*z);
+    tmpUnder=(a*x)/total;
+    tmpNormal=(b*y)/total;
+    tmpOver=(c*z)/total;
+    cout<<tmpNormal;
+    cout<<tmpOver;
+    cout<<tmpUnder;
+  /*  if(tmpUnder > tmpOver && tmpUnder > tmpNormal)
+        cout<<"It is underweight";
+    else if(tmpOver > tmpNormal)
+        cout<<"It is overweight";
+    else
+        cout<<"It is underweight";*/
 }
 
-int LinkedList::get_first_index_by_data_ref(bool* found,
-                                            size_t* index,
-                                            LinkedListNode* linked_list_node,
-                                            void* data)
+float Probab(float UserINPUTHt,float UserINPUTWt, char cht)
 {
-    // Cannot get a non-ref linked list by ref
-    if (this->data->data_copy_type != DATA_COPY_REF)
+    float meanht, varianceht, meanwt, variancewt;
+    if(cht=='u')
     {
-        EPRINT(logger,
-               EPRINT_ERROR__UNEXPECTED_CONDITION,
-               "cannot get a non-ref linked list by ref");
-        return RET_ERROR;
+        meanht=Under.GetHtMean();
+        varianceht=Under.GetHtVar();
+        meanwt=Under.GetWtMean();
+        variancewt=Under.GetWtVar();
     }
-
-    // Start at the linked list's first node
-    LinkedListNode* lle = first;
-
-    *found = false;
-    *index = 0;
-    linked_list_node = NULL;
-    while (lle != NULL)
+    else if(cht=='n')
     {
-        // Test node
-        if (lle->get_data() == data)
+        meanht=Normal.GetHtMean();
+        varianceht=Normal.GetHtVar();
+        meanwt=Normal.GetWtMean();
+        variancewt=Normal.GetWtVar();
+    }
+    else if(cht=='o')
+    {
+        meanht=Over.GetHtMean();
+        varianceht=Over.GetHtVar();
+        meanwt=Over.GetWtMean();
+        variancewt=Over.GetWtVar();
+    }
+    else{}
+
+    cout<<Normal.GetHtMean()<<endl;
+    cout<<Normal.GetHtVar()<<endl;
+    cout<<Normal.GetWtMean()<<endl;
+    cout<<Normal.GetWtVar()<<endl;
+    cout<<Over.GetHtMean()<<endl;
+    cout<<Over.GetHtVar()<<endl;
+    cout<<Over.GetWtMean()<<endl;
+    cout<<Over.GetWtVar()<<endl;
+    cout<<Under.GetHtMean()<<endl;
+    cout<<Under.GetHtVar()<<endl;
+    cout<<Under.GetWtMean()<<endl;
+    cout<<Under.GetWtVar()<<endl;
+
+    float PHt=exp(-0.5f * float((pow((UserINPUTHt-meanht),2))/varianceht));
+    float PWt=exp(-0.5f * float((pow((UserINPUTWt-meanht),2))/variancewt));
+    float RPHt=pow((2 * 3.14159f * varianceht), -0.5f);
+    float RPWt=pow((2 * 3.14159f * variancewt), -0.5f);
+    float tmp = PHt * RPHt * PWt * RPWt;
+
+    return tmp;
+}
+
+void CalculateMean(Classfic A[], int limit)
+{
+    int CU=0, CN=0, CO=0;
+    float SUh=0, SNh=0, SOh=0;
+    float SUw=0, SNw=0, SOw=0;
+    for(int i=1; i<=limit; i++)
+    {
+        if(A[i].GetClass()=="underweight")
         {
-            *found = true;
-            linked_list_node = lle;
-            return RET_OK;
+            CU++;
+            SUh+=A[i].GetHeight();
+            SUw+=A[i].GetWeight();
         }
-
-        // Go to the next node
-        lle = lle->get_next();
-        (*index)++;
-    }
-
-    return RET_OK;
-}
-
-int LinkedList::get_first_index_by_data_value(bool* found,
-                                              size_t* index,
-                                              LinkedListNode* linked_list_node,
-                                              void* data)
-{
-    // Cannot get a non-value linked list by value
-    if (this->data->data_copy_type != DATA_COPY_VALUE)
-    {
-        EPRINT(logger,
-               EPRINT_ERROR__UNEXPECTED_CONDITION,
-               "cannot get a non-value linked list by value");
-        return RET_ERROR;
-    }
-
-    // Start at the linked list's first node
-    LinkedListNode *lle = first;
-
-    *found = false;
-    *index = 0;
-    linked_list_node = NULL;
-    while (lle != NULL)
-    {
-        // Test node
-        if (memcmp(lle->get_data(),
-                   data,
-                   lle->get_size()) == 0)
+        else if(A[i].GetClass()=="normal")
         {
-            *found = true;
-            linked_list_node = lle;
-            return RET_OK;
+            CN++;
+            SNh+=A[i].GetHeight();
+            SNw+=A[i].GetWeight();
         }
-
-        // Go to the next node
-        lle = lle->get_next();
-        (*index)++;
-    }
-
-    return RET_OK;
-}
-
-// Linked list add/set functions
-
-int LinkedList::add_node_with_data_ref(char** data,
-                                       size_t size,
-                                       bool delete_data)
-{
-    // Cannot add non-ref data to a ref-type linked list
-    if (this->data->data_copy_type != DATA_COPY_REF)
-    {
-        EPRINT(logger,
-               EPRINT_ERROR__UNEXPECTED_CONDITION,
-               "cannot add non-ref data to a ref-type linked list");
-        return RET_ERROR;
-    }
-
-    if (data != NULL)
-    {
-        DPRINT(logger,
-               "data: %p",
-               *data);
-    }
-
-    // Allocate new memory and setup new node
-    LinkedListNode* new_node = new LinkedListNode(delete_data);
-    if (new_node == NULL)
-    {
-        EPRINT(logger,
-               EPRINT_ERROR__FAILED,
-               "new");
-        return RET_ERROR;
-    }
-
-    if (data != NULL)
-    {
-        new_node->set_data_ref(*data,
-                               size);
-    }
-
-    new_node->set_prev(last);
-
-    // Set the current last link node's next to point to the new node
-    DPRINT(logger,
-           "last: %p",
-           static_cast<void*>(last));
-    if (last != NULL)
-    {
-        DPRINT(logger,
-               "last: %p last->get_next(): %p new_node: %p",
-               static_cast<void*>(last),
-               static_cast<void*>(last->get_next()),
-               static_cast<void*>(new_node));
-        last->set_next(new_node);
-    }
-
-    // Set linked list's first node to the new node if this is the very first node
-    if (this->data->count == 0)
-    {
-        first = new_node;
-    }
-
-    // Append means the new node is the last node
-    last = new_node;
-
-    // Increase linked list count
-    this->data->count++;
-
-    return RET_OK;
-}
-
-int LinkedList::add_node_with_data_value(char** data,
-                                         size_t size,
-                                         bool delete_data)
-{
-    // Cannot add non-value data to a value-type linked list
-    if (this->data->data_copy_type != DATA_COPY_VALUE)
-    {
-        EPRINT(logger,
-               EPRINT_ERROR__UNEXPECTED_CONDITION,
-               "cannot add non-value data to a value-type linked list");
-        return RET_ERROR;
-    }
-
-    // Allocate new memory and setup new node
-    LinkedListNode* new_node = new LinkedListNode(delete_data);
-    new_node->set_data_value(*data,
-                             size);
-
-    new_node->set_prev(this->last);
-
-    // Set the current last link node's next to point to the new node
-    if (last != NULL)
-    {
-        last->set_next(new_node);
-    }
-
-    // Set linked list's first node to the new node if this is the very first node
-    if (this->data->count == 0)
-    {
-        first = new_node;
-    }
-
-    // Append means the new node is the last node
-    last = new_node;
-
-    // Increase linked list count
-    this->data->count++;
-
-    return RET_OK;
-}
-
-int LinkedList::add_unique_node_with_data_ref(bool* found,
-                                              char** data,
-                                              size_t size,
-                                              bool delete_data)
-{
-    // Cannot add a non-ref linked list by ref
-    if (this->data->data_copy_type != DATA_COPY_REF)
-    {
-        EPRINT(logger,
-               EPRINT_ERROR__UNEXPECTED_CONDITION,
-               "cannot add a non-ref linked list by ref");
-        return RET_ERROR;
-    }
-
-    size_t index = 0;
-    LinkedListNode* linked_list_node = NULL;
-
-    get_first_index_by_data_ref(found,
-                                &index,
-                                linked_list_node,
-                                data);
-
-    if (*found == true)
-    {
-        return RET_OK;
-    }
-
-    return add_node_with_data_ref(data,
-                                  size,
-                                  delete_data);
-}
-
-int LinkedList::add_unique_node_with_data_value(bool* found,
-                                                char** data,
-                                                size_t size,
-                                                bool delete_data)
-{
-    // Cannot get a non-value linked list by value
-    if (this->data->data_copy_type != DATA_COPY_VALUE)
-    {
-        EPRINT(logger,
-               EPRINT_ERROR__UNEXPECTED_CONDITION,
-               "cannot get a non-value linked list by value");
-        return RET_ERROR;
-    }
-
-    size_t index = 0;
-    LinkedListNode* linked_list_node = NULL;
-
-    get_first_index_by_data_value(found,
-                                  &index,
-                                  linked_list_node,
-                                  data);
-
-    if (*found == true)
-    {
-        return RET_OK;
-    }
-
-    return add_node_with_data_value(data,
-                                    size,
-                                    delete_data);
-}
-
-// Add nodes with the specified data until the index is reached (used for padding nodes)
-int LinkedList::add_with_data_ref_null_until_index(size_t index)
-{
-    while (data->count < index + 1)
-    {
-        if (add_node_with_data_ref(NULL,
-                                   0,
-                                   false) == RET_ERROR)
+        else if(A[i].GetClass()=="overweight")
         {
-            EPRINT(logger,
-                   EPRINT_ERROR__FAILED,
-                   "");
-            return RET_ERROR;
+             CO++;
+             SOh+=A[i].GetHeight();
+             SOw+=A[i].GetWeight();
         }
+        else
+        {}
     }
+    Under.SetHtMean(SUh/float(CU));
+    Under.SetHtVar(CalculateVar(Under.GetHtMean(), A, "underweight", CU, limit,'h'));
+    Under.SetWtMean(SUw/float(CU));
+    Under.SetWtVar(CalculateVar(Under.GetWtMean(), A, "underweight", CU, limit,'w'));
 
-    return RET_OK;
+    Normal.SetHtMean(SNh/float(CN));
+    Normal.SetHtVar(CalculateVar(Normal.GetHtMean(), A, "normal", CU, limit,'h'));
+    Normal.SetWtMean(SNw/float(CN));
+    Normal.SetWtVar(CalculateVar(Normal.GetWtMean(), A, "normal", CU, limit,'w'));
+
+    Over.SetHtMean(SOh/float(CO));
+    Over.SetHtVar(CalculateVar(Over.GetHtMean(), A, "overweight", CU, limit,'h'));
+    Over.SetWtMean(SOw/float(CO));
+    Over.SetWtVar(CalculateVar(Over.GetWtMean(), A, "overweight", CU, limit,'w'));
+    cout<<"Success";
 }
 
-// Add nodes with the specified data until the index is reached (used for padding nodes)
-int LinkedList::add_with_data_value_null_until_index(size_t index)
+float CalculateVar(float mean, Classfic _data[], string _classed, int total, int totalloop, char ch)
 {
-    while (data->count < index + 1)
+    float tempSum=0;
+    float temphold;
+    for(int i=1; i<=totalloop; i++)
     {
-        if (add_node_with_data_value(NULL,
-                                     0,
-                                     false) == RET_ERROR)
+        if(_data[i].GetClass()==_classed)
         {
-            EPRINT(logger,
-                   EPRINT_ERROR__FAILED,
-                   "");
-            return RET_ERROR;
-        }
-    }
-
-    return RET_OK;
-}
-
-int LinkedList::set_node_by_index_with_data_ref(size_t index,
-                                                char** data,
-                                                size_t size,
-                                                bool setting_add_with_data_value_null_until_index)
-{
-    // Cannot set a non-ref linked list by ref
-    if (this->data->data_copy_type != DATA_COPY_REF)
-    {
-        EPRINT(logger,
-               EPRINT_ERROR__UNEXPECTED_CONDITION,
-               "cannot set a non-ref linked list by ref");
-        return RET_ERROR;
-    }
-
-    // Add nodes until the given index is reached (if specified)
-    if (setting_add_with_data_value_null_until_index == true)
-    {
-        if (add_with_data_ref_null_until_index(index) == RET_ERROR)
-        {
-            EPRINT(logger,
-                   EPRINT_ERROR__FAILED,
-                   "add_with_data_ref_null_until_index");
-            return RET_ERROR;
-        }
-    }
-
-    bool found = false;
-    LinkedListNode* node = NULL;
-
-    // Look for the object id as an index
-    if (get_node_by_index(&found,
-                          &node,
-                          index) == RET_ERROR)
-    {
-        EPRINT(logger,
-               EPRINT_ERROR__FAILED,
-               "");
-        return RET_ERROR;
-    }
-
-    if (found == false)
-    {
-        EPRINT(logger,
-               EPRINT_ERROR__NOT_FOUND,
-               "");
-        return RET_ERROR;
-    }
-
-    // Set data and size
-    node->set_data_ref(*data,
-                       size);
-
-    return RET_OK;
-}
-
-int LinkedList::set_node_by_index_with_data_value(size_t index,
-                                                  char** data,
-                                                  size_t size,
-                                                  bool setting_add_with_data_value_null_until_index)
-{
-    // Cannot set a non-value linked list by value
-    if (this->data->data_copy_type != DATA_COPY_VALUE)
-    {
-        EPRINT(logger,
-               EPRINT_ERROR__UNEXPECTED_CONDITION,
-               "cannot set a non-value linked list by value");
-        return RET_ERROR;
-    }
-
-    // Add nodes until the given index is reached (if specified)
-    if (setting_add_with_data_value_null_until_index == true)
-    {
-        if (add_with_data_value_null_until_index(index) == RET_ERROR)
-        {
-            EPRINT(logger,
-                   EPRINT_ERROR__FAILED,
-                   "");
-            return RET_ERROR;
-        }
-    }
-
-    bool found = false;
-    LinkedListNode* node = NULL;
-
-    // Look for the object id as an index
-    if (get_node_by_index(&found,
-                          &node,
-                          index) == RET_ERROR)
-    {
-        EPRINT(logger,
-               EPRINT_ERROR__FAILED,
-               "");
-        return RET_ERROR;
-    }
-
-    if (found == false)
-    {
-        EPRINT(logger,
-               EPRINT_ERROR__NOT_FOUND,
-               "");
-        return RET_OK;
-    }
-
-    // Set data and size
-    node->set_data_value(*data,
-                         size);
-
-    return RET_OK;
-}
-
-
-int LinkedList::delete_node_unlink_and_free(LinkedListNode** linked_list_node,
-                                            size_t index)
-{
-    LinkedListNode* prev = (*linked_list_node)->get_prev();
-    LinkedListNode* next = (*linked_list_node)->get_next();
-
-    // Free the list node that has been deleted/unlinked
-    DPRINT(logger, "freeing node: %p (index: %llu) with prev: %p and next: %p",
-           static_cast<void*>(*linked_list_node),
-           index,
-           static_cast<void*>(prev),
-           static_cast<void*>(next));
-
-    delete *linked_list_node;
-    *linked_list_node = NULL;
-
-    if (prev != NULL)
-    {
-        prev->set_next(next);
-    }
-
-    if (next != NULL)
-    {
-        next->set_prev(prev);
-    }
-
-    if (index == 0)
-    {
-        first = next;
-    }
-
-    if (index + 1 == data->count)
-    {
-        last = prev;
-    }
-
-    return RET_OK;
-}
-
-// Linked list delete functions
-
-int LinkedList::delete_node_with_data_ref(void* data)
-{
-    // Cannot delete a non-ref linked list by ref
-    if (this->data->data_copy_type != DATA_COPY_REF)
-    {
-        EPRINT(logger,
-               EPRINT_ERROR__UNEXPECTED_CONDITION,
-               "cannot delete a non-ref linked list by ref");
-        return RET_ERROR;
-    }
-
-    // If there are no nodes in the linked list then return ok
-    if (this->data->count == 0)
-    {
-        return RET_OK;
-    }
-
-    // Start at the linked list's first node
-    LinkedListNode* lle_next = NULL;
-    LinkedListNode* lle = first;
-    size_t index = 0;
-    while (lle != NULL)
-    {
-        // Determine the next node before potentially deleting the current node
-        lle_next = lle->get_next();
-
-        // If the current list node matches the list node to delete the unlink the node to be deleted
-        if (lle->get_data() == data)
-        {
-            delete_node_unlink_and_free(&lle,
-                                        index);
-            lle = NULL;
-            this->data->count--;
-        }
-
-        // Set the current node to the next node
-        lle = lle_next;
-        index++;
-    }
-
-    return RET_OK;
-}
-
-int LinkedList::delete_node_with_data_value(void* data)
-{
-    // Cannot delete a non-value linked list by value
-    if (this->data->data_copy_type != DATA_COPY_VALUE)
-    {
-        EPRINT(logger,
-               EPRINT_ERROR__UNEXPECTED_CONDITION,
-               "cannot delete a non-value linked list by value");
-        return RET_ERROR;
-    }
-
-    // If there are no nodes in the linked list then return ok
-    if (this->data->count == 0)
-    {
-        return RET_OK;
-    }
-
-    // Start at the linked list's first node
-    LinkedListNode* lle_next = NULL;
-    LinkedListNode* lle = first;
-    size_t index = 0;
-
-    TPRINT(logger, "");
-    while (lle != NULL)
-    {
-        // Determine the next node before potentially deleting the current node
-        lle_next = lle->get_next();
-
-        // A size of zero should never happen
-        if (lle->get_size() == 0)
-        {
-            EPRINT(logger,
-                   EPRINT_ERROR__UNEXPECTED_CONDITION,
-                   "");
-            return RET_ERROR;
-        }
-
-        // If the current list node matches the list node to delete the unlink the node to be deleted
-        if (memcmp(lle->get_data(),
-                   data,
-                   lle->get_size()) == 0)
-        {
-            delete_node_unlink_and_free(&lle,
-                                        index);
-            lle = NULL;
-            this->data->count--;
-        }
-
-        // Set the current node to the next node
-        lle = lle_next;
-        index++;
-    }
-
-    return RET_OK;
-}
-
-int LinkedList::delete_node_by_index(bool* found,
-                                     size_t index)
-{
-    *found = false;
-    LinkedListNode* lle = NULL;
-
-    get_node_by_index(found,
-                      &lle,
-                      index);
-
-    if (*found == true)
-    {
-        delete_node_unlink_and_free(&lle,
-                                    index);
-        lle = NULL;
-        this->data->count--;
-    }
-
-    return RET_OK;
-}
-
-int LinkedList::delete_node_by_node(bool* found,
-                                    LinkedListNode** node)
-{
-    size_t index = 0;
-    if (get_index_by_node(found,
-                          &index,
-                          *node) == RET_ERROR)
-    {
-        EPRINT(logger,
-               EPRINT_ERROR__FAILED,
-               "get_index_by_node");
-        return RET_ERROR;
-    }
-
-    if (*found == false)
-    {
-        return RET_OK;
-    }
-
-    if (delete_node_by_index(found,
-                             index) == RET_ERROR)
-    {
-        EPRINT(logger,
-               EPRINT_ERROR__FAILED,
-               "");
-        return RET_ERROR;
-    }
-
-    return RET_OK;
-}
-
-int LinkedList::delete_all_nodes(bool delete_data)
-{
-    // Start at the linked list's first node
-    LinkedListNode* lle = first;
-    LinkedListNode* lle_next = NULL;
-
-    while (lle != NULL)
-    {
-        // Save the next node
-        lle_next = lle->get_next();
-
-        // Free this node
-        delete lle;
-        lle = NULL;
-
-        // Go to the next node
-        lle = lle_next;
-    }
-
-    this->data->count = 0;
-    this->first = NULL;
-    this->last = NULL;
-
-    return RET_OK;
-}
-
-// Linked list verify & print functions
-
-int LinkedList::verify()
-{
-    TPRINT(logger, "");
-    size_t index = 0;
-
-    // Verify that data is not null
-    if (data == NULL)
-    {
-        EPRINT(logger,
-               EPRINT_ERROR__IS_NULL,
-               "list data");
-        return RET_ERROR;
-    }
-
-    // Get the count
-    size_t count = data->count;
-
-    // Start at the linked list's first node
-    LinkedListNode* lle = first;
-    LinkedListNode* lle_prior = NULL;
-
-    while (lle != NULL)
-    {
-        DPRINT(logger,
-               "node: %p node-next: %p iteration: %llu",
-               static_cast<void*>(lle),
-               static_cast<void*>(lle->get_next()),
-               index);
-
-        // Check the prev node link
-        if (index > 0)
-        {
-            if (lle->get_prev() == NULL)
+            if(ch=='h')
             {
-                EPRINT(logger,
-                       EPRINT_ERROR__UNEXPECTED_CONDITION,
-                       "");
-                return RET_ERROR;
+                tempSum+= pow((_data[i].GetHeight() - mean),2.0);
             }
-        }
-
-        if (index == 1)
-        {
-            if (lle->get_prev() != first)
+            else
             {
-                EPRINT(logger,
-                       EPRINT_ERROR__UNEXPECTED_CONDITION,
-                       "");
-                return RET_ERROR;
+                tempSum+= pow((_data[i].GetWeight() - mean),2.0);
             }
+
         }
-
-        if (index + 1 == count)
-        {
-            if (lle->get_next() != NULL)
-            {
-                EPRINT(logger,
-                       EPRINT_ERROR__UNEXPECTED_CONDITION,
-                       "");
-                return RET_ERROR;
-            }
-        }
-
-        // Go to the next node and increment the index
-        lle_prior = lle;
-        lle = lle->get_next();
-        index++;
     }
+    temphold=tempSum/float(total);
 
-    if (lle_prior != last)
-    {
-        // The final node in the iteration: %p is not the list's last pointed to node
-        EPRINT(logger,
-               EPRINT_ERROR__UNEXPECTED_CONDITION,
-               "");
-        return RET_ERROR;
-    }
-
-    // Nodes iterated through: x but count is: y
-    if (index != count)
-    {
-        EPRINT(logger,
-               EPRINT_ERROR__UNEXPECTED_CONDITION,
-               "");
-        return RET_ERROR;
-    }
-
-    return RET_OK;
-}
-
-int LinkedList::print(bool print_data_as_strings)
-{
-    IPRINT(logger,
-           "count: %llu", data->count);
-
-    if (data->data_copy_type == DATA_COPY_REF)
-    {
-        IPRINT(logger,
-               "data_copy_type: DATA_COPY_REF");
-    } else
-    if (data->data_copy_type == DATA_COPY_VALUE)
-    {
-        IPRINT(logger,
-               "data_copy_type: DATA_COPY_VALUE");
-    } else {
-        IPRINT(logger,
-               "data_copy_type: %u (unknown)",
-               data->data_copy_type);
-    }
-
-    // Start at the linked list's first node
-    LinkedListNode* lle = first;
-    size_t index = 0;
-    while (lle != NULL)
-    {
-        // Print node details
-        IPRINT(logger,
-               "node index: %llu node: %p node->get_prev(): %p node->get_next(): %p with data: %p size: %llu",
-               index,
-               static_cast<void*>(lle),
-               static_cast<void*>(lle->get_prev()),
-               static_cast<void*>(lle->get_next()),
-               static_cast<void*>(lle->get_data()),
-               lle->get_size());
-
-        if (print_data_as_strings == true)
-        {
-            IPRINT(logger,
-                   " [%s]", lle->get_data());
-        }
-        TPRINT(logger, "");
-
-        // Go to the next node
-        lle = lle->get_next();
-        index++;
-    }
-
-    TPRINT(logger, "");
-    return RET_OK;
+    return temphold;
 }

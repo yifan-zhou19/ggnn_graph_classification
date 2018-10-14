@@ -1,37 +1,50 @@
-#include<cstdio>
-#include<cassert>
-#include<algorithm>
-#include<iostream>
-#include<string>
-#include<vector>
+#include <iostream>
+#include <vector>
+#include <queue>
+
 using namespace std;
 
-// factorials[i] = i!
-int factorials[12];
-// perm 이 [0..n-1] 의 permutation 일 때 사전순 번호를 반환한다. (0에서 시작)
-int getIndex(const vector<int>& perm) {
-	int ret = 0;
-	for(int i = 0; i < perm.size(); ++i) {
-		int less = 0;
-		for(int j = i+1; j < perm.size(); ++j) {
-			if(perm[j] < perm[i])
-				++less;
-		}
-		ret += factorials[perm.size()-i-1] * less;
-	}
-	return ret;
+template<typename CompT>
+void scan(vector<pair<int, int> > *g, bool *marked,
+          priority_queue<pair<int, int>, vector<pair<int, int> >, CompT> &pq, int s) {
+    marked[s] = true;
+    for (auto const &edge : g[s]) {
+        if (!marked[edge.second]) {
+            pq.push(edge);
+        }
+    }
 }
 
-int main() {
-	factorials[0] = 1;
-	for(int i = 1; i < 12; ++i)
-		factorials[i] = factorials[i-1] * i;
-	vector<int> a;
-	for(int i = 0; i < 8; ++i) a.push_back(i);
-	int x = 0;
-	do {
-		assert(getIndex(a) == x++);
-	} while(next_permutation(a.begin(), a.end()));
-	printf("checked %d permutations\n", x);
+template<typename CompT>
+int prim(vector<pair<int, int> > *g, bool *marked,
+         priority_queue<pair<int, int>, vector<pair<int, int> >, CompT> &pq, int s) {
+    int result = 0;
+    scan(g, marked, pq, s);
+    while (!pq.empty()) {
+        const pair<int, int> edge = pq.top();
+        pq.pop();
+        if (!marked[edge.second]) {
+            result += edge.first;
+            scan(g, marked, pq, edge.second);
+        }
+    }
+    return result;
+}
+
+int spanningTree(vector<pair<int, int> > g[], int MAX) {
+    auto cmp = [](pair<int, int> l, pair<int, int> r) { return l.first > r.first; };
+
+    priority_queue<pair<int, int>, vector<pair<int, int> >, decltype(cmp)> pq(cmp);
+    bool marked[MAX + 1];
+    for (int i = 1; i <= MAX; i++) {
+        marked[i] = false;
+    }
+
+    for (int i = 1; i <= MAX; i++) {
+        if (!g[i].empty()) {
+            return prim(g, marked, pq, i);
+        }
+    }
+
 }
 

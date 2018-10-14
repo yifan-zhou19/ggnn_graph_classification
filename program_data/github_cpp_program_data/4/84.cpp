@@ -1,222 +1,331 @@
-#include <iostream>
+/*######   Copyright (c) 2014-2015 Ufasoft  http://yupitecoin.com  mailto:support@yupitecoin.com,  Sergey Pavlov  mailto:dev@yupitecoin.com ####
+#                                                                                                                                     #
+# 		See LICENSE for licensing information                                                                                         #
+#####################################################################################################################################*/
 
-using namespace std;
+#include <el/ext.h>
 
-#define max(a, b) ((a) > (b) ? (a) : (b))
+#include "dblite.h"
+#include "b-tree.h"
+#include "hash-table.h"
 
-struct Node
+
+namespace Ext { namespace DB { namespace KV {
+
+HashTable::HashTable(DbTransactionBase& tx)
+	:	base(tx)
+	,	PageMap(tx)	
+	,	HtType(HashType::MurmurHash3)
+#ifdef X_DEBUG//!!!D
+	, MaxLevel(16)
+#else
+	,	MaxLevel(32)
+#endif
 {
-    int key, height;
-    Node *left, *right;
-    Node(int key): key(key), height(1), left(NULL), right(NULL) {}
-    ~Node() {
-        delete left;
-        delete right;
-    }
-};
-
-
-class AvlTree
-{
-private:
-    Node *root;
-
-    int height(Node *node) { return node ? node->height : 0; }
-    int balance_factor(Node *node) { return node ? height(node->left) - height(node->right) : 0; }
-    void update_height(Node *node) { node->height = 1 + max(height(node->left), height(node->right)); }
-    
-    Node* left_rotate(Node *x);
-    Node* right_rotate(Node *x);
-    Node* update_balance(Node *node);
-    Node* left_most_node(Node *node);
-
-    Node* __insert(Node *node, int key);
-    Node* __remove(Node *node, int key);
-public:
-    AvlTree();
-    ~AvlTree();
-    void insert(int key);
-    void remove(int key);
-};
-
-AvlTree::AvlTree()
-{
-    root = NULL;
+	ASSERT(MaxLevel <= 32);
 }
 
-AvlTree::~AvlTree()
-{
-    delete root;
+uint32_t HashTable::Hash(const ConstBuf& key) const {
+   	switch (HtType) {
+   	case HashType::MurmurHash3:
+   		return MurmurHash3_32(key, Tx.Storage.m_salt);
+	case HashType::Identity:
+	{
+		uint32_t r = 0;
+		for (size_t n=min(key.Size, size_t(4)), i=0; i<n; ++i)
+			r |= key.P[i] << 8*i;
+		return r;
+	}
+	case HashType::RevIdentity:
+		{
+			uint32_t r = 0;
+			for (size_t n=min(key.Size, size_t(4)), i=n; i--;)
+				r |= key.P[n-i-1] << 8*i;
+			return r;
+		}
+   	default:
+   		Throw(E_NOTIMPL);
+   	}
 }
 
-Node* AvlTree::left_rotate(Node *x)
-{
-    /*
-       x                               y
-     /  \                            /   \ 
-    s    y     Left Rotate(x)       x      z
-        /  \   - - - - - - - ->    / \    / \
-       t    z                     s   t  u   v
-           / \
-          u   v
-    */
-    Node *y = x->right;
-    Node *t = y->left;
-
-    x->right = t;
-    y->left = x;
-
-    update_height(x);
-    update_height(y);
-
-   return y; 
+int HashTable::BitsOfHash() const {
+	int r = 0;
+	if (uint64_t nPages = PageMap.Length/4)
+		r = BitOps::ScanReverse(uint32_t(nPages - 1));
+	return r;
 }
 
-Node* AvlTree::right_rotate(Node *x)
-{
-    /*
-           x                            y
-         /  \                         /   \ 
-        y    s   Right Rotate(x)     z      x
-       /  \      - - - - - - - ->   / \    / \
-      z    t                       v   u  t   s
-     / \
-    v   u
-    */
-    Node *y = x->left;
-    Node *t = y->right;
-
-    x->left = t;
-    y->right = x;
-
-    update_height(x);
-    update_height(y);
-
-   return y; 
+Page HashTable::TouchBucket(uint32_t nPage) {
+	Dirty = true;
+	uint64_t offset = uint64_t(nPage) * 4;
+	Page page = Tx.OpenPage(PageMap.GetUInt32(offset));
+	if (!page.Dirty)
+		PageMap.PutUInt32(offset, (page = dynamic_cast<DbTransaction&>(Tx).Allocate(PageAlloc::Move, &page)).N);
+	return page;
 }
 
-Node* AvlTree::update_balance(Node *node)
-{
-    int balance = balance_factor(node);
-
-    //left heavy
-    if(balance > 1)
-    {
-        //height(node->left->left) >= height(node->left->right)
-        if(balance_factor(node->left) >= 0)
-        {
-            node = right_rotate(node);
-        }
-        else
-        {
-            node->left = left_rotate(node->left);
-            node = right_rotate(node);
-        }
-    }
-    //right heavy
-    else if(balance < -1)
-    {
-        //height(node->right->right) >= height(node->right->left)
-        if(balance_factor(node->right) <= 0)
-        {
-            node = left_rotate(node);
-        }
-        else
-        {
-            node->right = right_rotate(node->right);
-            node = left_rotate(node);
-        }
-    }
-
-    return node;
+TableData HashTable::GetTableData() {
+	TableData r = base::GetTableData();
+	r.HtType = (byte)HtType;
+	r.RootPgNo = PageMap.PageRoot ? htole(PageMap.PageRoot.N) : 0;
+	r.PageMapLength = htole(PageMap.Length);
+	return r;
 }
 
-Node* AvlTree::left_most_node(Node *node)
-{
-    if(node == NULL || node->left == NULL) return node;
-    return left_most_node(node->left);
+uint32_t HashTable::GetPgno(uint32_t nPage) const {
+	uint64_t offset = uint64_t(nPage) * 4;	
+	return offset<PageMap.Length ? PageMap.GetUInt32(offset) : 0;
 }
 
-Node* AvlTree::__insert(Node *node, int key) 
+BTreeSubCursor::BTreeSubCursor(HtCursor& cHT)
+	:	m_btree(cHT.Ht->Tx)
 {
-    if(node == NULL) return new Node(key);
-
-    if(node->key == key) return node;
-
-    if(key < node->key)
-        node->left = __insert(node->left, key);
-    else
-        node->right = __insert(node->right, key);
-
-    update_height(node);
-    node = update_balance(node);
-    
-    return node;
-} 
-
-void AvlTree::insert(int key) 
-{
-    root = __insert(root, key);
+	SetMap(&m_btree);
+	m_btree.SetKeySize(cHT.Ht->KeySize);
+	m_btree.Root = cHT.m_pagePos.Page;
+	NPage = cHT.NPage;
 }
 
-Node* AvlTree::__remove(Node* node, int key)
+HtCursor::HtCursor(DbTransaction& tx, DbTable& table)
 {
-    if(node == NULL) return node;
-
-    if(node->key > key)
-        node->left = __remove(node->left, key);
-    else if(node->key < key)
-        node->right = __remove(node->right, key);
-    else
-    {
-        if(node->left == NULL && node->right == NULL)
-        {
-            Node *temp = node;
-            delete temp;
-            node = NULL;
-        }
-        else if(node->left == NULL || node->right == NULL)
-        {
-            Node *temp = node->left ? node->left : node->right;
-            *node = *temp;
-            delete temp;
-        }
-        else
-        {
-            Node *temp = left_most_node(node->right);
-            swap(node->key, temp->key);
-            node->right = __remove(node->right, key);
-        }
-    }
-
-    //deleted element with no child
-    if(node == NULL) 
-        return node;
-
-    update_height(node);
-    node = update_balance(node);
-
-    return node;
 }
 
-void AvlTree::remove(int key)
-{
-    root = __remove(root, key);
+
+bool HtCursor::SeekToFirst() {
+	for (uint64_t nPages=Ht->PageMap.Length/4, nPage=0; nPage<nPages; ++nPage) {
+		if (uint32_t pgno = Ht->GetPgno(NPage = (uint32_t)nPage)) {
+			Page page = Map->Tx.OpenPage(pgno);
+			if (page.Header().Num) {
+				m_pagePos = PagePos(page, 0);
+				Eof = false;
+				return Initialized = ClearKeyData();
+			}
+		}
+	}
+	return false;
 }
 
-int main(int argc, char const *argv[])
-{
-    AvlTree *tree = new AvlTree();
-    tree->insert(9);
-    tree->insert(5);
-    tree->insert(10);
-    tree->insert(0);
-    tree->insert(6);
-    tree->insert(11);
-    tree->insert(-1);
-    tree->insert(1);
-    tree->insert(2);
-
-    tree->remove(9);
-    return 0;
+bool HtCursor::SeekToLast() {
+	for (uint64_t nPage=Ht->PageMap.Length/4; nPage--;) {
+		if (uint32_t pgno = Ht->GetPgno(NPage = (uint32_t)nPage)) {
+			Page page = Map->Tx.OpenPage(pgno);
+			PageHeader& h = page.Header();
+			if (h.Num) {
+				m_pagePos = PagePos(page, h.Num-1);
+				Eof = true;
+				return Initialized = ClearKeyData();
+			}
+		}
+	}
+	return false;
 }
+
+bool HtCursor::SeekToSibling(bool bToRight) {
+	if (Ht->PageMap.Length == 0)
+		return false;
+	m_pagePos.Pos = 0;
+	if (bToRight) {
+		for (uint64_t nPages=Ht->PageMap.Length/4; ++NPage < nPages;)
+			if (uint32_t pgno = Ht->GetPgno(NPage))
+				if ((m_pagePos.Page = Map->Tx.OpenPage(pgno)).Header().Num)
+					return true;
+	} else {
+		while (NPage-- > 0)
+			if (uint32_t pgno = Ht->GetPgno(NPage))
+				if ((m_pagePos.Page = Map->Tx.OpenPage(pgno)).Header().Num)
+					return true;
+	}
+	m_pagePos.Page = nullptr;
+	return false;
+}
+
+bool HtCursor::SeekToNext() {
+	for (;; SubCursor = new BTreeSubCursor(_self)) {
+		if (SubCursor) {
+			if (SubCursor->SeekToNext())
+				return ClearKeyData();
+			SubCursor = nullptr;
+			m_pagePos.Pos = NumKeys(m_pagePos.Page);
+		}	
+		bool r = base::SeekToNext();
+		if (!r || !m_pagePos.Page.IsBranch)
+			return r;
+	}
+}
+
+bool HtCursor::SeekToPrev() {
+	for (;; SubCursor = new BTreeSubCursor(_self)) {
+		if (SubCursor) {
+			if (SubCursor->SeekToPrev())
+				return ClearKeyData();
+			SubCursor = nullptr;
+			m_pagePos.Pos = 0;
+		}
+		bool r = base::SeekToPrev();
+		if (!r || !m_pagePos.Page.IsBranch)
+			return r;
+	}
+}
+
+bool HtCursor::SeekToKeyHash(const ConstBuf& k, uint32_t hash) {
+	SubCursor = nullptr;
+	Initialized = ClearKeyData();
+	for (int level=Ht->BitsOfHash(); level>=0; --level) {
+		if (uint32_t pgno = Ht->GetPgno(NPage = hash & uint32_t((1LL << level)-1))) {				// converting to 1LL because int(1) << 32 == 1
+			PageHeader& h = (m_pagePos.Page = Ht->Tx.OpenPage(pgno)).Header();
+			if (h.Flags & PageHeader::FLAG_BRANCH) {
+				return (SubCursor = new BTreeSubCursor(_self))->SeekToKey(k);
+			} else {
+				pair<int, bool> pp = Map->EntrySearch(m_pagePos.Page.Entries(Ht->KeySize), h, k);
+				m_pagePos.Pos = pp.first;
+				return pp.second;
+			}
+		}
+	}
+	return false;
+}
+
+bool HtCursor::SeekToKey(const ConstBuf& k) {
+	return SeekToKeyHash(k, Ht->Hash(k));
+}
+
+void HtCursor::UpdateFromSubCursor() {
+	Ht->PageMap.PutUInt32(uint64_t(NPage)*4, (m_pagePos.Page = SubCursor->m_btree.Root).N);
+	Map->Dirty = true;
+}
+
+void HtCursor::Touch() {
+	if (SubCursor) {
+		SubCursor->Touch();
+		UpdateFromSubCursor();
+	} else {
+		m_pagePos.Page = Ht->TouchBucket(NPage);
+	}
+}
+
+void HashTable::Split(uint32_t nPage, int level) {
+	uint32_t nPageNew = (1 << level) | nPage;
+	ASSERT(nPageNew != nPage);
+	Page page = TouchBucket(nPage);
+	Page pageNew = dynamic_cast<DbTransaction&>(Tx).Allocate(PageAlloc::Leaf);
+	PageMap.PutUInt32(uint64_t(nPageNew)*4, pageNew.N);
+	uint32_t mask = uint32_t(1LL << (level+1))-1;
+	byte bitMask = 0;
+	PageHeader& h = page.Header();
+	byte keyOffset = h.KeyOffset();
+	if (HtType==HashType::Identity && KeySize) {
+		if (h.Flags & PageHeader::FLAGS_KEY_OFFSET) {
+			bitMask = 1 << (level & 7);
+		} else if (level == 7)
+			bitMask = 0x80;										// Start to Cut Key Head
+	}
+	LiteEntry *entries = page.Entries(KeySize);
+	PageHeader& dh = pageNew.Header();
+	int off = (bitMask == 0x80) && keyOffset<KeySize ? 1 : 0;	//!!!  was: (bitMask == 0x80) && keyOffset<KeySize-1 ? 1 : 0
+	h.SetKeyOffset(byte(keyOffset + off));
+	dh.SetKeyOffset(h.KeyOffset());
+	byte *ps = h.Data,
+		 *pd = dh.Data;
+	for (int i=0; i<h.Num; ++i) {
+		LiteEntry& e = entries[i];
+		size_t size = e.Size() - off;
+		if ((*e.P & bitMask)
+			|| !bitMask && ((Hash(e.Key(KeySize)) & mask) != nPage))
+		{
+			memcpy(pd, e.P + off, size);
+			pd += size;
+			dh.Num++;
+		} else {
+			memmove(ps, e.P + off, size);
+			ps += size;
+		}
+	}
+	h.Num -= dh.Num;
+	page.ClearEntries();
+}
+
+bool HtCursor::UpdateImpl(const ConstBuf& k, const ConstBuf& d, bool bInsert) {
+	pair<size_t, bool> ppEntry = Map->GetDataEntrySize(k, d.Size);
+	size_t ksize = Map->KeySize ? Map->KeySize-m_pagePos.Page.Header().KeyOffset() : 1+k.Size;
+	size_t entrySize = GetEntrySize(ppEntry, ksize, d.Size);
+	if (m_pagePos.Page.SizeLeft(Map->KeySize) < entrySize) {
+		for (int level = BitOps::ScanReverse(NPage); level<Ht->MaxLevel; ++level) {
+			if (!Ht->GetPgno((1 << level) | NPage)) {
+				Ht->Split(NPage, level);
+				return false;
+			}
+		}
+		(SubCursor = new BTreeSubCursor(_self))->Put(k, d, bInsert);
+		UpdateFromSubCursor();
+		return true;
+	}
+	InsertImpHeadTail(ppEntry, k, d, d.Size, DB_EOF_PGNO);
+	return true;
+}
+
+void HtCursor::Update(const ConstBuf& d) {
+	if (SubCursor) {
+		SubCursor->Update(d);
+		UpdateFromSubCursor();
+	} else {
+		ConstBuf k = get_Key();
+		byte key[256];
+		memcpy(key, k.P, k.Size);
+		k = ConstBuf(key, k.Size);
+		Touch();
+		Delete();
+		if (!UpdateImpl(k, d, false)) {
+			uint32_t hash = Ht->Hash(k);
+			do {
+				SeekToKeyHash(k, hash);
+			} while (!UpdateImpl(k, d, false));	
+		}
+	}
+}
+
+void HtCursor::Delete() {
+	if (SubCursor) {
+		SubCursor->Delete();
+		UpdateFromSubCursor();
+	} else
+		base::Delete();
+}
+
+void HtCursor::Put(ConstBuf k, const ConstBuf& d, bool bInsert) {
+	if (Ht->PageMap.Length == 0) {
+		Ht->PageMap.PutUInt32(0, dynamic_cast<DbTransaction&>(Ht->Tx).Allocate(PageAlloc::Leaf).N);
+		Map->Dirty = true;
+	}
+	uint32_t hash = Ht->Hash(k);
+	bool bExists = SeekToKeyHash(k, hash);
+	if (SubCursor) {
+		SubCursor->Put(k, d, bInsert);
+		UpdateFromSubCursor();
+	} else {
+		if (bExists && bInsert)
+			throw DbException(ExtErr::DB_DupKey, nullptr);
+		Touch();
+		if (bExists)
+			Delete();
+		while (!UpdateImpl(k, d, bInsert))
+			SeekToKeyHash(k, hash);
+	}
+}
+
+void HtCursor::Drop() {
+	Filet& pageMap = Ht->PageMap;
+	if (pageMap.PageRoot) {
+		uint64_t len = pageMap.Length;
+		for (uint64_t i=0; i<len; i+=4) {
+			if (uint32_t pgno = pageMap.GetUInt32(i))
+				DeepFreePage(Ht->Tx.OpenPage(pgno));
+		}
+		pageMap.Length = 0;
+		pageMap.SetRoot(nullptr);
+		Map->Dirty = true;
+	}
+}
+
+
+}}} // Ext::DB::KV::
+

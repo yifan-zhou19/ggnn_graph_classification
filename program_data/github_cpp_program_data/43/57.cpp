@@ -1,85 +1,80 @@
-/* 
-** NetXMS - Network Management System
-** NetXMS Scripting Language Interpreter
-** Copyright (C) 2003-2015 Victor Kirhenshtein
-**
-** This program is free software; you can redistribute it and/or modify
-** it under the terms of the GNU Lesser General Public License as published by
-** the Free Software Foundation; either version 3 of the License, or
-** (at your option) any later version.
-**
-** This program is distributed in the hope that it will be useful,
-** but WITHOUT ANY WARRANTY; without even the implied warranty of
-** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-** GNU General Public License for more details.
-**
-** You should have received a copy of the GNU Lesser General Public License
-** along with this program; if not, write to the Free Software
-** Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-**
-** File: stack.cpp
-**
-**/
+#include<iterator>
+#include<iostream>
+#include<vector>
+using namespace std;
 
-#include "libnxsl.h"
+/*****************
 
-/**
- * Constructor
- */
-NXSL_Stack::NXSL_Stack()
-{
-   m_nStackSize = 128;
-   m_nStackPos = 0;
-   m_ppData = (void **)malloc(sizeof(void *) * m_nStackSize);
+桶排序：将值为i的元素放入i号桶，最后依次把桶里的元素倒出来。
+
+桶排序序思路：
+1. 设置一个定量的数组当作空桶子。
+2. 寻访序列，并且把项目一个一个放到对应的桶子去。
+3. 对每个不是空的桶子进行排序。
+4. 从不是空的桶子里把项目再放回原来的序列中。
+
+假设数据分布在[0，100)之间，每个桶内部用链表表示，在数据入桶的同时插入排序，然后把各个桶中的数据合并。
+
+*****************/
+
+
+const int BUCKET_NUM = 10;
+
+struct ListNode{
+	explicit ListNode(int i=0):mData(i),mNext(NULL){}
+	ListNode* mNext;
+	int mData;
+};
+
+ListNode* insert(ListNode* head,int val){
+	ListNode dummyNode;
+	ListNode *newNode = new ListNode(val);
+	ListNode *pre,*curr;
+	dummyNode.mNext = head;
+	pre = &dummyNode;
+	curr = head;
+	while(NULL!=curr && curr->mData<=val){
+		pre = curr;
+		curr = curr->mNext;
+	}
+	newNode->mNext = curr;
+	pre->mNext = newNode;
+	return dummyNode.mNext;
 }
 
-/**
- * Destructor
- */
-NXSL_Stack::~NXSL_Stack()
-{
-   free(m_ppData);
+
+ListNode* Merge(ListNode *head1,ListNode *head2){
+	ListNode dummyNode;
+	ListNode *dummy = &dummyNode;
+	while(NULL!=head1 && NULL!=head2){
+		if(head1->mData <= head2->mData){
+			dummy->mNext = head1;
+			head1 = head1->mNext;
+		}else{
+			dummy->mNext = head2;
+			head2 = head2->mNext;
+		}
+		dummy = dummy->mNext;
+	}
+	if(NULL!=head1) dummy->mNext = head1;
+	if(NULL!=head2) dummy->mNext = head2;
+	
+	return dummyNode.mNext;
 }
 
-/**
- * Push value to stack
- */
-void NXSL_Stack::push(void *pData)
-{
-   if (m_nStackPos >= m_nStackSize)
-   {
-      m_nStackSize += 64;
-      m_ppData = (void **)realloc(m_ppData, sizeof(void *) * m_nStackSize);
-   }
-   m_ppData[m_nStackPos++] = pData;
-}
-
-/**
- * Pop value from stack
- */
-void *NXSL_Stack::pop()
-{
-   if (m_nStackPos > 0)
-      return m_ppData[--m_nStackPos];
-   return NULL;
-}
-
-/**
- * Peek (get without removing) value from stack
- */
-void *NXSL_Stack::peek()
-{
-   if (m_nStackPos > 0)
-      return m_ppData[m_nStackPos - 1];
-   return NULL;
-}
-
-/**
- * Peek (get without removing) value from stack at given offset from top
- */
-void *NXSL_Stack::peekAt(int offset)
-{
-   if ((offset > 0) && (m_nStackPos > offset - 1))
-      return m_ppData[m_nStackPos - offset];
-   return NULL;
+void BucketSort(int n,int arr[]){
+	vector<ListNode*> buckets(BUCKET_NUM,(ListNode*)(0));
+	for(int i=0;i<n;++i){
+		int index = arr[i]/BUCKET_NUM;
+		ListNode *head = buckets.at(index);
+		buckets.at(index) = insert(head,arr[i]);
+	}
+	ListNode *head = buckets.at(0);
+	for(int i=1;i<BUCKET_NUM;++i){
+		head = Merge(head,buckets.at(i));
+	}
+	for(int i=0;i<n;++i){
+		arr[i] = head->mData;
+		head = head->mNext;
+	}
 }

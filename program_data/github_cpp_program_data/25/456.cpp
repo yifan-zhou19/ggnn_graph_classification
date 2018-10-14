@@ -1,39 +1,76 @@
-/*
- * Bubble Sort
- *
- */
+/*++
+Copyright (c) 2011 Microsoft Corporation
 
-#include <iostream>
+Module Name:
 
-using namespace std;
+    permutation.cpp
 
-void swap(int *xp, int *yp);
-void printArray(int arr[], int size);
+Abstract:
 
-int bubbleSort(int arr[], int n) {
-    for (int i = 0; i < n-1; ++i)
-        for (int j = 0; j < n-i-1; ++j)
-            if (arr[j] > arr[j+1])
-                swap(&arr[j], &arr[j+1]);
-    printArray(arr, n);
+    Goodies for managing permutations.
+
+Author:
+
+    Leonardo de Moura (leonardo) 2011-06-10.
+
+Revision History:
+
+--*/
+#include"permutation.h"
+
+permutation::permutation(unsigned size) {
+    reset(size);
 }
 
-void swap(int *xp, int *yp) {
-    int temp = *xp;
-    *xp = *yp;
-    *yp = temp;
+void permutation::reset(unsigned size) {
+    m_p.reset();
+    m_inv_p.reset();
+    for (unsigned i = 0; i < size; i++) {
+        m_p.push_back(i);
+        m_inv_p.push_back(i);
+    }
 }
 
-void printArray(int arr[], int size) {
-    for (int i=0; i < size; i++)
-        cout<<" "<<arr[i];
-    cout<<endl;
+void permutation::swap(unsigned i, unsigned j) {
+    unsigned i_prime = m_p[i];
+    unsigned j_prime = m_p[j];
+    std::swap(m_p[i], m_p[j]);
+    std::swap(m_inv_p[i_prime], m_inv_p[j_prime]); 
 }
 
-int main(int argc, char const *argv[]) {
-    int arr[] = {3,1,5,2,75,7,4,12,35,54,1,256,24,5736453,1,7};
-    int n = sizeof(arr) / sizeof(arr[0]);
-    cout<<"Bubble Sort => ";
-    bubbleSort(arr, n);
-    return 0;
+/**
+   \brief Move i after j.
+*/
+void permutation::move_after(unsigned i, unsigned j) {
+    if (i >= j)
+        return;
+    unsigned i_prime = m_p[i];
+    for (unsigned k = i; k < j; k++) {
+        m_p[k] = m_p[k+1];
+        m_inv_p[m_p[k]] = k;
+    }
+    m_p[j] = i_prime;
+    m_inv_p[i_prime] = j;
+    SASSERT(check_invariant());
+}
+
+void permutation::display(std::ostream & out) const {
+    unsigned n = m_p.size();
+    for (unsigned i = 0; i < n; i++) {
+        if (i > 0)
+            out << " ";
+        out << i << ":" << m_p[i];
+    }
+}
+
+bool permutation::check_invariant() const {
+    SASSERT(m_p.size() == m_inv_p.size());
+    unsigned n = m_p.size();
+    for (unsigned i = 0; i < n; i++) {
+        SASSERT(m_p[i] < n);
+        SASSERT(m_inv_p[i] < n);
+        SASSERT(m_p[m_inv_p[i]] == i);
+        SASSERT(m_inv_p[m_p[i]] == i);
+    }
+    return true;
 }

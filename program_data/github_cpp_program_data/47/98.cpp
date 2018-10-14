@@ -1,44 +1,75 @@
-#include "palindrome.hpp"
+#include <iostream>
 
-#include <cmath>
+using namespace std; 
 
-namespace rdp
+int main()
 {
-    std::uint64_t
-    largest_palindrome(std::uint8_t const factor_length)
+	int N, temp, num = 0; 
+	
+	cout<<"Ingrese el tamano del vector"<<endl;
+	cin >> N;
+	
+	int A[N]; 
+	
+	for (int i = 0; i < N; i++)
+	{
+		cout << "Ingrese el elemento " << i + 1 << endl; 
+		cin >> A[i]; 
+	}
+	
+	for (int i = 0; i < N; i++)
+	{ 
+	    for(int j = 0; j < N - 1; j++)
+	    {
+            if (A[j] > A[j+1])
+            {
+               temp = A[j];
+               A[j] = A[j+1];
+               A[j+1] = temp;
+            }
+	    }
+	}
+	
+	cout<< "El vector ordenado es" << endl;
+   	
+	for (int i = 0; i < N; i++)
     {
-        auto const lower_bound = static_cast<std::uint64_t>(std::pow(10.0f, factor_length - 1));
-        auto const upper_bound = static_cast<std::uint64_t>(std::pow(10.0f, factor_length)) - 1;
-        auto diagonal_x = upper_bound;
-        auto diagonal_y = upper_bound;
-
-        while (diagonal_x >= lower_bound && diagonal_y >= lower_bound)
-        {
-            auto x = diagonal_x;
-            auto y = diagonal_y;
-
-            do
-            {
-                if (is_palindrome(x * y))
-                {
-                    return x * y;
-                }
-
-                ++x;
-                --y;
-            }
-            while (x <= upper_bound && y >= lower_bound);
-
-            if (diagonal_x == diagonal_y)
-            {
-                --diagonal_y;
-            }
-            else
-            {
-                --diagonal_x;
-            }
-        }
-
-        return 0;
+       	cout << A[i] <<"   ";
     }
+	cout << endl;
+	
+	cout << "Ingrese un numero para buscar: " << endl; 
+	cin >> num; 
+	
+	num = num; 
+	
+	int first, middle, last; 
+	
+	first = 0; 
+   	last = N - 1; 
+    
+	while (first <= last)
+	{
+		middle = (first + last) / 2; 
+		
+		if (A[middle] == num)
+		{
+			cout << num << " fue encontrado en la posicion " << middle + 1 << endl; 
+			break; 
+		}
+		else if (A[middle] < num)
+		{
+			first = middle + 1; 
+		}		
+		else if (A[middle] > num)
+		{
+			last = middle - 1; 
+		}
+	}
+	if (first > last)
+	{
+		cout << num << " no fue encontrado en la serie de numeros ingresados " << endl; 
+	}
+     
+	return 0;
 }

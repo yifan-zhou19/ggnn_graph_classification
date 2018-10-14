@@ -1,158 +1,280 @@
-package edu.uci.ics.jung.algorithms.shortestpath;
 
-import com.google.common.graph.MutableNetwork;
-import com.google.common.graph.MutableValueGraph;
-import com.google.common.graph.Network;
-import com.google.common.graph.NetworkBuilder;
-import com.google.common.graph.ValueGraph;
-import com.google.common.graph.ValueGraphBuilder;
-import edu.uci.ics.jung.algorithms.util.MapBinaryHeap;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
 
-/**
- * Creates a minimum spanning tree of a specified graph using a variation of Prim's algorithm.
- *
- * <p>The input graph is treated as though it were undirected, and the generated spanning tree is
- * undirected.
- *
- * @author Tom Nelson - tomnelson@dev.java.net
- * @author Joshua O'Madadhain
- * @param <N> the node type
- * @param <E> the edge type
- */
-public class MinimumSpanningTree<N, E> {
-  // TODO: consider providing a separate mechanism for extracting a spanning tree from an unweighted graph.
+package dataStructures;
 
-  /**
-   * Extracts a minimum spanning forest from {@code graph} based on the specified edge weights. (If
-   * {@code graph} is connected, then the graph returned will be a tree.)
-   *
-   * <p>Uses Prim's algorithm with a binary heap, for a run time of O(|E| log |V|).
-   *
-   * @param graph the graph from which to extract the minimum spanning forest
-   * @param edgeWeights a mapping from edges to weights
-   */
-  public static <N, E> Network<N, E> extractFrom(
-      Network<N, E> graph, Function<? super E, Double> edgeWeights) {
-    Set<N> remainingNodes = new HashSet<>(graph.nodes());
-    Map<N, NodeData<E>> nodeData = new HashMap<>();
-    // initialize node data
-    for (N node : remainingNodes) {
-      nodeData.put(node, new NodeData<>());
-    }
-    MapBinaryHeap<N> heap =
-        new MapBinaryHeap<>((a, b) -> Double.compare(nodeData.get(a).cost, nodeData.get(b).cost));
-    heap.addAll(remainingNodes);
+import java.util.*;
 
-    // TODO: it seems unfortunate that this is a directed graph, but our libraries
-    // (e.g. TreeLayout) assume that it is one.  Consider other options:
-    // * let the user specify whether to create a directed or undirected graph
-    // * let TreeLayout (etc.) handle undirected graphs (given a root set)
-    MutableNetwork<N, E> tree =
-        NetworkBuilder.directed().build(); // no self-loops or parallel edges
+public class SkipList implements Dictionary
+{
+   // top-level nested class
+   protected static class SkipNode
+   {
+      // data members
+      protected Comparable key;
+      protected Object element;
+      protected SkipNode [] next;
 
-    while (!remainingNodes.isEmpty()) {
-      N node = heap.poll(); // remove the node with the minimum incident edge cost
-      remainingNodes.remove(node);
-      E edge = nodeData.get(node).connection;
-      if (edge == null) {
-        tree.addNode(node);
-      } else {
-        tree.addEdge(graph.incidentNodes(edge).adjacentNode(node), node, edge);
+      // constructor
+      protected SkipNode(Object theKey, Object theElement, int size)
+      {
+         key = (Comparable) theKey;
+         element = theElement;
+         next = new SkipNode [size];
       }
-      for (N adjacentNode : graph.adjacentNodes(node)) {
-        if (!remainingNodes.contains(adjacentNode)) {
-          continue;
-        }
-        NodeData<E> adjacentNodeData = nodeData.get(adjacentNode);
-        for (E connectingEdge : graph.edgesConnecting(node, adjacentNode)) {
-          double connectingEdgeWeight = edgeWeights.apply(connectingEdge);
-          if (connectingEdgeWeight < adjacentNodeData.cost) {
-            adjacentNodeData.update(connectingEdgeWeight, connectingEdge);
-            heap.update(adjacentNode);
-          }
-        }
+   }
+
+   // data members of SkipList
+   protected float prob;         // probability used to decide level number
+   protected int maxLevel;       // max permissible chain level
+   protected int levels;         // max current nonempty chain
+   protected int size;           // current number of elements
+   protected Comparable tailKey; // a large key
+   protected SkipNode headNode;  // head node
+   protected SkipNode tailNode;  // tail node
+   protected SkipNode [] last;   // last node seen on each level
+   protected Random r;           // needed for random numbers
+
+   // constructor
+   /** create an empty skip list
+     * @param largekey used as key in tail node
+     * all elements must have a smaller key than this
+     * @param maxElements largest number of elements
+     * to be stored in the dictionary
+     * @param theProb probability that element on one
+     * level is also on the next level */
+   public SkipList(Comparable largeKey, int maxElements, float theProb)
+   {
+      prob = theProb;
+      maxLevel = (int) Math.round(Math.log(maxElements) / 
+                                  Math.log(1/prob)) - 1;
+      // size and levels have default initial value 0
+      tailKey = largeKey;
+   
+      // create head & tail nodes and last array
+      headNode = new SkipNode (null, null, maxLevel + 1);
+      tailNode = new SkipNode (tailKey, null, 0);
+      last = new SkipNode [maxLevel + 1];
+   
+      // headNode points to tailNode at all levels initially
+      for (int i = 0; i <= maxLevel; i++)
+          headNode.next[i] = tailNode;
+
+      r = new Random();  // initialize random number generator
+   }
+
+   // methods
+   /** @return true iff the skip list is empty */
+   public boolean isEmpty()
+       {return size == 0;}
+
+   /** @return current number of elements in the skip list */
+   public int size()
+      {return size;}
+
+   /** @return element with specified key
+     * @return null if there is no matching element */
+   public Object get(Object theKey)
+   {
+      if (tailKey.compareTo(theKey) <= 0)
+         return null;  // no matching element possible
+   
+      // position p just before possible node with theKey
+      SkipNode p = headNode;
+      for (int i = levels; i >= 0; i--)              // go down levels
+         while (p.next[i].key.compareTo(theKey) < 0) // follow level i
+            p = p.next[i];                           // pointers
+   
+      // check if next node has theKey
+      if (p.next[0].key.equals(theKey))
+         return p.next[0].element; 
+      return null;  // no matching element
+   }
+
+   /** search for theKey saving last nodes seen at each
+     * level in the array last
+     * @return node that might contain theKey */
+   SkipNode search(Object theKey)
+   {
+      // position p just before possible node with theKey
+      SkipNode p = headNode;
+      for (int i = levels; i >= 0; i--)
+      {
+         while (p.next[i].key.compareTo(theKey) < 0)
+            p = p.next[i];
+         last[i] = p;  // last level i node seen
       }
-    }
-    return tree;
-  }
+      return (p.next[0]);
+   }
 
-  /**
-   * Extracts a minimum spanning forest from {@code graph} using its edge values (interpreted as
-   * doubles). If {@code graph} is connected, then the graph returned will be a tree; otherwise it
-   * will be a forest of trees.
-   *
-   * <p>Uses Prim's algorithm with a binary heap, for a run time of {@code O(|E| log |V|)}.
-   *
-   * @param graph the graph from which to extract the minimum spanning forest
-   */
-  public static <N, V extends Number> ValueGraph<N, V> extractFrom(ValueGraph<N, V> graph) {
-    Set<N> remainingNodes = new HashSet<>(graph.nodes());
-    Map<N, NodeData<N>> nodeData = new HashMap<>();
-    // initialize node data
-    for (N node : remainingNodes) {
-      nodeData.put(node, new NodeData<>());
-    }
-    MapBinaryHeap<N> heap =
-        new MapBinaryHeap<>((a, b) -> Double.compare(nodeData.get(a).cost, nodeData.get(b).cost));
-    heap.addAll(remainingNodes);
-
-    MutableValueGraph<N, V> tree =
-        ValueGraphBuilder.directed().build(); // no self-loops or parallel edges
-
-    while (!remainingNodes.isEmpty()) {
-      N node = heap.peek(); // get the node with the minimum incident edge cost
-      remainingNodes.remove(node);
-      N connectedNode = nodeData.get(node).connection;
-      if (connectedNode == null) {
-        tree.addNode(node);
-      } else {
-        tree.putEdgeValue(
-            node,
-            connectedNode,
-            graph
-                .edgeValue(node, connectedNode)
-                .orElseThrow(
-                    () ->
-                        new IllegalStateException(
-                            "unexpected exception caused by bug in graph data structures")));
+   /** @return a random level number <= maxLevel */
+   int level()
+   {
+      int lev = 0;
+      while (r.nextFloat() <= prob)
+         lev++;
+      return (lev <= maxLevel) ? lev : maxLevel;
+   }
+   
+   /** insert an element with the specified key
+     * overwrite old element if there is already an
+     * element with the given key 
+     * @return old element (if any) with key theKey
+     * @throws IllegalArgumentException when
+     * theKey >= largeKey = tailKey */
+   public Object put(Object theKey, Object theElement)
+   {
+      if (tailKey.compareTo(theKey) <= 0) // key too large
+         throw new IllegalArgumentException("key is too large");
+      
+      // see if element with theKey already present
+      SkipNode p = search(theKey);
+      if (p.key.equals(theKey))
+      {// update p.element
+         Object elementToReturn = p.element;
+         p.element = theElement;
+         return elementToReturn;
       }
-      for (N adjacentNode : graph.adjacentNodes(node)) {
-        if (!remainingNodes.contains(adjacentNode)) {
-          continue;
-        }
-        NodeData<N> adjacentNodeData = nodeData.get(adjacentNode);
-        double connectingEdgeWeight =
-            graph
-                .edgeValue(node, adjacentNode)
-                .orElseThrow(
-                    () ->
-                        new IllegalStateException(
-                            "unexpected exception caused by bug in graph data structures"))
-                .doubleValue();
-        if (connectingEdgeWeight < adjacentNodeData.cost) {
-          adjacentNodeData.update(connectingEdgeWeight, node);
-          heap.update(adjacentNode);
-        }
+   
+      // not present, determine level for new node
+      int lev = level(); // level of new node
+      // fix lev to be <= levels + 1
+      if (lev > levels)
+      {
+         lev = ++levels;
+         last[lev] = headNode;
       }
-    }
-    return tree;
-  }
+   
+      // get and insert new node just after p
+      SkipNode y = new SkipNode (theKey, theElement, lev + 1);
+      for (int i = 0; i <= lev; i++)
+      {// insert into level i chain
+         y.next[i] = last[i].next[i];
+         last[i].next[i] = y;
+      }
+      size++;
+      return null;
+   }
 
-  // TODO: make this an AutoValue?
-  private static class NodeData<T> {
-    private double cost = Double.POSITIVE_INFINITY;
-    private T connection = null;
+   /** @return matching element and remove it
+     * @return null if no matching element */
+   public Object remove(Object theKey)
+   {
+      if (tailKey.compareTo(theKey) <= 0) // too large
+         return null;
+   
+      // see if matching element present
+      SkipNode p = search(theKey);
+      if (!p.key.equals(theKey)) // not present
+         return null;
+   
+      // delete node from skip list
+      for (int i = 0; i <= levels &&
+                      last[i].next[i] == p; i++)
+         last[i].next[i] = p.next[i];
+      
+      // update Levels
+      while (levels > 0 && headNode.next[levels] == tailNode)
+         levels--;
+      
+      size--;
+      return p.element;
+   }
+   
+   /** convert to a string */
+   public String toString()
+   {
+      StringBuffer s = new StringBuffer("["); 
 
-    private NodeData() {}
+      // follow level 0 chain
+      SkipNode currentNode = headNode.next[0];
+      if (currentNode != tailNode)
+      {// nonempty list
+         // do first element
+         s.append(currentNode.element.toString());
+         // do remaining elements
+         currentNode = currentNode.next[0];
+         while(currentNode != tailNode)
+         {
+            s.append(", " + currentNode.element.toString());
+            currentNode = currentNode.next[0];
+         }
+      }
+      s.append("]");
 
-    private void update(double cost, T connection) {
-      this.cost = cost;
-      this.connection = connection;
-    }
-  }
+      // create equivalent String
+      return new String(s);
+   }
+
+   /** create and return an iterator */
+   public Iterator iterator()
+      {return new SkipListIterator();}
+
+   /** sorted chain iterator */
+   private class SkipListIterator implements Iterator
+   {
+      // data member
+      private SkipNode nextNode;
+   
+      // constructor
+      public SkipListIterator()
+         {nextNode = headNode.next[0];}
+   
+      // methods
+      /** @return true iff list has more elements */
+      public boolean hasNext()
+         {return nextNode != tailNode;}
+   
+      /** @return next element in list
+        * @throws NoSuchElementException
+        * when if there is no next element */
+      public Object next()
+      {
+         if (nextNode != tailNode)
+         {
+            Object obj = nextNode.element;
+            nextNode = nextNode.next[0];
+            return obj;
+         }
+         else throw new NoSuchElementException("No next element");
+      }
+
+      /** unsupported method */
+      public void remove()
+      {
+         throw new UnsupportedOperationException
+                   ("remove not supported");
+      }   
+   }
+   
+   
+   /** test program */
+   public static void main(String [] args)
+   {
+      // test constructor
+      SkipList x = new SkipList(new Integer(1001), 100, (float) 0.5);
+
+      // test put
+      int n = 20;
+      for (int i = 1; i <= n; i++)
+         x.put(new Integer(2 * i), new Integer(i));
+      System.out.println("The list is");
+      System.out.println(x);
+
+      for (int i = 1; i <= n + 1; i++)
+         x.put(new Integer(2 * i - 1), new Integer(n + i));
+      System.out.println("The list is\n" + x);
+
+      // test get
+      System.out.println("element " + x.get(new Integer(1))
+                         + " has key 1");
+      System.out.println("element " + x.get(new Integer(2))
+                         + " has key 2");
+      System.out.println("element " + x.get(new Integer(6))
+                         + " has key 6");
+
+      // test remove
+      for (int i = 1; i <= n + 1; i++)
+         System.out.println("removed " + x.remove(new Integer(2 * i - 1)));
+      System.out.println("The list is\n" + x);
+   }
 }

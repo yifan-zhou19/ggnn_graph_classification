@@ -1,193 +1,411 @@
-#include <fstream>
-#include <iostream>
-#include <string>
+/*
+GRT MIT License
+Copyright (c) <2012> <Nicholas Gillian, Media Lab, MIT>
 
-#include "Heap.h"
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software 
+and associated documentation files (the "Software"), to deal in the Software without restriction, 
+including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, 
+and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, 
+subject to the following conditions:
 
-namespace Mrowka {
+The above copyright notice and this permission notice shall be included in all copies or substantial 
+portions of the Software.
 
-	Heap::Heap() {
-		this->_size = 0;
-		this->_heap = nullptr;
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT 
+LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
+
+#include "LogisticRegression.h"
+
+using namespace std;
+
+namespace GRT{
+
+//Register the LogisticRegression module with the Classifier base class
+RegisterRegressifierModule< LogisticRegression >  LogisticRegression::registerModule("LogisticRegression");
+
+LogisticRegression::LogisticRegression(const bool useScaling)
+{
+    this->useScaling = useScaling;
+    minChange = 1.0e-5;
+    maxNumEpochs = 500;
+    learningRate = 0.01;
+    classType = "LogisticRegression";
+    regressifierType = classType;
+    debugLog.setProceedingText("[DEBUG LogisticRegression]");
+    errorLog.setProceedingText("[ERROR LogisticRegression]");
+    trainingLog.setProceedingText("[TRAINING LogisticRegression]");
+    warningLog.setProceedingText("[WARNING LogisticRegression]");
+}
+
+LogisticRegression::~LogisticRegression(void)
+{
+}
+    
+LogisticRegression& LogisticRegression::operator=(const LogisticRegression &rhs){
+	if( this != &rhs ){
+        this->w0 = rhs.w0;
+        this->w = rhs.w;
+        
+        //Copy the base variables
+        copyBaseVariables( (Regressifier*)&rhs );
 	}
+	return *this;
+}
 
-	Heap::Heap(std::string path) {
-		std::fstream file;
-		int j, father, x;
-		file.open(path, std::ios::in);
-		
-		if (file.good()) {
-			std::cout << "Udalo sie otworzyc plik.\n";
-			file >> _size;
-			this->_heap = new int[_size];
+bool LogisticRegression::deepCopyFrom(const Regressifier *regressifier){
+    
+    if( regressifier == NULL ) return false;
+    
+    if( this->getRegressifierType() == regressifier->getRegressifierType() ){
+        const LogisticRegression *ptr = dynamic_cast<const LogisticRegression*>(regressifier);
+        
+        this->w0 = ptr->w0;
+        this->w = ptr->w;
+        
+        //Copy the base variables
+        return copyBaseVariables( regressifier );
+    }
+    return false;
+}
 
-			for (int i = 0; i < _size; ++i) {
-				file >> _heap[i];
-			}
-
-			for (int i = 1; i < _size; ++i) {
-				father = ((i + 1) / 2) - 1;
-				j = i;
-				x = _heap[i];
-
-				while (x > _heap[father] && father >= 0) {
-					_heap[j] = _heap[father];
-					_heap[father] = x;
-					j = father;
-					father = ((father + 1) / 2) - 1;
-				}
-			}
-		}
-		else {
-			std::cout << "Nie udalo sie otworzyc pliku.\n";
-		}
-
-		file.close();
+bool LogisticRegression::train_(RegressionData &trainingData){
+    
+    const unsigned int M = trainingData.getNumSamples();
+    const unsigned int N = trainingData.getNumInputDimensions();
+    const unsigned int K = trainingData.getNumTargetDimensions();
+    trained = false;
+    trainingResults.clear();
+    
+    if( M == 0 ){
+        errorLog << "train_(RegressionData trainingData) - Training data has zero samples!" << endl;
+        return false;
+    }
+    
+    if( K == 0 ){
+        errorLog << "train_(RegressionData trainingData) - The number of target dimensions is not 1!" << endl;
+        return false;
+    }
+    
+    numInputDimensions = N;
+    numOutputDimensions = 1; //Logistic Regression will have 1 output
+    inputVectorRanges.clear();
+    targetVectorRanges.clear();
+    
+    //Scale the training and validation data, if needed
+	if( useScaling ){
+		//Find the ranges for the input data
+        inputVectorRanges = trainingData.getInputRanges();
+        
+        //Find the ranges for the target data
+		targetVectorRanges = trainingData.getTargetRanges();
+        
+		//Scale the training data
+		trainingData.scale(inputVectorRanges,targetVectorRanges,0.0,1.0);
 	}
+    
+    //Reset the weights
+    Random rand;
+    w0 = rand.getRandomNumberUniform(-0.1,0.1);
+    w.resize(N);
+    for(UINT j=0; j<N; j++){
+        w[j] = rand.getRandomNumberUniform(-0.1,0.1);
+    }
 
-	Heap::~Heap() {
-		delete[] this->_heap;
-		this->_heap = nullptr;
-	}
+    double error = 0;
+    double lastSquaredError = 0;
+    double delta = 0;
+    UINT iter = 0;
+    bool keepTraining = true;
+    Random random;
+    vector< UINT > randomTrainingOrder(M);
+    TrainingResult result;
+    trainingResults.reserve(M);
+    
+    //In most cases, the training data is grouped into classes (100 samples for class 1, followed by 100 samples for class 2, etc.)
+    //This can cause a problem for stochastic gradient descent algorithm. To avoid this issue, we randomly shuffle the order of the
+    //training samples. This random order is then used at each epoch.
+    for(UINT i=0; i<M; i++){
+        randomTrainingOrder[i] = i;
+    }
+    std::random_shuffle(randomTrainingOrder.begin(), randomTrainingOrder.end());
+    
+    //Run the main stochastic gradient descent training algorithm
+    while( keepTraining ){
+        
+        //Run one epoch of training using stochastic gradient descent
+        totalSquaredTrainingError = 0;
+        for(UINT m=0; m<M; m++){
+            
+            //Select the random sample
+            UINT i = randomTrainingOrder[m];
+            
+            //Compute the error, given the current weights
+            VectorDouble x = trainingData[i].getInputVector();
+            VectorDouble y = trainingData[i].getTargetVector();
+            double h = w0;
+            for(UINT j=0; j<N; j++){
+                h += x[j] * w[j];
+            }
+            error = y[0] - sigmoid( h );
+            totalSquaredTrainingError += SQR(error);
+            
+            //Update the weights
+            for(UINT j=0; j<N; j++){
+                w[j] += learningRate * error * x[j];
+            }
+            w0 += learningRate * error;
+        }
+        
+        //Compute the error
+        delta = fabs( totalSquaredTrainingError-lastSquaredError );
+        lastSquaredError = totalSquaredTrainingError;
+        
+        //Check to see if we should stop
+        if( delta <= minChange ){
+            keepTraining = false;
+        }
+        
+        if( ++iter >= maxNumEpochs ){
+            keepTraining = false;
+        }
+        
+        if( grt_isinf( totalSquaredTrainingError ) || grt_isnan( totalSquaredTrainingError ) ){
+            errorLog << "train_(RegressionData &trainingData) - Training failed! Total squared error is NAN. If scaling is not enabled then you should try to scale your data and see if this solves the issue." << endl;
+            return false;
+        }
+        
+        //Store the training results
+        rootMeanSquaredTrainingError = sqrt( totalSquaredTrainingError / double(M) );
+        result.setRegressionResult(iter,totalSquaredTrainingError,rootMeanSquaredTrainingError,this);
+        trainingResults.push_back( result );
+        
+        //Notify any observers of the new result
+        trainingResultsObserverManager.notifyObservers( result );
+        
+        trainingLog << "Epoch: " << iter << " SSE: " << totalSquaredTrainingError << " Delta: " << delta << endl;
+    }
+    
+    //Flag that the algorithm has been trained
+    regressionData.resize(1,0);
+    trained = true;
+    return trained;
+}
 
-	bool Heap::Add(int value) {
-		int *heap;
-		int x, father, j;
-		heap = new int[_size + 1];
-
-		for (int i = 0; i < _size; ++i) {
-			heap[i] = _heap[i];
-		}
-
-		heap[_size] = value;
-		delete[] this->_heap;
-		++_size;
-		this->_heap = heap;
-
-		// przywrocenie struktury
-
-		x = _heap[_size - 1];
-		father = (_size / 2) - 1;
-		j = _size - 1;
-
-		while (x > _heap[father] && father >= 0) { // przesuwanie nowego elementu w stron� korzenia
-			_heap[j] = _heap[father];
-			_heap[father] = x;
-			j = father;
-			father = ((father + 1) / 2) - 1;
-		}
-
-		return true;		
-	}
-
-	bool Heap::Delete(int value) {
-		int j = -1;
-		int father, x;
-		bool found = false;
-
-		if (value == _heap[0]) {
-			_heap[0] = _heap[_size - 1];
-			found = true;
-		}
-		else {
-			
-			for (int i = 0; i < _size; ++i) {
-
-				if (value == _heap[i]) {
-					j = i;
-					i = i + _size;
-				}
-			}
-
-			if (j != -1)
-			{
-				_heap[j] = _heap[_size - 1];
-			}
-			
-			found = true;
-		}
-
-		if (found) {
-			int * heap;
-			heap = new int[_size - 1];
-			--_size;
-
-			for (int i = 0; i < _size; ++i) {
-				heap[i] = _heap[i];
-			}
-
-			delete[] _heap;
-			_heap = heap;
-
-			for (int i = 1; i < _size; ++i) {
-				father = ((i + 1) / 2) - 1;
-				j = i;
-				x = _heap[i];
-
-				while (x > _heap[father] && father >= 0) {
-					_heap[j] = _heap[father];
-					_heap[father] = x;
-					j = father;
-					father = ((father + 1) / 2) - 1;
-				}
-			}
-
-			return true;
-		}
-		else {
-			return false;
-		}
-	}
-
-	bool Heap::Search(int value) {
-		if (value == _heap[0]) {
-			return true;
-		}
-		else if (value > _heap[0]) { // na szczycie jest najwieksza wartosc, wiec jesli wyszukiwana jest wieksza niz korzen, to znaczy ze nie ma takiej wartosci
-			return false;
-		}
-		else {
-
-			for (int i = 1; i < _size; ++i) {
-				
-				if (_heap[i] == value) {
-					return true;
-				}
-			}
-		}
-
+bool LogisticRegression::predict_(VectorDouble &inputVector){
+    
+    if( !trained ){
+        errorLog << "predict_(VectorDouble &inputVector) - Model Not Trained!" << endl;
+        return false;
+    }
+    
+    if( !trained ) return false;
+    
+	if( inputVector.size() != numInputDimensions ){
+        errorLog << "predict_(VectorDouble &inputVector) - The size of the input vector (" << int(inputVector.size()) << ") does not match the num features in the model (" << numInputDimensions << endl;
 		return false;
 	}
-
-	int Heap::GetSize() {
-		return _size;
-	}
-
-	void Heap::View(std::string sp, std::string sn, int v) {
-		std::string cr, cl, cp, s;
-		cr = cl = cp = "  ";
-		cr[0] = 218; cr[1] = 196;
-		cl[0] = 192; cl[1] = 196;
-		cp[0] = 179; // uzycie kodow ascii, aby stworzyc 'ramke'
-
-		if (v < _size) {
-			s = sp; 
-			
-			if (cr == sn) { 
-				s[s.length() - 2] = ' ';
-			}
-
-			View((s + cp), cr, (2 * v + 2));
-			s = s.substr(0, sp.length() - 2);
-			std::cout << s << sn << _heap[v] << std::endl;
-			s = sp;
-
-			if (sn == cl) {
-				s[s.length() - 2] = ' ';
-			}
-
-			View((s + cp), cl, (2 * v + 1));
-		}
-	}
-
+    
+    if( useScaling ){
+        for(UINT n=0; n<numInputDimensions; n++){
+            inputVector[n] = scale(inputVector[n], inputVectorRanges[n].minValue, inputVectorRanges[n].maxValue, 0, 1);
+        }
+    }
+    
+    regressionData[0] =  w0;
+    for(UINT j=0; j<numInputDimensions; j++){
+        regressionData[0] += inputVector[j] * w[j];
+    }
+	regressionData[0] = sigmoid( regressionData[0] );
+    
+    if( useScaling ){
+        for(UINT n=0; n<numOutputDimensions; n++){
+            regressionData[n] = scale(regressionData[n], 0, 1, targetVectorRanges[n].minValue, targetVectorRanges[n].maxValue);
+        }
+    }
+    
+    return true;
 }
+    
+bool LogisticRegression::saveModelToFile(fstream &file) const{
+    
+    if(!file.is_open())
+	{
+        errorLog << "loadModelFromFile(fstream &file) - The file is not open!" << endl;
+		return false;
+	}
+    
+	//Write the header info
+	file<<"GRT_LOGISTIC_REGRESSION_MODEL_FILE_V2.0\n";
+    
+    //Write the regressifier settings to the file
+    if( !Regressifier::saveBaseSettingsToFile(file) ){
+        errorLog <<"saveModelToFile(fstream &file) - Failed to save Regressifier base settings to file!" << endl;
+		return false;
+    }
+    
+    if( trained ){
+        file << "Weights: ";
+        file << w0;
+        for(UINT j=0; j<numInputDimensions; j++){
+            file << " " << w[j];
+        }
+        file << endl;
+    }
+    
+    return true;
+}
+    
+bool LogisticRegression::loadModelFromFile(fstream &file){
+    
+    trained = false;
+    numInputDimensions = 0;
+    w0 = 0;
+    w.clear();
+    
+    if(!file.is_open())
+    {
+        errorLog << "loadModelFromFile(string filename) - Could not open file to load model" << endl;
+        return false;
+    }
+    
+    std::string word;
+    
+    //Find the file type header
+    file >> word;
+    
+    //Check to see if we should load a legacy file
+    if( word == "GRT_LOGISTIC_REGRESSION_MODEL_FILE_V1.0" ){
+        return loadLegacyModelFromFile( file );
+    }
+    
+    if( word != "GRT_LOGISTIC_REGRESSION_MODEL_FILE_V2.0" ){
+        errorLog << "loadModelFromFile( fstream &file ) - Could not find Model File Header" << endl;
+        return false;
+    }
+    
+    //Load the regressifier settings from the file
+    if( !Regressifier::loadBaseSettingsFromFile(file) ){
+        errorLog <<"loadModelFromFile( fstream &file ) - Failed to save Regressifier base settings to file!" << endl;
+		return false;
+    }
+    
+    if( trained ){
+        
+        //Resize the weights
+        w.resize(numInputDimensions);
+        
+        //Load the weights
+        file >> word;
+        if(word != "Weights:"){
+            errorLog << "loadModelFromFile( fstream &file ) - Could not find the Weights!" << endl;
+            return false;
+        }
+        
+        file >> w0;
+        for(UINT j=0; j<numInputDimensions; j++){
+            file >> w[j];
+            
+        }
+    }
+
+    return true;
+}
+
+UINT LogisticRegression::getMaxNumIterations() const{
+    return getMaxNumEpochs();
+}
+
+bool LogisticRegression::setMaxNumIterations(const UINT maxNumIterations){
+return setMaxNumEpochs( maxNumIterations );
+}
+
+double LogisticRegression::sigmoid(const double x) const{
+	return 1.0 / (1 + exp(-x));
+}
+    
+bool LogisticRegression::loadLegacyModelFromFile( fstream &file ){
+    
+    string word;
+    
+    file >> word;
+    if(word != "NumFeatures:"){
+        errorLog << "loadLegacyModelFromFile( fstream &file ) - Could not find NumFeatures!" << endl;
+        return false;
+    }
+    file >> numInputDimensions;
+    
+    file >> word;
+    if(word != "NumOutputDimensions:"){
+        errorLog << "loadLegacyModelFromFile( fstream &file ) - Could not find NumOutputDimensions!" << endl;
+        return false;
+    }
+    file >> numOutputDimensions;
+    
+    file >> word;
+    if(word != "UseScaling:"){
+        errorLog << "loadLegacyModelFromFile( fstream &file ) - Could not find UseScaling!" << endl;
+        return false;
+    }
+    file >> useScaling;
+    
+    ///Read the ranges if needed
+    if( useScaling ){
+        //Resize the ranges buffer
+        inputVectorRanges.resize(numInputDimensions);
+        targetVectorRanges.resize(numOutputDimensions);
+        
+        //Load the ranges
+        file >> word;
+        if(word != "InputVectorRanges:"){
+            file.close();
+            errorLog << "loadLegacyModelFromFile( fstream &file ) - Failed to find InputVectorRanges!" << endl;
+            return false;
+        }
+        for(UINT j=0; j<inputVectorRanges.size(); j++){
+            file >> inputVectorRanges[j].minValue;
+            file >> inputVectorRanges[j].maxValue;
+        }
+        
+        file >> word;
+        if(word != "OutputVectorRanges:"){
+            file.close();
+            errorLog << "loadLegacyModelFromFile( fstream &file ) - Failed to find OutputVectorRanges!" << endl;
+            return false;
+        }
+        for(UINT j=0; j<targetVectorRanges.size(); j++){
+            file >> targetVectorRanges[j].minValue;
+            file >> targetVectorRanges[j].maxValue;
+        }
+    }
+    
+    //Resize the weights
+    w.resize(numInputDimensions);
+    
+    //Load the weights
+    file >> word;
+    if(word != "Weights:"){
+        errorLog << "loadLegacyModelFromFile( fstream &file ) - Could not find the Weights!" << endl;
+        return false;
+    }
+    
+    file >> w0;
+    for(UINT j=0; j<numInputDimensions; j++){
+        file >> w[j];
+        
+    }
+    
+    //Resize the regression data vector
+    regressionData.resize(1,0);
+    
+    //Flag that the model has been trained
+    trained = true;
+    
+    return true;
+}
+
+} //End of namespace GRT
+

@@ -1,57 +1,48 @@
-// Problem Statemnt -- https://www.geeksforgeeks.org/topological-sorting/
-
-#include <bits/stdc++.h>
-
-using namespace std;
-
-struct node {
-    int visited = 0;
-    list<int> l;
-};
-
-void addEdge(vector<node>& graph, int u, int v) {
-    graph.at(u).l.push_back(v);
-}
-
-void doDFS(vector<node>& Graph, int v, stack<int>& s) {
-    Graph.at(v).visited = true;
-
-    for(int& i : Graph.at(v).l) {
-        if(!Graph.at(i).visited) 
-            doDFS(Graph, i, s);
-    }
-
-    s.push(v+1);
-}
-
-void printTopo(vector<node>& Graph) {
-    stack<int> s;
-
-    for(int i = 0; i < Graph.size(); ++i) {
-        if(!Graph.at(i).visited)
-            doDFS(Graph, i, s);
-    }
-
-    while(!s.empty()) {
-        cout<<s.top()<<" ";
-        s.pop();
-    }
-}
-
-int main() {
-    int n, m;
-    cin>>n>>m;
-
-    vector<node> Graph(n);
-
-    while(m--) {
-        int u, v;
-        cin>>u>>v;
-
-        addEdge(Graph, --u, --v);
-    }
-
-    printTopo(Graph);
-
-    return 0;
-}
+ #include<bits/stdc++.h>
+ using namespace std;
+ void heapify(int a[],int i,int n)
+ {
+ 	int l,r,max,temp;
+ 	max=i;
+ 	l=(2*i)+1;
+ 	r=(2*i)+2;
+ 	if(a[l]>a[max] && l<n)
+ 	{
+ 		max=l;
+	}
+	if(a[r]>a[max] && r<n)
+	{
+		max=r;
+	}
+	if(max!=i)
+	{
+		temp=a[i];
+		a[i]=a[max];
+		a[max]=temp;
+		heapify(a,max,n);
+	}
+ }
+ void buildheap (int a[],int n)
+ {
+ 	for(int i=n/2;i>=0;i--)
+ 	{
+ 		heapify(a,i,n);
+	}
+ }
+ int main()
+ {
+ 	int n,i;
+ 	cout<<"Enter no. of elements: ";
+ 	cin>>n;
+ 	int a[n];
+ 	for(i=0;i<n;i++)
+ 	{
+ 		cin>>a[i];
+	}
+	buildheap(a,n);
+	for(i=0;i<n;i++)
+	{
+		cout<<a[i]<<" ";
+	}
+	return 0;
+ }

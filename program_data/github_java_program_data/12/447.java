@@ -1,39 +1,52 @@
-// 最大値、最小値、中央値を決める
-void mergeSort(int[] array, int low, int high){
-  if(low < high){
-    int middle = (low + high) / 2;
-    mergeSort(array, low, middle);
-    mergeSort(array, middle + 1, high);
-    mergeSort(array, low, middle, high);
-  }
+Author: Frederik Wegner
+Time: 22.06.17
+Tests: 11/11
+executeVariant()
+{
+    setIteration(getIteration()+1);
+    if(getIteration() < getNodeQueue().size())
+        setCurrentNode(getNodeQueue().get(getIteration()));
 }
-
-//ソート本体
-void merge(int[] array, int low, int middle, int high){
-  int[] helper = new int[array, lenght];
-  //最大値の分までhelperにarrayを代入する
-  for (int i = low ; i <= high ; i++){
-    helper[i] = array[i];
-  }
-  //変数定義
-  int helper = low;
-  int helperRight = middle + 1;
-  int current = low;
-
-  //middleよりも高いか低いかを分けて条件ないでソートする
-  while (helperLeft <= middle && helperRight <= high){
-    if (helper[helperLeft] <= helper[helperRight]){
-      array[current] = helper[helperLeft];
-      helperLeft++ ;
-    } else{
-      array[current] = helper[helperRight];
-      helper++;
+checkBreakCondition()
+{
+    return getIteration() < getGraph().getNodeList().size();
+}
+preProcess()
+{
+    InvalidInputException exception = new InvalidInputException("");
+    AbstractGraph g = getGraph();
+    if(g == null) throw exception;
+    if(getNodeQueue() == null) throw exception;
+    if(!(getNodeQueue().containsAll(g.getNodeList()) && g.getNodeList().containsAll(getNodeQueue()))) throw exception;
+    
+    setIteration(0);
+    ArrayList<Node<N,E>> nodes = g.getNodeList();
+    AbstractEdgeComparator<E> cmp = g.getComparator();
+    for(Node<N,E> vv : nodes) {
+        int v = getMatrixIndex(vv);
+        for(Node<N,E> ww : nodes) {
+            int w = getMatrixIndex(ww);
+            if(w == v) setM(v,w,cmp.getZero());
+            else setM(v,w,cmp.getMax());
+        }
+        for(Edge<N,E> e : (ArrayList<Edge<N,E>>)vv.getFanOut()) {
+            int w = getMatrixIndex(e.getTargetNode());
+            setM(v,w,e.getData());
+        }
     }
-    current++;
-  }
-
-  int remaining = middle - helper;
-  for (int i = 0 <= remaining; i++){
-    array[current + i] = helper[helperLeft + i];
-  }
+    setCurrentNode(getNodeQueue().get(getIteration()));
+}
+doFunctionality()
+{
+    AbstractGraph g = getGraph();
+    AbstractEdgeComparator<E> cmp = g.getComparator();
+    ArrayList<Node<N,E>> nodes = g.getNodeList();
+    
+    for(Node<N,E> vv : nodes)
+        for(Node<N,E> ww : nodes) {
+            int v = getMatrixIndex(vv);
+            int w = getMatrixIndex(ww);
+            int u = getMatrixIndex(getCurrentNode());
+            setM(v,w,cmp.min(getM(v,w), cmp.sum(getM(v,u),getM(u,w))));
+        }
 }

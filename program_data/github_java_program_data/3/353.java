@@ -1,185 +1,244 @@
-package hash_tables;
+// 134. LRU Cache
+// Description
+// Design and implement a data structure for Least Recently Used (LRU) cache. It should support the following operations: get and set.
+//
+// get(key) - Get the value (will always be positive) of the key if the key exists in the cache, otherwise return -1.
+// set(key, value) - Set or insert the value if the key is not already present. When the cache reached its capacity, it should invalidate the least recently used item before inserting a new item.
 
-import java.util.ArrayList;
-import java.util.LinkedList;
 
-/**
- * An extension of Hash_Table_Linear_Probing that uses Chaining for collisions.
- * Unlike probing, a chaining hash table expands based on the average chain length.
- * For this implementation, 5 is the maximum average chain length.
- * 
- * @author Jaden Simon and Yingqi Song
- */
+public class LRUCache {
+    // construct our own class to store the Node type
+    private class Node {
+        int key;
+        int val;
+        Node pre;
+        Node next;
+        public Node(int k, int v) {
+            key = k;
+            val = v;
+            pre = null;
+            next = null;
+        }
+    }
 
-public class Hash_Table_Hash_Chaining<KeyType, ValueType> extends Hash_Table_Linear_Probing<KeyType, ValueType> 
-{
-	protected ArrayList<LinkedList<Pair<KeyType, ValueType>>>		table;		/** uses a LinkedList of Pairs */
-	protected int													chainCount; /** keeps track of how many chains there are */
-	
-	public Hash_Table_Hash_Chaining(int initial_capacity) 
-	{
-		super(initial_capacity);
-		this.chainCount = 0;
-	}
+    private Node head = new Node(-1, -1);
+    private Node tail = new Node(-1, -1);
+    private HashMap<Integer, Node> hash = new HashMap<>();
+    private int capacity;
 
-	@Override
-	protected void init_table()
-	{
-		table = new ArrayList<LinkedList<Pair<KeyType, ValueType>>>(capacity);
-				
-		for (int index = 0; index < capacity; index++)
-			table.add(null);
-	}
-	
-	/**
-	 * Finds a Pair with the specific key in a chain.
-	 * 
-	 * @param chain - chain to look in
-	 * @param key   - key to look for
-	 * @return a Pair if found, null otherwise
-	 */
-	private Pair<KeyType, ValueType> find(LinkedList<Pair<KeyType, ValueType>> chain, KeyType key)
-	{
-		for (Pair<KeyType, ValueType> pair : chain)
-		{			
-			if (pair.key.equals(key)) return pair;
-			
-			collisionCount++;
-		}
-		
-		return null;
-	}
-	
-	@Override
-	public ValueType find( KeyType key )
-	{
-		double startTime = System.nanoTime(); // Used for timing
-		
-		long hashTime = System.nanoTime();
-		int index = key.hashCode() % capacity;
-		functionTime += (System.nanoTime() - hashTime);
-		
-		// Index the table
-		LinkedList<Pair<KeyType, ValueType>> chain = table.get(index);
-		ValueType returnValue = null;
+    // @param capacity, an integer
+    public LRUCache(int capacity) {
+        // write your code here
+        this.capacity = capacity;
+        head.next = tail;
+        tail.pre = head;
+    }
 
-		if (chain != null) 
-		{
-			Pair<KeyType, ValueType> pair = find(chain, key);
-			
-			if (pair != null) returnValue = pair.value;
-		}
-		
-		findCount++;
-		findTime += (System.nanoTime() - startTime);
-		
-		return returnValue;
-	}
-	
-	@Override
-	public void insert( KeyType key, ValueType value )
-	{		
-		long startTime = System.nanoTime(); // Used for timing
-		
-		// Check for resize
-		if (num_of_entries > 5.0 * chainCount && resizeable)
-			resize(capacity * 2);
-		
-		long hashTime = System.nanoTime();
-		int index = key.hashCode() % capacity;
-		functionTime += (System.nanoTime() - hashTime);
-			
-		// Insert key/value
-		LinkedList<Pair<KeyType, ValueType>> chain = table.get(index);
-		if (chain != null) // Search the chain for duplicate
-		{	
-			Pair<KeyType, ValueType> pair = find(chain, key);
-			
-			if (pair != null) pair.value = value;
-			else 
-			{
-				num_of_entries++;
-				chain.add(new Pair<KeyType, ValueType>(key, value));
-			}
-		} else  // Add a new chain
-		{
-			chainCount++;
-			num_of_entries++;
-			LinkedList<Pair<KeyType, ValueType>> newChain = new LinkedList<>();
-			newChain.add(new Pair<KeyType, ValueType>(key, value));
-			table.set(index, newChain);
-		}		
-		
-		insertionCount++;
-		insertionTime += (System.nanoTime() - startTime);
-	}
-	
-	@Override
-	public void resize( int new_size )
-	{
-		if (new_size > capacity)
-		{
-			// Build a new table
-			new_size = Primes.next_prime(new_size);
-			ArrayList<LinkedList<Pair<KeyType, ValueType>>> newTable = new ArrayList<>(new_size);
-			ArrayList<LinkedList<Pair<KeyType, ValueType>>> oldTable = table;
-						
-			for (int index = 0; index < new_size; index++)
-				newTable.add(null);
+    // @return an integer
+    public int get(int key) {
+        // write your code here
+        if (!hash.containsKey(key)) {
+            return -1;
+        }
+        Node node = hash.get(key);
+        node.pre.next = node.next;
+        node.next.pre = node.pre;
+        moveToTail(node);
+        return hash.get(key).val;
+    }
 
-			this.capacity = new_size;
-			this.table = newTable;
-			
-			// Move the previous items to new one
-			num_of_entries = 0;
-			chainCount = 0;
-			reset_stats();
-			
-			for (LinkedList<Pair<KeyType, ValueType>> chain : oldTable)
-				if (chain != null)
-					for (Pair<KeyType, ValueType> pair : chain)
-						if (pair != null) 
-							insert(pair.key, pair.value);			
-		}
-	}
-	
-	@Override
-	public void clear()
-	{
-		super.clear();
-		chainCount = 0;
-	}
-	
-	/**
-	 * Fill in calculations to show some of the stats about the hash table
-	 * The chaining version includes average chain length, and considers percent filled
-	 * to be the ratio of chainCount and capacity.
-	 */
-	@Override
-	public String toString()
-	{
-		String result = new String();
-		
-		// Calculate stats
-		Long   avgHashTime 	    = (findCount == 0 && insertionCount == 0) ? 0 : functionTime / (findCount + insertionCount);
-		Long   avgInsertionTime = (insertionCount == 0) ? 0 : insertionTime / insertionCount;
-		Long   avgFindTime 	    = (findCount == 0) ? 0 : findTime / findCount;
-		Double percentFilled    = Math.round(10000.0 * chainCount / capacity) / 100.0;
-		Double avgChainLength   = Math.round(100.0 * num_of_entries / chainCount) / 100.0;
-		Double avgCollisions    = Math.round(100.0 * collisionCount / (insertionCount + findCount)) / 100.0;
+    // @param key, an integer
+    // @param value, an integer
+    // @return nothing
+    public void set(int key, int value) {
+        // write your code here
+        if (get(key) != -1) {
+            hash.get(key).val = value;
+            return;
+        }
+        if (hash.size() == capacity) {
+            hash.remove(head.next.key);
+            head.next = head.next.next;
+            head.next.pre = head;
+        }
+        Node newNode = new Node(key, value);
+        hash.put(key, newNode);
+        moveToTail(newNode);
+    }
 
-		
-		result = "------------ Hash Table Info ------------\n"
-					+ "  Average Collisions: "  	   + avgCollisions								 + "\n"
-					+ "  Average Hash Function Time: " + avgHashTime   								 + "\n"
-					+ "  Average Insertion Time: " 	   + avgInsertionTime				             + "\n"
-					+ "  Average Find Time: "          + avgFindTime								 + "\n"
-					+ "  Average Chain Length: "       + avgChainLength  							 + "\n"
-					+ "  Number of Elements: " 		   + num_of_entries							 	 + "\n"
-					+ "  Capacity of Table: "          + capacity		                             + "\n"
-					+ "  Percent filled: " 			   + percentFilled + "%"     					 + "\n"
-					+ "-----------------------------------------\n";
+    private void moveToTail(Node node) {
+        tail.pre.next = node;
+        node.next = tail;
+        node.pre = tail.pre;
+        tail.pre = node;
+    }
+}
 
-		return result;
-	}
+
+answer:
+
+public class LRUCache {
+    private class Node{
+        Node prev;
+        Node next;
+        int key;
+        int value;
+
+        public Node(int key, int value) {
+            this.key = key;
+            this.value = value;
+            this.prev = null;
+            this.next = null;
+        }
+    }
+
+    private int capacity;
+    private HashMap<Integer, Node> hs = new HashMap<Integer, Node>();
+    private Node head = new Node(-1, -1);
+    private Node tail = new Node(-1, -1);
+
+    public LRUCache(int capacity) {
+        this.capacity = capacity;
+        tail.prev = head;
+        head.next = tail;
+    }
+
+    public int get(int key) {
+        if( !hs.containsKey(key)) {
+            return -1;
+        }
+
+        // remove current
+        Node current = hs.get(key);
+        current.prev.next = current.next;
+        current.next.prev = current.prev;
+
+        // move current to tail
+        move_to_tail(current);
+
+        return hs.get(key).value;
+    }
+
+    public void set(int key, int value) {
+        // get 这个方法会把key挪到最末端，因此，不需要再调用 move_to_tail
+        if (get(key) != -1) {
+            hs.get(key).value = value;
+            return;
+        }
+
+        if (hs.size() == capacity) {
+            hs.remove(head.next.key);
+            head.next = head.next.next;
+            head.next.prev = head;
+        }
+
+        Node insert = new Node(key, value);
+        hs.put(key, insert);
+        move_to_tail(insert);
+    }
+
+    private void move_to_tail(Node current) {
+        current.prev = tail.prev;
+        tail.prev = current;
+        current.prev.next = current;
+        current.next = tail;
+    }
+}
+
+Singly Linked List 的版本:
+
+
+public class LRUCache {
+    class ListNode {
+        public int key, val;
+        public ListNode next;
+
+        public ListNode(int key, int val) {
+            this.key = key;
+            this.val = val;
+            this.next = null;
+        }
+    }
+
+    private int capacity, size;
+    private ListNode dummy, tail;
+    private Map<Integer, ListNode> keyToPrev;
+
+    /*
+    * @param capacity: An integer
+    */
+    public LRUCache(int capacity) {
+        this.capacity = capacity;
+        this.keyToPrev = new HashMap<Integer, ListNode>();
+        this.dummy = new ListNode(0, 0);
+        this.tail = this.dummy;
+    }
+
+    private void moveToTail(int key) {
+        ListNode prev = keyToPrev.get(key);
+        ListNode curt = prev.next;
+
+        if (tail == curt) {
+            return;
+        }
+
+        prev.next = prev.next.next;
+        tail.next = curt;
+
+        if (prev.next != null) {
+            keyToPrev.put(prev.next.key, prev);
+        }
+        keyToPrev.put(curt.key, tail);
+
+        tail = curt;
+    }
+
+    /*
+     * @param key: An integer
+     * @return: An integer
+     */
+    public int get(int key) {
+        if (!keyToPrev.containsKey(key)) {
+            return -1;
+        }
+
+        moveToTail(key);
+
+        // the key has been moved to the end
+        return tail.val;
+    }
+
+    /*
+     * @param key: An integer
+     * @param value: An integer
+     * @return: nothing
+     */
+    public void set(int key, int value) {
+        // get method will move the key to the end of the linked list
+        if (get(key) != -1) {
+            ListNode prev = keyToPrev.get(key);
+            prev.next.val = value;
+            return;
+        }
+
+        if (size < capacity) {
+            size++;
+            ListNode curt = new ListNode(key, value);
+            tail.next = curt;
+            keyToPrev.put(key, tail);
+
+            tail = curt;
+            return;
+        }
+
+        // replace the first node with new key, value
+        ListNode first = dummy.next;
+        keyToPrev.remove(first.key);
+
+        first.key = key;
+        first.val = value;
+        keyToPrev.put(key, dummy);
+
+        moveToTail(key);
+    }
 }

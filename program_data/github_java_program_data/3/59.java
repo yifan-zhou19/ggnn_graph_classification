@@ -1,29 +1,25 @@
-import java.util.Arrays;
+/*
+ Design and implement a data structure for Least Recently Used (LRU) cache. It
+should support the following operations: get and set .   get(key) - Get the
+value (will always be positive) of the key if the key exists in the cache,
+otherwise return -1.  set(key, value) - Set or insert the value if the key is
+not already present. When the cache reached its capacity, it should invalidate
+the least recently used item before inserting a new item.   Subscribe to see
+which companies asked this question    Show Tags   Design
+*/
 
-public class HashFunction {
 
-  String[] theArray;
-  int arraySize;
-  int itemsInArray = 0;
-  
-  
-  public static void main(String[] args) {
-  
-  }
-
-  public void hashFunction1(String[] stringsForArray, String[] the Array){
-    for (int n = 0; n < stringsForArray.length; n++) {
-    String new ElementVal = stringsForArray[n];
-    theArray[Integer.parseInt(newElementVal)] = newElementVal;
-  }
-
-  HashFunction(int size) { 
-    theArray = new String[size];
-    Arrays.fill(theArray, "-1");
-  
+public class LRUCache {
+    
+    public LRUCache(int capacity) {
+        
+    }
+    
+    public int get(int key) {
+        
+    }
+    
+    public void set(int key, int value) {
+        
+    }
 }
-
-public void displayTheStack() {
-
-      int increment = 0;
-      

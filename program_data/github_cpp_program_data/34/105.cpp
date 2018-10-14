@@ -1,257 +1,142 @@
-/*
- Copyright 2017 - 2018 Navigator Data (Pty) Ltd
+// SYSTEM INCLUES
 
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
 
- http://www.apache.org/licenses/LICENSE-2.0
+// C++ PROJECT INCLUDES
+#include "Bayesian/NaiveBayesClassifier.hpp"
 
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
-*/
+namespace Classifiers
+{
+namespace Bayesian
+{
 
-#include "logging/ccl_logging.h"
-#include "linked-list.h"
-#include "types/lists/linked-list.hpp"
-
-extern "C" {
-
-    LinkedList* newLinkedList(NavDBClientLogger* logger)
+    NaiveBayesClassifier::NaiveBayesClassifier(std::string varName,
+                StateFunctorPtr varNameFunctor, std::map<std::string,
+                    StateFunctorPtr> featureNamesAndStates) :
+        _varName(varName), _varNameFunctor(varNameFunctor),
+        _nodes(), _featureNames()
     {
-        return new LinkedList(logger);
+        this->_nodes[this->_varName] = std::make_shared<BayesianNode>(
+                this->_varName, this->_varNameFunctor,
+                DependencyType{}
+            );
+        this->_featureNames.reserve(featureNamesAndStates.size());
+        for(auto it = featureNamesAndStates.begin(); it != featureNamesAndStates.end(); ++it)
+        {
+            this->_featureNames.push_back(it->first);
+            this->_nodes[it->first] =
+                std::make_shared<BayesianNode>(
+                    it->first,
+                    it->second,
+                    DependencyType{
+                        {this->_varName, this->_varNameFunctor}
+                    }
+                );
+        }
     }
 
-    void deleteLinkedList(LinkedList* linked_list)
+    NaiveBayesClassifier::~NaiveBayesClassifier()
     {
-        delete linked_list;
     }
 
-    // Linked list new/delete functions
-
-    int LinkedList_create(LinkedList* linked_list,
-                          unsigned int data_copy_type)
+    void NaiveBayesClassifier::Train(std::vector<
+                std::map<std::string, std::string> >& trainingData)
     {
-        return linked_list->create(data_copy_type);
+        BayesianNodePtr pNode = nullptr;
+        StateFunctorPtr pFunctor = nullptr;
+        int index = 0;
+        std::map<std::string, std::string> argMap = {};
+        std::map<std::string, std::string> emptyMap = {};
+        for(auto& trainingTuple : trainingData)
+        {
+            for(auto it = trainingTuple.begin();
+                it != trainingTuple.end(); ++it)
+            {
+                pNode = this->_nodes[it->first];
+                pFunctor = pNode->_nameStateFunctor;
+
+                if(it->first == this->_varName)
+                {
+                    index = pNode->ValuesToIndex(emptyMap);
+                }
+                else
+                {
+                    argMap = {{this->_varName, trainingTuple[this->_varName]}};
+                    index = pNode->ValuesToIndex(argMap);
+                }
+                pNode->_table[index][pFunctor->Hash(it->second)] += 1.0;
+            }
+        }
+
+        pNode = this->_nodes[this->_varName];
+        for(auto it = this->_nodes.begin(); it != this->_nodes.end(); ++it)
+        {
+            if(it->first == this->_varName)
+            {
+                continue;
+            }
+            else
+            {
+                for(auto& state : it->second->_nameStateFunctor->GetAllStates())
+                {
+                    for(auto& varState : this->_varNameFunctor->GetAllStates())
+                    {
+                        argMap = {{this->_varName, varState}};
+                        it->second->_table[it->second->ValuesToIndex(argMap)]\
+                            [it->second->_nameStateFunctor->Hash(state)]\
+                                /= pNode->AccessTable(emptyMap, varState);
+                    }
+                }
+            }
+        }
+
+        for(int i = 0; i < pNode->_table[0].size(); ++i)
+        {
+            pNode->_table[0][i] /= trainingData.size();
+        }
     }
 
-    int LinkedList_destroy(LinkedList* linked_list,
-                           bool delete_data)
+    std::vector<std::string> NaiveBayesClassifier::Classify(std::map<std::string, std::string>& features)
     {
-        return linked_list->destroy(delete_data);
+        double maxPr = 0.0;
+        std::vector<std::pair<double, int> > classifications;
+        double prOfClassification = 0.0;
+        std::vector<std::string>& allStates = this->_varNameFunctor->GetAllStates();
+        for(int i = 0; i < allStates.size(); ++i)
+        {
+            prOfClassification = this->PrOfState(features, allStates[i]);
+            if(prOfClassification >= maxPr)
+            {
+                maxPr = prOfClassification;
+                classifications.push_back(std::make_pair(prOfClassification, i));
+            }
+        }
+
+        std::vector<std::string> solutions;
+        for(int i = 0; i < classifications.size(); ++i)
+        {
+            if(std::get<0>(classifications[i]) == maxPr)
+            {
+                solutions.push_back(allStates[std::get<1>(classifications[i])]);
+            }
+            else
+            {
+                return solutions;
+            }
+        }
     }
 
-    // Linked list navigation functions
-
-    LinkedListNode* LinkedList_get_first(LinkedList* linked_list)
+    double NaiveBayesClassifier::PrOfState(std::map<std::string, std::string>& features,
+                std::string& state)
     {
-        return linked_list->get_first();
+        double prob = this->_nodes[this->_varName]->PrOfState(state);
+
+        std::map<std::string, std::string> argMap = {{this->_varName, state}};
+        for(auto& feature : this->_featureNames)
+        {
+            prob *= this->_nodes[feature]->AccessTable(argMap, features[feature]);
+        }
+        return prob;
     }
 
-    LinkedListNode* LinkedList_get_last(LinkedList* linked_list)
-    {
-        return linked_list->get_last();
-    }
-
-    bool LinkedList_loop_start_to_end(LinkedList* linked_list,
-                                      LinkedListNode** node)
-    {
-        return linked_list->loop_start_to_end(node);
-    }
-
-    bool LinkedList_loop_end_to_start(LinkedList* linked_list,
-                                      LinkedListNode** node)
-    {
-        return linked_list->loop_end_to_start(node);
-    }
-
-    // Linked list get functions
-
-    size_t LinkedList_get_count(LinkedList* linked_list)
-    {
-        return linked_list->get_count();
-    }
-
-    int LinkedList_get_index_by_node(LinkedList* linked_list,
-                                     bool* found,
-                                     size_t* ret_index,
-                                     LinkedListNode* linked_list_node)
-    {
-        return linked_list->get_index_by_node(found,
-                                              ret_index,
-                                              linked_list_node);
-    }
-
-    LinkedListNode* LinkedList_get_node_by_index(LinkedList* linked_list,
-                                                 size_t get_index)
-    {
-        return linked_list->get_node_by_index(get_index);
-    }
-
-    int LinkedList_get_first_index_by_data_ref(LinkedList* linked_list,
-                                               bool* found,
-                                               size_t* index,
-                                               LinkedListNode* linked_list_node,
-                                               char* data)
-    {
-        return linked_list->get_first_index_by_data_ref(found,
-                                                        index,
-                                                        linked_list_node,
-                                                        data);
-    }
-
-    int LinkedList_get_first_index_by_data_value(LinkedList* linked_list,
-                                                 bool* found,
-                                                 size_t* index,
-                                                 LinkedListNode* linked_list_node,
-                                                 char* data)
-    {
-        return linked_list->get_first_index_by_data_value(found,
-                                                          index,
-                                                          linked_list_node,
-                                                          data);
-    }
-
-    // Linked list add/set functions
-
-    int LinkedList_add_node_with_data_ref(LinkedList* linked_list,
-                                          char** data,
-                                          size_t size,
-                                          bool delete_data)
-    {
-        return linked_list->add_node_with_data_ref(data,
-                                                   size,
-                                                   delete_data);
-    }
-
-    int LinkedList_add_node_with_data_value(LinkedList* linked_list,
-                                            char** data,
-                                            size_t size,
-                                            bool delete_data)
-    {
-        return linked_list->add_node_with_data_value(data,
-                                                     size,
-                                                     delete_data);
-    }
-
-    int LinkedList_add_unique_node_with_data_ref(LinkedList* linked_list,
-                                                 bool* found,
-                                                 char** data,
-                                                 size_t size,
-                                                 bool delete_data)
-    {
-        return linked_list->add_unique_node_with_data_ref(found,
-                                                          data,
-                                                          size,
-                                                          delete_data);
-    }
-
-    int LinkedList_add_unique_node_with_data_value(LinkedList* linked_list,
-                                                   bool* found,
-                                                   char** data,
-                                                   size_t size,
-                                                   bool delete_data)
-    {
-        return linked_list->add_unique_node_with_data_value(found,
-                                                            data,
-                                                            size,
-                                                            delete_data);
-    }
-
-    int LinkedList_add_with_data_ref_null_until_index(LinkedList* linked_list,
-                                                      size_t index)
-    {
-        return linked_list->add_with_data_ref_null_until_index(index);
-    }
-
-    int LinkedList_add_with_data_value_null_until_index(LinkedList* linked_list,
-                                                        size_t index)
-    {
-        return linked_list->add_with_data_value_null_until_index(index);
-    }
-
-    int LinkedList_set_node_by_index_with_data_ref(LinkedList* linked_list,
-                                                   size_t index,
-                                                   char** data,
-                                                   size_t size,
-                                                   bool setting_add_with_data_value_null_until_index)
-    {
-        return linked_list->set_node_by_index_with_data_ref(index,
-                                                            data,
-                                                            size,
-                                                            setting_add_with_data_value_null_until_index);
-    }
-
-    int LinkedList_set_node_by_index_with_data_value(LinkedList* linked_list,
-                                                     size_t index,
-                                                     char** data,
-                                                     size_t size,
-                                                     bool setting_add_with_data_value_null_until_index)
-    {
-        return linked_list->set_node_by_index_with_data_value(index,
-                                                              data,
-                                                              size,
-                                                              setting_add_with_data_value_null_until_index);
-    }
-
-    int LinkedList_delete_node_unlink_and_free(LinkedList* linked_list,
-                                               LinkedListNode** linked_list_node,
-                                               size_t index)
-    {
-        return linked_list->delete_node_unlink_and_free(linked_list_node,
-                                                        index);
-    }
-
-    // Linked list delete functions
-
-    int LinkedList_delete_node_with_data_ref(LinkedList* linked_list,
-                                             char* data)
-    {
-        return linked_list->delete_node_with_data_ref(data);
-    }
-
-    int LinkedList_delete_node_with_data_value(LinkedList* linked_list,
-                                               char* data)
-    {
-        return linked_list->delete_node_with_data_value(data);
-    }
-
-    int LinkedList_delete_node_by_index(LinkedList* linked_list,
-                                        bool* found,
-                                        size_t index)
-    {
-        return linked_list->delete_node_by_index(found,
-                                                 index);
-    }
-
-    int LinkedList_delete_node_by_node(LinkedList* linked_list,
-                                       bool* found,
-                                       LinkedListNode** node)
-    {
-        return linked_list->delete_node_by_node(found,
-                                                node);
-    }
-
-    int LinkedList_delete_all_nodes(LinkedList* linked_list,
-                                    bool delete_data)
-    {
-        return linked_list->delete_all_nodes(delete_data);
-    }
-
-    // Linked list verify & print functions
-
-    int LinkedList_verify(LinkedList* linked_list)
-    {
-        return linked_list->verify();
-    }
-
-    int LinkedList_print(LinkedList* linked_list,
-                         bool print_data_as_strings)
-    {
-        return linked_list->print(print_data_as_strings);
-    }
-
-}
+} // end of namespace Bayesian
+} // end of namespace Classifiers

@@ -1,42 +1,63 @@
 #include <iostream>
-#include <vector>
 
-int bsearch_iterative(const std::vector<int>&, int);
-int bsearch_recursive(const std::vector<int>&, int);
-int bsearch_recursive(const std::vector<int>&, int, int, int);
+using namespace std;
 
-int bsearch_iterative(const std::vector<int>& v, int n) {
-  int lo = 0, hi = v.size() - 1, mid;
-  while (lo <= hi) {
-    mid = (lo + hi) / 2;
-    if (v[mid] == n)
-      return mid;
-    else if (v[mid] < n)
-      lo = mid + 1;
-    else
-      hi = mid - 1;
-  }
-  return -1;
-}
+template<int MAXN>
+struct SegmentTree {
+	int idx[4 * MAXN + 10];
+	int bs;
 
-int bsearch_recursive(const std::vector<int>& v, int n) {
-  return bsearch_recursive(v, 0, v.size() - 1, n);
-}
+	SegmentTree() {
+		for (int i = 0; i < 4 * MAXN + 10; i++) {
+			idx[i] = 0;
+		}
 
-int bsearch_recursive(const std::vector<int>& v, int lo, int hi, int n) {
-  if (lo > hi) return -1;
-  int mid = (lo + hi) / 2;
-  if (v[mid] == n)
-    return mid;
-  else if (v[mid] < n)
-    return bsearch_recursive(v, mid + 1, hi, n);
+		for (bs = 1; bs <= MAXN; bs *= 2) {}
+	}
+	
+	void update(int x, int v) {
+		x += bs;
+		while (x) {
+			idx[x] += v;
+			x /= 2;
+		}
+	}
 
-  return bsearch_recursive(v, lo, mid - 1, n);
-}
+	int sum(int x, int y) {
+		int res = 0;
+
+		x += bs;
+		y += bs;
+
+		while (x < y) {
+			if (x % 2 == 1) {
+				res += idx[x];	
+				x++;
+			}
+
+			if (y % 2 == 0) {
+				res += idx[y];
+				y--;
+			}
+			x /= 2;
+			y /= 2;
+		}
+
+		if (x == y) {
+			res += idx[x];
+		}
+
+		return res;
+	}
+};
 
 int main() {
-  std::vector<int> v{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+	SegmentTree<10> tree;
+	for (int i = 0; i < 10; i++) {
+		tree.update(i, i+1);
+	}
 
-  std::cout << "Iterative: " << bsearch_iterative(v, 12) << std::endl;
-  std::cout << "Recursive: " << bsearch_recursive(v, -12) << std::endl;
+	cout << tree.sum(0, 9) << endl;
+	
+	return 0;
 }

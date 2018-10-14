@@ -1,47 +1,61 @@
-package com.baeldung.algorithms.ga.jenetics;
+package bashimquotes.quality;
 
-import static org.jenetics.engine.EvolutionResult.toBestPhenotype;
-import static org.jenetics.engine.limit.bySteadyFitness;
+import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression;
 
-import java.util.stream.Stream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.Scanner;
+import java.util.stream.IntStream;
 
-import org.jenetics.BitChromosome;
-import org.jenetics.BitGene;
-import org.jenetics.Mutator;
-import org.jenetics.Phenotype;
-import org.jenetics.RouletteWheelSelector;
-import org.jenetics.SinglePointCrossover;
-import org.jenetics.TournamentSelector;
-import org.jenetics.engine.Engine;
-import org.jenetics.engine.EvolutionStatistics;
+public class LinearRegression {
 
-//The main class.
-public class Knapsack {
+    private double[] coefficients;
 
-    public static void main(String[] args) {
-        int nItems = 15;
-        double ksSize = nItems * 100.0 / 3.0;
+    public void learn() throws FileNotFoundException {
+        OLSMultipleLinearRegression regression = new OLSMultipleLinearRegression();
+        Scanner sc = new Scanner(new FileInputStream(new File("learn.txt")));
 
-        KnapsackFF ff = new KnapsackFF(Stream.generate(KnapsackItem::random)
-            .limit(nItems)
-            .toArray(KnapsackItem[]::new), ksSize);
+        ArrayList<Double> qc = new ArrayList<>();
+        ArrayList<ArrayList<Double>> rating = new ArrayList<>();
 
-        Engine<BitGene, Double> engine = Engine.builder(ff, BitChromosome.of(nItems, 0.5))
-            .populationSize(500)
-            .survivorsSelector(new TournamentSelector<>(5))
-            .offspringSelector(new RouletteWheelSelector<>())
-            .alterers(new Mutator<>(0.115), new SinglePointCrossover<>(0.16))
-            .build();
+        while (sc.hasNext()) {
+            String[] oneLineDate = sc.nextLine().split(":");
+            ArrayList<Double> rtg = new ArrayList<>();
+            for (int i = 0; i < oneLineDate.length - 1; i++) {
+                rtg.add(Double.valueOf(oneLineDate[i]));
+            }
+            rating.add(rtg);
+            qc.add(Double.valueOf(oneLineDate[oneLineDate.length - 1]));
+        }
 
-        EvolutionStatistics<Double, ?> statistics = EvolutionStatistics.ofNumber();
+        double[] qcArr = qc.stream().mapToDouble(i -> i).toArray();
+        double[][] ratingArr = new double[qcArr.length][];
+        IntStream.range(0, rating.size()).forEach(i -> ratingArr[i] = rating.get(i).stream().mapToDouble(j -> j).toArray());
 
-        Phenotype<BitGene, Double> best = engine.stream()
-            .limit(bySteadyFitness(7))
-            .limit(100)
-            .peek(statistics)
-            .collect(toBestPhenotype());
+        regression.newSampleData(qcArr, ratingArr);
+        coefficients = regression.estimateRegressionParameters();
+    }
 
-        System.out.println(statistics);
-        System.out.println(best);
+
+    public void ranging(Integer[][] arr) throws Exception {
+        ArrayList<Double> res = new ArrayList<>();
+
+        for (Integer[] i : arr) {
+            double coeff = coefficients[0];
+            int k = 0;
+            for (Integer j : i) {
+                coeff += j * coefficients[k + 1];
+                k++;
+            }
+            res.add(coeff);
+        }
+
+        double result = 0;
+        for (double d : res) {
+            result += d;
+        }
+        System.out.println("Оценка качества после LR: \n" + (result / res.size()));
     }
 }

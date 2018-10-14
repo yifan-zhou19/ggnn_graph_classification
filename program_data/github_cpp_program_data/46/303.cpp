@@ -1,48 +1,64 @@
-struct BIT{
-	LL d[maxn];
-	inline int lowbit(int x){return x&-x;}
-	LL get(int x){
-		LL ans=0;
-		while(x)ans+=d[x],x-=lowbit(x);
-		return ans;
-	}
-	void updata(int x,LL f){
-		while(x<=m)d[x]+=f,x+=lowbit(x);
-	}
-	void add(int l,int r,LL f){
-		updata(l,f);
-		updata(r+1,-f);
-	}
-}T,T2;
-int anss[maxn],wana[maxn];
-struct qes{
-	LL x,y,z;
-	qes(LL _x=0,LL _y=0,LL _z=0):
-		x(_x),y(_y),z(_z){}
-}q[maxn],p[maxn];
-bool part(qes &q){
-	if(q.y+q.z>=wana[q.x])return 1;
-	q.z+=q.y;q.y=0;return 0;
-}
-void solve(int lef,int rig,int l,int r){
-	if(l==r){
-		for(int i=lef;i<=rig;i++)if(anss[p[i].x]!=-1)
-		anss[p[i].x]=l;return;
-	}int mid=(l+r)>>1;
-	for(int i=l;i<=mid;i++){
-		if(q[i].x<=q[i].y)T.add(q[i].x,q[i].y,q[i].z);
-		else T.add(1,q[i].y,q[i].z),T.add(q[i].x,m,q[i].z);
-	}for(int i=lef;i<=rig;i++){
-		p[i].y=0;
-		for(int j=0;j<O[p[i].x].size()&&p[i].y<=int(1e9)+1;j++)
-		p[i].y+=T.get(O[p[i].x][j]);
-	}for(int i=l;i<=mid;i++){
-		if(q[i].x<=q[i].y)T.add(q[i].x,q[i].y,-q[i].z);
-		else T.add(1,q[i].y,-q[i].z),T.add(q[i].x,m,-q[i].z);
-	}int dv=stable_partition(p+lef,p+rig+1,part)-p-1;		
-	if(lef<=dv)
-	solve(lef,dv,l,mid);
-	if(dv+1<=rig)
-	solve(dv+1,rig,mid+1,r);
-}
+#include <bits/stdc++.h>
+using namespace std;
 
+typedef long long ll;
+
+struct SegmentTree {
+    ll value, push;
+    SegmentTree *l, *r;
+
+    inline SegmentTree () : value(0), push(-1), l(NULL), r(NULL) {}
+
+	inline void shove (int l, int r) {
+		if (this->l == NULL)
+			this->l = new SegmentTree(), this->r = new SegmentTree();
+		if (this->push == -1) {
+			return;
+		}
+		this->value = (this->l->push = this->r->push = this->push) * (r - l + 1);
+		this->push = -1;
+	}
+
+    inline ll get (int l, int r, int tl, int tr) {
+        if (r < tl || l > tr)
+            return 0;
+		this->shove(l, r);
+		if (tl <= l && r <= tr)
+			return this->value;
+		int md = (l + r) >> 1;
+        return this->l->get(l, md, tl, tr) + this->r->get(md + 1, r, tl, tr);
+    }
+
+    inline ll upd (int l, int r, int tl, int tr, ll val) {
+		this->shove(l, r);
+        if (r < tl || l > tr)
+            return this->value;
+        if (tl <= l && r <= tr)
+            return this->value = (this->push = val) * (r - l + 1);
+        int md = (l + r) >> 1;
+        return this->value = this->l->upd(l, md, tl, tr, val) + this->r->upd(md + 1, r, tl, tr, val);
+    }
+} *ST;
+
+int n, k;
+
+int main () {
+    freopen("sum.in", "r", stdin); freopen("sum.out", "w", stdout);
+    ios_base::sync_with_stdio(false);
+    ST = new SegmentTree();
+    cin >> n >> k;
+    while (k--) {
+        char tpe;
+        cin >> tpe;
+        if (tpe == 'A') {
+            int l, r, x;
+			cin >> l >> r >> x;
+			ST->upd(1, n, l, r, x);
+		}
+        else {
+			int l, r;
+			cin >> l >> r;
+			cout << ST->get(1, n, l, r) << endl;
+        }
+    }
+}

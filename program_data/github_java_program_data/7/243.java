@@ -1,27 +1,17 @@
-package com.wang.domain.fanxing.complexmodel;
-
-/**
- * Created by chao.wang2 on 2018/6/14  12:59
- */
-public class Fibonacci implements Generator<Integer> {
-
-    private int count = 0;
-
-    @Override
-    public Integer next() {
-        return fib(count++);
-    }
-
-    private int fib(int n){
-        if (n<2) return 1;
-        return fib(n-1)+fib(n-2);
-    }
-
-    public static void main(String[] args) {
-        Fibonacci fibonacci = new Fibonacci();
-        for (int i = 0; i < 18; i++) {
-            System.out.print(fibonacci.next()+ " ");
-        }
-    }
-
+public class TowerOfHanoi {
+	public static void main(String[] args) {
+	int numOfDisks=3;
+	System.out.println("Tower of Hanoi Problem for Thee disks");
+	towerOfHanoi(numOfDisks,'A','B','C');
+	}
+	public static void towerOfHanoi(int disks,char first,char middle,char last){
+		if(disks==1){
+			System.out.println("Disk 1 from "+first+" to "+last);
+		}
+		else{
+			towerOfHanoi(disks-1, first,last,middle);
+			System.out.println("Disk "+disks+" from "+first+" to "+last);
+			towerOfHanoi(disks-1,middle, first,last);
+		}
+	}
 }

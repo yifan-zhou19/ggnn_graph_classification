@@ -1,95 +1,26 @@
-package Queue;
+/**
+ * Implementation of Data Structure and Algorithms
+ * Maximum profit for rod cutting for given length of problem
+ * Created by Ketki Mahajan on 2/20/2018.
+ **/
+public class rodCuttingProblem {
+    public static void main(String[] args) {
+        //price array for each length i
+        int[] p = {0, 1, 5, 8, 9, 10, 17, 17, 20, 24, 30};
+        int n = 10;
+        cutRod(p, n);
+    }
 
-import java.util.Scanner;
-
-public class Main {
-
-	public static void main(String[] args) {
-		Queue myqueue = new Queue(5);
-		Scanner input = new Scanner(System.in);
-		String command = "";
-		while (!command.equals("quit")) {
-			System.out.println();
-			System.out
-					.println("Do you want to insert, remove, getsize or quit?");
-			command = input.next();
-			if (command.equals("insert")) {
-				System.out.println("Enter name to insert");
-				String name = input.next();
-				myqueue.insert(name);
-				System.out.println(name + " has been inserted into the queue");
-				myqueue.printout();
-			} else if (command.equals("remove")) {
-				System.out.println(myqueue.remove()
-						+ " has been removed from the queue");
-				myqueue.printout();
-			} else if (command.equals("getsize")) {
-				System.out.println("The size of the queue is "
-						+ myqueue.getSize());
-			}
-		}
-	}
-}
-
-
-
-
-
-
-package Queue;
-
-public class Queue {
-
-	private String[] array;
-	private int size;
-	private int front;
-	private int rear;
-	private int nItems;
-
-	public Queue(int s) {
-		size = s;
-		array = new String[size];
-		front = 0;
-		rear = -1;
-		nItems = 0;
-	}
-
-	public boolean insert(String name) {
-		if (isFull())
-			return false;
-		if (rear == size - 1)
-			rear = -1;
-		rear++;
-		array[rear] = name;
-		nItems++;
-		return true;
-	}
-
-	public String remove() {
-		if (isEmpty())
-			return null;
-		String temp = array[front];
-		front++;
-		if (front == size)
-			front = 0;
-		return temp;
-	}
-
-	public boolean isFull() {
-		return (nItems == size);
-	}
-
-	public boolean isEmpty() {
-		return (nItems == 0);
-	}
-
-	public int getSize() {
-		return nItems;
-	}
-
-	public void printout() {
-		for(int i=front;i<nItems;i++){
-			System.out.print(array[i] + " ");
-		}
-	}
+    private static void cutRod(int[] p, int n) {
+        int[] revenue = new int[p.length];
+        revenue[0] = 0;
+        for (int j = 1; j <= n; j++) {
+            int q = -999;
+            for (int i = 1; i <= j; i++) {
+                q = Math.max(q, p[i] + revenue[j - i]);
+            }
+            revenue[j] = q;
+        }
+        System.out.println(revenue[n]);
+    }
 }

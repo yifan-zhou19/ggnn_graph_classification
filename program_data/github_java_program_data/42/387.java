@@ -1,42 +1,48 @@
-package sorting.noncomparison;
+package pl.coderstrust.sort;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
-public class BucketSort {
+/**
+ * Created by Adam on 2018-02-13.
+ */
+public class SelectionSortSort {
+    public static void main(String[] args) {
 
-    public void sort(Double[] A) {
+        int[] array = {5, 4, 1, 2, 9, 2, 7};
 
-        int n = A.length;
-        List[] B = new ArrayList[n];
+        System.out.println(Arrays.toString(array));
 
-        for (int i = 0; i < n; i++)
-            B[i] = new ArrayList<>();
+        SelectionSortSort myObject = new SelectionSortSort();
+        myObject.sort(array);
 
-        for (int i = 0; i < n; i++)
-            B[(int) Math.floor(n * A[i])].add(A[i]);
-
-        for (List b : B)
-            Collections.sort(b);
-
-        int i = 0;
-        for (List b : B)
-            for (Object d : b)
-                A[i++] = (Double) d;
+        System.out.println(Arrays.toString(array));
 
     }
 
-    public static void main(String... args) {
+    public int[] sort(int[] array) {
+        for (int j = 0; j < array.length; ++j) {
+            int minimumNumberIndex = getMinimumNumberIndex(array, j);
+            swap(array, j, minimumNumberIndex);
 
-        Double[] numbers = {0.15, 0.84, 0.36, 0.99, 0.13, 0.34, 0.91, 0.51};
-        BucketSort bucketSort = new BucketSort();
-        bucketSort.sort(numbers);
+        }
+        return array;
+    }
 
-        Arrays.asList(numbers).stream().forEach(System.out::println);
+    public int getMinimumNumberIndex(int[] array, int j) {
+        int minimumNumberIndex = j;
+        for (int i = j; i < array.length; ++i)
+            if (array[i] < array[minimumNumberIndex]) {
+                minimumNumberIndex = i;
+            }
+        return minimumNumberIndex;
+    }
 
+    public static void swap(int[] array, int j, int minimumNumberIndex) {
+        int temp = array[j];
+        array[j] = array[minimumNumberIndex];
+        array[minimumNumberIndex] = temp;
     }
 
 
 }
+

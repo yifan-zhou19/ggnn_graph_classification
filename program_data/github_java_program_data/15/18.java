@@ -1,124 +1,208 @@
-package com.hrishikeshmishra.ns.graph;
-
-import com.hrishikeshmishra.ns.stack.LinkedStack;
-import com.hrishikeshmishra.ns.stack.Stack;
-
+import java.io.*;
 import java.util.*;
-import java.util.stream.Collectors;
 
-/**
- * Topological Sort
- *
- * @author hrishikesh.mishra
- * @link http://hrishikeshmishra.com/topological-sort/
- */
-public class TopologicalSort {
+public class Heap {
+  public Comparable value;
+  public Heap left, right;
+  public int rank;
 
-    public <V> List<V> sortRecursive(Digraph<V> digraph) {
-        List<V> topologicalOrder = new ArrayList<>();
-        VertexInDegreeCounter vertexInDegreeCounter = new VertexInDegreeCounter(digraph);
-        Set<V> zeroInDegreeVertices = getZeroInDegreeVertices(digraph);
-        if (zeroInDegreeVertices.isEmpty()) throw new RuntimeException("Graph has loop.");
-        zeroInDegreeVertices.stream().forEach(vertex -> sortRecursive(topologicalOrder, vertex, digraph, vertexInDegreeCounter));
-        return topologicalOrder;
+  public static Comparable removedValue;
+
+  static int LEFT = 0;
+  static int RIGHT = 1;
+
+  public Heap (Comparable value_, Heap left_, Heap right_) {
+    value = value_;
+    left = left_;
+    right = right_;
+
+    // when the node is created, it gets rank 1, on the
+    // assumption that it is a leaf node
+    rank = 1;
+  }
+
+  public static Heap insert (Heap heap, Comparable value) {
+    // this should no longer be necessary
+    // labelRank (heap);
+
+    // then do the actual insertion
+    return insertHelp (heap, value);
+  }
+
+  public static Heap insertHelp (Heap heap, Comparable value) {
+
+    // to add a new element to a null heap, just create a new object
+    if (heap == null) {
+      return new Heap (value, null, null);
     }
 
-    private <V> void sortRecursive(List<V> topologicalOrder, V vertex, Digraph<V> digraph, VertexInDegreeCounter vertexInDegreeCounter) {
-        topologicalOrder.add(vertex);
-        for (V outgoingVertex : digraph.getOutboundNeighbors(vertex)) {
-            vertexInDegreeCounter.decreaseInDegreeCountByOne(outgoingVertex);
-            if (!vertexInDegreeCounter.hasMoreInDegree(outgoingVertex))
-                sortRecursive(topologicalOrder, outgoingVertex, digraph, vertexInDegreeCounter);
-        }
+    // figure out which side is going to get the new object
+    int choice = LEFT;
+    if (heap.left == null) {
+      choice = LEFT;
+    } else if (heap.right == null) {
+      choice = RIGHT;
+    } else if (heap.left.rank > heap.right.rank) {
+      choice = RIGHT;
     }
 
-    public <V> List<V> sortNonRecursive(Digraph<V> digraph) {
-        List<V> topologicalOrder = new ArrayList<>();
-        Stack<V> stack = new LinkedStack<>();
+    // call insertHelp recursively on the appropriate child,
+    // then check for the heap property when the child returns.
+    if (choice == LEFT) {
+      heap.left = insertHelp (heap.left, value);
+      if (heap.value.compareTo(heap.left.value) == -1) {
+	swapContents (heap, heap.left);
+      }
+    } else {
+      heap.right = insertHelp (heap.right, value);
+      if (heap.value.compareTo (heap.right.value) == -1) {
+	swapContents (heap, heap.right);
+      }
+    }
+    setRank (heap);
+    return heap;
+  }
 
-        getZeroInDegreeVertices(digraph).forEach(stack::push);
-        VertexInDegreeCounter vertexInDegreeCounter = new VertexInDegreeCounter(digraph);
+  public static void swapContents (Heap h1, Heap h2) {
+    Comparable temp = h1.value;
+    h1.value = h2.value;
+    h2.value = temp;
+  }
 
-        if (stack.isEmpty())
-            throw new RuntimeException("Graph has loop.");
+  public static Heap remove (Heap heap) {
+    if (heap == null) return null;
 
-        while (!stack.isEmpty()) {
-            V vertex = stack.pop();
-            topologicalOrder.add(vertex);
-            for (V outgoingVertex : digraph.getOutboundNeighbors(vertex)) {
-                vertexInDegreeCounter.decreaseInDegreeCountByOne(outgoingVertex);
-                if (!vertexInDegreeCounter.hasMoreInDegree(outgoingVertex))
-                    stack.push(outgoingVertex);
+    // put the primary return value into removedValue
+    removedValue = heap.value;
 
-            }
-        }
+    // then fix the broken heap
+    heap = reheapify (heap);
 
-        return topologicalOrder;
+    // and set the rank of the top node.
+    setRank (heap);
+    return heap;
+  }
+
+  public static Heap reheapify (Heap heap) {
+
+    // reheapify by recursively removing an element from
+    // the larger of the two children
+    int larger;
+
+    // if there are no children, return an empty heap
+    if (heap.left == null && heap.right == null) return null;
+
+    // larger indicates which of the children is larger
+    if (heap.left == null) {
+      larger = RIGHT;
+    } else {
+      larger = LEFT;
+
+      if (heap.right != null &&
+	  heap.right.value.compareTo(heap.left.value) == 1) {
+	larger = RIGHT;
+      }
     }
 
-    private <V> Set<V> getZeroInDegreeVertices(Digraph<V> digraph) {
-        return digraph.getVertices().
-                stream().
-                filter(vertex -> digraph.getInboundNeighbors(vertex).size() == 0).
-                collect(Collectors.toCollection(() -> new LinkedHashSet<>()));
+    // steal a value from the larger child and reheapify that child
+    if (larger == LEFT) {
+      heap.value = heap.left.value;
+      heap.left = reheapify (heap.left);
+    } else {
+      heap.value = heap.right.value;
+      heap.right = reheapify (heap.right);
     }
+    return heap;
+  }
 
-    private static class VertexInDegreeCounter<V> {
-        private final Map<V, Integer> vertexInDegreeCountMap;
+  public static boolean isLeaf (Heap heap) {
+    if (heap == null) return false;
+    return heap.left == null && heap.right == null;
+  }
 
-        private VertexInDegreeCounter(Digraph<V> digraph) {
-            vertexInDegreeCountMap = getVertexInDegreeCountMap(digraph);
-        }
+  public static boolean isHeap (Heap heap) {
+    if (heap == null) return true;
 
-        public void decreaseInDegreeCountByOne(V vertex) {
-            vertexInDegreeCountMap.put(vertex, vertexInDegreeCountMap.get(vertex) - 1);
-        }
-
-        public boolean hasMoreInDegree(V vertex) {
-            return (vertexInDegreeCountMap.get(vertex) > 0);
-        }
-
-        private <V> Map<V, Integer> getVertexInDegreeCountMap(Digraph<V> digraph) {
-            Map<V, Integer> vertexInDegreeCountMap = new HashMap<>();
-            for (V vertex : digraph.getVertices())
-                vertexInDegreeCountMap.put(vertex, digraph.inDegree(vertex));
-            return vertexInDegreeCountMap;
-        }
-
+    if (heap.left != null) {
+      if (heap.left.value.compareTo(heap.value) == 1) return false;
+      if (!isHeap (heap.left)) return false;
     }
+    if (heap.right != null) {
+      if (heap.right.value.compareTo(heap.value) == 1) return false;
+      if (!isHeap (heap.right)) return false;
+    }
+    return true;
+  }
+
+
+  // height finds the height of the given node (longest
+  // distance to a leaf node)
+  public static int height (Heap heap) {
+    if (heap == null) return 0;
+    int left = height (heap.left) + 1;
+    int right = height (heap.right) + 1;
+    if (left > right) return left;
+    return right;
+  }
+
+  // rank is the minimum distance from a node to a leaf
+  // labelRank traverses the tree and labels each node with
+  // its rank.  setRank assumes that the children are already
+  // labeled correctly, and just calculates the rank of the
+  // parent (in constant time).
+
+  public static int labelRank (Heap heap) {
+    if (heap == null) return 0;
+    int left = labelRank (heap.left) + 1;
+    int right = labelRank (heap.right) + 1;
+
+    if (left < right) {
+      heap.rank = left;
+    } else {
+      heap.rank = right;
+    }
+    return heap.rank;
+  }
+
+  public static void setRank (Heap heap) {
+    if (heap == null) return;
+    int left = 0;
+    int right = 0;
+
+    if (heap.left != null) left = heap.left.rank;
+    if (heap.right != null) right = heap.right.rank;
+
+    if (left < right) {
+      heap.rank = left + 1;
+    } else {
+      heap.rank = right + 1;
+    }
+  }
+
+  public static void printHeap (Heap heap) {
+
+    int height = height (heap);
+
+    for (int i = 0; i<height; i++) {
+      printLevel (heap, i, 0);
+      System.out.println ("");
+    }
+  }
+
+  public static void printLevel (Heap heap, int level, int sofar) {
+    if (sofar == level) {
+      if (heap == null) {
+	System.out.print ("n ");
+      } else {
+	System.out.print (heap.value + " ");
+      }
+
+    } else if (heap != null) {
+      printLevel (heap.left, level, sofar+1);
+      printLevel (heap.right, level, sofar+1);
+    }
+  }
+
 }
 
-
-class TopologicalSortTest {
-
-    public static void main(String[] args) {
-        Digraph<Integer> graph = new Digraph<>();
-
-        graph.addVertex(7);
-        graph.addVertex(5);
-        graph.addVertex(3);
-        graph.addVertex(11);
-        graph.addVertex(8);
-        graph.addVertex(2);
-        graph.addVertex(9);
-        graph.addVertex(10);
-
-        graph.addEdge(3, 8);
-        graph.addEdge(3, 10);
-        graph.addEdge(5, 11);
-        graph.addEdge(7, 11);
-        graph.addEdge(7, 8);
-        graph.addEdge(11, 2);
-        graph.addEdge(11, 9);
-        graph.addEdge(11, 10);
-        graph.addEdge(8, 9);
-
-        System.out.println("Graph:\n" + graph);
-
-        TopologicalSort topologicalSort = new TopologicalSort();
-        System.out.println("\n\nNon-Sort: " + topologicalSort.sortNonRecursive(graph));
-        System.out.println("\n\nRecursive Sort: " + topologicalSort.sortRecursive(graph));
-
-
-    }
-}
+  

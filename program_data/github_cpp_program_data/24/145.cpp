@@ -1,141 +1,143 @@
-#include <iostream>
-#include <numeric> 
-#include <iterator>
+// A C / C++ program for Prim's Minimum Spanning Tree (MST) algorithm. 
+// The program is for adjacency matrix representation of the graph
+// http://www.geeksforgeeks.org/greedy-algorithms-set-5-prims-minimum-spanning-tree-mst-2/
+
+#include <stdio.h>
+#include <limits.h>
 #include <vector>
-#include <algorithm>
-#include <string>
-using namespace std;
+#include <iostream>
 
-// Version 1 : get next permutation, same with STL next_permutaion
-//
-//      Step1: from right to left, find the first one(i) smaller than its right neighbour(i1)
-//      Step2: from right to i, find the rightest one(i2) larger than i
-//      Step3: swap i and i2, then reverse from i1 to the last
-//      Step4: check if i is first one, which means permutation ends, return
-// would ignore duplicates, e.g. {1, 1, 2} -> {1, 1, 2}, {1, 2, 1}, {2, 1, 1}
-bool nextPermutation(int *first, int *last) {
-    if (first == last || first == last - 1)
-        return false;
+class Graph{
+private:
+    int V;
+    std::vector<std::vector<int> > graph;
 
-    int *i = last - 1;
-    while (true) {
-        int *i1, *i2;
-        i1 = i;
-        if (*--i < *i1) {
-            i2 = last;
-            while (*i >= *--i2);
-            iter_swap(i, i2);
-            reverse(i1, last);
-            return true;
-        }
-        if (i == first) {
-            reverse(first, last);
-            return false;
-        }
+    int min_key(std::vector<int>, std::vector<bool>);
+
+public:
+    Graph(int);
+    void add_edge(int, int, int);
+    void delete_edge(int, int);
+    void print_graph();
+
+    void prim_mst();
+    void printMST(std::vector<int>);
+};
+
+
+Graph::Graph(int i) {
+    this->V = i;
+    std::vector<int> temp (i, 0);
+    for(int k=0; k<i; k++)
+        graph.push_back(temp);
+
+    for(int k=0; k<i; k++)
+        graph[k][k] = 0;
+}
+
+void Graph::print_graph() {
+    for(int i = 0; i<V; i++) {
+        for (int k = 0; k < V; k++)
+            std::cout << graph[i][k] << " ";
+    std::cout << std::endl;
     }
 }
 
-
-// Version 2 : generate all permutations
-//
-// Solution 2.1 : dfs, generate
-void dfs(vector<vector<int>>& result, vector<int>& path, vector<bool>& used, vector<int>& nums, size_t steps) {
-    if (steps == nums.size()) {
-        result.push_back(path);
+void Graph::add_edge(int v1, int v2, int weight) {
+    if (v1 == v2)
         return;
-    }
-    for (int i = 0; i < (int)nums.size(); ++i) {
-        if (!used[i]) {
-            used[i] = true;
-            path.push_back(nums[i]);
-            dfs(result, path, used, nums, steps+1);
-            path.pop_back();
-            used[i] = false;
-        }
-    }
+
+    graph[v1][v2] = weight;
+    graph[v2][v1] = weight;
 }
 
-vector<vector<int>> permutation_dfs(vector<int> nums) {
-    vector<vector<int>> result;
-    vector<int> path;
-    vector<bool> used(nums.size(), false);
-    dfs(result, path, used, nums, 0);
-    return result;
-}
-
-
-// Solution 2.2 : dfs, swap
-void dfs(vector<vector<int>>& result, vector<int>& nums, size_t cur) {
-    if (cur == nums.size()-1) {
-        result.push_back(nums);
+void Graph::delete_edge(int v1, int v2) {
+    if (v1 == v2)
         return;
-    }
-    for (int i = cur; i < (int)nums.size(); ++i) {
-        swap(nums[cur], nums[i]);
-        dfs(result, nums, cur+1);
-        swap(nums[cur], nums[i]);
-    }
+
+    graph[v1][v2] = 0;
+    graph[v2][v1] = 0;
 }
 
-vector<vector<int>> permutation_dfs_swap(vector<int>& nums) {
-    vector<vector<int>> result;
-    dfs(result, nums, 0);
-    return result;
+/* =================================================== */
+int Graph::min_key(std::vector<int> key, std::vector<bool> mstSet) {
+    // Initialize min value
+    int min = INT_MAX, min_index;
+
+    for (int v = 0; v < V; v++)
+        if (mstSet[v] == false && key[v] <= min)
+            min = key[v], min_index = v;
+
+    return min_index;
 }
 
-
-// Version 3 : get k-th permutation, academic solution from Combinatorial - Canton Expression
-// 康拓展开逆过程，中介数
-// k = an*(n-1)! + an-1*(n-2)! + ... + ai*(i-1)! + ... + a2*1! + a1*0!
-string get_kth_permutation(int n, int k) {
-    // initialize a dictionary that stores 1, 2, ..., n
-    string dict(n, '0');
-    iota(dict.begin(), dict.end(), '1');
-
-    // build up a look-up factorial table, which stores (n-1)!, (n-2)!, ..., 1!, 0!
-    vector<int> fact(n, 1);
-    for (int i = n-3; i >= 0; --i)
-        fact[i] = fact[i+1] * (n-i-1);
-
-    // let k be zero based
-    --k;
-
-    string res(n, '0');
-    for (int i = 0; i < n; ++i) {
-        int select = k / fact[i];
-        k %= fact[i];
-        res[i] = dict[select];
-        dict.erase(dict.begin()+select);
-    }
-    return res;
+void Graph::printMST(std::vector<int> parent) {
+    printf("Edge   Weight\n");
+    for (int i = 1; i < V; i++)
+        printf("%d - %d    %d \n", parent[i], i, graph[i][parent[i]]);
 }
 
-int main() {
-    cout << "solution 1" << endl;
-    int s[] = {1, 2, 3};
-    for (auto & i : s) cout << i << " ";
-    cout << endl;
-    while (nextPermutation(s, s+3)) {
-        for (auto & i : s) cout << i << " ";
-        cout << endl;
+void Graph::prim_mst() {
+    // Array to store constructed MST
+    std::vector<int> parent(V);
+
+    // Key values used to pick minimum weight edge in cut
+    std::vector<int> key(V);
+
+    // To represent set of vertices not yet included in MST
+    std::vector<bool> mstSet(V);
+
+    // Initialize all keys as INFINITE
+    for (int i = 0; i < V; i++)
+        key[i] = INT_MAX, mstSet[i] = false;
+
+    // Always include first 1st vertex in MST.
+    // Make key 0 so that this vertex is picked as first vertex
+    key[0] = 0;
+
+    // First node is always root of MST
+    parent[0] = -1;
+
+    // The MST will have V vertices
+    for (int count = 0; count < V-1; count++)
+    {
+        // Pick the minimum key vertex from the set of vertices
+        // not yet included in MST
+        int u = min_key(key, mstSet);
+
+        // Add the picked vertex to the MST Set
+        mstSet[u] = true;
+
+        // Update key value and parent index of the adjacent vertices of
+        // the picked vertex. Consider only those vertices which are not yet
+        // included in MST
+        for (int v = 0; v < V; v++)
+
+            // graph[u][v] is non zero only for adjacent vertices of m
+            // mstSet[v] is false for vertices not yet included in MST
+            // Update the key only if graph[u][v] is smaller than key[v]
+            if (graph[u][v] && mstSet[v] == false && graph[u][v] <  key[v])
+                parent[v]  = u, key[v] = graph[u][v];
     }
 
-    cout << "solution 2" << endl;
-    vector<int> nums = {1, 2, 3};
-    for (auto & v : permutation_dfs(nums)) {
-        for (auto & i : v)
-            cout << i << " ";
-        cout << endl;
-    }
+    // print the constructed MST
+    printMST(parent);
+}
 
-    cout << "solution 3" << endl;
-    for (auto & v : permutation_dfs_swap(nums)) {
-        for (auto & i : v)
-            cout << i << " ";
-        cout << endl;
-    }
+int main()
+{
+    Graph g(5);
 
-    cout << "solution 4" << endl;
-    cout << get_kth_permutation(8, 1000) << endl;
+    g.add_edge(0,1,2);
+    g.add_edge(0,3,6);
+    g.add_edge(1,2,3);
+    g.add_edge(1,3,8);
+    g.add_edge(1,4,5);
+    g.add_edge(2,4,7);
+    g.add_edge(3,4,9);
+
+    g.print_graph();
+    g.prim_mst();
+
     return 0;
 }

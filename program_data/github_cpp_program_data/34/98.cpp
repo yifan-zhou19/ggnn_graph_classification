@@ -1,418 +1,443 @@
-/*                             Begin LinkedList.h                                           */
 #include <iostream>
-#include <stdlib.h>
+#include <fstream>
 #include <vector>
-#include <algorithm>
-#include <functional>
+#include <sstream>
+#include <string>
+#include <math.h>
 
-typedef unsigned long ulong;
+// for shuffling
+#include "gsl/gsl_rng.h"
+#include "gsl/gsl_randist.h"
 
-template<class T>
-struct node {
-	T data;
-	node *next;
+//for distributions
+#include "gsl/gsl_cdf.h"
 
-	node(T value) : data(value), next(nullptr) {}
+using namespace std;
+
+#define MIN(a,b) ((a) < (b) ? (a) : (b) )
+
+const int experimentCount = 15;
+const double smoothingEps = 0.00000000001;
+const double trainPart = 0.5;
+
+vector<bool> loadResponse(string fileName)
+{
+    vector<bool> ret;
+    ifstream file;
+    file.open(fileName.c_str(),ifstream::in);
+    if (!file.good())
+    {
+        cout<<"error"<<endl;
+    }
+    cout<<"Loading response"<<endl;
+
+    string word;
+    bool temp;
+    while(!file.eof())
+    {
+        file >> temp;
+        ret.push_back(temp);
+    }
+    // In case of redundant last line. R package likes add such lines.
+    ret.pop_back();
+
+    file.close();
+    cout<<"Loading response finished"<<endl;
+
+    return ret;
+}
+
+void loadSamples(vector< vector <double> >& healphy,
+                 vector< vector <double> >& cancer,
+                 vector<bool>& resp,
+                 string fileName)
+{
+    vector<double> healphyVec;
+    vector<double> cancerVec;
+    ifstream file;
+    file.open(fileName.c_str(),ifstream::in);
+    if (!file.good())
+    {
+        cout<<"error"<<endl;
+    }
+    cout<<"Loading samples"<<endl;
+    
+    double temp;
+    string line;
+    getline(file, line);
+    istringstream iss(line);
+    int count = 0;
+    
+    while(!iss.eof())
+    {
+        iss >> temp;
+        if(resp[count])
+            cancerVec.push_back(temp);
+        else
+            healphyVec.push_back(temp);
+        count++;
+    }
+    
+    cancer.push_back(cancerVec);
+    healphy.push_back(healphyVec);
+
+    while (getline(file, line))
+    {
+        healphyVec.clear();
+        cancerVec.clear();
+        istringstream iss(line);
+        count = 0;
+        while(!iss.eof())
+        {
+            iss >> temp;
+            if(resp[count])
+                cancerVec.push_back(temp);
+            else
+                healphyVec.push_back(temp);
+            count++;
+        }
+
+        cancer.push_back(cancerVec);
+        healphy.push_back(healphyVec);
+        
+        if(cancer.size() % 10000 == 0)
+        {
+            cout <<"progress: " << cancer.size()<<endl;
+        }
+    }
+    cout<<"cancer.size() = "<<cancer.size()<<endl;
+    file.close();
+    cout<<"Loading samples finished"<<endl;
+}
+
+vector<double> mean(vector<vector<double> >& sample, vector<int>& ind)
+{
+    vector<double> ret;
+    double sum = 0;
+    vector<double> temp;
+    for (int i = 0; i < sample.size(); i++)
+    {
+        sum = 0;
+        for (int j = 0; j < ind.size(); j++)
+        {
+            sum += sample[i][ind[j]];
+        }
+        ret.push_back(sum/ind.size());
+    }
+    return ret;
+}
+
+vector<double> sd(vector<vector<double> >& sample, vector<int>& ind)
+{
+    vector<double> ret;
+    double sum = 0;
+    double sum2 = 0;
+    int N;
+    for (int i = 0; i < sample.size(); i++)
+    {
+        sum = 0;
+        sum2 = 0;
+        N = ind.size();
+        for (int j = 0; j < N; j++)
+        {
+            sum += sample[i][ind[j]];
+            sum2 += sample[i][ind[j]]*sample[i][ind[j]];
+        }
+
+        // ret.push_back(sqrt((sum2 - sum*sum/N)/(N-1)));
+        ret.push_back(sqrt((sum2 - sum*sum/N)/(N)+smoothingEps));
+    }
+    return ret;
+}
+
+vector<int> get_sample(gsl_rng* randGenerator, int max)
+{
+    int* vec = new int[max];
+    for (int i = 0; i < max; i++)
+    {
+        vec[i] = i;
+    }
+    gsl_ran_shuffle(randGenerator, (void*) vec, max,sizeof(*vec));
+    vector<int> vecRet;
+    for (int i = 0; i < max; i++)
+    {
+        vecRet.push_back(vec[i]);
+    }
+    delete [] vec;
+    return vecRet;
+}
+
+struct SumErrorsStruct
+{
+    int healphyMis;
+    int cancerMis;
+    int healphyMisSquared;
+    int cancerMisSquared;
+    int totalMisSquared;
+    int healphyMisTrain;
+    int cancerMisTrain;
+    SumErrorsStruct():
+        healphyMis(0), cancerMis(0), healphyMisSquared(0),
+        cancerMisSquared(0), totalMisSquared(0),
+        healphyMisTrain(0), cancerMisTrain(0)
+        {}
 };
 
-template<class T>
-class LinkedList {
-private:
-	node<T> *root;
-	node<T> *cursor;
-	int listLength;
-	enum linkInfo { prevNodeA, nextNodeA, prevNodeB, nextNodeB };
-	void PrintList(node<T> *printer, bool reversed) const;
-	void SetRoot(node<T> **newRoot, node<T> *n);
-	void DoDeleteAll(node<T> *dltr);
-	bool IterativeReverse(node<T> *head);
-	bool RecurseReverse(node<T> *currNode, node<T> *prevNode, node<T> *newNext);
-
-
-public:
-	LinkedList();            ~LinkedList();
-
-	bool InsertNode(T val);
-	void PrintList(bool reversed) const;
-	node<T> *Search(T val);
-	T RemoveNode(T val);
-	void DeleteEntireList(void);
-	bool SwapNodes(T nodeOne, T nodeTwo);
-	bool SortList(std::string sortForm);
-	bool ReverseList(char toggle);
-	bool MakeUnique(void);
-	bool ModifyNode(T nodeVal, T toVal);
-	void GetCursor(void) const;
-	void AdvanceCursor(int places);
-	int GetLength(void) const;
-
+struct TrainModel
+{
+    vector<double> healphyMean;
+    vector<double> healphySd;
+    vector<double> cancerMean;
+    vector<double> cancerSd;
+    TrainModel(vector<double> _healphyMean,
+               vector<double> _healphySd,
+               vector<double> _cancerMean,
+               vector<double> _cancerSd):
+        healphyMean(_healphyMean),
+        healphySd(_healphySd),
+        cancerMean(_cancerMean),
+        cancerSd(_cancerSd)
+        {}
 };
-/*                             End LinkedList.h                                           */
 
-/*                             Begin LinkedList.cpp                                           */
-/* Idea is to implement basic functions first, in order from non-destructive to destructive
-* Hence: Insert -> PrintList -> Search -> Remove etc; before moving on to the more involved functionality.
-*/
-
-template<class T>
-LinkedList<T>::LinkedList() : root(nullptr), cursor(nullptr), listLength(0) {}
-
-template<class T>
-LinkedList<T>::~LinkedList() {}
-
-template<class T>
-bool LinkedList<T>::InsertNode(T val) {
-	if (!root) {
-		root = new node<T>(val);
-		cursor = root;
-	}
-	else {
-		node<T> *n = new node<T>(val);
-		cursor->next = n;
-		cursor = n;
-	}
-	++listLength;
-	return true;
+struct ResultStatistics
+{
+    double healphy_mean;
+    double healphy_mean_train;
+    double healphy_mean_sd;
+    double cancer_mean;
+    double cancer_mean_train;
+    double cancer_mean_sd;
+    int tc;
+    double total_mean;
+    double total_mean_sd;
+    string cancerName;
+    int experimentCount;
+    int healphyTestSize;
+    int cancerTestSize;
+    void Export(string filename)
+        {
+            ofstream ofile;
+            ofile.open(filename.c_str(), iostream::app);
+            ofile<<cancerName<<" ";
+            ofile<<experimentCount<<" ";
+            ofile<<healphyTestSize<<" ";
+            ofile<<healphy_mean<<" ";
+            ofile<<healphy_mean_sd<<" ";
+            ofile<<healphy_mean_train<<" ";
+            ofile<<cancerTestSize<<" ";
+            ofile<<cancer_mean<<" ";
+            ofile<<cancer_mean_sd<<" ";
+            ofile<<cancer_mean_train<<" ";
+            ofile<<tc<<" ";
+            ofile<<total_mean<<" ";
+            ofile<<total_mean_sd<<" "<<endl;
+            ofile.close();
+        }
+    static void MakeHeader(string filename)
+        {
+            ofstream ofile;
+            ofile.open(filename.c_str(), iostream::out);
+            ofile<<"CancerName"<<" ";
+            ofile<<"N_Exp"<<" ";
+            ofile<<"N_healphy"<<" ";
+            ofile<<"Healphy_mis"<<" ";
+            ofile<<"Healphy_mis_sd"<<" ";
+            ofile<<"Healphy_mis_train"<<" ";
+            ofile<<"N_cancer"<<" ";
+            ofile<<"Cancer_mis"<<" ";
+            ofile<<"Cancer_mis_sd"<<" ";
+            ofile<<"Cancer_mis_train"<<" ";
+            ofile<<"N_total"<<" ";
+            ofile<<"Total_mis"<<" ";
+            ofile<<"Total_mis_sd"<<" "<<endl;
+            ofile.close();
+        }
+};
+    
+double GetProb(vector<vector<double> >& samples, vector<double>& means, vector<double>& sds,int idx, double subclassProb)
+{
+    double prob = 0;
+    for (int j = 0; j < samples.size(); j++)
+    {
+        prob += log( gsl_ran_gaussian_pdf(samples[j][idx]-means[j],sds[j])  +smoothingEps);
+    }
+    prob += subclassProb;
+    return prob;
 }
 
+void ProcessCancer(string cancerName,gsl_rng* randGenerator, string outFile)
+{
+    cout<<"Processing "<< cancerName<<" cancer"<<endl;
+    // Loading data
+    string filenameResp = cancerName + ".resp.csv";
+    vector<bool> resp = loadResponse(filenameResp);
+    cout<<"resp size = "<<resp.size()<<endl;
 
-template<class T>
-void LinkedList<T>::PrintList(bool reversed) const {
-	if (root == nullptr) { std::cout << "The list's empty ... "; return; }
-	std::cout << std::endl;
-	PrintList(root, reversed);
+    string filenameSample = cancerName + ".sample.csv";
+    vector<vector<double> > healphySample,
+        cancerSample;
+    loadSamples(healphySample, cancerSample, resp, filenameSample);
+    cout<<"healphy sample size = "<<healphySample.size()<<endl;
+    cout<<"cancer sample size = "<<cancerSample.size()<<endl;
+
+    SumErrorsStruct sumErrs;
+    int healphySize = healphySample[0].size(),
+        cancerSize = cancerSample[0].size();
+    int healphyTrainSize = healphySize*trainPart,
+        cancerTrainSize = cancerSize*trainPart,
+        healphyTestSize = healphySize - healphyTrainSize,
+        cancerTestSize = cancerSize - cancerTrainSize;
+
+    // Main loop
+    for (int k = 0; k < experimentCount; k++)
+    {
+        cout<<"##################"<<" experiment index: "<<k<<endl;
+        // Form train and test sets
+        vector<int > healphyShuffle = get_sample(randGenerator, healphySize),
+            cancerShuffle = get_sample(randGenerator, cancerSize);
+        vector<int> healphyTrain(healphyShuffle.begin(),
+                                 healphyShuffle.begin()+healphyTrainSize),
+            healphyTest(healphyShuffle.begin()+healphyTrainSize,
+                        healphyShuffle.end()),
+            cancerTrain(cancerShuffle.begin(),
+                        cancerShuffle.begin()+cancerTrainSize),
+            cancerTest(cancerShuffle.begin()+cancerTrainSize,
+                       cancerShuffle.end());
+        cout<<"training model\n";
+        TrainModel model(
+            mean(healphySample,healphyTrain),
+            sd(healphySample,healphyTrain),
+            mean(cancerSample,cancerTrain),
+            sd(cancerSample,cancerTrain)
+            );
+        cout<<"after training model\n";
+        
+        // Train complete at this point
+        // Predicting
+        time_t t = clock();
+        int healphyMisLocal = 0;
+        int cancerMisLocal = 0;
+        double prob0 = 0,
+            prob1 = 0,
+            healphyClassProb = log(double(healphyTrainSize)/(healphyTrainSize+cancerTrainSize)+smoothingEps),
+            cancerClassProb = log(double(cancerTrainSize)/(healphyTrainSize+cancerTrainSize)+smoothingEps);
+        cout<<"healphy predicting"<<endl;
+        for (int i = 0; i < healphyTestSize; i++)
+        {
+            prob0 = GetProb(healphySample,model.healphyMean, model.healphySd,healphyTest[i],healphyClassProb);
+            prob1 = GetProb(healphySample,model.cancerMean, model.cancerSd,healphyTest[i],cancerClassProb);
+            healphyMisLocal += prob0 < prob1;
+            cout<<"prob1 - prob0 = "<< prob1-prob0<<endl;
+        }
+        sumErrs.healphyMis += healphyMisLocal;
+        sumErrs.healphyMisSquared += healphyMisLocal * healphyMisLocal;
+        cout<<"healphy predicting time = "<<double(clock() - t)/CLOCKS_PER_SEC<<endl;
+        cout<<"sumErrs = "<<healphyMisLocal<<" out of "<<healphyTestSize<<endl;
+
+        t = clock();
+        cancerMisLocal = 0;
+        cout<<"cancer predicting"<<endl;
+        for (int i = 0; i < cancerTestSize; i++)
+        {
+            prob0 = GetProb(cancerSample,model.healphyMean, model.healphySd,cancerTest[i],healphyClassProb);
+            prob1 = GetProb(cancerSample,model.cancerMean, model.cancerSd,cancerTest[i],cancerClassProb);
+            cancerMisLocal += prob1 < prob0;
+            cout<<"prob0 - prob1 = "<< prob0-prob1<<endl;
+        }
+        sumErrs.cancerMis += cancerMisLocal;
+        sumErrs.cancerMisSquared += cancerMisLocal * cancerMisLocal;
+        cout<<"cancer predicting time = "<<double(clock() - t)/CLOCKS_PER_SEC<<endl;
+        cout<<"sumErrs = "<<cancerMisLocal<<" out of "<<cancerTestSize<<endl;
+        sumErrs.totalMisSquared += (cancerMisLocal + healphyMisLocal)*(cancerMisLocal + healphyMisLocal);
+        
+        cout<<"healphy train predicting"<<endl;
+        healphyMisLocal = 0;
+        for (int i = 0; i < healphyTrainSize; i++)
+        {
+            prob0 = GetProb(healphySample,model.healphyMean, model.healphySd,healphyTrain[i],healphyClassProb);
+            prob1 = GetProb(healphySample,model.cancerMean, model.cancerSd,healphyTrain[i],cancerClassProb);
+            healphyMisLocal += prob0 < prob1;
+        }
+        sumErrs.healphyMisTrain += healphyMisLocal;
+        cout<<"sumErrs = "<<healphyMisLocal<<" out of "<<healphyTestSize<<endl;
+
+        cout<<"cancer train predicting"<<endl;
+        cancerMisLocal = 0;
+        for (int i = 0; i < cancerTrainSize; i++)
+        {
+            prob0 = GetProb(cancerSample,model.healphyMean, model.healphySd,cancerTrain[i],healphyClassProb);
+            prob1 = GetProb(cancerSample,model.cancerMean, model.cancerSd,cancerTrain[i],cancerClassProb);
+            cancerMisLocal += prob1 < prob0;
+        }
+        sumErrs.cancerMisTrain += cancerMisLocal;
+
+        cout<<"sumErrs = "<<cancerMisLocal<<" out of "<<cancerTestSize<<endl;
+    }
+    
+    cout<<"healphy errors:  "<<sumErrs.healphyMis<< " out of "<<healphyTestSize*experimentCount<<". "<<double(sumErrs.healphyMis)/(healphyTestSize*experimentCount)<<endl;
+    cout<<"cancer errors:  "<<sumErrs.cancerMis<< " out of "<<cancerTestSize*experimentCount<<". "<<double(sumErrs.cancerMis)/(cancerTestSize*experimentCount)<<endl;
+
+    // Calculating result statistics and saving it into ResultStatistics structure
+    ResultStatistics resStat;
+    
+    resStat.healphy_mean = double(sumErrs.healphyMis)/(healphyTestSize*experimentCount);
+    resStat.healphy_mean_train = double(sumErrs.healphyMisTrain)/(healphyTrainSize*experimentCount);
+    resStat.healphy_mean_sd = sqrt(
+        double(sumErrs.healphyMisSquared)/(healphyTestSize*
+                                           healphyTestSize*
+                                           experimentCount) -
+        resStat.healphy_mean*resStat.healphy_mean);
+    resStat.cancer_mean = double(sumErrs.cancerMis)/(cancerTestSize*experimentCount);
+    resStat.cancer_mean_train = double(sumErrs.cancerMisTrain)/(cancerTrainSize*experimentCount);
+    resStat.cancer_mean_sd = sqrt(
+        double(sumErrs.cancerMisSquared)/(cancerTestSize*
+                                          cancerTestSize*
+                                          experimentCount) -
+        resStat.cancer_mean*resStat.cancer_mean);
+    resStat.tc= cancerTestSize + healphyTestSize;
+    resStat.total_mean = double(sumErrs.cancerMis+sumErrs.healphyMis)/(resStat.tc*experimentCount);
+    resStat.total_mean_sd = sqrt(
+        double(sumErrs.totalMisSquared)/(resStat.tc*resStat.tc*
+                                         experimentCount) -
+        resStat.total_mean*resStat.total_mean);
+    resStat.cancerName = cancerName;
+    resStat.experimentCount = experimentCount;
+    resStat.healphyTestSize = healphyTestSize;
+    resStat.cancerTestSize = cancerTestSize;
+    resStat.Export(outFile);
 }
 
-template<class T>
-void LinkedList<T>::PrintList(node<T> *printer, bool reversed) const {
-	if (printer == nullptr) { return; }
-
-	if (reversed) {
-		PrintList(printer->next, reversed);
-		std::cout << printer->data << "\t";
-	}
-	if (!reversed) {
-		std::cout << printer->data << "\t";
-		PrintList(printer->next, reversed);
-	}
+int main()
+{
+    gsl_rng* randGenerator= gsl_rng_alloc(gsl_rng_taus);
+//    gsl_rng_set(randGenerator, time(NULL));
+    gsl_rng_set(randGenerator, 0);
+    
+    string outFileSuffix("test_train_errs.txt");
+    ResultStatistics::MakeHeader(outFileSuffix);
+    
+    vector<string> cancers;
+    // cancers.push_back("BLCA");
+    cancers.push_back("READ");
+    // cancers.push_back("KIRP");
+    // cancers.push_back("LIHC");
+    // cancers.push_back("PRAD");
+    // cancers.push_back("LUSC");
+    // cancers.push_back("COAD");
+    // cancers.push_back("LUAD");
+    // cancers.push_back("HNSC");
+    // cancers.push_back("THCA");
+    // cancers.push_back("UCEC");
+    // cancers.push_back("KIRC");
+    // cancers.push_back("BRCA");
+    for (int i = 0; i < cancers.size(); i++)
+    {
+//        ProcessCancer(cancers[i], randGenerator,cancers[i]+outFileSuffix);
+        ProcessCancer(cancers[i], randGenerator, outFileSuffix);
+    }
+    cout<<"after experiments\n";
+    
+    gsl_rng_free(randGenerator);
+    return 0;
 }
-
-template<class T>
-bool LinkedList<T>::ReverseList(char toggle) {
-	if (root == nullptr) { return false; }
-
-	/* Come back to this later */
-	if (toggle == 1) { //iterative
-		IterativeReverse(root);
-	}
-
-	if (toggle == 2) {
-		RecurseReverse(root->next, root, nullptr);
-	}
-	return false;
-}
-
-
-/* The iterative version is just unoptimal puzzle to play around with pointers-to-pointers.
- It's _not_ meant to be efficient, or pretty, or remotely 'good'. This is _bad_.*/
- /* Currently putting into statis, will return to it later */
-template<class T>
-bool LinkedList<T>::IterativeReverse(node<T> *head) {
-	/*	node<T> **reverseArr[listLength];      // ISSUE: Trying to create a dynamic array from static conventions -->listLength is volatile, need a dynamic array for this approach
-	node<T> *parser = root;
-
-	for (auto i : reverseArr) {				// ISSUE: Since the array declaration is illegal, this doesn't work either
-	i = &parser;
-	parser = parser->next;
-	}
-
-	for (int ppi = listLength - 1; ppi >= 0; --ppi) {
-	if (ppi == 0)
-	(*reverseArr[ppi])->next = nullptr;
-	else
-	(*reverseArr[ppi])->next = (*reverseArr[ppi - 1]);
-	}*/
-	return true;
-}
-
-template<class T>
-bool LinkedList<T>::RecurseReverse(node<T> *currNode, node<T> *prevNode, node<T> *newNext) {
-
-	if (prevNode == nullptr) { return true; }
-	if (currNode == nullptr && prevNode != nullptr) { root = prevNode; return true; }
-	else {
-		prevNode->next = newNext;
-		RecurseReverse(currNode->next, currNode, prevNode);
-		currNode->next = prevNode;
-		return true;
-	}
-}
-
-template<class T>
-node<T> *LinkedList<T>::Search(T val) {
-	if (root == nullptr) {
-		std::cout << "List's empty! Found gobs of nothing!";
-		return nullptr;
-	}
-	else {
-		node<T> *parser = root;
-		while (parser != nullptr) {
-			if (parser->data != val) { parser = parser->next; }
-			else { break; }
-		}
-
-		if (parser == nullptr) {
-			std::cout << "Couldn't find your query! Sorry.";
-			return nullptr;
-		}
-		return parser;
-	}
-}
-
-
-// Modify the root
-template<class T>
-void LinkedList<T>::SetRoot(node<T> **newRoot, node<T> *n) {
-	if (n == nullptr) { (*newRoot)->next = nullptr; }
-	else { (*newRoot)->next = n->next; }
-
-	(*newRoot) = n;
-	return;
-}
-
-template<class T>
-bool LinkedList<T>::ModifyNode(T nodeVal, T toVal) {
-	if (root == nullptr) { return false; }
-
-	node<T> *targetN = Search(nodeVal);
-	if (targetN) {
-		targetN->data = toVal;
-		return true;
-	}
-	else { return false; }
-}
-
-
-template<class T>
-bool LinkedList<T>::MakeUnique() {
-	if (!root) { return false; }
-
-	node<T> *parserSymbol = root,
-		*comparer = nullptr,
-		*del = nullptr;
-
-	std::vector<node<T>*> nodesToRemove;
-
-	while (parserSymbol != nullptr) {
-		comparer = root;
-		while (comparer != nullptr) {
-			if (parserSymbol->data == comparer->data && parserSymbol != comparer) {
-				if (nodesToRemove.size() > 0) {
-					for (auto node : nodesToRemove) {
-						if (node != comparer) {
-							nodesToRemove.push_back(comparer);
-						}
-					}
-				}
-				else {
-					nodesToRemove.push_back(comparer);
-				}
-			}
-			comparer = comparer->next;
-		}
-		parserSymbol = parserSymbol->next;
-	}
-
-	std::cout << "Deleted nodes: \n";
-	for (auto &i : nodesToRemove) {
-		std::cout << i->data << "\t";
-	}
-
-	std::cout << "\nRemoved " << nodesToRemove.size() << " duplicate nodes.\n";
-	return true;
-}
-
-
-
-template<class T>
-T LinkedList<T>::RemoveNode(T val) {
-	if (!root) {
-		std::cout << "The list's empty, hey! It's maddening but /you/ might be doing something wrong!";
-		return val;
-	}
-
-	node<T> *del = Search(val);
-	T dataBuffer;
-
-	if (del == root) {
-		dataBuffer = root->data;
-
-		SetRoot(&root, del->next);
-
-		delete del;        --listLength;
-		return dataBuffer;
-	}
-	else {
-		dataBuffer = del->data;
-		cursor = root;
-		while (cursor->next != del) { cursor = cursor->next; }
-		cursor->next = (cursor->next)->next;
-		delete del;        
-		--listLength;
-		return dataBuffer;
-	}
-}
-
-template<class T>
-void LinkedList<T>::DeleteEntireList() {
-	DoDeleteAll(root);
-}
-
-template<class T>
-void LinkedList<T>::DoDeleteAll(node<T> *dltr) {
-	if (dltr == nullptr) { listLength = 0; return; }
-
-	DoDeleteAll(dltr->next);
-
-	dltr->next = nullptr;
-	delete dltr;
-	dltr->data = -1;
-	dltr = nullptr;
-
-}
-
-template<class T>
-void LinkedList<T>::GetCursor() const {
-	std::cout << "cursor: " << cursor->data << "\n";
-}
-
-template<class T>
-void LinkedList<T>::AdvanceCursor(int places) {
-	while (places != 0 && cursor->next != nullptr) {
-		cursor = cursor->next;
-		--places;
-	}
-	if (cursor->next == nullptr) {
-		std::cout << "Reached the end of the list!" << std::endl;
-		return;
-	}
-}
-
-
-template<class T>
-int LinkedList<T>::GetLength() const {
-	return listLength;
-}
-
-// For now, non-unique linked-lists are out of scope.
-template<class T>
-bool LinkedList<T>::SwapNodes(T nodeOne, T nodeTwo) {
-	if (!root || !nodeOne || !nodeTwo) { return false; }
-
-	node<T> *A = Search(nodeOne);
-	node<T> *B = Search(nodeTwo);
-
-	node<T> **root_links[] = { nullptr, nullptr, nullptr, nullptr };
-
-	// Data switching
-	T temp = B->data;					B->data = A->data;					A->data = temp;
-
-#pragma region pointer_addr_switching
-	// NOTE: This does _not_ work; consider it a frozen thought experiement
-	/*node<T> *parser = root;
-	while (parser->next != nullptr) {
-	if (parser->next == A) { root_links[linkInfo::prevNodeA] = &(parser); }
-	if (parser->next == B) { root_links[linkInfo::prevNodeB] = &(parser); }
-	parser = parser->next;
-	}
-	root_links[linkInfo::nextNodeA] = &(A->next);
-	root_links[linkInfo::nextNodeB] = &(B->next);
-
-	// > Commence swap <
-
-	(*root_links[linkInfo::prevNodeA])->next = B;
-	(*root_links[linkInfo::prevNodeB])->next = A;
-
-	node<T> *tempVar = B;			B = A;			A = tempVar;
-
-	node<T> *temp = *(root_links[linkInfo::nextNodeB]);
-	*(root_links[linkInfo::nextNodeB]) = *(root_links[linkInfo::nextNodeA]);
-	*(root_links[linkInfo::nextNodeA]) = temp;*/
-
-#pragma endregion
-	
-	return true;
-}
-template<class T>
-bool LinkedList<T>::SortList(std::string sortForm) {
-	if (!root) { return  false; }
-	
-	std::vector<T> data_array;
-	node<T> *parser = root;
-
-	while (parser != nullptr) {
-		data_array.push_back(parser->data);
-		parser = parser->next;
-	}
-		
-	if (sortForm == "asc") {
-		std::sort(data_array.begin(), data_array.end(), std::less<T>());
-	}
-	if (sortForm == "dsc") {
-		std::sort(data_array.begin(), data_array.end(), std::greater<T>());
-	}
-
-	parser = root;
-	for (auto &i : data_array) {
-		if (parser != nullptr) {
-			parser->data = i;
-			parser = parser->next;
-		}
-	}
-}
-
-int main(void) {
-	// your code goes here
-
-	LinkedList<int> slist;
-	slist.PrintList(false);
-	std::cout << "list length: " << slist.GetLength() << std::endl;
-
-	slist.InsertNode(9);
-	slist.PrintList(false);
-	std::cout << "list length: " << slist.GetLength() << std::endl;
-
-	slist.InsertNode(2);
-	slist.InsertNode(5);
-	slist.InsertNode(3);
-	slist.InsertNode(5);
-	slist.InsertNode(3);
-	slist.InsertNode(5);
-	slist.InsertNode(3);
-	slist.InsertNode(2);
-	slist.InsertNode(3);
-	slist.InsertNode(7);
-	slist.InsertNode(3);
-	slist.InsertNode(5);
-	slist.PrintList(false);
-
-	std::cout << std::endl;
-
-	//slist.SwapNodes(2, 7);
-	//slist.ReverseList(2);
-	//slist.ModifyNode(2, 23);
-
-	//slist.MakeUnique();
-
-	slist.SortList("asc");
-	slist.PrintList(false);
-
-	slist.SortList("dsc");
-	slist.PrintList(false);
-
-	std::cout << std::endl << "list length: " << slist.GetLength() << std::endl;
-
-	return 0;
-}
-
-// End LinkedList.cpp //

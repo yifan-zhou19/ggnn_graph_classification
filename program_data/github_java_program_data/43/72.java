@@ -1,13 +1,26 @@
-package java.util;
-import org.checkerframework.checker.nullness.qual.Nullable;
+package Algorithm;
 
-// permits null elements
-public class Stack<E extends @Nullable Object> extends Vector<E> {
-  private static final long serialVersionUID = 0;
-  public Stack() { throw new RuntimeException("skeleton method"); }
-  public E push(E a1) { throw new RuntimeException("skeleton method"); }
-  public synchronized E pop() { throw new RuntimeException("skeleton method"); }
-  public synchronized E peek() { throw new RuntimeException("skeleton method"); }
-  public boolean empty() { throw new RuntimeException("skeleton method"); }
-  public synchronized int search(Object a1) { throw new RuntimeException("skeleton method"); }
+/**
+ * Created by tonytan on 12/1/2017.
+ *
+ * Bucket sort: cost most memory
+ */
+public class BucketSort {
+
+    static int[] data = {1,2,7,4,6,3,9};//assume all data < 10
+    static int[] bucket = new int[10];
+
+    public static void bucketSort(int[] data){
+        for (int i=0; i<data.length; i++){
+            bucket[data[i]] = data[i];
+        }
+    }
+
+    public static void main(String[] args){
+        bucketSort(data);
+        for (int i:bucket) {
+            if (i==0) continue;
+            System.out.print(i);
+        }
+    }
 }

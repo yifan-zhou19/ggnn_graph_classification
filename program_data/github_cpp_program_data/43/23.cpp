@@ -1,55 +1,105 @@
+#include <iostream>
+#include <limits.h>
+#include <stdlib.h>
+#include <vector>
+#include <algorithm>
 
-#include "Linklist.h"
+#define MAX_DATA 100
 
-#define InitList(L)		InitStack(L)
-#define DestroyList(L) 		DestroySatck(L)
-#define ClearList(L) 		ClearStack(L)
-#define ListEmpty(L) 		StackEmpty(L)
-#define ListLength(L) 		SatckLength(L)
-typedef struct
+#define mSwap(first, second) do { \
+    int temp = *first;             \
+    *first = *second;               \
+    *second = temp;                \
+} while (0)
+
+using namespace std;
+
+/* PROTOTYPES */
+void ProcessInput();
+void BucketSort();
+void InsertionSort(vector<int> & elements);
+void Print();
+
+vector<int> buckets[MAX_DATA];
+
+int numbers[MAX_DATA];
+static int numbersCount;
+static double maxElement = INT_MIN;
+
+int main()
 {
-    ElemType 		data;
-    struct LNode *	next;
-} LNode, *LinkList;
+    ProcessInput();
+    BucketSort();
+    Print();
 
-
-typedef Linklist Stack;
-
-Status GetTop(Stack S,ElemType &e){
-	e = S->next->data;
-	
-	return True;
+    return 0;
 }
 
-Status Push(Stack &S,ElemType e){
-	Stack tmpNode = S;
-	while(tmpNode->next){
-		tmpNode = tmpNode->next;
-	}
-	Stack newNode = (Stack)malloc(sizeof(LNode));
-	newNode->data = e;
-	newNode->next = NULL:
-	tmpNode->next = newNode;
-	
-	return True;
-}
-Status Pop(Stack &S,ElemType &e){
-	Stack tmpNode = S,preNode;
-	while(tmpNode->next){
-		preNode = tmpNode;
-		tmpNode = tmpNode->next;
-		}
-	}
-	e = tmpNode->data;
-	free(tmpNode);
-	preNode->next = NULL;
-	
-	return True;
+void BucketSort()
+{
+    for (int count = 0; count < numbersCount; count++)
+    {
+        int bucketIndex = ( ( numbers[count] / maxElement ) *
+                            ( numbersCount - 1 ) ) ;
+
+        buckets[bucketIndex].push_back(numbers[count]);
+    }
+    cout << endl;
+
+    int numbersIndex = 0;
+    for (int count = 0; count < numbersCount; count++)
+    {
+        InsertionSort(buckets[count]);
+
+        int vectorCount = buckets[count].size();
+
+        for (int vCount = 0; vCount < vectorCount; vCount++)
+        {
+            numbers[numbersIndex] = buckets[count].at(vCount);
+            numbersIndex++;
+        }
+    }
 }
 
-int main(){
-	Stack S;
-	InitStack(S);
-	printf("%d\n", StackEmpty(S));
-	return 0;
+void InsertionSort(vector<int> & elements)
+{
+    for (int count = 0; count < elements.size(); count++)
+    {
+        int element = elements.at(count);
+        for (int insertCount = count; insertCount > 0; insertCount--)
+        {
+            if (elements.at(insertCount) < elements.at(insertCount - 1))
+            {
+                mSwap(&elements.at(insertCount),
+                      &elements.at(insertCount - 1));
+            }
+        }
+    }
+}
+
+void ProcessInput()
+{
+    cout << "Input the count of the numbers" << endl;
+    cin >> numbersCount;
+
+    for (int count = 0; count < numbersCount; count++)
+    {
+        cin >> numbers[count];
+        if (numbers[count] > maxElement)
+        {
+            maxElement = (double)numbers[count];
+        }
+    }
+}
+
+void Print()
+{
+    cout << "Sorted: " << endl;
+
+    for (int count = 0; count < numbersCount; count++)
+    {
+        cout << numbers[count] << " ";
+    }
+
+    cout << endl;
 }

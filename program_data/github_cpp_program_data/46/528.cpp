@@ -1,115 +1,103 @@
-
-/*
-  Binary Search
-
-  Worst Case Performance: O(log N)
-    The algorithm deals in n, then n/2, then n/3, ...
-  Best Case Performance: O(1)
-    The middle index is the one being search for.
-  Average Case Performance: O(log n)
-    Search will be between O(n) and O(log n), but more
-    likely near O(log n).
-  Worst Case Space Complexity: O(1)
-    Search operates only on the given input, no extra
-    space needs to be available.
-
-  Compared to Sequential Search:
-    - Faster, but requires the elements be sorted.
-    - Needs a way to order the elements, i.e methods
-      operator== and operator> and/or operator< need
-      to be defined.
-*/
-
-#include <vector>
-#include <assert.h>
+#include<bits/stdc++.h>
 using namespace std;
 
-/*
-  Implemented for C arrays, pointers with unknown length
-*/
-int binarySearch(const int* array, const int len, const int query) {
-  int lowerBound = 0;
-  int upperBound = len;
+// segment tree with data compression and lazy propagation
+// this segment tree is specialized to be a sum segment tree
 
-  while(upperBound - lowerBound > 1) {
-    int index = ((upperBound - lowerBound) / 2) + lowerBound;
-    int value = array[index];
-    if(value == query) return index;
-    if(value > query) {
-      upperBound = index;
-    } else {
-      lowerBound = index;
-    }
-  }
-  return -1;
+template<class T> class segment_tree{
+   private:
+           int qlo,qhi,N;
+           T   V;
+           map<int,T>tree,lazy;
+           // replace with this if using c++11
+           //unordered_map<int,T>tree,lazy;
+   public:
+         segment_tree(int _N){
+            N = _N;
+         }
+         segment_tree(T arr[],int _N){
+            N = _N; for(int i = 0;i < N;i++)
+                update(i+1,arr[i]);
+         }
+         segment_tree(vector<T> arr,int _N){
+            N = _N;
+            for(int i = 0;i < N;i++)
+                update(i+1,arr[i]);
+         }
+    public:
+           // updating methods
+           void update(int it,int v){// single point update
+              qlo = qhi = it;
+              V = v;
+              _update(1,1,N);
+           }
+           void update(int it,int jt,T v){// range update
+              qlo = it,qhi = jt;
+              V = v;
+              _update(1,1,N);
+           }
+           // querying methods
+           T query(int it){
+               qlo = qhi = it;
+               return _query(1,1,N);
+           }
+           T query(int it,int jt){
+               qlo = it, qhi = jt;
+               return _query(1,1,N);
+           }
+     private:
+             void _update(int n,int lo,int hi){
+                  propagate(n,lo,hi);
+                  if(lo > qhi || hi < qlo || lo > hi)
+                     return;
+                  else{
+                      if(lo >= qlo && hi <= qhi){
+                         tree[n] += abs(hi-lo+1)*V;
+                         if(lo!=hi){
+                            lazy[2*n]   += V;
+                            lazy[2*n+1] += V;
+                         }
+                      }else{
+                          _update(2*n,lo,(lo+hi)/2);
+                          _update(2*n+1,(lo+hi)/2+1,hi);
+                          tree[n] = tree[2*n]+tree[2*n+1];
+                      }
+                  }
+             }
+             T _query(int n,int lo,int hi){
+                 propagate(n,lo,hi);
+                 if(lo > qhi || hi < qlo || lo > hi)
+                    return 0;
+                 else if(lo >= qlo && hi <= qhi)
+                    return tree[n];
+                 else
+                    return _query(2*n,lo,(lo+hi)/2)+_query(2*n+1,(lo+hi)/2+1,hi);
+             }
+             // helper methods
+             void propagate(int n,int lo,int hi){
+                if(lazy[n]!=0){
+                    tree[n]  += abs(hi-lo+1)*lazy[n];
+                    if(lo!=hi){
+                       lazy[2*n]   += lazy[n];
+                       lazy[2*n+1] += lazy[n];
+                    }
+                    lazy[n] = 0;
+                }
+             }
+};
+
+segment_tree<int> tree(1000);
+
+int main(){
+    //tree.update(0,500);
+    //tree.update(9,1000);
+
+    for(int i = 1;i <= 5;i++)
+        tree.update(i,500);
+    cout << tree.query(1,5) << endl;
+    tree.update(1,5,500);
+
+    cout << tree.query(1,5) << endl;
+    cout << tree.query(1,2) << endl;
+    cout << tree.query(1,3) << endl;
 }
-
-/*
-  Implemented for any container class (T) which implements int size()
-  and any sub class (V) which implements bool operator== and operator>.
-  This is used for C++ lists, arrays, vectors, etc.
-*/
-template<class T, class V>
-int binarySearch(const T &container, const V query) {
-  int lowerBound = 0;
-  int upperBound = container.size();
-
-  while(upperBound - lowerBound > 1) {
-    int index = ((upperBound - lowerBound) / 2) + lowerBound;
-    int value = container[index];
-    if(value == query) return index;
-    if(value > query) {
-      upperBound = index;
-    } else {
-      lowerBound = index;
-    }
-  }
-  return -1;
-}
-
-void binarySearchTest() {
-  {
-    int set[] = {1, 3, 4, 6, 8, 10};
-    int len = 6;
-    int query = 4;
-    int pos = binarySearch(set, len, query);
-    assert(pos == 2);
-  }
-
-  {
-    int set[] = {1, 3, 5, 7, 9};
-    int len = 5;
-    int pos1 = binarySearch(set, len, 4);
-    assert(pos1 == -1);
-
-    int pos2 = binarySearch(set, len, 5);
-    assert(pos2 == 2);
-  }
-
-  {
-    /* vector<int> vec = {...}; */
-    static const int elems[] = {1,2,4,6,8,10};
-    vector<int> vec (elems, elems + 6);
-
-    int pos = binarySearch<vector<int>, int>(vec, 4);
-    assert(pos == 2);
-  }
-
-  {
-    /* vector<int> vec = {...}; */
-    static const int elems[] = {1,3,5,7,9};
-    vector<int> vec (elems, elems + 5);
-
-    int pos1 = binarySearch<vector<int>, int>(vec, 4);
-    assert(pos1 == -1);
-
-    int pos2 = binarySearch<vector<int>, int>(vec, 5);
-    assert(pos2 == 2);
-  }
-}
-
-int main() {
-  binarySearchTest();
-  return 0;
-}
-

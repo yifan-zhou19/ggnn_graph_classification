@@ -1,67 +1,80 @@
-#include <bits/stdc++.h>
+/*Ford fulkerson - DFS */
+/*
+7 9
+1 7
+1 2 2
+1 3 7
+2 4 3
+3 4 5
+3 5 5
+4 6 4
+5 6 1
+5 7 2
+6 7 6
+ans 7
+*/
+#include <stdio.h>
+#include <iostream>
+#include <vector>
+#include <algorithm>
 using namespace std;
 
-// Fuente: club de algoritmia ESCOM
-// Autor: Ethan Jiménez
-
-const int INF = (1 << 30);
-
-// Segment Tree version dinamica. Para generar el
-// arbol completo deben llamar a la funcion Construir.
-// CUIDADO: Para usarlo deben especificar el tipo de
-// dato a utilizar; SegTree<int> por ejemplo.
-
-template<class T>
-struct SegTree {
-  T dato; int i, d;
-  SegTree* izq, *der;
-
-  SegTree(int I, int D) : izq(NULL), der(NULL), i(I), d(D), dato() {}
-  
-  ~SegTree() {
-    if (izq) delete izq;
-    if (der) delete der;
-  }
-  
-  T Construir() {
-    if (i == d) return dato = T();
-    int m = (i + d) >> 1;
-    izq = new SegTree(i, m);
-    der = new SegTree(m + 1, d);
-    return dato = izq->Construir() + der->Construir();
-  }
-  
-  T Actualizar(int a, T v) {
-    if (a < i || d < a) return dato;
-    if (a == i && d == a) return dato = v;
-    if (!izq) {
-      int m = (i + d) >> 1;
-      izq = new SegTree(i, m);
-      der = new SegTree(m + 1, d);
+struct network_edge {
+    int to, capacity, flow, residual_idx;
+    network_edge() {}
+    network_edge(int t, int c, int f, int r) {
+        to = t;
+        capacity = c;
+        flow = f;
+        residual_idx = r;
     }
-    return dato = izq->Actualizar(a, v) + der->Actualizar(a, v);
-  }
-  
-  T Query(int a, int b) {
-    if (b < i || d < a) return T();
-    if (a <= i && d <= b) return dato;
-    return izq? izq->Query(a, b) + der->Query(a, b): T();
-  }
 };
 
-// A continuación se ejemplifica como sobrecargar
-// el operador + dentro de una estructura para poder
-// reutilizar el codigo del Segment Tree facilmente.
-// El ejemplo sobrecarga el + por la funcion de maximo.
-// Es MUY IMPORTANTE tener un constructor por defecto.
+int src, sink;
+bool chk[101];
+vector<network_edge> adj[101];
 
-struct MaxInt {
-  int d; MaxInt(int D) : d(D) {}
-  MaxInt() : d(-INF) {} // IMPORTANTE!
-  MaxInt operator+(const MaxInt& o) {
-    return MaxInt(max(d, o.d));
-  }
-};
-int main(){
-  return 0;
+int find_path(int cur, int addible_flow) {
+    if(cur == sink) return addible_flow;
+    chk[cur] = true;
+
+    for(int i = 0; i < adj[cur].size(); i++) {
+        network_edge& edge = adj[cur][i];
+        if(chk[edge.to] || edge.capacity - edge.flow == 0) continue;
+
+        int added = find_path(edge.to, min(addible_flow, edge.capacity - edge.flow));
+        if(added) {
+            edge.flow += added;
+            adj[edge.to][edge.residual_idx].flow -= added;
+            return added;
+        }
+    }
+
+    return 0;
+}
+
+int main() {
+    int v, e;
+    scanf("%d %d", &v, &e);
+    scanf("%d %d", &src, &sink);
+
+    for(int i = 0; i < e; i++) {
+        int from, to, capacity;
+        scanf("%d %d %d", &from, &to, &capacity);
+        adj[from].push_back(network_edge(to, capacity, 0, adj[to].size()));
+        adj[to].push_back(network_edge(from, 0, 0, adj[from].size() - 1));
+        cout <<" asds" <<adj[to].size() << adj[from].size()-1 <<endl;
+    
+    }
+
+    int ans = 0, added_flow;
+    while(added_flow = find_path(src, 101)) {
+        ans += added_flow;
+        for(int i = 1; i <= v; i++) {
+            chk[i] = 0;
+        }
+    }
+
+    printf("%d\n", ans);
+    return 0;
 }

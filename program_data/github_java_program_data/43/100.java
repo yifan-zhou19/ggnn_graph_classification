@@ -1,40 +1,26 @@
-
-import java.util.ArrayList;
+package Algorithm;
 
 /**
- * @status       COMPLETE         
+ * Created by tonytan on 12/1/2017.
  *
- * @author       BuckYoung 
- * @date         Jun 15, 2013
- *         
+ * Bucket sort: cost most memory
  */
+public class BucketSort {
 
-public class Stack<T> extends ArrayList implements StackInterface<T> {
-    
-    public Stack(){
-        super();
-    }
-    
-    @Override
-    public void push(T item) {
-        super.add(0, item);
+    static int[] data = {1,2,7,4,6,3,9};//assume all data < 10
+    static int[] bucket = new int[10];
+
+    public static void bucketSort(int[] data){
+        for (int i=0; i<data.length; i++){
+            bucket[data[i]] = data[i];
+        }
     }
 
-    @Override
-    public T pop() {
-        T result = null;
-        if(!super.isEmpty()){
-            result = (T)super.remove(0);
+    public static void main(String[] args){
+        bucketSort(data);
+        for (int i:bucket) {
+            if (i==0) continue;
+            System.out.print(i);
         }
-        return result;
     }
-    
-    public T peek(){
-        T result = null;
-        if(!super.isEmpty()){
-            result = (T)super.get(0);
-        }
-        return result;
-    }
-    
 }

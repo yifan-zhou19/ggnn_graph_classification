@@ -1,95 +1,143 @@
-#include "Heap.hpp"
+#include <iostream>
+#include <cmath>
+#include <cassert>
+#include <fstream>
+#include <vector>
+#include "armadillo.hpp"
 
-int log(const char *format,...);
 
-map<unsigned int, Heap *>heaps;
+arma::Col<double> gradient(arma::Mat<double> x, arma::Col<short> y, arma::Col<double> w);
+arma::Col<double> new_w(arma::Col<double> w, double alpha, arma::Mat<double> x, arma::Col<short> y);
+arma::Col<double> regression(arma::Col<double> w, double alpha, arma::Mat<double> x, arma::Col<short> y);
 
-HeapChunk *Heap::malloc(unsigned int pid, unsigned int chunk_base, unsigned int size, unsigned int time) {
-    HeapChunk *newChunk;
+int main()
+{
+	std::vector <double> dataX;
+	std::vector <double> dataY;
+	std::vector <double> test;
+	double storage;
+	short storagei;
 
-    if (!time) time = gettime();
-    newChunk = new HeapChunk(pid, chunk_base, chunk_base+size, time);
+	// reading dataX
+	std::ifstream read_file("dataX.dat");
+	assert(read_file.is_open());
+	while (!read_file.eof())
+	{
+		read_file >> storage;
+		dataX.push_back(storage);
+	}
+	read_file.close();
 
-    openChunks[chunk_base] = newChunk;
-    chunks.push_back(newChunk);
+	// reading dataY
+	read_file.open("dataY.dat");
+	assert(read_file.is_open());
+	while (!read_file.eof())
+	{
+		read_file >> storagei;
+		dataY.push_back(storagei);
+	}
+	read_file.close();
 
-    if (top < newChunk->top)   top  = newChunk->top;
-    if (base > newChunk->base) base = newChunk->base;
+	// reading dataXtest
+	read_file.open("dataXtest.dat");
+	assert(read_file.is_open());
+	while (!read_file.eof())
+	{
+		read_file >> storage;
+		test.push_back(storage);
+	}
+	read_file.close();
 
-    return newChunk;
+	int lenX;
+	lenX = dataX.end() - dataX.begin() - 1;
+	int lenY;
+	lenY = dataY.end() - dataY.begin() - 1;
+	int lenTest;
+	lenTest = test.end() - test.begin() - 1;
+	int XY;
+	XY = lenX / lenY;
+
+	// Converting dataX to arma matrix
+	arma::mat X(lenY, XY, arma::fill::none);
+	for (int i = 0; i < lenY; i++)
+	{
+		for (int j = 0; j < XY; j++)
+		{
+			X(i, j) = dataX[XY*i + j];
+		}
+	}
+
+	int test_rows = lenTest / XY;
+
+	// Converting test to arma matrix
+	arma::mat Xtest(test_rows, XY, arma::fill::none);
+	for (int i = 0; i < test_rows; i++)
+	{
+		for (int j = 0; j < XY; j++)
+		{
+			Xtest(i, j) = test[XY*i + j];
+		}
+	}
+
+	// Converting dataY to arma vector
+	arma::Col<short> Y(lenY);
+	for (int i = 0; i < lenY; i++)
+	{
+		Y(i) = dataY[i];
+	}
+	
+	arma::Col<double> w = arma::zeros(X.n_cols);
+	// sign
+	arma::Col<double> y(Xtest.n_rows);
+	arma::Col<int> out(Xtest.n_rows);
+	y = Xtest*regression(w, 0.9, X, Y);
+
+	for (int i = 0; i < Xtest.n_rows; i++)
+	{
+		if (y(i) > 0)
+		{
+			out(i) = 1;
+		}
+		else
+		{
+			out(i) = -1;
+		}
+	}
+	//out.print();
+
+	std::ofstream write_file("LogReg.dat");
+	for (int h = 0; h < Xtest.n_rows; h++)
+	{
+		write_file << out[h] << "\n";
+	}
+	return 0;
 }
 
-HeapChunk *Heap::free(unsigned int pid, unsigned int chunk_base, unsigned int time) {
-    HeapChunk *freeChunk;
 
-    if (!time) time = gettime();
-
-    if (openChunks.find(chunk_base) == openChunks.end()) {
-        // addEvent("Double free", time);
-        return NULL;
-    }
-
-    freeChunk = openChunks[chunk_base];
-
-    // if (freeChunk->pid != pid)
-    //     addEvent("Chunk freed from different PID.", time);
-    openChunks.erase(chunk_base);
-    freeChunk->freeTime = time;
-
-    return freeChunk;
+arma::Col<double> gradient(arma::Mat<double> x, arma::Col<short> y, arma::Col<double> w)
+{
+	arma::vec out(x.n_cols);
+	out.fill(0);
+	for (int i = 0; i < x.n_rows; i++)
+	{
+		out -= (y[i] * x.row(i).t()/(1+exp(y[i] *x.row(i)*w)[0]));
+	}
+	return out/x.n_rows;
 }
 
-HeapChunk *Heap::realloc(unsigned int pid, unsigned int old_base, unsigned int new_base, unsigned int new_size, unsigned int time) {
-    if (!time) time = gettime();
-
-    free(pid, old_base, time);
-    return malloc(pid, new_base, new_size, time);
+arma::Col<double> new_w(arma::Col<double> w, double alpha, arma::Mat<double> x, arma::Col<short> y)
+{
+	return w - alpha*gradient(x, y, w);
 }
 
-void Heap::addEvent(char *comment, unsigned int time) {
-    HeapChunk *newChunk;
-
-    if (!time) time = gettime();
-    events.push_back(new HeapEvent(comment, time));
-	log("%s\n", comment);
+arma::Col<double> regression(arma::Col<double> w, double alpha, arma::Mat<double> x, arma::Col<short> y)
+{
+	int count = 0;
+	while (norm(gradient(x,y,w)) > pow(10,-7) & count <100000)
+	{
+		w = new_w(w, alpha, x, y);
+		count++;
+	}
+	return w;
 }
 
-Heap *getHeap(unsigned int handle) {
-	if (heaps.find(handle) == heaps.end())
-        heaps[handle] = new Heap();
-
-    return heaps[handle];
-}
-
-void Heap::clear() {
-	HeapChunk *c;
-
-	for (ts_vector<HeapChunk *>::iterator chunk = chunks.begin(); chunk != chunks.end(); ++chunk)
-		delete  *chunk;
-	chunks.clear();
-
-    for (ts_vector<HeapEvent *>::iterator event = events.begin(); event!= events.end(); ++event) 
-        delete (*event);
-	events.clear();
-
-	openChunks.clear();
-	allocTime = gettime();
-	base = 0xffffffff;
-	top  = 0;
-}
-
-void clearHeap(unsigned int handle) {
-	if (heaps.find(handle) == heaps.end())
-        return;
-
-	heaps[handle]->clear();
-}
-
-void clearHeaps() {
-    map<unsigned int, Heap *>::iterator heap;
-
-	for (heap = heaps.begin(); heap != heaps.end(); ++heap)
-		heap->second->clear();
-
-	heaps.clear();
-}

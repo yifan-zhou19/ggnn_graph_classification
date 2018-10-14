@@ -1,67 +1,117 @@
-#include<bits/stdc++.h>
+/**
+ * Basic Skip List implementation
+ * Based on blog: http://codeforces.com/blog/entry/13218
+**/ 
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <iostream>
+#include <queue>
+
 using namespace std;
-const int MAX = 1e4 + 5;
-/* Finds the sum of weights of the edges of the Minimum Spanning Tree.
-    Graph is represented as adjacency list using array of vectors.  MAX 
-    is an upper  limit on number of vertices.
-   g[u] represents adjacency list of vertex u,  Every element of this list 
-   is a pair<w,v>  where v is another vertex and w is weight of edge (u, v)
-  Note : Vertex numbers start with 1 and don't need to be contiguous.   */
-int spanningTree(vector <pair<int,int> > g[], int MAX)
+
+const int oo = 2e9;
+
+struct skip_list
 {
-	set<int> mst_not;
-	set<int> mst;
-	set<int>::iterator it;
-	int hemap[MAX];
-	for(int i=0;i<MAX;i++){
-		if(g[i].size())
-			mst_not.insert(i);
-		hemap[i]=MAX;
-	}
-	it=mst_not.begin();
-	hemap[*it]=0;
-	
-	vector< pair<int,int> >::iterator it1;
-	int n=mst_not.size();
-	int sum=0;
-	while(mst.size()!=n){
-		
-		int min = INT_MAX, min_index;
-		for (int v = 0; v < MAX; v++)
-			if (mst.find(v) == mst.end() && hemap[v] < min)
-				min = hemap[v], min_index = v;
-		
-		mst.insert(min_index);
-		sum=sum+min;
-		
-		for(it1=g[min_index].begin();it1!=g[min_index].end();it1++){
-			if(mst.find(it1->second)==mst.end() && it1->first<hemap[it1->second])
-				hemap[it1->second]=it1->first;
-		}
-	}
-	return sum;
+  // Node definition
+  struct node
+  {
+    int val;
+    deque <node*> nxt;
+    deque <node*> prv;
+    node(int val)
+      : val(val), nxt(), prv() {} 
+  } *begin, *end;
+
+  // Default constructor
+  skip_list()
+  {
+     begin = new node(-oo);
+     end   = new node(+oo);
+     begin->nxt = {  end};
+     begin->prv = { NULL};
+     end  ->nxt = { NULL};
+     end  ->prv = {begin};
+  }
+
+  // find lower_bound of X
+  node *find(int x)
+  {
+    node *cur = begin;
+    int lvl = begin->nxt.size();
+    while(lvl >= 0)
+    {
+      while( (lvl<cur->nxt.size()) &&
+             (cur->nxt[lvl]->val < x))
+      {
+        cur = cur->nxt[lvl];
+      }
+      lvl--;
+    }
+    return cur->nxt[0];
+  }
+
+  // Insert x: Invariant L0 contain all elements
+  void insert(int x)
+  {
+    node *R = find(x);
+    node *L = R->prv[0];
+    node *it = new node(x);
+    int lvl = -1;
+    while(lvl==-1 || rand()&1)
+    {
+      lvl++;
+      // Create new level
+      if(lvl >= begin->nxt.size())
+      {
+        begin->nxt.push_back(NULL);
+        begin->prv.push_back(NULL);
+        end->nxt.push_back(NULL);
+        end->prv.push_back(NULL);
+      }
+      while(lvl >= L->nxt.size()) L = L->prv[lvl-1]; 
+      while(lvl >= R->nxt.size()) R = R->nxt[lvl-1];
+      L->nxt[lvl] = it;
+      R->prv[lvl] = it;
+      it->nxt.push_back(R);
+      it->prv.push_back(L);
+    }
+
+  }
+
+  // Delete element X
+  void remove(int x)
+  {
+    node *it = find(x);
+    for(int i=0; i<it->nxt.size(); ++i)
+    {
+      it->nxt[i]->prv[i] = it->prv[i];
+      it->prv[i]->nxt[i] = it->nxt[i];
+    }
+    delete it;
+    it = NULL;
+  }
+}; 
+
+int main() {
+  skip_list SL;
+  skip_list::node* nd;
+  
+  SL.insert( 5);
+  SL.insert( 4);
+  SL.insert(11);
+  SL.insert( 9);
+  SL.insert(14);
+  SL.insert( 7);
+  SL.insert( 6);
+  SL.insert( 1);
+  SL.insert( 2);
+
+  SL.remove(5);
+  nd = SL.find(5);
+  printf("%d\n",nd->val);
+  return 0;
 }
 
-int main()
-{
-	int t ;
-	cin>>t;
-	while(t--)
-	{
-	vector <pair<int,int> > adj[MAX];
-    int n,e;
-    int w, mC;
-    cin >> n>> e;
-    for(int i = 0;i < e;++i)
-    {
-    	int x,y;
-        cin >> x >> y >> w;
-        adj[x].push_back({w, y});
-        adj[y].push_back({w, x});
-    }
-  
-    mC= spanningTree(adj, MAX);
-    cout << mC << endl;
-	}
-    return 0;
-}
+

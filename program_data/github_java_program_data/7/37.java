@@ -1,34 +1,37 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package Chapter18Review;
+
+import java.util.Scanner;
 
 /**
- * 
- * 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89 - it is Fibonacci sequence
- * O, O, E, O, O, E,  O,  O,  E,  O,  O - it is Fibonacci sequence, where even numbers - E,
- * and odd numbers - O. You can see that every third number - even number, 
- * for this reason, parity check of all numbers is unnecessary
- * 
- * @author Sluva
  *
- */ 
-public class Fibonacci {
-	public static void main (String[] args) {
-		// the first three values
-		int first = 1; int second = 1; int third = 2;
-		// the limit calculations
-		int limit = 4_000_000;
-		// the initial value of the sum
-		int sum = 0;
-		// summation until the value is less than limit
-		while (third <= limit) {
-			// addition of even value to the result
-			sum += third;
-			// calculation of the first odd value
-			first = second + third;
-			// calculation of the second odd value
-			second = third + first;
-			// calculation of the even value
-			third = first + second;
-		}
-		// output sum
-		System.out.println(sum);
-	}
+ * @author dsli
+ */
+public class TowerOfHanoi {
+    public static int runs = 0;
+    public static void main(String[] args) {
+        Scanner input = new Scanner(System.in);
+        System.out.print("Enter number of disks: ");
+        int n = input.nextInt();
+        
+        //Find the solution recursively
+        System.out.println("The moves are: ");
+        moveDisks(n, 'A', 'B', 'C');
+        System.out.println("The method runs " + runs + " times.");
+    }
+    //The method for finding the solution to move n disks from fromTower to toTower with auxTower
+    public static void moveDisks(int n, char fromTower, char toTower, char auxTower) {
+        runs++;
+        if (n == 1) //Stopping condition
+            System.out.println("Move disk " + n + " from " + fromTower + " to " + toTower);
+        else {
+            moveDisks(n - 1, fromTower, auxTower, toTower);
+            System.out.println("Move disk " + n + " from " + fromTower + " to " + toTower);
+            moveDisks(n - 1, auxTower, toTower, fromTower);
+        }
+    }
 }

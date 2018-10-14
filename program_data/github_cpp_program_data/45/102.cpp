@@ -1,60 +1,52 @@
-/* HDU 1166 Partial Code */
+struct Edge {
+    int from;
+    int to;
+    int capacity;
+    int flow;
 
-struct ST{
-    struct Node{
-        int value,lazy;
-        Node *lc,*rc;
-        Node():lc(NULL),rc(NULL),lazy(0){}
-        void pull(){ value = lc->value + rc->value; }
-        void push(){
-            if(!lazy) return;
-            if(lc){ lc->lazy = lazy;lc->value += lazy; }
-            if(rc){ rc->lazy = lazy;rc->value += lazy; }
-            lazy = 0;
-        }
-    };
-    
-    vector<int> A;
+    Edge() {}
+    Edge(int _from, int _to, int _capacity = 0, int _flow = 0)
+        : from(_from), to(_to), capacity(_capacity), flow(_flow) {}
+};
 
-    Node* build(int L,int R){
-        Node *node = new Node();
-        if(L == R){
-            node->value = A[L];
-            return node;
-        }
-        int mid = (L+R)>>1;
-        node->lc = build(L,mid);
-        node->rc = build(mid+1,R);
-        node->pull();
-        return node;
+struct flowNetwork {
+    int n;
+    int source;
+    int sink;
+    vector<Edge> edges;
+    vector< vector<int> > adjLists;
+
+    flowNetwork() {}
+    flowNetwork(int _n, int _source, int _sink) : n(_n), source(_source), sink(_sink) {
+        adjLists.resize(n);
     }
 
-    void modify(Node *node,int L,int R,int ql,int qr,int d){
-        if(R < ql || qr < L) return;
-        if(ql <= L && R <= qr){
-            node->lazy += d;
-            node->value += d;
-            return;
+    void addEdge(Edge e) {
+        adjLists[e.from].push_back(edges.size());
+        edges.push_back(e);
+        e = Edge(e.to, e.from, 0);
+        adjLists[e.from].push_back(edges.size());
+        edges.push_back(e);
+    }
+
+    ll dfs(int u, int minC) {
+        if (u == sink) {
+            return minC;
         }
-        node->push();
-        int mid = (L+R)>>1;
-        modify(node->lc,L,mid,ql,qr,d);
-        modify(node->rc,mid+1,R,ql,qr,d);
-        node->pull();
-    }
 
-    int query(Node* node,int L,int R,int ql,int qr){
-        if(R < ql || qr < L) return 0;
-        if(ql <= L && R <= qr) return node->value;
-        node->push();
-        int mid = (L+R)>>1;
-        return query(node->lc,L,mid,ql,qr) + query(node->rc,mid+1,R,ql,qr);
-    }
+        visited[u] = 1;
+        for (auto uv : adjLists[u]) {
+            if (!visited[edges[uv].to] && edges[uv].flow < edges[uv].capacity) {
+                int delta = dfs(edges[uv].to, min(minC, edges[uv].capacity - edges[uv].flow));
 
-    void delete_(Node* now){
-        if(!now) return;
-        delete_(now->lc);
-        delete_(now->rc);
-        delete now;
+                if (delta > 0) {
+                    edges[uv].flow += delta;
+                    edges[uv ^ 1].flow -= delta;
+                    return delta;
+                }
+            }
+        }
+
+        return 0;
     }
 };

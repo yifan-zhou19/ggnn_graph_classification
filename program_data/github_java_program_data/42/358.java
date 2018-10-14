@@ -1,73 +1,48 @@
-public class RadixSort {
+package pl.coderstrust.sort;
 
-	//Key-indexed counting(a[].key is an int in [0, R))
-	//O(N) time
-	public static void keyIndexCounting(String[] a) {
-		int N = a.length;
-		String[] aux = new String[N];
-		int[] count = new [R + 1];
+import java.util.Arrays;
 
-		//Count the each key's frenquency
-		for(int i = 0; i < N; i++) {
-			count[a[i].key() + 1]++;
-		}
+/**
+ * Created by Adam on 2018-02-13.
+ */
+public class SelectionSortSort {
+    public static void main(String[] args) {
 
-		//Transform frequency to indices
-		for(int r = 0; r < R; r++) {
-			count[r + 1] += count[r];
-		}
+        int[] array = {5, 4, 1, 2, 9, 2, 7};
 
-		//Distribute data into aux
-		for(int i = 0; i < N; i++) {
-			aux[count[a[i].key()]++] = a[i];
-		}
+        System.out.println(Arrays.toString(array));
 
-		//Copy back
-		for(int i = 0; i < N; i++) {
-			a[i] = aux[i];
-		}
-	}
+        SelectionSortSort myObject = new SelectionSortSort();
+        myObject.sort(array);
 
-	
-	//LSD sort for same length strings, sort a[] on leading W characters
-	//LSDstringsortuses~7WN􏰄3WRarrayaccessesand extra space proportional to N􏰄R to sort N items whose keys are W-character strings taken from an R-character alphabet.
-	public static void sortLSD(String[] a, int W) {
-		int N = a.length;
-		int R = 256;
-		String[] aux = new String[N];
+        System.out.println(Arrays.toString(array));
 
-		for(int d = W - 1; d >= 0; d--) {
-			int[] count = new int[R + 1];
-			for(int i = 0; i < N; i++) 
-				count[a[i].charAt(d) + 1]++;
+    }
 
-			for(int r = 0; r < R; r++)
-				count[r + 1] += count[r];
+    public int[] sort(int[] array) {
+        for (int j = 0; j < array.length; ++j) {
+            int minimumNumberIndex = getMinimumNumberIndex(array, j);
+            swap(array, j, minimumNumberIndex);
 
-			for(int i = 0; i < N; i++)
-				aux[count[a[i].charAt(d)]++] = a[i];
+        }
+        return array;
+    }
 
-			for(int i = 0; i < N; i++)
-				a[i] = aux[i];
-		}
-	}
+    public int getMinimumNumberIndex(int[] array, int j) {
+        int minimumNumberIndex = j;
+        for (int i = j; i < array.length; ++i)
+            if (array[i] < array[minimumNumberIndex]) {
+                minimumNumberIndex = i;
+            }
+        return minimumNumberIndex;
+    }
 
-	//LSD for number for positive numbers
-	public static void sort(int[] a) {
-		int N = a.length;
-		int R = 256;
-		int[] aux = new int[N];
-		for(int d = 0; d < 4; d++) {
-			int mask = 255 << (8 * d);
-			int[] count = new int[R + 1];
-			for(int i = 0; i < N; i++) 
-				count[(a[i] & mask) + 1]++;
-			for(int r = 0; r < R; r++)
-				count[r + 1] += count[r];
-			for(int i = 0; i < N; i++) 
-				aux[count[a[i] & mask]++] = a[i];
-			for(int i = 0; i < N; i++)
-				a[i] = aux[i];
-		}
-	}
+    public static void swap(int[] array, int j, int minimumNumberIndex) {
+        int temp = array[j];
+        array[j] = array[minimumNumberIndex];
+        array[minimumNumberIndex] = temp;
+    }
+
+
 }
+

@@ -1,32 +1,42 @@
-/*******************************************************************************
- * Copyright (c) 2011 BestSolution.at and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     Tom Schindl<tom.schindl@bestsolution.at> - initial API and implementation
- *******************************************************************************/
-package at.bestsolution.efxclipse.tooling.css.jfx.scene.layout;
-
-import static at.bestsolution.efxclipse.tooling.css.CssDialectExtension.Util.createEnumProperties;
-import static at.bestsolution.efxclipse.tooling.css.CssDialectExtension.Util.createReflective;
+package sorting.noncomparison;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
-import at.bestsolution.efxclipse.tooling.css.CssDialectExtension.Property;
-import at.bestsolution.efxclipse.tooling.css.jfx.JFXDialectExtension.Size4TimesProperty;
+public class BucketSort {
 
-public class Stack {
-	public static List<Property> init() {
-		List<Property> properties = new ArrayList<Property>();
-		properties.addAll(createEnumProperties(Arrays.asList("left","center","right","leading","trailing"), "-fx-node-hpos"));
-		properties.addAll(createEnumProperties(Arrays.asList("top","center","baseline","bottom","page-end","page-start"), "-fx-node-vpos"));
-		properties.addAll(createReflective(Size4TimesProperty.class, "-fx-padding"));
-		
-		return properties;
-	}
+    public void sort(Double[] A) {
+
+        int n = A.length;
+        List[] B = new ArrayList[n];
+
+        for (int i = 0; i < n; i++)
+            B[i] = new ArrayList<>();
+
+        for (int i = 0; i < n; i++)
+            B[(int) Math.floor(n * A[i])].add(A[i]);
+
+        for (List b : B)
+            Collections.sort(b);
+
+        int i = 0;
+        for (List b : B)
+            for (Object d : b)
+                A[i++] = (Double) d;
+
+    }
+
+    public static void main(String... args) {
+
+        Double[] numbers = {0.15, 0.84, 0.36, 0.99, 0.13, 0.34, 0.91, 0.51};
+        BucketSort bucketSort = new BucketSort();
+        bucketSort.sort(numbers);
+
+        Arrays.asList(numbers).stream().forEach(System.out::println);
+
+    }
+
+
 }

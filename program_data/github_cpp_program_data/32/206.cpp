@@ -1,33 +1,44 @@
-//============================================================================
-// Name        : shell-sort.cpp
-// Author      : Alan Villarreal, Christopher Spear, Sidian Wu
-// Date        : 02/14/13
-// Copyright   : what
-// Description : Implementation of shell sort in C++
-//============================================================================
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define MAX_node 100000
 
-#include "sort.h"
-#include <iostream>
-
-
-inline int next_gap(int gap)
-	{ if (gap ==2) return 1;else return (int) (gap/2.2); }
-void ShellSort::sort(int A[], int size)
-{
-	for (int gap = size/2; gap > 0; gap = next_gap(gap)) 
-	{
-		for (int i = gap; i <size; i++)
-		{
-			int tmp = A[i];
-			int j = i;
-			for( ; j>=gap && (num_cmps++,tmp < A[j-gap]);j-=gap)
-				A[j] = A[j-gap];
-			A[j] = tmp;
-		}
-	}
-
-
-  /* Complete this function with the implementation of shell sort algorithm 
-  Record number of comparisons in variable num_cmps of class Sort
-  */
+struct edg{
+    int a,b,w;
+    bool operator < (const edg &b) const{
+        return w<b.w;
+    }
+}E[MAX_node+1];
+ 
+int Prev[MAX_node+1];
+int parent(int a){
+    if(a==Prev[a]) return a;
+    return Prev[a]=parent(Prev[a]);
 }
+ 
+int main(){
+    int node,edge;
+    while(scanf("%d%d",&node,&edge)){
+         
+        int TOTAL=0;
+             
+        for(int i=1;i<=node;i++) Prev[i]=i;
+        for(int i=0;i<edge;i++) scanf("%d%d%d",&E[i].a,&E[i].b,&E[i].w);
+         
+        sort(E,E+edge);
+         
+        for(int i=0; i<edge; i++ ){
+            int u=parent(E[i].a);
+            int v=parent(E[i].b);
+             
+            if(u!=v){
+                TOTAL+=E[i].w;
+                Prev[u]=v;
+            }
+        }
+         
+        printf("%d\n",TOTAL);
+    }
+    return 0;
+}
+ 

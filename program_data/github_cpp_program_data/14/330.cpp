@@ -1,157 +1,123 @@
+#include"logistic-regression.h"
+#include<vector>
+#include<omp.h>
+#include<numeric>
+using Eigen::MatrixXd;
+using Eigen::VectorXi;
+using Eigen::VectorXd;
 
-/**
- * @file heap.cpp
- * Implementation of a heap class.
- */
-
-template <class T, class Compare>
-size_t heap<T, Compare>::root() const
-{
-    // @TODO Update to return the index you are choosing to be your root.
-    return 1;
+LogisticRegression::LogisticRegression() {
+	learning_rate_ = 0.001;
+	train_epochs_ = 100;
+	regularization_parameter_ = 0;
 }
 
-template <class T, class Compare>
-size_t heap<T, Compare>::leftChild(size_t currentIdx) const
-{
-    // @TODO Update to return the index of the left child.
-    return currentIdx*2;
+LogisticRegression::LogisticRegression(double learning_rate, double regularization_parameter, int train_epochs)
+	: learning_rate_(learning_rate), regularization_parameter_(regularization_parameter), train_epochs_(train_epochs) {}
+
+double LogisticRegression::learning_rate() const {
+	return learning_rate_;
 }
 
-template <class T, class Compare>
-size_t heap<T, Compare>::rightChild(size_t currentIdx) const
-{
-    // @TODO Update to return the index of the right child.
-    return currentIdx*2+1;
+void LogisticRegression::learning_rate(double learning_rate) {
+	this->learning_rate_ = learning_rate;
 }
 
-template <class T, class Compare>
-size_t heap<T, Compare>::parent(size_t currentIdx) const
-{
-    // @TODO Update to return the index of the parent.
-    return currentIdx/2;
+int LogisticRegression::train_epochs() const {
+	return train_epochs_;
 }
 
-template <class T, class Compare>
-bool heap<T, Compare>::hasAChild(size_t currentIdx) const
-{
-    // @TODO Update to return whether the given node has a child
-    return currentIdx*2<_elems.size();
+void LogisticRegression::train_epochs(int train_epochs) {
+	this->train_epochs_ = train_epochs;
 }
 
-template <class T, class Compare>
-size_t heap<T, Compare>::maxPriorityChild(size_t currentIdx) const
-{
-    // @TODO Update to return the index of the child with highest priority
-    ///   as defined by higherPriority()
-    if(hasAChild(currentIdx)){
-       if(2*currentIdx+1>=_elems.size())
-	        return leftChild(currentIdx);
-      if(higherPriority(_elems[leftChild(currentIdx)],_elems[rightChild(currentIdx)])){
-        return leftChild(currentIdx);
-      }else{
-        return rightChild(currentIdx);
-      }
-    }
-    return 0;
+double LogisticRegression::regularization_parameter() const {
+	return regularization_parameter_;
 }
 
-template <class T, class Compare>
-void heap<T, Compare>::heapifyDown(size_t currentIdx)
-{
-    // @TODO Implement the heapifyDown algorithm.
-    if(hasAChild(currentIdx)==false){
-      return;
-    }
-    size_t minChildIndex = maxPriorityChild(currentIdx);
-    if(!higherPriority(_elems[currentIdx],_elems[minChildIndex])){
-      std::swap(_elems[currentIdx],_elems[minChildIndex]);
-      heapifyDown(minChildIndex);
-    }
+void LogisticRegression::regularization_parameter(double regularization_parameter) {
+	this->regularization_parameter_ = regularization_parameter;
 }
 
-template <class T, class Compare>
-void heap<T, Compare>::heapifyUp(size_t currentIdx)
-{
-    if (currentIdx == root())
-        return;
-    size_t parentIdx = parent(currentIdx);
-    if (higherPriority(_elems[currentIdx], _elems[parentIdx])) {
-        std::swap(_elems[currentIdx], _elems[parentIdx]);
-        heapifyUp(parentIdx);
-    }
-}
+void LogisticRegression::SerialTrain(const MatrixXd &x, const VectorXi &y) {
+	size_t num_examples = x.rows();
+	size_t num_features = x.cols();
+	theta_.setZero(num_features);
 
-template <class T, class Compare>
-heap<T, Compare>::heap()
-{
-    // @TODO Depending on your implementation, this function may or may
-    ///   not need modifying
-    _elems.push_back(T());
-}
-
-template <class T, class Compare>
-heap<T, Compare>::heap(const std::vector<T>& elems)
-{
-    // @TODO Construct a heap using the buildHeap algorithm
-    _elems.push_back(T());
-    for(size_t i = 0; i < elems.size(); i++)
-	{
-		_elems.push_back(elems[i]);
+	for (size_t epoch = 0; epoch < train_epochs_; epoch++) {
+		VectorXd gradient = VectorXd::Zero(num_features);
+		for (size_t i = 0; i < num_examples; i++) {
+			auto gradient_i = (Sigmoid(x.row(i) * theta_) - y(i)) * x.row(i);
+			gradient += gradient_i;
+		}
+		regularize(gradient);
+		gradient *= 1.0 / num_examples;
+		theta_ -= learning_rate_ * gradient;
 	}
-	for(size_t i = parent(_elems.size()); i >0 ; i--)
-	{
-		heapifyDown(i);
+}
+
+void LogisticRegression::ParallelTrain(const MatrixXd &x, const VectorXi &y) {
+	size_t num_examples = x.rows();
+	size_t num_features = x.cols();
+	theta_.setZero(num_features);
+	VectorXd gradient = VectorXd::Zero(num_features);
+
+	auto num_processors = omp_get_num_procs();
+	size_t section_size = num_examples / num_processors;
+	std::vector<VectorXd> partial_gradient(num_processors);
+	std::vector<size_t> iterator(num_processors);
+
+	for (size_t epoch = 0; epoch < train_epochs_; epoch++) {
+		gradient.setZero(num_features);
+		for (auto &item : partial_gradient) item.setZero(num_features);
+		
+#pragma omp parallel for
+		for (int i = 0; i < num_processors; i++) {
+			size_t &j = iterator[i];
+			size_t left_bound = i * section_size;
+			size_t right_bound = std::min((i + 1) * section_size, num_examples);
+			for (j = left_bound; j < right_bound; j++) {
+				auto gradient_row = (Sigmoid(x.row(j) * theta_) - y(j)) * x.row(j);
+				partial_gradient[i] += gradient_row;
+			}
+		}
+		gradient = std::accumulate(partial_gradient.begin(), partial_gradient.end(), gradient);
+		regularize(gradient);
+		gradient *= 1.0 / num_examples;
+		theta_ -= learning_rate_ * gradient;
 	}
-
 }
 
-template <class T, class Compare>
-T heap<T, Compare>::pop()
-{
-    // @TODO Remove, and return, the element with highest priority
-    if(!empty()){
-      T temp = _elems[1];
-      _elems[1] = _elems[_elems.size()-1];
-      _elems.pop_back();
-      heapifyDown(1);
-      return temp;
-    }
-    return T();
+void LogisticRegression::CacheUnfriendlyParallelTrain(const Eigen::MatrixXd & x, const Eigen::VectorXi & y) {
+	size_t num_examples = x.rows();
+	size_t num_features = x.cols();
+	theta_.setZero(num_features);
+
+	for (size_t epoch = 0; epoch < train_epochs_; epoch++) {
+		VectorXd gradient = VectorXd::Zero(num_features);
+#pragma omp parallel for
+		for (int i = 0; i < num_examples; i++) {
+			auto gradient_i = (Sigmoid(x.row(i) * theta_) - y(i)) * x.row(i);
+#pragma omp critical
+			gradient += gradient_i;
+		}
+		regularize(gradient);
+		gradient *= 1.0 / num_examples;
+		theta_ -= learning_rate_ * gradient;
+	}
 }
 
-template <class T, class Compare>
-T heap<T, Compare>::peek() const
-{
-    // @TODO Return, but do not remove, the element with highest priority
-    if(!empty()){
-      return _elems[1];
-    }
-    return T();
+VectorXd LogisticRegression::PredictProbability(MatrixXd &x) const {
+	VectorXd result = (x * theta_).unaryExpr(std::ptr_fun(LogisticRegression::Sigmoid));
+	return std::move(result);
 }
 
-template <class T, class Compare>
-void heap<T, Compare>::push(const T& elem)
-{
-    // @TODO Add elem to the heap
-    _elems.push_back(elem);
-    heapifyUp(_elems.size()-1);
+double LogisticRegression::Sigmoid(double x) {
+	return 1.0 / (1.0 + std::exp(-x));
 }
 
-template <class T, class Compare>
-bool heap<T, Compare>::empty() const
-{
-    // @TODO Determine if the heap is empty
-    if(_elems.size() > 1){
-      return false;
-    }
-    return true;
-}
-
-template <class T, class Compare>
-void heap<T, Compare>::getElems(std::vector<T> & heaped) const
-{
-    for (size_t i = root(); i < _elems.size(); i++) {
-        heaped.push_back(_elems[i]);
-    }
+void LogisticRegression::regularize(VectorXd & gradient) {
+	size_t length = gradient.rows();
+	VectorXd theta_without_bias = theta_.block(1, 0, length - 1, 1);
+	gradient.block(1, 0, length - 1, 1) += regularization_parameter_ * theta_without_bias;
 }

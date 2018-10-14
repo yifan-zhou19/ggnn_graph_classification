@@ -1,157 +1,123 @@
-
 /**
- * @file heap.cpp
- * Implementation of a heap class.
+ * @file logistic_regression.cpp
+ * @author Chase Geigle
  */
 
-template <class T, class Compare>
-size_t heap<T, Compare>::root() const
-{
-    // @TODO Update to return the index you are choosing to be your root.
-    return 1;
-}
+#include "classify/classifier/logistic_regression.h"
+#include "classify/loss/loss_function_factory.h"
+#include "classify/loss/logistic.h"
+#include "parallel/parallel_for.h"
+#include "util/functional.h"
 
-template <class T, class Compare>
-size_t heap<T, Compare>::leftChild(size_t currentIdx) const
+namespace meta
 {
-    // @TODO Update to return the index of the left child.
-    return currentIdx*2;
-}
+namespace classify
+{
 
-template <class T, class Compare>
-size_t heap<T, Compare>::rightChild(size_t currentIdx) const
-{
-    // @TODO Update to return the index of the right child.
-    return currentIdx*2+1;
-}
+const std::string logistic_regression::id = "logistic-regression";
 
-template <class T, class Compare>
-size_t heap<T, Compare>::parent(size_t currentIdx) const
+logistic_regression::logistic_regression(
+    const std::string& prefix, std::shared_ptr<index::forward_index> idx,
+    double alpha, double gamma, double bias, double lambda, uint64_t max_iter)
+    : classifier{std::move(idx)}
 {
-    // @TODO Update to return the index of the parent.
-    return currentIdx/2;
-}
-
-template <class T, class Compare>
-bool heap<T, Compare>::hasAChild(size_t currentIdx) const
-{
-    // @TODO Update to return whether the given node has a child
-    return currentIdx*2<_elems.size();
-}
-
-template <class T, class Compare>
-size_t heap<T, Compare>::maxPriorityChild(size_t currentIdx) const
-{
-    // @TODO Update to return the index of the child with highest priority
-    ///   as defined by higherPriority()
-    if(hasAChild(currentIdx)){
-       if(2*currentIdx+1>=_elems.size())
-	        return leftChild(currentIdx);
-      if(higherPriority(_elems[leftChild(currentIdx)],_elems[rightChild(currentIdx)])){
-        return leftChild(currentIdx);
-      }else{
-        return rightChild(currentIdx);
-      }
-    }
-    return 0;
-}
-
-template <class T, class Compare>
-void heap<T, Compare>::heapifyDown(size_t currentIdx)
-{
-    // @TODO Implement the heapifyDown algorithm.
-    if(hasAChild(currentIdx)==false){
-      return;
-    }
-    size_t minChildIndex = maxPriorityChild(currentIdx);
-    if(!higherPriority(_elems[currentIdx],_elems[minChildIndex])){
-      std::swap(_elems[currentIdx],_elems[minChildIndex]);
-      heapifyDown(minChildIndex);
+    auto labels = idx_->class_labels();
+    pivot_ = labels[labels.size() - 1];
+    for (uint64_t i = 0; i < labels.size() - 1; ++i)
+    {
+        using namespace loss;
+        classifiers_.emplace(
+            std::piecewise_construct, std::forward_as_tuple(labels[i]),
+            std::forward_as_tuple(prefix, idx_, labels[i], pivot_,
+                                  make_loss_function<logistic>(), alpha, gamma,
+                                  bias, lambda, max_iter));
     }
 }
 
-template <class T, class Compare>
-void heap<T, Compare>::heapifyUp(size_t currentIdx)
+std::unordered_map<class_label, double>
+    logistic_regression::predict(doc_id d_id)
 {
-    if (currentIdx == root())
-        return;
-    size_t parentIdx = parent(currentIdx);
-    if (higherPriority(_elems[currentIdx], _elems[parentIdx])) {
-        std::swap(_elems[currentIdx], _elems[parentIdx]);
-        heapifyUp(parentIdx);
+    std::unordered_map<class_label, double> probs;
+    double denom = 0;
+    for (auto& pair : classifiers_)
+    {
+        auto prediction = std::exp(pair.second.predict(d_id));
+        probs[pair.first] = prediction;
+        denom += prediction;
     }
+    probs[pivot_] = 1;
+    denom += 1;
+    for (auto& pair : probs)
+        pair.second /= denom;
+    return probs;
 }
 
-template <class T, class Compare>
-heap<T, Compare>::heap()
+class_label logistic_regression::classify(doc_id d_id)
 {
-    // @TODO Depending on your implementation, this function may or may
-    ///   not need modifying
-    _elems.push_back(T());
+    using namespace functional;
+    auto probs = predict(d_id);
+    auto it = argmax(probs.begin(), probs.end(),
+                     [](const std::pair<class_label, double>& pair)
+                     {
+        return pair.second;
+    });
+    return it->first;
 }
 
-template <class T, class Compare>
-heap<T, Compare>::heap(const std::vector<T>& elems)
+void logistic_regression::train(const std::vector<doc_id>& docs)
 {
-    // @TODO Construct a heap using the buildHeap algorithm
-    _elems.push_back(T());
-    for(size_t i = 0; i < elems.size(); i++)
-	{
-		_elems.push_back(elems[i]);
-	}
-	for(size_t i = parent(_elems.size()); i >0 ; i--)
-	{
-		heapifyDown(i);
-	}
-
+    std::unordered_map<class_label, std::vector<doc_id>> docs_by_class;
+    for (const auto& d_id : docs)
+        docs_by_class[idx_->label(d_id)].emplace_back(d_id);
+    using T = decltype(*classifiers_.begin());
+    parallel::parallel_for(classifiers_.begin(), classifiers_.end(),
+                           [&](T& pair)
+                           {
+        auto train_docs = docs_by_class[pair.first];
+        auto pivot_docs = docs_by_class[pivot_];
+        train_docs.insert(train_docs.end(), pivot_docs.begin(),
+                          pivot_docs.end());
+        pair.second.train(train_docs);
+    });
 }
 
-template <class T, class Compare>
-T heap<T, Compare>::pop()
+void logistic_regression::reset()
 {
-    // @TODO Remove, and return, the element with highest priority
-    if(!empty()){
-      T temp = _elems[1];
-      _elems[1] = _elems[_elems.size()-1];
-      _elems.pop_back();
-      heapifyDown(1);
-      return temp;
-    }
-    return T();
+    for (auto& pair : classifiers_)
+        pair.second.reset();
 }
 
-template <class T, class Compare>
-T heap<T, Compare>::peek() const
+template <>
+std::unique_ptr<classifier> make_classifier<logistic_regression>(
+    const cpptoml::table& config, std::shared_ptr<index::forward_index> idx)
 {
-    // @TODO Return, but do not remove, the element with highest priority
-    if(!empty()){
-      return _elems[1];
-    }
-    return T();
-}
+    auto prefix = config.get_as<std::string>("prefix");
+    if (!prefix)
+        throw classifier_factory::exception{
+            "prefix must be specified for logistic-regression in config"};
 
-template <class T, class Compare>
-void heap<T, Compare>::push(const T& elem)
-{
-    // @TODO Add elem to the heap
-    _elems.push_back(elem);
-    heapifyUp(_elems.size()-1);
-}
+    auto alpha = sgd::default_alpha;
+    if (auto c_alpha = config.get_as<double>("alpha"))
+        alpha = *c_alpha;
 
-template <class T, class Compare>
-bool heap<T, Compare>::empty() const
-{
-    // @TODO Determine if the heap is empty
-    if(_elems.size() > 1){
-      return false;
-    }
-    return true;
-}
+    auto gamma = sgd::default_gamma;
+    if (auto c_gamma = config.get_as<double>("gamma"))
+        gamma = *c_gamma;
 
-template <class T, class Compare>
-void heap<T, Compare>::getElems(std::vector<T> & heaped) const
-{
-    for (size_t i = root(); i < _elems.size(); i++) {
-        heaped.push_back(_elems[i]);
-    }
+    auto bias = sgd::default_bias;
+    if (auto c_bias = config.get_as<double>("bias"))
+        bias = *c_bias;
+
+    auto lambda = sgd::default_lambda;
+    if (auto c_lambda = config.get_as<double>("lambda"))
+        lambda = *c_lambda;
+
+    auto max_iter = sgd::default_max_iter;
+    if (auto c_max_iter = config.get_as<int64_t>("max-iter"))
+        max_iter = *c_max_iter;
+
+    return make_unique<logistic_regression>(*prefix, std::move(idx), alpha,
+                                            gamma, bias, lambda, max_iter);
+}
+}
 }

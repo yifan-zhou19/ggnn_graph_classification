@@ -1,48 +1,125 @@
-struct BIT{
-	LL d[maxn];
-	inline int lowbit(int x){return x&-x;}
-	LL get(int x){
-		LL ans=0;
-		while(x)ans+=d[x],x-=lowbit(x);
-		return ans;
-	}
-	void updata(int x,LL f){
-		while(x<=m)d[x]+=f,x+=lowbit(x);
-	}
-	void add(int l,int r,LL f){
-		updata(l,f);
-		updata(r+1,-f);
-	}
-}T,T2;
-int anss[maxn],wana[maxn];
-struct qes{
-	LL x,y,z;
-	qes(LL _x=0,LL _y=0,LL _z=0):
-		x(_x),y(_y),z(_z){}
-}q[maxn],p[maxn];
-bool part(qes &q){
-	if(q.y+q.z>=wana[q.x])return 1;
-	q.z+=q.y;q.y=0;return 0;
-}
-void solve(int lef,int rig,int l,int r){
-	if(l==r){
-		for(int i=lef;i<=rig;i++)if(anss[p[i].x]!=-1)
-		anss[p[i].x]=l;return;
-	}int mid=(l+r)>>1;
-	for(int i=l;i<=mid;i++){
-		if(q[i].x<=q[i].y)T.add(q[i].x,q[i].y,q[i].z);
-		else T.add(1,q[i].y,q[i].z),T.add(q[i].x,m,q[i].z);
-	}for(int i=lef;i<=rig;i++){
-		p[i].y=0;
-		for(int j=0;j<O[p[i].x].size()&&p[i].y<=int(1e9)+1;j++)
-		p[i].y+=T.get(O[p[i].x][j]);
-	}for(int i=l;i<=mid;i++){
-		if(q[i].x<=q[i].y)T.add(q[i].x,q[i].y,-q[i].z);
-		else T.add(1,q[i].y,-q[i].z),T.add(q[i].x,m,-q[i].z);
-	}int dv=stable_partition(p+lef,p+rig+1,part)-p-1;		
-	if(lef<=dv)
-	solve(lef,dv,l,mid);
-	if(dv+1<=rig)
-	solve(dv+1,rig,mid+1,r);
+#include <bits/stdc++.h>
+using namespace std;
+
+#define rep(i, a, b) for(int i = a; i < int(b); ++i)
+#define trav(a, v) for(auto& a : v)
+#define all(x) x.begin(), x.end()
+#define sz(x) (int)(x).size()
+
+typedef long long ll;
+typedef pair<int, int> pii;
+typedef vector<int> vi;
+
+static unsigned RA = 1231231;
+int ra() {
+	RA *= 574841;
+	RA += 14;
+	return RA >> 1;
 }
 
+namespace maximum {
+
+#include "../content/data-structures/SegmentTree.h"
+
+}
+
+namespace nonabelian {
+
+// https://en.wikipedia.org/wiki/Dihedral_group_of_order_6
+const int lut[6][6] = {
+	{0, 1, 2, 3, 4, 5},
+	{1, 0, 4, 5, 2, 3},
+	{2, 5, 0, 4, 3, 1},
+	{3, 4, 5, 0, 1, 2},
+	{4, 3, 1, 2, 5, 0},
+	{5, 2, 3, 1, 0, 4}
+};
+
+struct Tree {
+	typedef int T;
+	const T LOW = 0;
+	T f(T a, T b) { return lut[a][b]; }
+	vector<T> s; int n;
+	Tree(int n = 0, T def = 0) : s(2*n, def), n(n) {}
+	void update(int pos, T val) {
+		for (s[pos += n] = val; pos > 1; pos /= 2)
+			s[pos / 2] = f(s[pos & ~1], s[pos | 1]);
+	}
+	T query(int b, int e) { // query [b, e)
+		T ra = LOW, rb = LOW;
+		for (b += n, e += n; b < e; b /= 2, e /= 2) {
+			if (b % 2) ra = f(ra, s[b++]);
+			if (e % 2) rb = f(s[--e], rb);
+		}
+		return f(ra, rb);
+	}
+};
+
+}
+
+int main() {
+	{
+		maximum::Tree t(0);
+		assert(t.query(0, 0) == t.LOW);
+	}
+
+	if (1) {
+		const int N = 10000;
+		maximum::Tree tr(N);
+		ll sum = 0;
+		rep(it,0,1000000) {
+			tr.update(ra() % N, ra());
+			int i = ra() % N;
+			int j = ra() % N;
+			if (i > j) swap(i, j);
+			int v = tr.query(i, j+1);
+			sum += v;
+		}
+		cout << sum << endl;
+		// return 0;
+	}
+
+	rep(n,1,10) {
+		maximum::Tree tr(n);
+		vi v(n);
+		rep(it,0,1000000) {
+			int i = rand() % (n+1), j = rand() % (n+1);
+			int x = rand() % (n+2);
+
+			int r = rand() % 100;
+			if (r < 30) {
+				int ma = tr.LOW;
+				rep(k,i,j) ma = max(ma, v[k]);
+				assert(ma == tr.query(i,j));
+			}
+			else {
+				i = min(i, n-1);
+				tr.update(i, x);
+				v[i] = x;
+			}
+		}
+	}
+
+	rep(n,1,10) {
+		nonabelian::Tree tr(n);
+		vi v(n);
+		rep(it,0,1000000) {
+			int i = rand() % (n+1), j = rand() % (n+1);
+			int x = rand() % 6;
+
+			int r = rand() % 100;
+			if (r < 30) {
+				int ma = tr.LOW;
+				rep(k,i,j) ma = nonabelian::lut[ma][v[k]];
+				assert(ma == tr.query(i,j));
+			}
+			else {
+				i = min(i, n-1);
+				tr.update(i, x);
+				v[i] = x;
+			}
+		}
+	}
+
+	exit(0);
+}

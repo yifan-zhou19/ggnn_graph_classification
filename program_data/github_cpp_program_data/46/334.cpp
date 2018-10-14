@@ -1,45 +1,60 @@
-#include <iostream>
+/* HDU 1166 Partial Code */
 
-int binary_search_iter(int element, int array[], int length) {
-  int begin = 0;
-  int end = length - 1;
-  int mid = (begin + end) / 2;
+struct ST{
+    struct Node{
+        int value,lazy;
+        Node *lc,*rc;
+        Node():lc(NULL),rc(NULL),lazy(0){}
+        void pull(){ value = lc->value + rc->value; }
+        void push(){
+            if(!lazy) return;
+            if(lc){ lc->lazy = lazy;lc->value += lazy; }
+            if(rc){ rc->lazy = lazy;rc->value += lazy; }
+            lazy = 0;
+        }
+    };
+    
+    vector<int> A;
 
-  while (array[mid] != element && begin <= end) {
-    if (element < array[mid]) {
-      end = mid - 1;
-    } else {
-      begin = mid + 1;
+    Node* build(int L,int R){
+        Node *node = new Node();
+        if(L == R){
+            node->value = A[L];
+            return node;
+        }
+        int mid = (L+R)>>1;
+        node->lc = build(L,mid);
+        node->rc = build(mid+1,R);
+        node->pull();
+        return node;
     }
 
-    mid = (begin + end) / 2;
-  }
+    void modify(Node *node,int L,int R,int ql,int qr,int d){
+        if(R < ql || qr < L) return;
+        if(ql <= L && R <= qr){
+            node->lazy += d;
+            node->value += d;
+            return;
+        }
+        node->push();
+        int mid = (L+R)>>1;
+        modify(node->lc,L,mid,ql,qr,d);
+        modify(node->rc,mid+1,R,ql,qr,d);
+        node->pull();
+    }
 
-  return element == array[mid] ? mid : -1;
-}
+    int query(Node* node,int L,int R,int ql,int qr){
+        if(R < ql || qr < L) return 0;
+        if(ql <= L && R <= qr) return node->value;
+        node->push();
+        int mid = (L+R)>>1;
+        return query(node->lc,L,mid,ql,qr) + query(node->rc,mid+1,R,ql,qr);
+    }
 
-int binary_search(int element, int array[], int begin, int end) {
-  if (begin > end) {
-    return -1;
-  }
-
-  int mid = (begin + end) / 2;
-  if (array[mid] == element) {
-    return mid;
-  }
-  if (element < array[mid]) {
-    return binary_search(element, array, begin, mid - 1);
-  }
-  return binary_search(element, array, mid + 1, end);
-}
-
-int binary_search(int element, int array[], int length) {
-  return binary_search(element, array, 0, length - 1);
-}
-
-int main() {
-  int array[] = {3, 5, 10, 21, 42};
-  std::cout << binary_search(42, array, 5) << '\n';
-
-  return 0;
-}
+    void delete_(Node* now){
+        if(!now) return;
+        delete_(now->lc);
+        delete_(now->rc);
+        delete now;
+    }
+};

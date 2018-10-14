@@ -1,83 +1,156 @@
-#include <iostream>
-#include <cstdlib>
-#include <ctime>
-using namespace std;
+#include "rcpp_naive_bayes.h"
+#include <functional>
 
-struct data{
-    int val;
-    data* next;
-    data(int value): val(value),next(NULL){}
-};
+using namespace Rcpp;
 
-data* add(int value,data *now){
-    data *tmp = new data(value);
-    if(now!=NULL){
-        now->next = tmp;
-        now = tmp;
-    }
-    return tmp;
-}
+/**
+ * @brief Called by NaiveBayesTrain, internal use only
+ *
+ * @param corpus_in A corpus
+ * @return List A list of words/frequencies
+ * @see http://css.dzone.com/articles/spam-filtering-naive-bayes
+ **/
 
-void print(data *begin,data *end){
-    for(data *ptr=begin->next;ptr!=end;ptr=ptr->next)
-        cout << ptr->val << " ";
-    cout << endl;
-}
-
-data* search(int value,data *begin,data *end){
-    for(data *ptr=begin->next;ptr!=end;ptr=ptr->next)
-        if(ptr->val==value)
-            return ptr;
-    return end;
-}
-
-void remove(int value,data* begin,data*end){
-    data* tmp = search(value,begin,end);
-    if(tmp==end){
-        cout << "Can't find " << value << " in list" << endl;
-    }else{
-        data* prev = begin;
-        while(prev->next!=tmp){
-            prev = prev->next;
+List NaiveBayesWordsFreq (List corpus_in)
+{
+    //BEGIN_RCPP
+    int corpusSize = corpus_in.size();
+    std::map<std::string, int> wordsFrequencies;
+    std::map<std::string, int>::iterator it;
+    std::vector<std::string>::iterator text_it;
+    for (int i = 0; i < corpusSize; ++i) {
+        std::vector<std::string> texts =
+            as<std::vector<std::string> > (corpus_in[i]);
+        std::sort (texts.begin(), texts.end());
+        for (text_it = texts.begin(); text_it != texts.end(); ++text_it) {
+            it = wordsFrequencies.find (*text_it);
+            if (it != wordsFrequencies.end()) {
+                it->second ++;
+            } else {
+                wordsFrequencies.insert
+                (std::pair<std::string, int> (*text_it, 2));
+            }
         }
-        prev->next = tmp->next;
-        delete tmp;
     }
+    return List::create (_["wordsFrequencies"] = wordsFrequencies,
+                         _["corpusSize"] = corpusSize);
+    //END_RCPP
 }
 
-void clear(data* begin,data* end){
-    data*tmp = new data(-1);
-    for(data *ptr=begin->next;ptr!=end;ptr=ptr->next){
-        tmp = ptr->next;
-        begin->next = tmp;
-        delete ptr;
+/**
+ * @brief Creates a training model from @a corpora_in
+ *
+ * @param corpora_in  A list of corpus
+ * @return SEXP A RcppNaiveBayes class
+ **/
+
+SEXP NaiveBayesTrain (SEXP corpora_in)
+{
+    //BEGIN_RCPP
+    List corpora (corpora_in);
+    int corporaSize = corpora.size();
+    List wordsList (corporaSize);
+    int total = 0;
+    for (int i = 0; i < corporaSize; i++) {
+        List category = NaiveBayesWordsFreq (corpora[i]);
+        wordsList[i] = category;
+        total += as<int> (category["corpusSize"]);
     }
-    delete tmp ; 
-    delete begin ;
-    //delete end;
+    List z = List::create (_["wordsList"] = wordsList,
+                           _["categorySize"] = corporaSize,
+                           _["totalCorpusSize"] = total);
+    z.attr ("class") = "RcppNaiveBayesTrain";
+    return z;
+    //END_RCPP
 }
 
 
-int main(){
-    data* head = new data(-1), *cur = NULL , *tail = new data(-1);
-    srand(time(0)) ;
-    int v;
-	for(int i=0 ; i<10; i++){
-        v = rand() % 100;
-        cout << v << " ";
-        cur = add(v,cur);
-        if(i==0)
-            head->next = cur;
-        if(i==9)
-            cur->next = tail;
+SEXP NaiveBayesPredict (const List& wordsList_in, int categoryCount_in,
+                        int factor_in, SEXP unknown_in)
+{
+    //BEGIN_RCPP
+    std::vector<double> scores (categoryCount_in);
+    std::vector<std::string> unknown =
+        as<std::vector<std::string> > (unknown_in);
+    if (unknown.size() == 0) {
+        std::fill (scores.begin(), scores.end(), 0.0);
+        return wrap (scores);
     }
-    //cout << endl << &head << " " << &cur << " " << &tail << endl;
-    cout << endl; print(head,tail);
-    cout << "Enter a number to search and remove in list: ";
-    cin >> v;
-    remove(v,head,tail);
-    print(head,tail);
-    clear(head,tail);
-    print(head,tail);
-    return 0;
+    std::sort (unknown.begin(), unknown.end());
+    std::vector<std::string>::iterator
+    unknown_it,
+    words_it,
+    words_cursor;
+    volatile long double s = 0.0;
+    volatile int corpusSize = 0;
+    for (int i = 0; i < categoryCount_in; ++i) {
+        s = 1.0;
+        List wordsFreqTable = wordsList_in[i];
+        List wordsFrequencies = wordsFreqTable["wordsFrequencies"];
+        corpusSize = as<int> (wordsFreqTable["corpusSize"]);
+        std::vector<std::string> words =
+            as<std::vector<std::string> > (wordsFrequencies.names());
+        /**
+         * As unknown is sorted as well as words by std::sort, if unknown_it
+         * matches words_it then the next to unknown_it should attempt to match
+         * from words_it rather than from begining.
+        **/
+        words_cursor = words.begin();
+        for (unknown_it = unknown.begin();
+                unknown_it != unknown.end();
+                ++unknown_it) {
+            for (words_it = words_cursor;
+                    words_it != words.end();
+                    ++words_it) {
+                if (*words_it == *unknown_it) {
+                    // NOTE must use `as' to get a proper value,
+                    // other wise 1 obtained
+                    s *= (as<long double> (wordsFrequencies[*words_it]));
+                    words_cursor = words_it;
+                    break;
+                }
+            }
+        }
+        // not use std::pow
+        s /= (pow (corpusSize, unknown.size() - 1) * factor_in);
+        scores[i] = s;
+    }
+    return wrap (scores);
+    //END_RCPP
 }
+
+/**
+ * @brief A predictor
+ *
+ * @param NBT_in A model return by NaiveBayesTrain
+ * @param unknown_in A corpus or a text
+ * @param isCorpus_in As is
+ * @return SEXP A list of scores for each case
+ **/
+
+SEXP NaiveBayesPredict (SEXP NBT_in, SEXP unknown_in, SEXP isCorpus_in)
+{
+    //BEGIN_RCPP
+    int isCorpus = as<int> (isCorpus_in);
+    List NBT (NBT_in);
+    List wordsList = NBT["wordsList"];
+    int categoryCount = as<int> (NBT["categorySize"]);
+    int factor = as<int> (NBT["totalCorpusSize"]);
+    if (isCorpus) {
+        List cases (unknown_in);
+        int s = cases.size();
+        List predictList (s);
+        for (int i = 0; i < s; i++) {
+            predictList[i] = NaiveBayesPredict
+                             (wordsList, categoryCount, factor, cases[i]);
+        }
+        return predictList;
+    } else {
+        List z = NaiveBayesPredict
+                 (wordsList, categoryCount, factor, unknown_in);
+        return z;
+    }
+    //END_RCPP
+}
+
+// kate: indent-mode cstyle; indent-width 4; replace-tabs on; ;

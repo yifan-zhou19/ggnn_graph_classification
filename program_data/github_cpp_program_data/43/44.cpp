@@ -1,114 +1,149 @@
-/*************************************************************************
- *                                                                       *
- * Open Dynamics Engine, Copyright (C) 2001,2002 Russell L. Smith.       *
- * All rights reserved.  Email: russ@q12.org   Web: www.q12.org          *
- *                                                                       *
- * This library is free software; you can redistribute it and/or         *
- * modify it under the terms of EITHER:                                  *
- *   (1) The GNU Lesser General Public License as published by the Free  *
- *       Software Foundation; either version 2.1 of the License, or (at  *
- *       your option) any later version. The text of the GNU Lesser      *
- *       General Public License is included with this library in the     *
- *       file LICENSE.TXT.                                               *
- *   (2) The BSD-style license that is included with this library in     *
- *       the file LICENSE-BSD.TXT.                                       *
- *                                                                       *
- * This library is distributed in the hope that it will be useful,       *
- * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the files    *
- * LICENSE.TXT and LICENSE-BSD.TXT for more details.                     *
- *                                                                       *
- *************************************************************************/
+// HW2_e14023056.cpp : �w�q�D���x���ε{�����i�J�I�C
+//
 
-@@@ this file should not be compiled any more @@@
+#include "stdafx.h"
+#include <iostream>
+#include <fstream>
 
-#include <string.h>
-#include <errno.h>
-#include "stack.h"
-#include "ode/error.h"
-#include "ode/config.h"
+using namespace std;
+ofstream ofs("Output1_e14023056.txt", ios::out);
 
-//****************************************************************************
-// unix version that uses mmap(). some systems have anonymous mmaps and some
-// need to mmap /dev/zero.
-
-#ifndef WIN32
-
-#include <unistd.h>
-#include <sys/mman.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-
-
-void dStack::init (int max_size)
+struct ListNode
 {
-  if (sizeof(long int) != sizeof(char*)) dDebug (0,"internal");
-  if (max_size <= 0) dDebug (0,"Stack::init() given size <= 0");
+	int data;
+	struct ListNode *next;
+};
 
-#ifndef MMAP_ANONYMOUS
-  static int dev_zero_fd = -1;	// cached file descriptor for /dev/zero
-  if (dev_zero_fd < 0) dev_zero_fd = open ("/dev/zero", O_RDWR);
-  if (dev_zero_fd < 0) dError (0,"can't open /dev/zero (%s)",strerror(errno));
-  base = (char*) mmap (0,max_size, PROT_READ | PROT_WRITE, MAP_PRIVATE,
-		       dev_zero_fd,0);
-#else
-  base = (char*) mmap (0,max_size, PROT_READ | PROT_WRITE,
-		       MAP_PRIVATE | MAP_ANON,0,0);
-#endif
+class BucketSort{
+private:
+	int key, temp;
+	int count[10];
+	ListNode *list[10];
+	ListNode *tmp[10];
+	ListNode *now;
+public:
+	void getdata();
+	void sorting(); //sort the list and print the steps
+	void sort(int key); //change the sequence of list[key]
+	void print(); //print the curremt list
+};
 
-  if (int(base) == -1) dError (0,"Stack::init(), mmap() failed, "
-    "max_size=%d (%s)",max_size,strerror(errno));
-  size = max_size;
-  pointer = base;
-  frame = 0;
+void BucketSort::getdata(){
+	for (int i = 0; i < 10; i++)
+		count[i] = 0;
+	for (key = 0; key < 10; key++)
+		list[key] = NULL;
+	ifstream ifs("Input1.txt", ios::in);
+	if (!ifs)
+		cout << "Fail to open the input file." << endl;
+	else
+	{
+		ifs >> temp;
+		while (!ifs.eof()){
+			if (temp == '\n' )
+				break;
+			key = temp / 10;
+			count[key]++;
+			if (list[key] == NULL) {
+				ListNode *now = new ListNode;
+				now->data = temp;
+				now->next = NULL;
+				list[key] = now;
+				tmp[key] = now;
+			}
+			else{
+				ListNode *now = new ListNode;
+				now->data = temp;
+				now->next = NULL;
+				tmp[key]->next = now;
+				tmp[key] = tmp[key]->next;
+			}
+			ifs >> temp;
+		}
+	}
+	ifs.close();
 }
 
+void BucketSort::sort(int key){
+	ListNode *tmpsmall;//temp node (save the smallest value)
+	ListNode *pos;//position node
 
-void dStack::destroy()
-{
-  munmap (base,size);
-  base = 0;
-  size = 0;
-  pointer = 0;
-  frame = 0;
+	now = list[key]; //first number of a list
+
+	if (now == NULL)
+		cout<<" ";
+	else{
+		for (int i = 0; i < count[key]; i++){
+			int time = i;
+			pos = now;
+			tmpsmall = now;
+
+			while (time != count[key]){
+				if (pos->data < now->data && pos->data <= tmpsmall->data){
+					tmpsmall = pos;
+					//tmpsmall->data = pos->data;
+				}
+				pos = pos->next;
+				time++;
+			}//end of while loop
+			if (tmpsmall->data < now->data){
+				temp = tmpsmall->data;
+				tmpsmall->data = now->data;
+				now->data = temp;
+			}
+			now = now->next;
+		}//end of for loop
+	}//end of else
+
 }
 
-#endif
-
-//****************************************************************************
-
-#ifdef WIN32
-
-#include "windows.h"
-
-
-void dStack::init (int max_size)
-{
-  if (sizeof(LPVOID) != sizeof(char*)) dDebug (0,"internal");
-  if (max_size <= 0) dDebug (0,"Stack::init() given size <= 0");
-  base = (char*) VirtualAlloc (NULL,max_size,MEM_RESERVE,PAGE_READWRITE);
-  if (base == 0) dError (0,"Stack::init(), VirtualAlloc() failed, "
-    "max_size=%d",max_size);
-  size = max_size;
-  pointer = base;
-  frame = 0;
-  committed = 0;
-
-  // get page size
-  SYSTEM_INFO info;
-  GetSystemInfo (&info);
-  pagesize = info.dwPageSize;
+void BucketSort::print(){
+	//print the curremt list
+	for (int n = 0; n < 10; n++){
+		ofs << n << ": ";
+		cout << n << ": ";
+		now = list[n];
+		if (now == NULL){
+			ofs << endl;
+			cout << endl;
+		}
+		else{
+			do{
+				ofs << now->data << " ";
+				cout << now->data << " ";
+				now = now->next;
+			} while (now != NULL);
+			ofs << endl;
+			cout << endl;
+		}
+	}
 }
 
-
-void dStack::destroy()
-{
-  VirtualFree (base,0,MEM_RELEASE);
-  base = 0;
-  size = 0;
-  pointer = 0;
-  frame = 0;
+void BucketSort::sorting(){
+	for (key = 0; key < 10; key++){
+		sort(key);
+		ofs << endl << "key= " << key << endl;
+		cout << endl << "key= " << key << endl;
+		print();
+	}//end of for loop
 }
 
-#endif
+int main()
+{
+	BucketSort bs;
+	bs.getdata();
+
+	cout << "key" << endl;
+	ofs << "key" << endl;
+	bs.print(); 
+	cout <<  endl;
+
+	bs.sorting();
+	cout << endl;
+
+	ofs.close();//close the output file
+
+	system("pause");
+	return 0;
+}
+

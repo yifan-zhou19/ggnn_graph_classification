@@ -1,83 +1,42 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-package datastructures;
+package sorting.noncomparison;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
-/**
- * Lightweight standard stack datastructure implementation with array.
- * Array size is doubled during the push operation if needed.
- * Thus, push is amortized O(1) while worst case is O(n).
- * @author Elias Nygren
- */
-public class Stack<E> {
-    private int stackSize;
-    private final static int DEFAULT_SIZE=150;
-    private Object[] data;
-    
-    
-    /**
-     * Initialize stack with given size.
-     * @param size initial size of the stack.
-     */
-    public Stack(int size){
-        data = new Object[size];
+public class BucketSort {
+
+    public void sort(Double[] A) {
+
+        int n = A.length;
+        List[] B = new ArrayList[n];
+
+        for (int i = 0; i < n; i++)
+            B[i] = new ArrayList<>();
+
+        for (int i = 0; i < n; i++)
+            B[(int) Math.floor(n * A[i])].add(A[i]);
+
+        for (List b : B)
+            Collections.sort(b);
+
+        int i = 0;
+        for (List b : B)
+            for (Object d : b)
+                A[i++] = (Double) d;
+
     }
-    
-    /**
-     * Initialize stack with default size.
-     */
-    public Stack(){
-        data = new Object[DEFAULT_SIZE];
+
+    public static void main(String... args) {
+
+        Double[] numbers = {0.15, 0.84, 0.36, 0.99, 0.13, 0.34, 0.91, 0.51};
+        BucketSort bucketSort = new BucketSort();
+        bucketSort.sort(numbers);
+
+        Arrays.asList(numbers).stream().forEach(System.out::println);
+
     }
-    
-    /**
-     * Push element to stack.
-     * @param e element to be pushed.
-     */
-    public void push(E e){
-        if(stackSize==data.length) resize();
-        data[stackSize++]=e;
-    }
-    
-    /**
-     * Pop element from stack.
-     * @return popped element.
-     */
-    
-    public E pop(){
-        E e = (E) data[--stackSize];
-        data[stackSize]=null;
-        return e;
-    }
-    
-    /**
-     * Checks if stack is empty.
-     * @return true if empty.
-     */
-    public boolean isEmpty(){
-        return stackSize==0;
-    }
-    
-    
-    /**
-     * Double the stack size.
-     */
-    private void resize(){
-        data = Arrays.copyOf(data, data.length * 2);
-    }
-    
-    /**
-    * Naive search of the stack for jUnit tests.
-    * @return true if stack contains item.
-    */
-    public boolean contains(E e){
-        for (int i = 0; i < data.length; i++) {
-            if(data[i]==null) continue;
-            if(data[i].equals(e)) return true;            
-        }
-        return false;
-    }
+
+
 }

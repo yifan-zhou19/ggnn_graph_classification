@@ -1,18 +1,68 @@
-/**
- * 二分查找, 在有序数组中查找目标元素
- */
-public int search(int[] nums, int target) {
-    int left = 0;
-    int right = nums.length - 1;
-    while (left <= right) {
-        int mid = (left + right) / 2;
-        if (target > nums[mid]) { // 目标元素比中点元素大，往右侧查找
-            left = mid + 1;
-        } else if (target < nums[mid]) { // 目标元素比中点元素小，往左侧查找
-            right = mid - 1;
-        } else { // 相等判断放最后是因为目标元素刚好等于中点元素的几率很小，尽快往左或往右查找
-            return mid;
+package algo;
+
+import java.util.Arrays;
+import java.util.Scanner;
+
+// segument tree, RMQ
+public class SegmentTreeMain {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        int n = sc.nextInt();
+        int q = sc.nextInt();
+        SegmentTree st = new SegmentTree(n);
+        for (int i = 0; i < q; i++) {
+            int com = sc.nextInt();
+            int x = sc.nextInt();
+            int y = sc.nextInt();
+            if (com == 1) {
+                System.out.println(st.find(x, y + 1));
+            } else {
+                st.update(x, y);
+            }
         }
     }
-    return -1;
+
+    static class SegmentTree {
+        int[] data;
+        int n;
+        static int INF = (1 << 31) - 1;
+
+        SegmentTree(int n_) {
+            n = 1;
+            while (n < n_) {
+                n *= 2;
+            }
+            data = new int[2 * n - 1];
+
+            Arrays.fill(data, INF);
+        }
+
+        int find(int a, int b) {
+            return find(a, b, 0, 0, 0);
+        }
+
+        int find(int a, int b, int k, int l, int r) {
+            if (r <= l) {
+                r = n;
+            }
+            if (r <= a || b <= l) {
+                return INF;
+            }
+            if (a <= l && r <= b) {
+                return data[k];
+            }
+            int vl = find(a, b, k * 2 + 1, l, (r + l) / 2);
+            int vr = find(a, b, k * 2 + 2, (r + l) / 2, r);
+            return Math.min(vl, vr);
+        }
+
+        void update(int k, int a) {
+            k += n - 1;
+            data[k] = a;
+            while (k > 0) {
+                k = (k - 1) / 2;
+                data[k] = Math.min(data[k * 2 + 1], data[k * 2 + 2]);
+            }
+        }
+    }
 }

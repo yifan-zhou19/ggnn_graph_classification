@@ -1,66 +1,183 @@
-// Author	: Kaylee Gabus
-// Date		: 5-1-17
-// Minimum Spanning Tree.cpp : Defines the entry point for the console application.
-	//builds the minimum spanning tree for a graph using both Kruskal's and Prim's algorithms
-	//outputs the tree as an alphabetized list of verticies and their weights
-	//requires input in the form of number of verticies, vertex names, adjacency matrix
-
-
 #include "stdafx.h"
-#include <iostream>
-#include <string>
-#include <fstream>
-#include "Kruskal.h"
-#include "Prim.h"
+#include "iostream"
+#include "vector"
+#include "string"
+#include "map"
+#include <algorithm>
+#include <stdlib.h>
+#include <time.h>
+#include <stack>
+#include <sstream>
+#include <iomanip>
 
 using namespace std;
+//http://www.cs.umd.edu/~meesh/420/Notes/MountNotes/lecture11-skiplist.pdf
 
-string filePath = "C:\\Users\\Kaylee\\Desktop\\mst test.txt";			//<--------------------------------------------------------------------set file path here
+class SkipListNode{
+public:
+	int data;
+	SkipListNode *backward;
+	vector<SkipListNode*> forward;
 
+	SkipListNode(){}
 
-int main()
-{	//reads in the number of nodes to instantiate the two algoriths objects
-	//reads in the vertex names and stores in a single dimentional array
-	//reads in the adjacency matrix as a single dimentional array
-		//items are accessed as row index * number of nodes + column index
-	double inputDouble;
-	string currentInput;
+	SkipListNode(int d, int level){
+		data=d;
+		forward=vector<SkipListNode*>(level+1, NULL);
+	}
+};
 
-	ifstream inFile(filePath, ios::binary);
-	if (inFile.fail())
-	{	//if the file is unable to be read, notify user and close the program
-		cout << "Unable to open input file\n\n"
-			<< "Program Exiting\n\nPress ENTER to exit\n";
-		cin >> currentInput;
-		exit(1);
+class SkipList{
+public:
+	int maxLevel;
+	SkipListNode* header;
+
+	SkipList(int maxLev){
+		maxLevel=maxLev;
+		header=new SkipListNode(NULL, maxLevel);
+
+		SkipListNode *sentinel =new SkipListNode(INT_MAX, maxLevel);
+		for(int i=0;i<=maxLevel;i++)
+		{
+			header->forward[i]=sentinel;
+		}
+		sentinel->backward=header;
 	}
 
-	inFile >> currentInput;
-	inputDouble = atoi(currentInput.c_str());		//convert the first thing in the file to a number
+	int find(int key)
+	{
+		SkipListNode* current=header;
 
-	//instantiate the arrays and objects 
-	int nValue = inputDouble;
-	double* adjMatrix = new double[nValue * nValue];		
-	string* nodeNamesMatrix = new string[nValue];
+		for(int i=maxLevel;i>=0;i--)
+		{
+			SkipListNode *next=current->forward[i];
+			while(next->data<key)
+			{
+				current=next;
+				next=current->forward[i];
+			}
+		}
 
-	Kruskal KrsukalAlgorithm(nValue);			
-	Prim PrimAlgorithm(nValue);
+		current=current->forward[0];
 
-	for (int pos = 0; pos < nValue; pos++)
-	{	//read in the names of the nodes and put them in the names array
-		inFile >> nodeNamesMatrix[pos];
+		if(current->data==key)return current->data;
+		else return NULL;
 	}
 
-	for (int pos = 0; pos < (nValue * nValue); pos++)
-	{	//read in the adjancy matrix
-		inFile >> currentInput;
-		inputDouble = atof(currentInput.c_str());		//convert text to double
-		adjMatrix[pos] = inputDouble;
+	void insert(int key)
+	{
+		SkipListNode* current=header;
+		for(int i=maxLevel;i>=0;i--)
+		{
+			SkipListNode *next=current->forward[i];
+			while(next->data<key)
+			{
+				current=next;
+				next=current->forward[i];
+			}
+		}
+
+		SkipListNode* forwardNode=current->forward[0];
+		if(forwardNode->data==key)return;
+
+		SkipListNode* newNode=new SkipListNode(key, 0);
+		current->forward[0]=newNode;
+		newNode->forward[0]=forwardNode;
+		forwardNode->backward=newNode;
+		newNode->backward=current;
+
+		SkipListNode* backwardNode=current;
+
+		srand(time(NULL));
+		for(int i=1;i<=maxLevel;i++)
+		{
+			if(rand()%10<5)
+			{
+				while(forwardNode->forward.size()<i+1)
+					forwardNode=forwardNode->forward[forwardNode->forward.size()-1];
+				newNode->forward.push_back(forwardNode);
+				while(backwardNode&&backwardNode->forward.size()<i+1)
+				{
+					backwardNode=backwardNode->backward;
+				}
+				backwardNode->forward[i]=newNode;
+			}
+			else
+			{
+				break;
+			}
+		}
 	}
 
-//	KrsukalAlgorithm.runKruskal(nodeNamesMatrix, adjMatrix);
-	PrimAlgorithm.runPrim(nodeNamesMatrix, adjMatrix);
+	void erase(int key)
+	{
+		SkipListNode* current=header;
+		for(int i=maxLevel;i>=0;i--)
+		{
+			SkipListNode *next=current->forward[i];
+			while(next->data<key)
+			{
+				current=next;
+				next=current->forward[i];
+			}
+		}
 
-    return 0;
+		SkipListNode* eraseNode=current->forward[0];
+		if(eraseNode->data!=key)return;
+		SkipListNode* backwardNode=current;
+		SkipListNode* forwardNode=eraseNode->forward[0];
+		forwardNode->backward=backwardNode;
+
+		while(true)
+		{
+			for(int i=min(backwardNode->forward.size()-1, eraseNode->forward.size()-1);i>=0;i--)
+			{
+				if(backwardNode->forward[i]==eraseNode)
+					backwardNode->forward[i]=eraseNode->forward[i];
+			}
+			if(backwardNode->forward.size()>=eraseNode->forward.size())break;
+			backwardNode=backwardNode->backward;
+		}
+		delete eraseNode;
+	}
+
+	void print()
+	{
+		for(int i=maxLevel;i>=0;i--)
+		{
+			SkipListNode *current=header;
+			while(current->forward[0])
+			{
+				if(current->forward.size()>=i+1)
+					cout<<setw(4)<<setfill('-')<<current->data<<"-->";
+				else
+					cout<<"-------";
+				current=current->forward[0];
+			}
+			cout<<endl;
+		}
+		cout<<endl;
+	}
+};
+
+
+int _tmain(int argc, _TCHAR* argv[])
+{
+	SkipList *skl=new SkipList(4);
+	srand(time(NULL));
+	for(int i=0;i<10;i++)
+	{
+		int tmp=(i+rand()%31)%17;
+		skl->insert(tmp);
+		cout<<skl->find(tmp)<<endl;
+		skl->print();
+		if(tmp%7<=2)
+		{
+			skl->erase(tmp);
+			skl->print();
+		}
+	}
+	return 0;
 }
+
 

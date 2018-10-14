@@ -1,63 +1,84 @@
-//bubble sort (пузырьком)
+/*++
+Copyright (c) 2012 Microsoft Corporation
 
-#include <iostream>
-#include <fstream>
-#include <cmath>
-#include <ctime>
+Module Name:
 
-using namespace std;
+    permutation.cpp
 
-void writeArr(int *arr, int len);
-void printArr(int *arr, int len, ofstream &fout, char sep = ' ');
+Abstract:
 
-void sort(int *arr, int n);
+    Simple abstraction for managing permutations.
 
-int main() {
-	ifstream fin("input.txt");
-	ofstream fout("output.txt");
-	srand(time(0));
+Author:
 
-	int len;
-	fin >> len;
+    Leonardo de Moura (leonardo) 2012-01-04
 
-	int *arr = new int[len];
-	
-	writeArr(arr, len);
-	//printArr(arr, len, fout, '\n');
+Revision History:
 
-	sort(arr, len);
-	printArr(arr, len, fout, '\n');
+--*/
+#include"permutation.h"
+#include"util.h"
+#include"vector.h"
 
-	fin.close();
-	fout.close();
-
-	delete[] arr;
-	return 0;
+void apply_permutation_copy(unsigned sz, unsigned const * src, unsigned const * p, unsigned * target) {
+    for (unsigned i = 0; i < sz; i++) {
+        target[i] = src[p[i]];
+    }
 }
 
-void sort(int *arr, int n) {
-	for (int i = 0; i < n; i++) {
-		for (int j = i + 1; j < n; j++) {
-
-			if (arr[i] > arr[j]) {
-				int tmp = arr[i];
-				arr[i] = arr[j];
-				arr[j] = tmp;
-			}
-
-		}
-	}
-
+static void tst1(unsigned sz, unsigned num_tries, unsigned max = UINT_MAX) {
+#if 0
+    unsigned_vector data;
+    unsigned_vector p;
+    unsigned_vector new_data;
+    data.resize(sz);
+    p.resize(sz);
+    new_data.resize(sz);
+    random_gen g;
+    for (unsigned i = 0; i < sz; i++)
+        p[i] = i;
+    // fill data with random numbers
+    for (unsigned i = 0; i < sz; i++)
+        data[i] = g() % max;
+    for (unsigned k = 0; k < num_tries; k ++) {
+        shuffle(p.size(), p.c_ptr(), g);
+        // std::cout << "p:    "; display(std::cout, p.begin(), p.end()); std::cout << "\n";
+        // std::cout << "data: "; display(std::cout, data.begin(), data.end()); std::cout << "\n";
+        apply_permutation_copy(sz, data.c_ptr(), p.c_ptr(), new_data.c_ptr());
+        apply_permutation(sz, data.c_ptr(), p.c_ptr());
+        // std::cout << "data: "; display(std::cout, data.begin(), data.end()); std::cout << "\n";
+        for (unsigned i = 0; i < 0; i++)
+            SASSERT(data[i] == new_data[i]);
+    }
+#endif
 }
 
-void writeArr(int *arr, int len) {
-	for (int i = 0; i < len; i++) {
-		arr[i] = rand() % 10000;
-	}
-}
-
-void printArr(int *arr, int len, ofstream &fout, char sep) {
-	for (int i = 0; i < len; i++) {
-		fout << arr[i] << sep;
-	}
+void tst_permutation() {
+    tst1(10, 1000, 5);
+    tst1(10, 1000, 1000);
+    tst1(10, 1000, UINT_MAX);
+    tst1(100, 1000, 33);
+    tst1(100, 1000, 1000);
+    tst1(100, 1000, UINT_MAX);
+    tst1(1000, 1000, 121);
+    tst1(1000, 1000, 1000);
+    tst1(1000, 1000, UINT_MAX);
+    tst1(33, 1000, 121);
+    tst1(33, 1000, 1000);
+    tst1(33, 1000, UINT_MAX);
+    tst1(121, 1000, 121);
+    tst1(121, 1000, 1000);
+    tst1(121, 1000, UINT_MAX);
+    for (unsigned i = 0; i < 1000; i++) {
+        tst1(1000, 2, 333);
+        tst1(1000, 2, 10000);
+        tst1(1000, 2, UINT_MAX);
+    }
+    random_gen g;
+    for (unsigned i = 0; i < 100000; i++) {
+        unsigned sz = (g() % 131) + 1;
+        tst1(sz, 1, sz*2);
+        tst1(sz, 1, UINT_MAX);
+        tst1(sz, 1, sz/2 + 1);
+    }
 }

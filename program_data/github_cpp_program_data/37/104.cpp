@@ -1,56 +1,52 @@
-//
-//  Queue.cpp
-//  Ball
-//
-//  Created by meiyuchen on 14-11-18.
-//
-//
-#include "cocos2d.h"
-#include "Queue.h"
+/******************************************************
+** This is a practice code for rod cutting problem:
+** Assume r_n is the maximum profit for cutting the 
+** rod of length n
+** Recursive function:
+**   r_n = max(p_i, r_{n-i}) with i from 1 to n
+**
+******************************************************/
+#include <iostream>
+#include <vector>
+#include <climits>
+#include <cmath>
+#include <string>
+#include <sstream>
+#include <assert.h>
 
-USING_NS_CC;
+using namespace std;
 
-int Queue::getHead()
-{
-    return head;
-}
+	
+int rodCutting(vector<int>& prices){
+    size_t n = prices.size();
 
-int Queue::getTail()
-{
-    return tail < head ? tail + MAX_CELL : tail;
-}
+    // initialize the DP array:
+    vector<int> r(n+1, 0);
 
-pathCell Queue::dequeue()
-{
-    head = head % MAX_CELL;
-    return queue[head++];
-}
-
-void Queue::enqueue(pathCell pc)
-{
-    tail = tail % MAX_CELL;
-    queue[tail++] = pc;
-}
-
-bool Queue::isEmpty()
-{
-    return size() == 0;
-}
-
-pathCell Queue::getByIndex(const unsigned int index)
-{
-    return queue[index % MAX_CELL];
-}
-
-void Queue::print()
-{
-    for (int i = head; i < tail; i++)
-    {
-        log("queue[i] col %d row %d\n", queue[i].col, queue[i].row);
+    for(size_t i = 1; i <= n; ++i){
+        int q = INT_MIN;
+	for(size_t j = 0; j < i; ++j){
+	    q = max(q, prices[j] + r[i-j-1]);
+        }
+        r[i] = q;
     }
+    return r[n];
 }
 
-int Queue::size()
-{
-    return tail - head;
+int main(int argc, char ** argv){
+    string str;
+    while(getline(cin, str)){
+        istringstream iss(str);
+	int num;
+	vector<int> p;
+	while(iss>>num){
+	    p.push_back(num);
+	    assert(num >= 0);
+	}
+	int answer = p.back();
+	p.pop_back();
+	int my_answer = rodCutting(p);
+	cout<<"Your answer: "<<my_answer<<"\tCorrect answer should be: "<<answer<<endl;
+    }
+
 }

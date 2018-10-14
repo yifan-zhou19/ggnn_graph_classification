@@ -1,39 +1,26 @@
-#include <GenericClassifierWeka.h>
-using namespace std;	
+//============================================================================
+// Name        : shell-sort.cpp
+// Author      : 
+// Date        :
+// Copyright   : 
+// Description : Implementation of shell sort in C++
+//============================================================================
 
-/*
-* execute: g++ NaiveBayesClassification.cpp  -L${$JAVA_HOME/jre/lib/amd64/server/} -ljvm -o executable
-* ./executable
-*/
-int main(int n, char *argv[]) {
-	
-	GenericClassifierWeka classifier;
-	
-	char modelFilePath[] = "NaiveBayes-semeion.model";
-	char propertiesFilePath[] = "semeion.properties";
-	int indexOfClass = 257;
+#include "sort.h"
+#include <iostream>
+#include "math.h"
 
-
-	try{
-		classifier.loadClassifier(modelFilePath,propertiesFilePath,indexOfClass);
-		
-		double p1[] = {0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,0,1,0,0,1,1,1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,1,1,0,0,0,1,1,1,0,0,0,0,0,0,0,1,1,1,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0};
-		int sizeOfVector = sizeof(p1)/sizeof(*p1);
-		double classOfInstance = classifier.classify(p1,sizeOfVector);
-		cout << "Class of instance 1: " << classOfInstance << endl;
-
-		
-		double p2[] = {0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,0,0,0,0,0,1,1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0};
-		sizeOfVector = sizeof(p2)/sizeof(*p2);
-		vector<double> a2(p2, p2+sizeOfVector);
-		classifier.classify(a2);
-		classOfInstance = classifier.classify(a2);
-		cout << "Class of instance 2: " << classOfInstance << endl;
-		
-		return -1;
-	}catch(const char* ErrorMsg){
-		cerr << ErrorMsg << endl;
+void ShellSort::sort(int A[], int size)
+{
+ 	for(int k = 2; k < size; k *= 2) {
+		int gap = floor(size/k);
+		for(int i = gap; i < size; i += 1) {
+			int temp = A[i];
+			int j;
+			for(j = i; j >= gap and (num_cmps++, A[j - gap] > temp); j -= gap) {
+				A[j] = A[j - gap];
+			}
+			A[j] = temp;
+		}
 	}
 }
-
-

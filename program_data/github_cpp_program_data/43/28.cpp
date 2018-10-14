@@ -1,238 +1,80 @@
-/* Jen Hanni [CS163] "prog2csairways.cpp" [Program #2] */
+#include<iterator>
+#include<iostream>
+#include<vector>
+using namespace std;
 
-#include "prog1symtable.h"
+/*****************
 
-/* Node */
+桶排序：将值为i的元素放入i号桶，最后依次把桶里的元素倒出来。
 
-node::node() 
-{
-	next = NULL;
-	char * name;
-	char * ticket;
-	char * seat;
-	int status;	// 1 = ticketed, 2 = aboard
+桶排序序思路：
+1. 设置一个定量的数组当作空桶子。
+2. 寻访序列，并且把项目一个一个放到对应的桶子去。
+3. 对每个不是空的桶子进行排序。
+4. 从不是空的桶子里把项目再放回原来的序列中。
+
+假设数据分布在[0，100)之间，每个桶内部用链表表示，在数据入桶的同时插入排序，然后把各个桶中的数据合并。
+
+*****************/
+
+
+const int BUCKET_NUM = 10;
+
+struct ListNode{
+	explicit ListNode(int i=0):mData(i),mNext(NULL){}
+	ListNode* mNext;
+	int mData;
+};
+
+ListNode* insert(ListNode* head,int val){
+	ListNode dummyNode;
+	ListNode *newNode = new ListNode(val);
+	ListNode *pre,*curr;
+	dummyNode.mNext = head;
+	pre = &dummyNode;
+	curr = head;
+	while(NULL!=curr && curr->mData<=val){
+		pre = curr;
+		curr = curr->mNext;
+	}
+	newNode->mNext = curr;
+	pre->mNext = newNode;
+	return dummyNode.mNext;
 }
 
-node::node(char * newname, char * newtype, char * newvalue) 
-{
-	next = NULL;
-	if(newname) {
-		int namelen = strlen(newname) + 1;
-		name = new char[namelen];
-		strncpy(name, newname, namelen);
-	}
-	if(newticket) {
-		int ticketlen = strlen(newticket) + 1;
-		ticket = new char[ticketlen];
-		strncpy(ticket, newticket, ticketlen);
-	}
-	if(newseat) {
-		int seatlen = strlen(newseat) + 1;
-		seat = new char[seatlen];
-		strncpy(seat, newseat, seatlen);
-	}
-}
 
-node::node(char * newname)
-{
-	next = NULL;
-	if(newname) {
-		int namelen;
-		namelen = strlen(newname) + 1;
-		name = new char[namelen];
-		strncpy(name, newname, namelen);
+ListNode* Merge(ListNode *head1,ListNode *head2){
+	ListNode dummyNode;
+	ListNode *dummy = &dummyNode;
+	while(NULL!=head1 && NULL!=head2){
+		if(head1->mData <= head2->mData){
+			dummy->mNext = head1;
+			head1 = head1->mNext;
+		}else{
+			dummy->mNext = head2;
+			head2 = head2->mNext;
+		}
+		dummy = dummy->mNext;
 	}
-	char * type;
-	char * value;
-}
-
-node::~node() {
-	delete next; 
-	delete[] name;
-	delete[] type;
-	delete[] value;
-}
-
-int node::compare(node& source) 
-{
-	int temp;
-	temp = strcmp(name, source.name);
-	return temp;
-}
-
-int node::set(node& source)
-{
-	if(source.name) {
-		int namelen = strlen(source.name) + 1;
-		name = NULL;
-		name = new char[namelen];
-		strncpy(name, source.name, namelen);
-	}
-	if(source.type) {
-		int typelen = strlen(source.type) + 1;
-		type = NULL;
-		type = new char[typelen];
-		strncpy(type, source.type, typelen);
-	}
-	if(source.value) {
-		int valuelen = strlen(source.value) + 1;
-		value = NULL;
-		value = new char[valuelen];
-		strncpy(value, source.value, valuelen);
-	}
-	return 0;
-}
-
-/****************/
-/* Symbol Table */
-/****************/
-
-/* symbol table :: constructor */
-
-symbolTable::symbolTable()
-{
-	node * head = NULL;
-}
-
-symbolTable::~symbolTable() {
-	delete head;
-}
-
-/* symbol table :: creates a new symbol, adds it to the list */
-
-// strcmp(str1,str2) returns 0 when the strings are equal
-// strcmp(str1,str2) returns a negative integer when s1 < s2
-// strcmp(str1,str2) returns a positive integer when s1 > s2
-
-int symbolTable::add(char * newname, char * newtype, char * newvalue) 
-{
-	node * symtoadd = new node(newname, newtype, newvalue);
-	node * current = head;
-	if (!current) 
-	{	// if an empty list, make the new symbol the head
-		head = symtoadd; 
-	}
-	else if (current->compare(*symtoadd) == 0)
-	{	// return the symbol already exists
-		return 2;
-	}
-	else if (current->compare(*symtoadd) > 0)
-	{	// if name of the first node is already more than the symtoadd
-		symtoadd->next = current;
-		head = symtoadd;
-		return 0;
-	}
-	else if (current->next->compare(*symtoadd) < 0)
-	{	// traverse if name of curr->next is less than symtoadd name
-		current = current->next;
-		return 0;
-	}
-	else if (current->next->compare(*symtoadd) > 0)
-	{ 	// if name of curr->next is more than symtoadd name
-		symtoadd->next = current->next;
-		current->next = symtoadd;
-		return 0;
-	}
-	else if (current->compare(*symtoadd) < 0 && current->next == '\0')
-	{	// if current is less than symtoaddname but current->next is NULL
-		current->next = symtoadd;
-		symtoadd->next = '\0';
-		return 0;
-	}
-	else { return 1; }
+	if(NULL!=head1) dummy->mNext = head1;
+	if(NULL!=head2) dummy->mNext = head2;
 	
-	return 0;
+	return dummyNode.mNext;
 }
 
-int symbolTable::drop(char * nametodrop) 
-{
-	node * symtodrop = new node(nametodrop);
-	node * current = head;
-
-	if (!current) 
-	{ 
-		return 1; 
+void BucketSort(int n,int arr[]){
+	vector<ListNode*> buckets(BUCKET_NUM,(ListNode*)(0));
+	for(int i=0;i<n;++i){
+		int index = arr[i]/BUCKET_NUM;
+		ListNode *head = buckets.at(index);
+		buckets.at(index) = insert(head,arr[i]);
 	}
-	else if (current->compare(*symtodrop) == 0)
-	{
-		return 0;
+	ListNode *head = buckets.at(0);
+	for(int i=1;i<BUCKET_NUM;++i){
+		head = Merge(head,buckets.at(i));
 	}
-	else if (find(current->next, symtodrop) == 0)
-	{
-		node * temp = current->next;
-		current->next = current->next->next;
-		delete temp;
-		return 0;
+	for(int i=0;i<n;++i){
+		arr[i] = head->mData;
+		head = head->mNext;
 	}
-	else if (find(current->next, symtodrop) == 1)
-	{
-		return 1;
-	}
-}
-
-void symbolTable::get(char * nametoget)
-{
-	node * symtoget = new node(nametoget);
-	node * current = head;
-
-	if (!current)
-	{
-	cout << "This is an empty list. " << endl;
-	}
-	else if (find(current, symtoget) == 0)
-	{
-	char name[20];
-	current->displayname(*current);
-	cout << "Name: " << name << endl;
-	}
-	else 
-	{
-	cout << "The symbol wasn't found." << endl;
-	}
-}
-
-char node::displayname(node& source)
-{
-	name = source.name;
-	return *name;
-}
-
-int symbolTable::set(char * newname, char * newtype, char * newvalue) 
-{
-	node * symtoset = new node(newname, newtype, newvalue);
-	node * current = head;
-
-	if (!current) 
-	{ 
-		return 1; // clean up error messages here
-	}
-	else if (find(current, symtoset) == 0)
-	{
-		if (current->set(*symtoset) == 0)
-		{
-		return 0;  // clean up error messages here
-		}
-		else
-		{
-		return 1;  // here as well
-		}
-	}
-	else if (find(current, symtoset) == 1)
-	{
-		return 1;  // here as well
-	}
-}
-
-int symbolTable::find(node * here, node * symtodrop) 
-{
-	int rVal = 1;
-	if (here)
-	{
-		rVal = here->compare(*symtodrop);
-		if (rVal == 1) 
-		{
-		return find(here->next, symtodrop);
-		}
-	}
-	return rVal; // return 0;
 }

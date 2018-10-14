@@ -1,83 +1,113 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-package datastructures;
+package com.curioustake.sftm.activity;
 
+import com.curioustake.sftm.utils.DataValidator;
+import com.curioustake.sftm.utils.RandomDataGenerator;
+
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 
 /**
- * Lightweight standard stack datastructure implementation with array.
- * Array size is doubled during the push operation if needed.
- * Thus, push is amortized O(1) while worst case is O(n).
- * @author Elias Nygren
- */
-public class Stack<E> {
-    private int stackSize;
-    private final static int DEFAULT_SIZE=150;
-    private Object[] data;
-    
-    
-    /**
-     * Initialize stack with given size.
-     * @param size initial size of the stack.
-     */
-    public Stack(int size){
-        data = new Object[size];
-    }
-    
-    /**
-     * Initialize stack with default size.
-     */
-    public Stack(){
-        data = new Object[DEFAULT_SIZE];
-    }
-    
-    /**
-     * Push element to stack.
-     * @param e element to be pushed.
-     */
-    public void push(E e){
-        if(stackSize==data.length) resize();
-        data[stackSize++]=e;
-    }
-    
-    /**
-     * Pop element from stack.
-     * @return popped element.
-     */
-    
-    public E pop(){
-        E e = (E) data[--stackSize];
-        data[stackSize]=null;
-        return e;
-    }
-    
-    /**
-     * Checks if stack is empty.
-     * @return true if empty.
-     */
-    public boolean isEmpty(){
-        return stackSize==0;
-    }
-    
-    
-    /**
-     * Double the stack size.
-     */
-    private void resize(){
-        data = Arrays.copyOf(data, data.length * 2);
-    }
-    
-    /**
-    * Naive search of the stack for jUnit tests.
-    * @return true if stack contains item.
-    */
-    public boolean contains(E e){
-        for (int i = 0; i < data.length; i++) {
-            if(data[i]==null) continue;
-            if(data[i].equals(e)) return true;            
+ * Purpose : Sort a given input
+ *
+ * Details: Non-Comparison sort "MOSTLY"
+ *
+ * Complexity (Time): O(n log (n))
+ * */
+
+public class P23_BucketSort implements Activity {
+
+    enum SORT_ORDER { ASCENDING, DESCENDING}
+
+    public void invoke(String[] args) {
+        System.out.println( "Execute => " + Arrays.toString(args) );
+
+        final int count = Integer.parseInt(args[1]);
+        final int max = Integer.parseInt(args[2]);
+        final boolean printResults = Boolean.parseBoolean(args[3]);
+
+        Integer[] original = RandomDataGenerator.getRandomIntegerArray(count, max, printResults);
+
+        if(count <= 1) {
+            System.out.println("INPUT SIZE TO SMALL ");
+            return;
         }
-        return false;
+
+        // BUCKET SORT ASCENDING
+        Integer[] inputAsc = original.clone();
+        Integer[] outputAsc = sort(inputAsc, SORT_ORDER.ASCENDING);
+        System.out.println("\n###################### BUCKET SORT validateSortAscending ##############################");
+        System.out.println("\nBUCKET SORT ASCENDING SUCCESSFUL? [" + DataValidator.validateSortAscending(original, outputAsc, printResults) + "]\n");
+        System.out.println("############################################################################################\n");
+
+        // BUCKET SORT DESCENDING
+        Integer[] inputDesc = original.clone();
+        Integer[] outputDesc = sort(inputDesc, SORT_ORDER.DESCENDING);
+        System.out.println("\n###################### BUCKET SORT validateSortDescending #############################");
+        System.out.println("\nBUCKET SORT DESCENDING SUCCESSFUL? [" + DataValidator.validateSortDescending(original, outputDesc, printResults) + "]\n");
+        System.out.println("############################################################################################\n");
+    }
+
+    private Integer[] sort(Integer[] input, SORT_ORDER sortOrder) {
+
+        if(input.length <= 1)
+            return input;
+
+        final Integer max = Arrays.stream(input).max(Integer::compareTo).get();
+
+        final int maxFactor = getMaxFactor(max);
+
+        final List<List<Integer>> buckets = new ArrayList<>();
+
+        final int maxBucketSize = max/maxFactor;
+
+        for(int i=0; i<=maxBucketSize; i++)
+            buckets.add(new ArrayList<>());
+
+        for(int i=0; i<input.length; i++) {
+            int bucketId = input[i]/maxFactor;
+            buckets.get(bucketId).add(input[i]);
+        }
+
+        for(int i=0; i<buckets.size(); i++) {
+            if(input.length == buckets.get(i).size()) {
+                if(sortOrder.equals(SORT_ORDER.ASCENDING))
+                    Arrays.sort(input);
+                else
+                    Arrays.sort(input, Comparator.reverseOrder());
+                return input;
+            }
+
+            buckets.set(i, Arrays.asList(sort(buckets.get(i).stream().toArray(Integer[]::new), sortOrder)));
+        }
+        return order(buckets, sortOrder);
+    }
+
+    private int getMaxFactor(Integer max) {
+        int maxFactor = 10;
+        while((max/maxFactor) > 10)
+            maxFactor*=10;
+        return maxFactor;
+    }
+
+    private Integer[] order(final List<List<Integer>> sortedBuckets , SORT_ORDER sortOrder) {
+        List<Integer> output = new ArrayList<>();
+        switch (sortOrder) {
+            case ASCENDING:
+                sortedBuckets.stream().forEach(b -> output.addAll(b));
+                break;
+            case DESCENDING:
+                int index = 0;
+                for(int i=sortedBuckets.size()-1; i>=0; i--) {
+                    output.addAll(index, sortedBuckets.get(i));
+                    index = index + sortedBuckets.get(i).size();
+                }
+                break;
+            default:
+                throw new RuntimeException("Invalid sort Order");
+        }
+        return output.toArray(new Integer[output.size()]);
     }
 }
+

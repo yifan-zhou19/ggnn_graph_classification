@@ -1,66 +1,74 @@
 #include <iostream>
+using std::cout;
+using std::cerr;
+using std::endl;
+using std::string;
+#include <vector>
+using std::vector;
+#include <algorithm>
+using std::min;
 
-template <typename T>
-inline void
-swap(T& a, T& b)
-{
-    if (a != b) {
-        T tmp = a;
-        a = b;
-        b = tmp;
-    }
+typedef vector<vector<int> > matrix;
+
+int diff(char a, char b) {
+	return (a == b) ? 0 : 1;
 }
 
-template <typename T>
-void
-ajust_heap(T list[], int root, int tail, bool is_ascending)
-{
-    while (root * 2 + 1 <= tail) {
-        int lch = root * 2 + 1;
-        size_t to_swap = root;
-        if ((is_ascending && list[to_swap] < list[lch]) ||
-            (!is_ascending && list[to_swap] > list[lch])) {
-            to_swap = lch;
-        }
-        int rch = lch + 1;
-        if (rch <= tail && ((is_ascending && list[to_swap] < list[rch]) ||
-                           (!is_ascending && list[to_swap] > list[rch]))) {
-            to_swap = rch;
-        }
-        if (to_swap != root) {
-            swap(list[root], list[to_swap]);
-            root = to_swap;
-        } else {
-            return;
-        }
-    }
+template<typename T>
+std::ostream& operator<<(std::ostream& s, const std::vector<T>& v) {
+	s.put('[');
+	char comma[3] = {'\0', ' ', '\0'};
+	for (const auto& e : v) {
+		s << comma << e;
+		comma[0] = ',';
+	}
+	return s << ']';
 }
 
-template <typename T>
-inline void
-build_heap(T list[], size_t size, bool is_ascending)
-{
-    int start = (size - 2) / 2;
+int edit_distance(string one, string two) {
+	matrix E;
+	int m = one.size();
+	int n = two.size();
 
-    while (start >= 0) {
-        ajust_heap(list, start, size - 1, is_ascending);
-        --start;
-    }
+	E.resize(m + 1);
+	for (int i = 0; i <= m; i++) {
+		vector<int> temp;
+		temp.resize(n + 1);
+		E.at(i) = temp;
+	}
+
+	// set up top row
+	for (int i = 0; i <= m; i++) {
+		E.at(i).at(0) = i;
+	}
+
+	// set up left column
+	for (int j = 1; j <= n; j++) {
+		E.at(0).at(j) = j;
+	}
+
+	// find distances
+	for (int i = 1; i <= m; i++) {
+		for (int j = 1; j <= n; j++) {
+			E.at(i).at(j) = min({
+				E.at(i - 1).at(j) + 1,
+				E.at(i).at(j - 1) + 1,
+				E.at(i - 1).at(j - 1) + diff(one.at(i - 1), two.at(j - 1)),
+			});
+		}
+	}
+
+	return E.at(m).at(n);
 }
 
-template <typename T>
-void
-heap_sort(T list[], size_t size, bool is_ascending=true)
-{
-    if (list == NULL || size <= 1) {
-        return;
-    }
-    build_heap(list, size, is_ascending);
+int main(int argc, char const *argv[]) {
+	if (argc < 3)
+		cerr << argv[0] << " string1 string2" << endl;
 
-    int tail = size - 1;
-    while (tail > 0) {
-        swap(list[tail], list[0]);
-        --tail;
-        ajust_heap(list, 0, tail, is_ascending);
-    }
+	string one = argv[1];
+	string two = argv[2];
+
+	cout << edit_distance(one, two) << endl;
+
+	return 0;
 }

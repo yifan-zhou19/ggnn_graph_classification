@@ -1,40 +1,32 @@
-/**
- * Class for doing Radix sort
- *
- * @author Akhil Batra
- * @version 1.4 - April 14, 2016
- *
- **/
-public class RadixSort
-{
+import java.io.*;
+import java.util.*;
+import java.text.*;
+import java.math.*;
+import java.util.regex.*;
 
-    /**
-     * Does Radix sort on the passed in array with the following restrictions:
-     *  The array can only have ASCII Strings (sequence of 1 byte characters)
-     *  The sorting is stable and non-destructive
-     *  The Strings can be variable length (all Strings are not constrained to 1 length)
-     *
-     * @param asciis String[] that needs to be sorted
-     *
-     * @return String[] the sorted array
-     **/
-    public static String[] sort(String[] asciis)
-    {
-        return null;
-    }
+public class Solution {
 
-    /**
-     * Radix sort helper function that recursively calls itself to achieve the sorted array
-     *  destructive method that changes the passed in array, asciis
-     *
-     * @param asciis String[] to be sorted
-     * @param start int for where to start sorting in this method (includes String at start)
-     * @param end int for where to end sorting in this method (does not include String at end)
-     * @param index the index of the character the method is currently sorting on
-     *
-     **/
-    private static void sortHelper(String[] asciis, int start, int end, int index)
-    {
-        //TODO use if you want to
+    public static void main(String[] args) {
+        Scanner in = new Scanner(System.in);
+        int n = in.nextInt();
+        int swaps=0;
+        int a[] = new int[n];
+        for(int a_i=0; a_i < n; a_i++){
+            a[a_i] = in.nextInt();
+        }
+        for(int a_i=0; a_i < n; a_i++){
+            for(int j=0;j<(a.length-(a_i+1));j++){
+				if(a[j]>a[j+1]){
+					int temp=a[j+1];
+					a[j+1]=a[j];
+					a[j]=temp;
+                    swaps++;
+				}
+			}
+            
+        }
+        System.out.println("Array is sorted in "+swaps+" swaps.");
+        System.out.println("First Element: "+a[0]);
+        System.out.print("Last Element: "+a[a.length-1]);
     }
 }

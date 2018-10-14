@@ -1,396 +1,202 @@
-binary search应用条件是sorted，可以有duplicates
-需要注意的就是找第一个target的index和最后一个target的index是不一样的，
-sorted不一定是严格sorted，rotated的话咱也能做，但是必须没有duplicates
-还有就是遇到array首先考虑是否为空，length==0吗，这两个是两回事，要都写出来
-还有就是result[2]默认是两个元素都是0，如果题中给出找不到返-1，-1那array==null||length ==0
-的结果就要好好定义啦
 
-
-
-
-*1. search insert position
-这题需要注意（1）A==null || A.length == 0 的情况，千万别忽略length为0的情况(2)因为array是sorted的
-所以直接考虑target<第一个值，return 0(3)最后target > 最后一个值，就返回A.length
- public int searchInsert(int[] A, int target) {
-        // write your code here
-        if(A == null || A.length == 0){
-            return 0;
-        }
-        if(target < A[0]){
-           return 0; 
-        }
-        //find the first position where the num is >= target
-        int start = 0, end = A.length - 1;
-        int mid;
-        while (start + 1 < end){
-            mid = (end - start)/2 + start;
-            if(A[mid] >= target){
-                end = mid;
-            }
-            else{
-                start = mid;
-            }
-        }
-        if(A[start] >= target){
-            return start;
-        }
-        if(A[end] >= target){
-            return end;
-        }
-        return A.length;
+// Program for range maximum query using segment tree
+class SegmentTreegetMaxOnes2
+{
+    int st[]; //array to store segment tree
+ 
+    // A utility function to get minimum of two numbers
+    int maxVal(int x, int y) {
+        return (x > y) ? x : y;
     }
-*2. Search a 2D Matrix
-就是给定target 然后这个matrix是递增的，第二行第一个数总比第一行最后一个数大。
-所以先找target可能所在行，再找target所在列
-public boolean searchMatrix(int[][] matrix, int target) {
-        // write your code here
-        if(matrix == null || matrix.length == 0){
-            return false;
-        }
-        //first find the row where target can be, which is the
-        //last number that is <= target
-        int start = 0, end = matrix.length - 1;
-        int mid;
-        int index1 = 0;
-        if(target < matrix[0][0]){
-            return false;
-        }
-        while(start + 1 < end){
-            mid = start + (end - start)/2;
-            if(matrix[mid][0] == target){
-                return true;
-            }
-            if(matrix[mid][0] > target){
-                end = mid;
-            }
-            else{
-                start = mid;
-            }
-        }
-        if(matrix[end][0] < target){
-            index1 = end;
-        }
-        else if(matrix[start][0] < target){
-            index1 = start;
-        }
-        start = 0;
-        end = matrix[index1].length - 1;
-        while(start + 1 < end){
-            mid = start + (end - start)/2;
-            if(matrix[index1][mid] == target){
-                return true;
-            }
-            if(matrix[index1][mid] > target){
-                end = mid;
-            }
-            else{
-                start = mid;
-            }
-        }
-        if(matrix[index1][start] == target || matrix[index1][end] == target){
-            return true;
-        }
-        return false;
+ 
+    // A utility function to get the middle index from corner
+    // indexes.
+    int getMid(int s, int e) {
+        return s + (e - s) / 2;
     }
-*3. search a 2D matrixII
-这个题跟上个不同的地方在于这个每一行都是从左到右递增，每一列也是，但是第二行的第一个不一定比第一行的
-值都大
-O(m+n) time and O(1) extra space
- public int searchMatrix(int[][] matrix, int target) {
-        // write your code here
-        //starting from left bottom to right top
-        int a = matrix.length - 1;
-        int b = 0;
-        int count = 0;
-        while(a >= 0 && b <= matrix[0].length - 1){
-            if(matrix[a][b] > target){
-                a--;
-            }
-            else if(matrix[a][b] < target){
-                b++;
-            }
-            else if(matrix[a][b] == target){
-                count++;
-                a--;
-                b++;
-            }
-        }
-        return count;
+ 
+    /*  A recursive function to get the minimum value in a given
+        range of array indexes. The following are parameters for
+        this function.
+ 
+        st    --> Pointer to segment tree
+        index --> Index of current node in the segment tree. Initially
+                   0 is passed as root is always at index 0
+        ss & se  --> Starting and ending indexes of the segment
+                     represented by current node, i.e., st[index]
+        qs & qe  --> Starting and ending indexes of query range */
+    int MaxQUtil(int ss, int se, int qs, int qe, int index)
+    {
+        // If segment of this node is a part of given range, then
+        // return the min of the segment
+        if (qs <= se && qe >= ss)
+            return st[index];
+ 
+        // If segment of this node is outside the given range
+        if (se < qs || ss > qe)
+            return Integer.MAX_VALUE;
+ 
+        // If a part of this segment overlaps with the given range
+        int mid = getMid(ss, se);
+        return maxVal(MaxQUtil(ss, mid, qs, qe, 2 * index + 1),
+                MaxQUtil(mid + 1, se, qs, qe, 2 * index + 2));
     }
-就是这个从左下角开始 要么删一行 要么删一列
-*3. Binary Search：找target第一个出现的位置
-public int binarySearch(int[] nums, int target) {
-        //write your code here
-        if(nums == null || target < nums[0] || target > nums[nums.length - 1]){
+ 
+    // Return minimum of elements in range from index qs (quey
+    // start) to qe (query end).  It mainly uses MaxQUtil()
+    int getMaxOnes(int n, int qs, int qe)
+    {
+        // Check for erroneous input values
+        if (qs < 0 || qe > n - 1 || qs > qe) {
+            System.out.println("Invalid Input");
             return -1;
         }
-        int start = 0, end = nums.length - 1;
-        int mid;
-        while(start + 1 < end){
-            mid = start + (end - start)/2;
-            if(nums[mid] >= target){
-                end = mid;
-            }
-            else{
-                start = mid;
-            }
-        }
-        if(nums[start] == target){
-            return start;
-        }
-        if(nums[end] == target){
-            return end;
-        }
-        return -1;
+ 
+        return MaxQUtil(0, n - 1, qs, qe, 0);
     }
-*4. find the min in rotated sorted array(no duplicates)
-这种题要首先要注意有没有duplicates，没有二分法，有则全扫
-然后看是找min还是min的index
- public int findMin(int[] num) {
-        // write your code here
-        if(num == null || num.length == 0){
-            return -1;
+ 
+    // A recursive function that constructs Segment Tree for
+    // array[ss..se]. si is index of current node in segment tree st
+    int constructSTUtil(int arr[], int ss, int se, int si)
+    {
+        // If there is one element in array, store it in current
+        //  node of segment tree and return
+        if (ss == se) {
+            st[si] = arr[ss];
+            return arr[ss];
         }
-        if(num[0] < num[num.length - 1]){
-            return num[0];
-        }
-        int start = 0, end = num.length - 1;
-        while(start + 1 < end){
-            int mid = start + (end - start)/2;
-            if(num[mid] < num[mid + 1] && num[mid] < num[mid - 1]){
-                return num[mid];
-            }    
-            if(num[mid] > num[start]){
-                start = mid;
-            }
-            else{
-                end = mid;
-            }
-        }
-        return Math.min(num[start], num[end]);
+ 
+        // If there are more than one elements, then recur for left and
+        // right subtrees and store the minimum of two values in this node
+        int mid = getMid(ss, se);
+        st[si] = maxVal(constructSTUtil(arr, ss, mid, si * 2 + 1),
+                constructSTUtil(arr, mid + 1, se, si * 2 + 2));
+        return st[si];
     }
- 有duplicates就得全扫
-  public int findMin(int[] num) {
-        // write your code here
-        //if there is duplicate, then we can only scan to find min
-        //cant use binary search
-        if(num == null || num.length == 0){
-            return -1;
-        }
-        int min = num[0];
-        for(int i : num){
-            min = i < min ? i : min;
-        }
-        return min;
+ 
+    /* Function to construct segment tree from given array. This function
+       allocates memory for segment tree and calls constructSTUtil() to
+       fill the allocated memory */
+    void constructST(int arr[], int n)
+    {
+        // Allocate memory for segment tree
+ 
+        //Height of segment tree
+        int x = (int) (Math.ceil(Math.log(n) / Math.log(2)));
+ 
+        //Maximum size of segment tree
+        int max_size = 2 * (int) Math.pow(2, x) - 1;
+        st = new int[max_size]; // allocate memory
+ 
+        // Fill the allocated memory st
+        constructSTUtil(arr, 0, n - 1, 0);
     }
-*5. search in rotated sorted array
-前提是没有duplicates！！！！！这点真的很重要！！！！
-画个图，讨论一下到底A[mid]是在A[start]之上or之下
-需要注意的是只要给了array就先讨论A == null || A.length == 0的情况，这是两种不同的情况，不能省
- public int search(int[] A, int target) {
-        // write your code here
-        if(A == null || A.length == 0){
-            return -1;
-        }
-        int start = 0, end = A.length - 1;
-        int mid;
-        while(start + 1 < end){
-            mid = (end - start)/2 + start;
-            //discuss whether the mid is above A[start] or below
-            if(A[mid] > A[start]){
-                if(A[start] <= target && target <= A[mid]){
-                    end = mid;
-                }
-                else{
-                    start = mid;
-                }
-            }
-            else{
-                if(target <= A[end] && target >= A[mid]){
-                    start = mid;
-                }
-                else{
-                    end = mid;
-                }
-            }
-        }
-        if(A[start] == target){
-            return start;
-        }
-        if(A[end] == target){
-           return end; 
-        }
-        return -1;
-    }
-要是有duplicates的话，那就全扫
- public boolean search(int[] A, int target) {
-        // write your code here
-        if(A == null || A.length == 0){
-            return false;
-        }
-        for(int i : A){
-            if(i == target){
-                return true;
-            }
-        }
-        return false;
-    }
-*6. find peak element
-There is an integer array which has the following features:
+    
+    /* A recursive function to update the nodes which have the given 
+    index in their range. The following are parameters
+     st, si, ss and se are same as getSumUtil()
+     i    --> index of the element to be updated. This index is in
+              input array.
+    diff --> Value to be added to all nodes which have i in range */
+ void updateValueUtil(int ss, int se, int i, int diff, int si)
+ {
+     // Base Case: If the input index lies outside the range of 
+     // this segment
+     if (i < ss || i > se)
+         return;
 
--The numbers in adjacent positions are different.
--A[0] < A[1] && A[A.length - 2] > A[A.length - 1].
-这题的解法就是画图
+     // If the input index is in range of this node, then update the
+     // value of the node and its children
+     st[si] = st[si] + diff;
+     if (se != ss) {
+         int mid = getMid(ss, se);
+         updateValueUtil(ss, mid, i, diff, 2 * si + 1);
+         updateValueUtil(mid + 1, se, i, diff, 2 * si + 2);
+     }
+ }
 
+ // The function to update a value in input array and segment tree.
+// It uses updateValueUtil() to update the value in segment tree
+ void updateValue(int arr[], int n, int i,int old_value, int new_value)
+ {
+   
+     if (st[i]==old_value && ( 2*i+1>=st.length || st[2*i+1]==0))
+     {
+    	 st[i]=new_value;
+    	 checkParents(i);
+    	 return;
+     }
+     else
+     {
+    	 if( (2*i)+1<st.length && (2*i)+2<st.length)
+    	 {
+    		 updateValue(arr,n,2*i+1,old_value,new_value);
+    		 updateValue(arr,n,2*i+2,old_value,new_value);
+    	 }
+     }
 
-  /        \
- `/          ` \
-/              \
- public int findPeak(int[] A) {
-        // write your code here
-        if(A == null || A.length == 0){
-            return -1;
-        }
-        int start = 0, end = A.length - 1;
-        int mid;
-        while(start + 1 < end){
-            mid = start + (end - start)/2;
-            if(A[mid] > A[mid + 1] && A[mid] > A[mid - 1]){
-                return mid;
-            }
-            else if(A[mid] < A[mid + 1] && A[mid] > A[mid - 1]){
-                start = mid;
-            }
-            //if(A[mid] > A[mid + 1] && A[mid] < A[mid - 1]) || A[mid]is bottom
-            else{
-                end = mid;
-            }
-        }
-        if(A[start] > A[start + 1] && A[start] > A[start - 1]){
-            return start;
-        }
-        if(A[end] > A[end + 1] && A[end] > A[end - 1]){
-            return end;
-        }
-        return 0;
+    
+ }
+ 
+ void checkParents(int i) {
+	 if(i==0)
+		 return;
+	 if(i%2==0) //Right child is updated
+	 {
+		 if(maxVal(st[i],st[i-1])!=st[(i-1)/2])
+		 {
+			 st[(i-1)/2]=maxVal(st[i],st[i-1]);
+			 checkParents((i-1)/2);
+		 }
+		 else
+			 return;
+	 }
+	 else if(i%2==1) //Left child is updated
+	 {
+		 if(maxVal(st[i],st[i+1])!=st[(i-1)/2])
+		 {
+			 st[(i-1)/2]=maxVal(st[i],st[i-1]);
+			 checkParents((i-1)/2);
+		 }
+		 else
+			 return;
+	 }
+	 
+ }
+ 
+ void display() {
+	 for(int i=0; i<st.length; i++)
+	 {
+		 System.out.print(st[i]+" ");
+	 }
+	 System.out.println();
+ }
+ 
+ 
+    // Driver program to test above functions
+    public static void main(String args[]) 
+    {
+        int arr[] = {1, 3, 2, 7, 9, 11};
+        int n = arr.length;
+        SegmentTreegetMaxOnes2 tree = new SegmentTreegetMaxOnes2();
+ 
+        // Build segment tree from given array
+        tree.constructST(arr, n);
+ 
+        int qs = 1;  // Starting index of query range
+        int qe = 5;  // Ending index of query range
+ 
+        // Print minimum value in arr[qs..qe]
+        System.out.println("Minimum of values in range [" + qs + ", "
+                           + qe + "] is = " + tree.getMaxOnes(n, qs, qe));
+        tree.display();
+     // Update: set arr[1] = 20 and update corresponding segment
+        // tree nodes
+        tree.updateValue(arr, n, 1,3,20);
+        tree.display();
+        
+        
+        System.out.println("Minimum of values in range [" + qs + ", "
+                + qe + "] is = " + tree.getMaxOnes(n, qs, qe));
     }
-*7. find first bad version
-就是从某个version开始后面都是bad了，那我们就是要找到第一个bad version，注意
-可以用函数VersionControl.isBadVersion(n)
-    // write your code here
-        //find the first badVersion
-        int start = 1, end = n;
-        int mid;
-        while(start + 1 < end){
-            mid = (end - start)/2 + start;
-            if(VersionControl.isBadVersion(mid)){
-                end = mid;
-            }
-            else{
-                start = mid;
-            }
-        }
-        if(VersionControl.isBadVersion(start)){
-            return start;
-        }
-        if(VersionControl.isBadVersion(end)){
-            return end;
-        }
-        return 0;
-    }
-*8. search for a range
-这里要求找到给定target的起始index和终止index,如果找不到的话就返回-1，-1
-所以要注意在讨论A == null || A.length == 0的情况，不能像以前那样直接返回空的result，因为那样
-的话，返回的是{0，0}而不是{-1，-1}
- public int[] searchRange(int[] A, int target) {
-        // write your code here
-        int[] result = new int[2];
-        result[0] = -1;
-        result[1] = -1;
-        if(A == null || A.length == 0){
-            return result;
-        }
-        int start = 0, end = A.length - 1;
-        int mid;
-        //first find the starting index of the target
-        while(start + 1 < end){
-            mid = (end - start)/2 + start;
-            if(A[mid] >= target){
-                end = mid;
-            }
-            else{
-                start = mid;
-            }
-        }
-        if(A[start] == target){
-            result[0] = start;
-        }
-        else if(A[end] == target){
-            result[0] = end;
-        }
-        //then find the ending index of the target
-        start = 0;
-        end = A.length - 1;
-        while(start + 1 < end){
-            mid = (end - start)/2 + start;
-            if(A[mid] > target){
-                end = mid;
-            }
-            else{
-                start = mid;
-            }
-        }
-        if(A[end] == target){
-            result[1] = end;
-        }
-        else if(A[start] == target){
-            result[1] = start;
-        }
-        return result;
-    }
-*9. wood count(#*#再看一遍)
-就是给你一个数组 里面存着数的长度，然你cut成给的的n块，然后我们想做的就是二分法决定cut的length
-所以要写个函数count(L, length)就是以给定length能cut成几块
-注意二分法count(L, length) == k也不能return，因为要找最大长度的length 然后最后判断的时候
-也是count() >= k就好，不一定非得等于k
-public int woodCut(int[] L, int k) {
-        // write your code here
-        //first find a way to calculate how many pieces we can get given length
-        if(L == null || L.length == 0){
-            return 0;
-        }
-        int maxLength = L[0];
-        for(int i : L){
-            maxLength = i > maxLength ? i : maxLength;
-        }
-        int start = 1, end = maxLength;
-        int mid;
-        while(start + 1 < end){
-            mid  = (end - start)/2 + start;
-            
-            if(count(L, mid) >= k){
-                start = mid;
-            }
-            else if(count(L, mid) < k){
-                end = mid;
-            }
-        }
-        if(count(L, start) >= k){
-            return start;
-        }
-        if(count(L, end) >= k){
-            return end;
-        }
-       return 0;
-    }
-    private int count(int[] L, int length){
-        // if(L == null || L.length == 0){
-        //     return 0;
-        // }
-        int count = 0;
-        for(int i: L){
-            count += i/length;
-        }
-        return count;
-    }
-yeah！！！！binary search tree在lintcode上的题就都弄完了，以后可以再加leetcode上的题~
+}

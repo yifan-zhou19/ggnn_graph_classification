@@ -1,56 +1,52 @@
-/**
- * Copyright (c) 2017, Kyle Fricilone <kfricilone@gmail.com>
- * All rights reserved.
- * <p>
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- * <p>
- * 1. Redistributions of source code must retain the above copyright notice, this
- * list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- * <p>
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-package com.friz.algorithms;
+import java.util.*;
 
-import com.friz.graphs.Vertex;
+public class Heap<T extends Comparable<T>> {
+    
+    private ArrayList<T> arr = new ArrayList<T>();
+    private int heapSize = 0;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+    public void add(T data) {
+        arr.add(data);
+        increaseValue(heapSize, data);
+        heapSize++;
+    }
 
-/**
- * Created by Kyle Fricilone on Feb 13, 2018.
- */
-public class TopologicalSort<V extends Object>
-{
+    private int getParentIndex(int index) {
+        if (index == 0) return -1;
+        return ((index-1) >> 1);
+    }
 
-	private final List<Vertex> order;
+    private void increaseValue(int index, T value) {
+        if (index <= 0) {
+            return;
+        }
+        int parentIndex = getParentIndex(index);
 
-	public TopologicalSort(DepthFirstSearch<V> dfs)
-	{
-		this.order = new ArrayList<>();
+        T parentVal = arr.get(parentIndex);
+        if (parentVal.compareTo(value) < 0) {
+            swap(arr, parentIndex, index);
+            increaseValue(parentIndex, value);
+        }
+    }
 
-		List<Vertex> postOrder = dfs.getPostOrder();
-		for (int i = postOrder.size() - 1; i >= 0; i--)
-		{
-			order.add(postOrder.get(i));
-		}
-	}
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Heap array: " + arr.toString());
+        sb.append("\nTree looks like:\n");
+        for (int i = 0, pow=1; i < heapSize; i++) {
+            sb.append(arr.get(i) + " ");
+            if (i == ((int) Math.pow(2, pow) - 2)) {
+                sb.append("\n");
+                pow++;
+            }
+        }
+        sb.append("\n");
+        return sb.toString();
+    }
 
-	public List<Vertex> getOrder()
-	{
-		return Collections.unmodifiableList(order);
-	}
+    private void swap(ArrayList<T> arr, int i, int j) {
+        T temp = arr.get(i);
+        arr.set(i, arr.get(j));
+        arr.set(j, temp);
+    }
 }

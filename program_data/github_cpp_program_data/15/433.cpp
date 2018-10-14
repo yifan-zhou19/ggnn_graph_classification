@@ -1,57 +1,69 @@
-// Problem Statemnt -- https://www.geeksforgeeks.org/topological-sorting/
+#include"heap.h"
 
-#include <bits/stdc++.h>
 
-using namespace std;
-
-struct node {
-    int visited = 0;
-    list<int> l;
-};
-
-void addEdge(vector<node>& graph, int u, int v) {
-    graph.at(u).l.push_back(v);
+Heap::Heap (constexpr int option)
+{
+	list = (Event**) calloc(1, sizeof(Event *));;
+	list_length = 0;
+	this->option = option;
 }
 
-void doDFS(vector<node>& Graph, int v, stack<int>& s) {
-    Graph.at(v).visited = true;
-
-    for(int& i : Graph.at(v).l) {
-        if(!Graph.at(i).visited) 
-            doDFS(Graph, i, s);
-    }
-
-    s.push(v+1);
+/*
+ Creates a new node with the paramter and adds it to the heap.
+ */
+void Heap::addNode (Event *element) 
+{	
+	list_length++;
+	if (list_length == 1)
+	{
+		//list[0] = calloc(1, sizeof(Event));
+		list[0] = element;
+		return;
+	}
+	else
+	{
+		list = (Event**) realloc(list, sizeof(Event*)*list_length);
+		list[list_length-1] = element;
+	}
+	
+	int child_index = list_length;
+	int parent_index = child_index/2;
+	Event *tmp;
+	while (child_index > 1 && 
+		(std::get<(option)>(*list[child_index-1])> 
+		std::get<(option)>(*list[parent_index-1])))
+	{
+		//tmp = list[child_index-1];
+		//list[child_index-1] = list[parent_index-1];
+		//list[parent_index-1] = tmp;
+		//child_index = parent_index;
+		//parent_index = child_index/2;
+	}
 }
 
-void printTopo(vector<node>& Graph) {
-    stack<int> s;
 
-    for(int i = 0; i < Graph.size(); ++i) {
-        if(!Graph.at(i).visited)
-            doDFS(Graph, i, s);
-    }
-
-    while(!s.empty()) {
-        cout<<s.top()<<" ";
-        s.pop();
-    }
+Event * Heap::removeNode () 
+{
+	void *output = &list[0];
 }
 
-int main() {
-    int n, m;
-    cin>>n>>m;
 
-    vector<node> Graph(n);
+void Heap::printHeap () 
+{
+	if (list_length > 0)
+	{
+		std::cout << std::get<0>(list[0]->info);
+		std::cout << ": " << std::get<1>(list[0]->info);
+		std::cout << "-" << std::get<2>(list[0]->info);
+	}
 
-    while(m--) {
-        int u, v;
-        cin>>u>>v;
-
-        addEdge(Graph, --u, --v);
-    }
-
-    printTopo(Graph);
-
-    return 0;
+	int i = 1;
+	while (i < list_length)
+	{
+		std::cout << ", " << std::get<0>(list[i]->info);
+		std::cout << ": " << std::get<1>(list[i]->info);
+		std::cout << "-" << std::get<2>(list[i]->info);
+		i++;
+	}
+	std::cout << std::endl;
 }
