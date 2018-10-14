@@ -51,7 +51,8 @@ def test(dataloader, net, criterion, optimizer, opt):
             pred = output.data.max(1, keepdim=True)[1]
             correct += pred.eq(target.data.view_as(pred)).cpu().sum()
        
-        test_loss += loss.data[0]
+        #test_loss += loss.data[0]
+        test_loss += loss.item()
 
        
     test_loss /= len(dataloader.dataset)
