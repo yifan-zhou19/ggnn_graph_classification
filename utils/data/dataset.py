@@ -250,12 +250,40 @@ class CrossLingualProgramData():
     def __init__(self, size_vocabulary, left_path, right_path, is_train, loss, n_classes=3, data_percentage=1):
         
         self.loss = loss
-        left_all_data = load_program_graphs_from_directory(left_path,is_train,n_classes,data_percentage)
-        right_all_data = load_program_graphs_from_directory(right_path,is_train,n_classes,data_percentage)
+        base_name = os.path.basename(left_path)
+        if is_train:
+           left_filename = "%s/%s-%d-train.pkl" % (left_path, base_name, n_classes)
+        else:
+           left_filename = "%s/%s-%d-test.pkl" % (left_path, base_name, n_classes)
+        if os.path.exists(left_filename):
+           left_file = open(left_filename, 'rb')
+           buf = left_file.read()
+           left_all_data = pyarrow.deserialize(buf)
+           left_file.close()
+        else:
+           left_all_data = load_program_graphs_from_directory(left_path,is_train,n_classes,data_percentage)
+           left_all_data = np.array(left_all_data)[0:len(left_all_data)]
+           buf = pyarrow.serialize(left_all_data).to_buffer()
+           out = pyarrow.OSFile(left_filename, 'wb')
+           out.write(buf)
+           out.close()
+        if is_train:
+           right_filename = "%s/%s-%d-train.pkl" % (right_path, base_name, n_classes)
+        else:
+           right_filename = "%s/%s-%d-test.pkl" % (right_path, base_name, n_classes)
+        if os.path.exists(right_filename):
+           right_file = open(right_filename, 'rb')
+           buf = right_file.read()
+           right_all_data = pyarrow.deserialize(buf)
+           right_file.close()
+        else:
+           right_all_data = load_program_graphs_from_directory(right_path,is_train,n_classes,data_percentage)
+           right_all_data = np.array(right_all_data)[0:len(right_all_data)]
+           buf = pyarrow.serialize(right_all_data).to_buffer()
+           out = pyarrow.OSFile(right_filename, 'wb')
+           out.write(buf)
+           out.close()
 
-        left_all_data = np.array(left_all_data)[0:len(left_all_data)]
-        right_all_data = np.array(right_all_data)[0:len(right_all_data)]
-       
         if is_train == True:
             print("Number of all left training data : " + str(len(left_all_data)))
             print("Number of all right training data : " + str(len(right_all_data)))

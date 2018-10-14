@@ -1,8 +1,9 @@
 import torch
 from torch.autograd import Variable
+from tensorboardX import SummaryWriter
 import model
 
-def train(epoch, dataloader, net, criterion, optimizer, opt):
+def train(epoch, dataloader, net, criterion, optimizer, opt, writer):
     # net.train()
     
     for i, (adj_matrices, target) in enumerate(dataloader, 0):
@@ -35,11 +36,14 @@ def train(epoch, dataloader, net, criterion, optimizer, opt):
 
         if opt.loss == 1:
             left_output, right_output = net(left_init_input, left_adj_matrix, right_init_input, right_adj_matrix)
+            writer.add_graph(net, (left_init_input, left_adj_matrix, right_init_input, right_adj_matrix), verbose=False)
             loss = criterion(left_output,right_output, target) 
-    
+            writer.add_scalar('loss', loss.data.item(), int(epoch))
         else:
             output = net(left_init_input, left_adj_matrix, right_init_input, right_adj_matrix)
+            writer.add_graph(net, (left_init_input, left_adj_matrix, right_init_input, right_adj_matrix), verbose=False)
             loss = criterion(output, target) 
+            writer.add_scalar('loss', loss.data.item(), int(epoch))
            
         # 
 
