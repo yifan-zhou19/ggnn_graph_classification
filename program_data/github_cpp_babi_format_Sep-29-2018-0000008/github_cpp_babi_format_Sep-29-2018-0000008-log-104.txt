@@ -1,13 +1,0 @@
-Namespace(cuda=True, directory='program_data/github_cpp_babi_format_Sep-29-2018-0000008', is_training_ggnn=True, log_path='program_data/github_cpp_babi_format_Sep-29-2018-0000008/logs', lr=0.01, manualSeed=0, model_path='program_data/github_cpp_babi_format_Sep-29-2018-0000008/github_cpp_babi_format_Sep-29-2018-0000008-104.cpkl', n_classes=104, n_hidden=50, n_steps=5, niter=150, size_vocabulary=1, state_dim=5, test_batch_size=32, testing=False, train_batch_size=128, training=True, training_percentage=1.0, verbal=True, workers=2)
-Random Seed:  0
-  0% 0/104 [00:00<?, ?it/s]  1% 1/104 [00:00<00:35,  2.87it/s]  2% 2/104 [00:00<00:32,  3.15it/s]  3% 3/104 [00:00<00:33,  2.98it/s]  4% 4/104 [00:01<00:41,  2.39it/s]  5% 5/104 [00:01<00:39,  2.50it/s]  6% 6/104 [00:02<00:44,  2.19it/s]  7% 7/104 [00:02<00:35,  2.70it/s]  8% 8/104 [00:03<00:40,  2.34it/s]  9% 9/104 [00:03<00:35,  2.71it/s] 10% 10/104 [00:04<00:39,  2.38it/s]
-Traceback (most recent call last):
-  File "main_ggnn.py", line 102, in <module>
-    main(opt)
-  File "main_ggnn.py", line 63, in main
-    train_dataset = MonoLanguageProgramData(opt.size_vocabulary, opt.directory, True, opt.n_classes, opt.training_percentage)
-  File "/e/utils/data/dataset.py", line 209, in __init__
-    all_data = load_program_graphs_from_directory(path,is_train,n_classes,data_percentage)
-  File "/e/utils/data/dataset.py", line 60, in load_program_graphs_from_directory
-    path = lookup[i]
-KeyError: 11

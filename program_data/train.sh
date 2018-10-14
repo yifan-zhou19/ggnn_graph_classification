@@ -2,7 +2,7 @@ lang=${1:-cpp}
 MEMORY=${2:-256G}
 TRAIN_SIZE=${3:-128}
 in=${4:-github_"$lang"_protobuf_format_Oct-10-2018}
-out=${in/protobuf/babi}-00000${5:-23}
+out=${in/protobuf/babi}-00000${5:-24}
 cd $out > /dev/null
 k=$(docker run -v $(pwd):/e --entrypoint /opt/bin/maps -it yijun/fast:built --lang $lang | sort -n | wc -l)
 cd - > /dev/null

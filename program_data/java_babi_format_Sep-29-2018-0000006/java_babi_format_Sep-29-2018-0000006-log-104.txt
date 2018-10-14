@@ -1,13 +1,0 @@
-Namespace(cuda=True, directory='program_data/java_babi_format_Sep-29-2018-0000006', is_training_ggnn=True, log_path='program_data/java_babi_format_Sep-29-2018-0000006/logs', lr=0.01, manualSeed=0, model_path='program_data/java_babi_format_Sep-29-2018-0000006/java_babi_format_Sep-29-2018-0000006-104.cpkl', n_classes=104, n_hidden=1, n_steps=5, niter=150, size_vocabulary=1, state_dim=5, test_batch_size=32, testing=False, train_batch_size=8192, training=True, training_percentage=1.0, verbal=True, workers=2)
-Random Seed:  0
-  0% 0/104 [00:00<?, ?it/s]  3% 3/104 [00:00<00:05, 19.74it/s]  6% 6/104 [00:00<00:04, 21.01it/s]  8% 8/104 [00:00<00:04, 20.16it/s] 10% 10/104 [00:00<00:04, 18.91it/s] 12% 13/104 [00:00<00:04, 18.50it/s] 15% 16/104 [00:00<00:04, 20.08it/s] 17% 18/104 [00:00<00:04, 17.61it/s] 20% 21/104 [00:01<00:04, 16.74it/s] 23% 24/104 [00:01<00:04, 18.50it/s] 26% 27/104 [00:01<00:04, 16.88it/s] 29% 30/104 [00:01<00:03, 18.77it/s] 32% 33/104 [00:01<00:03, 20.14it/s] 35% 36/104 [00:01<00:03, 17.41it/s] 38% 39/104 [00:02<00:03, 19.07it/s] 40% 42/104 [00:02<00:03, 20.58it/s] 43% 45/104 [00:02<00:03, 16.72it/s] 46% 48/104 [00:02<00:03, 18.62it/s] 49% 51/104 [00:02<00:02, 20.12it/s] 52% 54/104 [00:02<00:02, 21.49it/s] 55% 57/104 [00:03<00:02, 15.86it/s] 58% 60/104 [00:03<00:02, 17.74it/s] 61% 63/104 [00:03<00:02, 19.66it/s] 63% 66/104 [00:03<00:01, 20.96it/s] 66% 69/104 [00:03<00:01, 21.99it/s] 69% 72/104 [00:03<00:02, 15.26it/s] 72% 75/104 [00:04<00:01, 17.10it/s] 75% 78/104 [00:04<00:01, 18.61it/s] 78% 81/104 [00:04<00:01, 19.92it/s] 81% 84/104 [00:04<00:00, 21.29it/s] 84% 87/104 [00:04<00:01, 13.86it/s] 87% 90/104 [00:04<00:00, 16.01it/s] 89% 93/104 [00:05<00:00, 17.89it/s] 92% 96/104 [00:05<00:00, 19.57it/s] 95% 99/104 [00:05<00:00, 20.79it/s] 98% 102/104 [00:05<00:00, 21.89it/s]
-Traceback (most recent call last):
-  File "main_ggnn.py", line 102, in <module>
-    main(opt)
-  File "main_ggnn.py", line 63, in main
-    train_dataset = MonoLanguageProgramData(opt.size_vocabulary, opt.directory, True, opt.n_classes, opt.training_percentage)
-  File "/e/utils/data/dataset.py", line 209, in __init__
-    all_data = load_program_graphs_from_directory(path,is_train,n_classes,data_percentage)
-  File "/e/utils/data/dataset.py", line 60, in load_program_graphs_from_directory
-    path = lookup[i]
-KeyError: 104
