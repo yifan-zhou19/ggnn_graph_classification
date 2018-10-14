@@ -36,12 +36,12 @@ def train(epoch, dataloader, net, criterion, optimizer, opt, writer):
 
         if opt.loss == 1:
             left_output, right_output = net(left_init_input, left_adj_matrix, right_init_input, right_adj_matrix)
-            writer.add_graph(net, (left_init_input, left_adj_matrix, right_init_input, right_adj_matrix), verbose=False)
+            #writer.add_graph(net, (left_init_input, left_adj_matrix, right_init_input, right_adj_matrix), verbose=False)
             loss = criterion(left_output,right_output, target) 
             writer.add_scalar('loss', loss.data.item(), int(epoch))
         else:
             output = net(left_init_input, left_adj_matrix, right_init_input, right_adj_matrix)
-            writer.add_graph(net, (left_init_input, left_adj_matrix, right_init_input, right_adj_matrix), verbose=False)
+            #writer.add_graph(net, (left_init_input, left_adj_matrix, right_init_input, right_adj_matrix), verbose=False)
             loss = criterion(output, target) 
             writer.add_scalar('loss', loss.data.item(), int(epoch))
            
