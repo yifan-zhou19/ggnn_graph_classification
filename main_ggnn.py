@@ -27,7 +27,7 @@ parser.add_argument('--cuda', action='store_true', help='enables cuda')
 parser.add_argument('--verbal', type=bool, default=True, help='print training info or not')
 parser.add_argument('--manualSeed', type=int, help='manual seed')
 parser.add_argument('--n_classes', type=int, default=104, help='manual seed')
-parser.add_argument('--directory', default="program_data/cpp_babi_format_3", help='program data')
+parser.add_argument('--directory', default="program_data/cpp_babi_format_Sep-29-2018-0000006", help='program data')
 parser.add_argument('--model_path', default="model/model.ckpt", help='path to save the model')
 parser.add_argument('--n_hidden', type=int, default=50, help='number of hidden layers')
 parser.add_argument('--size_vocabulary', type=int, default=59, help='maximum number of node types')
@@ -47,8 +47,6 @@ else:
     run_number = max([int(s.split('run-')[1]) for s in previous_runs]) + 1
 writer = SummaryWriter("%s/run-%03d" % (opt.log_path, run_number))
 
-if not os.path.isdir("model"):
-    os.mkdir("model")
 
 if opt.manualSeed is None:
     opt.manualSeed = random.randint(1, 10000)
