@@ -1,25 +1,30 @@
-package generics;// : generics/Fibonacci.java
+package interviewQuestion;
 
-// Generate a Fibonacci sequence.
-import net.mindview.util.*;
+import java.util.Hashtable;
 
-public class Fibonacci implements Generator<Integer> {
-    private int count = 0;
-
-    public Integer next() {
-        return fib(count++);
-    }
-
-    private int fib(int n) {
-        if (n < 2) return 1;
-        return fib(n - 2) + fib(n - 1);
-    }
-
-    public static void main(String[] args) {
-        Fibonacci gen = new Fibonacci();
-        for (int i = 0; i < 18; i++)
-            System.out.print(gen.next() + " ");
-    }
-} /*
-   * Output: 1 1 2 3 5 8 13 21 34 55 89 144 233 377 610 987 1597 2584
-   */// :~
+public class SimpleHashTable {
+	
+	int [] a = new int[5];
+	
+	String [] arrNames = new String[]{"Sumit","Jain","Raghav","Garg","Gaurav","Rishi"};
+	
+	
+	Hashtable<Integer, String> ht = new Hashtable<Integer, String>();
+	
+	public void insertValues(){
+		for(int i=0;i<arrNames.length;i++ ){
+			ht.put(i+1,arrNames[i]);
+		}
+	}
+	
+	public String getValue(int key){
+		return ht.get(key);
+	}
+	public static void main (String [] args){
+		SimpleHashTable sht = new SimpleHashTable();
+		sht.insertValues();
+		System.out.println("All values inserted");
+		System.out.println("Employee with ID 1 is "+ sht.getValue(1));
+		System.out.println("Employee with ID 3 is "+ sht.getValue(6));
+	}
+}

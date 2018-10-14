@@ -1,45 +1,36 @@
+package ds_collection;
 
-public class fibonacci {
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.Iterator;
+
+public class HashMapvsHashTable {
 	
 	public static void main(String[] args){
-	//	fibonacci(4);
-	//	System.out.println(fibonacciRecursive(7));
-		int[] array = {1, 5, 9, 10, 2};
-		System.out.println(whoKnows(array, array.length));
-	}
-	
-	public static int whoKnows(int[] x, int n){
-		if(n==1)
-			return x[n-1];
-		else
-			return Math.min(x[n-1], whoKnows(x, n-1));
 		
-	}
-	
-	public static int fibonacciRecursive(int n){
-		int nthSum = 0;
-		if(n<=2)
-			return 1;
-		else
-			nthSum = fibonacciRecursive(n-1) + fibonacciRecursive(n-2); 
-			return nthSum;
-	}
-	
-	
-	
-	/*public static int fibonacci(int nthTerm){
-		int previousTerm = 1;
-		int beforePreviousTerm = 1;
+		Integer[] a = {100,20,45,67,89,1};
+		Character[] c = {'e','b','f','d','a','c'};
 		
-		if(nthTerm<=2)
-			return 1;
-		int newTerm = previousTerm + beforePreviousTerm;
-		for(int i = 2; i<nthTerm; i++){
-			newTerm = previousTerm + beforePreviousTerm;
-			beforePreviousTerm = previousTerm;
-			previousTerm = newTerm;
-			System.out.println(newTerm);
+		HashMap<Integer,Character> hmap = new HashMap<Integer,Character>();
+		Hashtable<Integer,Character> htable = new Hashtable<Integer,Character>();
+		
+		for(int i=0;i<a.length;i++){
+			hmap.put(a[i], c[i]);
+			htable.put(a[i], c[i]);
 		}
-		return nthTerm;
-	}*/
+
+		Iterator<Integer> k = hmap.keySet().iterator();
+		Iterator<Character> v = hmap.values().iterator();
+		
+		Iterator<Integer> k1 = htable.keySet().iterator();
+		Iterator<Character> v1 = htable.values().iterator();
+		
+		while(k.hasNext())
+			System.out.printf("%d ", k.next());
+		
+		System.out.println("\n");
+		
+		while(k1.hasNext())
+			System.out.printf("%d ", k1.next());	
+	}
 }

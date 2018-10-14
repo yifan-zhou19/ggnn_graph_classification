@@ -1,29 +1,30 @@
-package edu.lmu.cs.msutton.util;
+package interviewQuestion;
 
-/**
- * A quick class to test the recursive Fibonacci calls for exercise 10.6
- * @author Kelly Sutton
- * @author Garrett Shannon
- */
+import java.util.Hashtable;
 
-public class Fibonacci {
-
-	private static int counter = 0;
+public class SimpleHashTable {
 	
-	public static void main(String args[]){
-		System.out.println(fibonacci(8));
-		System.out.println(counter - 1); //the - 1 is for the initial call
-										 //the problem wants to know how many _recursive_ calls are made
+	int [] a = new int[5];
+	
+	String [] arrNames = new String[]{"Sumit","Jain","Raghav","Garg","Gaurav","Rishi"};
+	
+	
+	Hashtable<Integer, String> ht = new Hashtable<Integer, String>();
+	
+	public void insertValues(){
+		for(int i=0;i<arrNames.length;i++ ){
+			ht.put(i+1,arrNames[i]);
+		}
 	}
 	
-	/**
-	 * Lame recursive fibonacci method copied from our Data Structures book
-	 */
-	private static int fibonacci(int n){
-		counter++;
-		if ( n < 1 ) return 0;
-		if ( n < 3 ) return 1;	
-		return fibonacci(n - 1) + fibonacci(n - 2);
+	public String getValue(int key){
+		return ht.get(key);
 	}
-	
+	public static void main (String [] args){
+		SimpleHashTable sht = new SimpleHashTable();
+		sht.insertValues();
+		System.out.println("All values inserted");
+		System.out.println("Employee with ID 1 is "+ sht.getValue(1));
+		System.out.println("Employee with ID 3 is "+ sht.getValue(6));
+	}
 }

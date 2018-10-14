@@ -1,50 +1,64 @@
-public class Stack<T> {
-	//Top of the stack
-	private Node top;
 
-	private class Node {
-		T data;
-		Node next;
+import java.util.Arrays;
 
-		public Node (T item) {
-			data = item;
-		}
-	}
+public class RadixSort {
 
-	public Stack() {
-		top = null;
-	}
+    private static int max(int[] nums) {
 
-	//Push item to stack
-	public void push(T item) {
-		Node n = new Node(item);
-			n.next = top;
-			top = n;
-	}
+        int mx = Integer.MIN_VALUE;
 
-	//Pop top of stack
-	public T pop() {
-		if(top == null) {
-			return null;
-		}
-		else {
-			top = top.next;
-			return top == null ? null : top.data;
-		}
-	}
+        for (int n : nums) {
+            mx = Math.max(mx, n);
+        }
 
-	//Peek top of stack
-	public T peek() {
-		if(top == null) {
-			return null;
-		} else {
-			return top.data;
-		}
-	}
+        return mx;
 
-	//Check if stack is empty
-	public boolean empty() {
-		return top == null;
-	}
+    }
+
+    private static void sortCount(int[] nums, int mask) {
+
+        int[] counts = new int[10];
+        int[] out = new int[nums.length];
+
+        for (int i = 0; i < nums.length; i++) {
+            counts[(nums[i] / mask) % 10]++;
+        }
+
+        for (int i = 1; i < 10; i++) {
+            counts[i] += counts[i - 1];
+        }
+
+        for (int i = nums.length - 1; i >= 0; i--) {
+            out[counts[(nums[i] / mask) % 10] - 1] = nums[i];
+            counts[(nums[i] / mask) % 10]--;
+        }
+
+        System.arraycopy(out, 0, nums, 0, nums.length);
+
+    }
+
+    public static void radixSort(int[] nums) {
+
+        int m = max(nums);
+
+        for (int mask = 1; m / mask > 0; mask *= 10) {
+
+            sortCount(nums, mask);
+
+        }
+
+    }
+
+    public static void main(String[] args) {
+
+        int[] nums = new int[]{1, 52, 2, 25, 6, 10, 25, 200, 15, 12, 8, 2};
+
+        System.out.println(Arrays.toString(nums));
+
+        radixSort(nums);
+
+        System.out.println(Arrays.toString(nums));
+
+    }
+
 }
-

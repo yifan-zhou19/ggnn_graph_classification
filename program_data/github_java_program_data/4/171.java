@@ -1,37 +1,29 @@
-package com.demo.written.unknow;
+import java.util.Arrays;
 
-/**
- * @Description: fibonacci数列
- *
- * @author Vincent
- *
- * @time: 2016年11月3日 下午5:00:40
- *
- */
-public class Fibonacci {
+public class HashFunction {
 
-	public int fibonacci(int n) {
-		if (n <= 0 || n > 39) {
-			return 0;
-		}
-		int result[] = new int[] { 0, 1 };
+  String[] theArray;
+  int arraySize;
+  int itemsInArray = 0;
+  
+  
+  public static void main(String[] args) {
+  
+  }
 
-		if (n <= 2) {
-			return result[n - 1];
-		}
-		int fibN = 0;
-		int fibOne = 0;
-		int fibTwo = 1;
-		while ((n--) > 2) {
-			fibN = fibOne + fibTwo;
-			fibOne = fibTwo;
-			fibTwo = fibN;
-		}
-		return fibN;
-	}
+  public void hashFunction1(String[] stringsForArray, String[] the Array){
+    for (int n = 0; n < stringsForArray.length; n++) {
+    String new ElementVal = stringsForArray[n];
+    theArray[Integer.parseInt(newElementVal)] = newElementVal;
+  }
 
-	public static void main(String[] args) {
-		new Fibonacci().fibonacci(3);
-	}
-
+  HashFunction(int size) { 
+    theArray = new String[size];
+    Arrays.fill(theArray, "-1");
+  
 }
+
+public void displayTheStack() {
+
+      int increment = 0;
+      

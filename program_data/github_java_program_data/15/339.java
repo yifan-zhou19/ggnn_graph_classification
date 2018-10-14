@@ -1,276 +1,86 @@
-import java.util.Iterator;
+package EvacSim.jme3tools.navmesh;
+
+import EvacSim.jme3tools.navmesh.util.MinHeap;
+import com.jme3.math.Vector3f;
 
 /**
- * Created by uditmehrotra on 29/12/14.
+ * A NavigationHeap is a priority-ordered list facilitated by the STL heap
+ * functions. This class is also used to hold the current path finding session
+ * ID and the desired goal point for NavigationCells to query. Thanks to Amit J.
+ * Patel for detailing the use of STL heaps in this way. It's much faster than a
+ * linked list or multimap approach.
+ * 
+ * Portions Copyright (C) Greg Snook, 2000
+ * 
+ * @author TR
+ * 
  */
-public class RedBlackTree<Key extends Comparable<Key>, Value>
-{
+class Heap implements java.io.Serializable {
 
-    private Node root = null;
-    private final static boolean RED = true;
-    private final static boolean BLACK = false;
+    private MinHeap nodes = new MinHeap();
+    private int sessionID;
+    private Vector3f goal;
 
-    private class Node
-    {
-        Key key;
-        Value value;
-        Node left;
-        Node right;
-        boolean color;
+    int getSessionID() {
+        return sessionID;
+    }
 
-        public Node(Key key, Value value, boolean color)
-        {
-            this.key = key;
-            this.value = value;
-            this.color = color;
+    Vector3f getGoal() {
+        return goal;
+    }
+
+    void initialize(int sessionID, Vector3f goal) {
+        this.goal = goal;
+        this.sessionID = sessionID;
+        nodes.clear();
+    }
+
+    void addCell(Cell pCell) {
+        Node newNode = new Node(pCell, pCell.getTotalCost());
+        nodes.add(newNode);
+    }
+
+    /**
+     * Adjust a cell in the heap to reflect it's updated cost value. NOTE: Cells
+     * may only sort up in the heap.
+     */
+    void adjustCell(Cell pCell) {
+        Node n = findNodeIterator(pCell);
+
+        if (n != nodes.lastElement()) {
+            // update the node data
+            n.cell = pCell;
+            n.cost = pCell.getTotalCost();
+
+            nodes.sort();
         }
     }
 
-    private void put(Key key, Value value)
-    {
-        root = put(root, key, value);
+    /**
+     * @return true if the heap is not empty
+     */
+    boolean isNotEmpty() {
+        return !nodes.isEmpty();
     }
 
-    private Node put(Node node, Key key, Value value)
-    {
-        if(node == null)
-        {
-            return new Node(key, value, RED);
-        }
-        else if(key.compareTo(node.key) < 0)
-        {
-            node.left = put(node.left, key, value);
-        }
-        else if(key.compareTo(node.key) > 0)
-        {
-            node.right = put(node.right, key, value);
-        }
-        else if(key.compareTo(node.key) == 0)
-        {
-            node.value = value;
-        }
-
-        if(!isRed(node.left) && isRed(node.right)) node = rotateLeft(node);
-
-        if(isRed(node.left) && isRed(node.left.left)) node = rotateRight(node);
-
-        if(isRed(node.left) && isRed(node.right)) flipColors(node);
-        return node;
+    /**
+     * Pop the top off the heap and remove the best value for processing.
+     */
+    Node getTop() {
+        return (Node) nodes.deleteMin();
     }
 
-    private boolean isRed(Node node)
-    {
-        if(node == null) return false;
+    /**
+     * Search the container for a given cell. May be slow, so don't do this
+     * unless nessesary.
+     */
+    Node findNodeIterator(Cell pCell) {
+        for (Object n : nodes) {
 
-        return node.color == RED;
-    }
-
-    private Node rotateLeft(Node node)
-    {
-        //Orient a temporarily right leaning Red link, and make it left leaning
-
-        assert isRed(node.right);
-        Node t = node.right;
-        node.right = t.left;
-        t.left = node;
-        t.color = node.color;
-        node.color = RED;
-        return t;
-
-    }
-
-    private Node rotateRight(Node node)
-    {
-        //Orient a left leaning Red link, and make it temporarily right leaning
-
-        assert isRed(node.left);
-        Node t = node.left;
-        node.left = t.right;
-        t.right = node;
-        t.color = node.color;
-        node.color = RED;
-        return t;
-
-    }
-
-    private void flipColors(Node node)
-    {
-        assert !isRed(node);
-        assert isRed(node.left);
-        assert isRed(node.right);
-
-        node.left.color = BLACK;
-        node.right.color = BLACK;
-        node.color = RED;
-    }
-
-    private Value get(Key key)
-    {
-
-        Node node = root;
-        while(node != null)
-        {
-            if(node.key.compareTo(key) == 0)
-            {
-                return node.value;
-            }
-            else if(key.compareTo(node.key) < 0)
-            {
-                node = node.left;
-            }
-            else
-            {
-                node = node.right;
+            if (((Node) n).cell.equals(pCell)) {
+                return ((Node) n);
             }
         }
-
-        return null;
-
-    }
-
-    private Node floor(Node node, Key key)
-    {
-        if(node == null) return null;
-
-        if(node.key.compareTo(key) == 0)
-            return node;
-
-        if(key.compareTo(node.key) < 0)
-            return floor(node.left, key);
-
-        Node temp = floor(node.right, key);
-        if(temp != null) return temp;
-        return node;
-    }
-
-    private Key floor(Key key)
-    {
-        Node x = floor(root, key);
-
-        if(x == null) return null;
-
-        return x.key;
-    }
-
-    private Node ceiling(Node node, Key key)
-    {
-        if(node == null) return null;
-
-        if(node.key.compareTo(key) == 0)
-            return node;
-
-        if(key.compareTo(node.key) > 0)
-            return ceiling(node.right, key);
-
-        Node temp = ceiling(node.left, key);
-        if(temp != null) return temp;
-        return node;
-    }
-
-    private Key ceiling(Key key)
-    {
-        Node x = ceiling(root, key);
-
-        if(x == null) return null;
-
-        return x.key;
-    }
-
-    private void preorder(Node node)
-    {
-        if(node != null)
-        {
-            System.out.print(node.key + "," + node.value + "   ");
-            preorder(node.left);
-            preorder(node.right);
-        }
-    }
-
-    private Iterable<Key> keys()
-    {
-        QueueLinkedList<Key> q = new QueueLinkedList<Key>();
-        inorder(q, root);
-        return q;
-    }
-
-    private void inorder(QueueLinkedList<Key> q, Node node)
-    {
-        if(node == null) return;
-        inorder(q, node.left);
-        q.enqueue(node.key);
-        inorder(q, node.right);
-    }
-
-    private Key min()
-    {
-        return min(root).key;
-    }
-
-    private Node min(Node node)
-    {
-        if(node == null) return null;
-        if(node.left == null) return node;
-
-        return min(node.left);
-    }
-
-
-    public static void main(String[] args)
-    {
-        RedBlackTree<String,Integer> rbt = new RedBlackTree<String, Integer>();
-        rbt.put("udit", 10);
-        rbt.put("jaya", 80);
-        rbt.put("neeraj", 56);
-        rbt.put("ujjwal", 67);
-        rbt.put("suchitra", 45);
-        rbt.put("ankit", 34);
-        rbt.put("akshat", 99);
-        rbt.put("shikha", 56);
-        rbt.put("neeraj", 156);
-        rbt.put("ujjwal", 267);
-        rbt.preorder(rbt.root);
-
-        System.out.println("\nGot : " + rbt.get("udit"));
-        System.out.println("Got : " + rbt.get("ankit"));
-        System.out.println("Got : " + rbt.get("neeraj"));
-        System.out.println("Got : " + rbt.get("suchitra"));
-
-
-        RedBlackTree<String,Integer> rbt_2 = new RedBlackTree<String, Integer>();
-        rbt_2.put("S", 10);
-        System.out.println("\nKeys Iterator : ");
-        rbt_2.preorder(rbt_2.root);
-
-        rbt_2.put("E", 10);
-        System.out.println("\nKeys Iterator : ");
-        rbt_2.preorder(rbt_2.root);
-
-        rbt_2.put("A", 10);
-        System.out.println("\nKeys Iterator : ");
-        rbt_2.preorder(rbt_2.root);
-
-        rbt_2.put("R", 10);
-        System.out.println("\nKeys Iterator : ");
-        rbt_2.preorder(rbt_2.root);
-
-        rbt_2.put("C", 10);
-        System.out.println("\nKeys Iterator : ");
-        rbt_2.preorder(rbt_2.root);
-
-        rbt_2.put("H", 10);
-        System.out.println("\nKeys Iterator : ");
-        rbt_2.preorder(rbt_2.root);
-
-        rbt_2.put("X", 10);
-        System.out.println("\nKeys Iterator : ");
-        rbt_2.preorder(rbt_2.root);
-
-        rbt_2.put("M", 10);
-        System.out.println("\nKeys Iterator : ");
-        rbt_2.preorder(rbt_2.root);
-
-        rbt_2.put("P", 10);
-        System.out.println("\nKeys Iterator : ");
-        rbt_2.preorder(rbt_2.root);
+        return (Node) nodes.lastElement();
     }
 }

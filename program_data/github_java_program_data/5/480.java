@@ -1,69 +1,86 @@
-package dfs;
+package tree_visualization;
 
-import java.util.List;
+import meetup_21_avl_tree.AvlBinarySearchTree;
+import tree_visualization.avl.AvlInsertActionListener;
+import tree_visualization.avl.AvlRemoveActionListener;
 
-import common.Constants;
-import common.DFileID;
+import javax.swing.*;
+import java.awt.*;
 
-public abstract class DFS {
+public class AvlTreeDemo {
+    public static boolean RIGHT_TO_LEFT = false;
 
-	protected boolean _format;
-	protected String _volName;
+    public static void addComponentsToPane(GroupLayout layout, JFrame frame) {
+        JLabel valueLabel = new JLabel("Value:");
+        JTextField valueField = new JTextField();
 
-	/**
-	 * @volName: Explicitly overwrite volume name
-	 * @format: If format is true, the system should earse the underlying disk
-	 *          contents and reinialize the volume.
-	 */
+        Insets buttonMargin = new Insets(0, 0, 0, 0);
+        JButton insertButton = new JButton("Insert");
+        insertButton.setMargin(buttonMargin);
 
-	DFS(String volName, boolean format) {
-		_volName = volName;
-		_format = format;
-	}
+        AvlBinarySearchTree<Integer> tree = new AvlBinarySearchTree<>();
+        TreePanel treePanel = new TreePanel();
 
-	DFS(boolean format) {
-		this(Constants.vdiskName, format);
-	}
+        JButton removeButton = new JButton("Remove");
+        removeButton.setMargin(buttonMargin);
+        insertButton.addActionListener(new AvlInsertActionListener(treePanel, valueField, frame, tree));
+        removeButton.addActionListener(new AvlRemoveActionListener(treePanel, valueField, frame, tree));
 
-	DFS() {
-		this(Constants.vdiskName, false);
-	}
+        layout.setHorizontalGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                                .addComponent(valueLabel)
+                                .addComponent(valueField)
+                                .addComponent(insertButton)
+                                .addComponent(removeButton))
+                        .addComponent(treePanel)));
 
-	/**
-	 * Initialize all the necessary structures with sizes as specified in the
-	 * common/Constants.java
-	 */
-	public abstract void init();
+        layout.setVerticalGroup(layout.createSequentialGroup()
+                .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                .addComponent(valueLabel)
+                                .addComponent(valueField)
+                                .addComponent(insertButton)
+                                .addComponent(removeButton)))
+                .addComponent(treePanel));
+    }
 
-	/**
-	 * creates a new DFile and returns the DFileID, which is useful to uniquely
-	 * identify the DFile
-	 */
-	public abstract DFileID createDFile();
+    private static void createAndShowGUI() {
+        JFrame frame = new JFrame("AVL Binary Search Tree Demo");
+        frame.setResizable(false);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-	/** destroys the file specified by the DFileID */
-	public abstract void destroyDFile(DFileID dFID);
+        Container contentPane = frame.getContentPane();
+        GroupLayout layout = new GroupLayout(contentPane);
+        contentPane.setLayout(layout);
 
-	/**
-	 * reads the file dfile named by DFileID into the buffer starting from the
-	 * buffer offset startOffset; at most count bytes are transferred
-	 */
-	public abstract int read(DFileID dFID, byte[] buffer, int startOffset, int count);
+        layout.setAutoCreateGaps(true);
+        layout.setAutoCreateContainerGaps(true);
 
-	/**
-	 * writes to the file specified by DFileID from the buffer starting from the
-	 * buffer offset startOffset; at most count bytes are transferred
-	 */
-	public abstract int write(DFileID dFID, byte[] buffer, int startOffset, int count);
+        addComponentsToPane(layout, frame);
 
-	/** returns the size in bytes of the file indicated by DFileID. */
-	public abstract int sizeDFile(DFileID dFID);
+        frame.pack();
+        frame.setVisible(true);
+    }
 
-	/**
-	 * List all the existing DFileIDs in the volume
-	 */
-	public abstract List<DFileID> listAllDFiles();
+    public static void main(String[] args) {
+        /* Use an appropriate Look and Feel */
+        try {
+            //UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
+            UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
+        } catch (UnsupportedLookAndFeelException ex) {
+            ex.printStackTrace();
+        } catch (IllegalAccessException ex) {
+            ex.printStackTrace();
+        } catch (InstantiationException ex) {
+            ex.printStackTrace();
+        } catch (ClassNotFoundException ex) {
+            ex.printStackTrace();
+        }
 
-	/** Write back all dirty blocks to the volume, and wait for completion. */
-	public abstract void sync();
+        //Schedule a job for the event dispatch thread:
+        //creating and showing this application's GUI.
+        SwingUtilities.invokeLater(() -> createAndShowGUI());
+    }
+
 }

@@ -1,109 +1,39 @@
-package Goodrich_AVLTree;
+public class Solution {
+    /**
+     * @param word1 and word2: Two string.
+     * @return: The minimum number of steps.
+     */
+    public int minDistance(String a, String b) {
+        // write your code 
+        
+       if (a == null && b == null) {
+    		return 0;
+    	}
 
-import java.util.Comparator;
-import java.util.Dictionary;
+    	int n = a.length();
+    	int m = b.length();
+    	
+    	int[][] f = new int[n + 1][m + 1];	//f[i][j]: the minimal distance of (the first i char of a and the first j of b)
 
-/**
- * Created by alex on 02.11.15.
- */
-public class AVLTree<Key extends Comparable <Key>>{
+    	for (int i = 0; i < f.length; i++) {
+    		f[i][0] = i;
+    	}
 
-    int height;
+    	for (int j = 0; j < f[0].length; j++) {
+    		f[0][j] = j;
+    	}
 
-    Node root;
+    	for (int aFirst = 1; aFirst <= a.length(); aFirst++) {
+    		for (int bFirst = 1; bFirst <= b.length(); bFirst++) {
+    			if (a.charAt(aFirst - 1) == b.charAt(bFirst - 1)) {
+    				f[aFirst][bFirst] = f[aFirst - 1][bFirst - 1];
+    			} else {    
+    				f[aFirst][bFirst] = 1 + Math.min(Math.min(f[aFirst - 1][bFirst - 1], f[aFirst][bFirst - 1]), f[aFirst - 1][bFirst]);
+    			}
 
-    Comparator C;
-
-    public int getHeight() {
-        return height;
+    		} 
+    	}
+    	return f[n][m];
+    	
     }
-
-    public int setHeight(int h) {
-        int oldGeight = height;
-        height = h;
-        return oldGeight;
-    }
-
-    private class Node {
-        private Key key;
-        private Node right, left, parent;
-        private int height;
-
-        private Node(Key key) {
-            if (root == null)
-                root = this;
-            this.key = key;
-            this.left = null;
-            this.right = null;
-            height = 1;
-        }
-
-        private int height() {
-            return height;
-        }
-
-        public int setHeight(int h) {
-            int oldHeight = height;
-            height = h;
-            return oldHeight;
-        }
-
-        private Key key() {
-            return key;
-        }
-
-        private void setKey(Key key) {
-            this.key = key;
-        }
-
-        private int bfactor() {
-            return this.right.height() - this.left.height();
-        }
-
-        private void fixheight() {
-            int hl = this.left.height();
-            int hr = this.right.height();
-           // this.height =
-        }
-
-    }
-
-
-
-    private void rebalance(Node z) {
-        while(z != root) {
-            z = z.parent;
-            setHeight(z.height());
-            if (!isBalanced(z)) {
-                Node x = tallerChild(tallerChild(z));
-              //  z =
-            }
-        }
-    }
-
-    private Node tallerChild(Node z) {
-        if (z.left.height() >= z.right.height())
-            return z.left;
-        else
-            return z.right;
-    }
-
-    private boolean isBalanced(Node x) {
-        int bf = x.left.height() - x.right.height();
-        return ((-1 <= bf) && (bf <= 1));
-    }
-
-    public Node find(Key key) {
-        Node current = root;
-        while(current.key != key) {
-            if (key.compareTo(current.key) < 0)
-                current = current.left;
-            else
-                current = current.right;
-            if (current == null)
-                return null;
-        }
-        return current;
-    }
-
-}
+}2

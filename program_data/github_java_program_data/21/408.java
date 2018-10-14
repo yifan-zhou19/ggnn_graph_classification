@@ -1,78 +1,22 @@
-import java.util.function.BiPredicate;
-
-/**
- * TODO: This is your second major task.
- *
- * This class implements a generic height-balanced binary search tree, 
- * using the AVL algorithm. Beyond the constructor, only the insert()
- * method needs to be implemented. All other methods are unchanged.
- */
-
-public class AVLTree<K> extends BinarySearchTree<K> {
-
-  /**
-   * Creates an empty AVL tree as a BST organized according to the
-   * lessThan predicate.
-   */
-  public AVLTree(BiPredicate<K, K> lessThan) {
-    super(lessThan);
-  }
-
-  /**
-   * TODO
-   * 
-   * Inserts the given key into this AVL tree such that the ordering 
-   * property for a BST and the balancing property for an AVL tree are
-   * maintained.
-   */
-  
-  public Node insert(K key) {
-    Node q = super.insert(key);
-    if (Math.abs(root.left.height - root.right.height) >= 2){
-    	return null;
+public class Solution {
+    public int minDistance(String word1, String word2) {
+        // Start typing your Java solution below
+        // DO NOT write main() function
+        int l1=word1.length(),l2=word2.length();
+        if(l1==0) return l2;
+        if(l2==0) return l1;
+        int[][] d=new int[l1+1][l2+1];
+        for(int i=0;i<=l2;i++)
+            d[0][i]=i;
+        for(int i=0;i<=l1;i++)
+            d[i][0]=i;
+        for(int i=1;i<=l1;i++) {
+            for(int j=1;j<=l2;j++) {
+                int m=Math.min(d[i-1][j]+1,d[i][j-1]+1);
+                m=Math.min(m,d[i-1][j-1]+(word1.charAt(i-1)==word2.charAt(j-1)?0:1));
+                d[i][j]=m;
+            }
+        }
+        return d[l1][l2];
     }
-	return q;
-  }
-  
- /**
-  * left left rotation  
-  * @param n
-  * @return
-  */
-  private Node LeftLeft(Node n){
-      Node rightchild = root.right;
-      root.right = rightchild.left;
-      rightchild.left = root;
-      root.height = Math.max(root.left.height, root.right.height) + 1;
-      rightchild.height = Math.max(rightchild.right.height, rightchild.left.height) + 1;
-      return rightchild;
-  }
-  
-  /**
-   * right right rotation
-   * @param n
-   * @return
-   */
-  private Node RightRight(Node n){
-      Node leftchild = root.right;
-      root.left = leftchild.right;
-      leftchild.right = root;
-      root.height = Math.max(root.right.height, root.left.height) + 1;
-      leftchild.height = Math.max(leftchild.left.height, leftchild.right.height) + 1;
-      return leftchild;
-  }
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
 }

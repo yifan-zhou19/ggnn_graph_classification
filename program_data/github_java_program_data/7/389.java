@@ -1,35 +1,30 @@
-package algorithm;
-
-public class quicksort {
-	public void sort(int[] data, int l, int r){
-        int left = l;
-        int right = r;
-        int pivot = data[(l+r)/2];
-        
-        do{
-            while(data[left] < pivot) left++;
-            while(data[right] > pivot) right--;
-            if(left <= right){    
-                int temp = data[left];
-                data[left] = data[right];
-                data[right] = temp;
-                left++;
-                right--;
-            }
-        }while (left <= right);
-        
-        if(l < right) sort(data, l, right);
-        if(r > left) sort(data, left, r);
-    }
-    
-    public static void main(String[] args) {
-        
-        int data[] = {66, 10, 1, 34, 5, -10};
-        
-        quicksort quick = new quicksort();
-        quick.sort(data, 0, data.length - 1);
-        for(int i=0; i<data.length; i++){
-            System.out.println("data["+i+"] : "+data[i]);
-        }
-    }
+public class TowerOfHanoi
+{
+  public static int cnt = 0;
+  public static void solveTowers( int disk, int source, 
+                      int destination, int temp )
+  {
+      cnt++;
+      if( disk == 1 )
+      {
+        System.out.printf( "\n%d --> %d", source, destination );
+        return;
+      }
+      solveTowers(disk - 1, source, temp, destination );
+      
+      System.out.printf( "\n%d --> %d", source, destination );
+      
+      solveTowers(disk - 1, temp, destination, source  );  
+  }
+  
+  public static void main( String[] args ) 
+  {
+      int start = 2;
+      int end   = 3;
+      int temp  = 1;
+      int disks = 20;
+      TowerOfHanoi.solveTowers( disks, start, end, temp );
+      System.out.printf("\nNo. of moves: %d\n", TowerOfHanoi.cnt );
+      System.exit(0);
+  }
 }

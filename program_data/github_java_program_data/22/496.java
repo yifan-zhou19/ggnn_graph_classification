@@ -1,208 +1,72 @@
-/*
- * Minecraft Forge
- * Copyright (c) 2016.
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation version 2.1
- * of the License.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- */
 
-package net.minecraftforge.fml.common.toposort;
+Code Description :
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
+*maxheap(int[] a, int i) : It helps us to maintain the property of Max-Heap i.e. the root value is always greater than the child value and it takes a time of O(lg n). Therefore, we can say that the running time of maxheap(int [] a, int i) on a tree of height h  is O(h). 
 
-import net.minecraftforge.fml.common.FMLLog;
+*buildheap(int[] a) : We use the maxheap() function in a bottom-up manner to create an array A[1..n], where n=A.length, into a Max-Heap. The function buildheap() goes through the remaining elements i.e. A[(n/2)+1, n] thus it take linear time, produces a max-heap from an unordered input array. 
 
-import com.google.common.collect.Sets;
-import com.google.common.collect.Sets.SetView;
 
-/**
- * Topological sort for mod loading
- *
- * Based on a variety of sources, including http://keithschwarz.com/interesting/code/?dir=topological-sort
- * @author cpw
- *
- */
-public class TopologicalSort
+public class HeapSort 
 {
-    public static class DirectedGraph<T> implements Iterable<T>
-    {
-        private final Map<T, SortedSet<T>> graph = new HashMap<T, SortedSet<T>>();
-        private List<T> orderedNodes = new ArrayList<T>();
+    private static int[] a;
+    private static int n;
+    private static int left;
+    private static int right;
+    private static int largest;
 
-        public boolean addNode(T node)
-        {
-            // Ignore nodes already added
-            if (graph.containsKey(node))
-            {
-                return false;
-            }
-
-            orderedNodes.add(node);
-            graph.put(node, new TreeSet<T>(Comparator.comparingInt(o -> orderedNodes.indexOf(o))));
-            return true;
-        }
-
-        public void addEdge(T from, T to)
-        {
-            if (!(graph.containsKey(from) && graph.containsKey(to)))
-            {
-                throw new NoSuchElementException("Missing nodes from graph");
-            }
-
-            graph.get(from).add(to);
-        }
-
-        public void removeEdge(T from, T to)
-        {
-            if (!(graph.containsKey(from) && graph.containsKey(to)))
-            {
-                throw new NoSuchElementException("Missing nodes from graph");
-            }
-
-            graph.get(from).remove(to);
-        }
-
-        public boolean edgeExists(T from, T to)
-        {
-            if (!(graph.containsKey(from) && graph.containsKey(to)))
-            {
-                throw new NoSuchElementException("Missing nodes from graph");
-            }
-
-            return graph.get(from).contains(to);
-        }
-
-        public Set<T> edgesFrom(T from)
-        {
-            if (!graph.containsKey(from))
-            {
-                throw new NoSuchElementException("Missing node from graph");
-            }
-
-            return Collections.unmodifiableSortedSet(graph.get(from));
-        }
-        @Override
-        public Iterator<T> iterator()
-        {
-            return orderedNodes.iterator();
-        }
-
-        public int size()
-        {
-            return graph.size();
-        }
-
-        public boolean isEmpty()
-        {
-            return graph.isEmpty();
-        }
-
-        @Override
-        public String toString()
-        {
-            return graph.toString();
+    
+    public static void buildheap(int []a){
+        n=a.length-1;
+        for(int i=n/2;i>=0;i--){
+            maxheap(a,i);
         }
     }
-
-    /**
-     * Sort the input graph into a topologically sorted list
-     *
-     * Uses the reverse depth first search as outlined in ...
-     * @param graph
-     * @return The sorted mods list.
-     */
-    public static <T> List<T> topologicalSort(DirectedGraph<T> graph)
-    {
-        DirectedGraph<T> rGraph = reverse(graph);
-        List<T> sortedResult = new ArrayList<T>();
-        Set<T> visitedNodes = new HashSet<T>();
-        // A list of "fully explored" nodes. Leftovers in here indicate cycles in the graph
-        Set<T> expandedNodes = new HashSet<T>();
-
-        for (T node : rGraph)
-        {
-            explore(node, rGraph, sortedResult, visitedNodes, expandedNodes);
+    
+    public static void maxheap(int[] a, int i){ 
+        left=2*i;
+        right=2*i+1;
+        if(left <= n && a[left] > a[i]){
+            largest=left;
         }
-
-        return sortedResult;
+        else{
+            largest=i;
+        }
+        
+        if(right <= n && a[right] > a[largest]){
+            largest=right;
+        }
+        if(largest!=i){
+            exchange(i,largest);
+            maxheap(a, largest);
+        }
     }
-
-    public static <T> DirectedGraph<T> reverse(DirectedGraph<T> graph)
-    {
-        DirectedGraph<T> result = new DirectedGraph<T>();
-
-        for (T node : graph)
-        {
-            result.addNode(node);
+    
+    public static void exchange(int i, int j){
+        int t=a[i];
+        a[i]=a[j];
+        a[j]=t; 
         }
-
-        for (T from : graph)
-        {
-            for (T to : graph.edgesFrom(from))
-            {
-                result.addEdge(to, from);
-            }
+    
+    public static void sort(int []a0){
+        a=a0;
+        buildheap(a);
+        
+        for(int i=n;i>0;i--){
+            exchange(0, i);
+            n=n-1;
+            maxheap(a, 0);
         }
-
-        return result;
     }
-
-    public static <T> void explore(T node, DirectedGraph<T> graph, List<T> sortedResult, Set<T> visitedNodes, Set<T> expandedNodes)
-    {
-        // Have we been here before?
-        if (visitedNodes.contains(node))
-        {
-            // And have completed this node before
-            if (expandedNodes.contains(node))
-            {
-                // Then we're fine
-                return;
-            }
-
-            FMLLog.log.fatal("Mod Sorting failed.");
-            FMLLog.log.fatal("Visiting node {}", node);
-            FMLLog.log.fatal("Current sorted list : {}", sortedResult);
-            FMLLog.log.fatal("Visited set for this node : {}", visitedNodes);
-            FMLLog.log.fatal("Explored node set : {}", expandedNodes);
-            SetView<T> cycleList = Sets.difference(visitedNodes, expandedNodes);
-            FMLLog.log.fatal("Likely cycle is in : {}", cycleList);
-            throw new ModSortingException("There was a cycle detected in the input graph, sorting is not possible", node, cycleList);
+    
+    public static void main(String[] args) {
+        int []a1={4,1,3,2,16,9,10,14,8,7};
+        sort(a1);
+        for(int i=0;i<a1.length;i++){
+            System.out.print(a1[i] + " ");
         }
-
-        // Visit this node
-        visitedNodes.add(node);
-
-        // Recursively explore inbound edges
-        for (T inbound : graph.edgesFrom(node))
-        {
-            explore(inbound, graph, sortedResult, visitedNodes, expandedNodes);
-        }
-
-        // Add ourselves now
-        sortedResult.add(node);
-        // And mark ourselves as explored
-        expandedNodes.add(node);
     }
 }
+
+OUTPUT :
+
+1 2 3 4 7 8 9 10 14 16 

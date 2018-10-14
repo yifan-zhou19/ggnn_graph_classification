@@ -1,148 +1,44 @@
-//$HeadURL: svn+ssh://aerben@scm.wald.intevation.org/deegree/base/trunk/src/org/deegree/io/quadtree/Quadtree.java $
-/*----------------    FILE HEADER  ------------------------------------------
+// By definition, the first two numbers in the Fibonacci sequence are 0 and 1
+//and each subsequent number is the sum of the previous two.
+// For example, the first ten Fibonacci numbers are:
+// 0, 1, 1, 2, 3, 5, 8, 13, 21, 34
 
- This file is part of deegree.
- Copyright (C) 2001-2008 by:
- EXSE, Department of Geography, University of Bonn
- http://www.giub.uni-bonn.de/deegree/
- lat/lon GmbH
- http://www.lat-lon.de
+//What to do:
+// Write a Java function that accepts a number and returns the number at that position 
+//in the fibonnaci sequence.
+//in your solution, print out the first 15 numbers of the Fibonacci sequence.
+package fibonacci;
+import java.util.Scanner;
+public class Fibonacci {
+	
+	public static int fibonacciSequence(int number)
+	{
+		if(number == 0){
+            return 0;
+        }
+		else if(number == 1 || number == 2){
+            return 1;
+        }
+ 
+        return fibonacciSequence(number-1) + fibonacciSequence(number -2); //tail recursion
+	}
+	/**
+	 * @param args
+	 */
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub;
+		Scanner input = new Scanner(System.in);
+		System.out.println("Enter the position of the number in the fibonnaci sequence: ");
+		int num = input.nextInt();
+		int position = num-1;
+		System.out.println(fibonacciSequence(position));
+		
+		System.out.println("\n\nFibonacci series upto " + num +" numbers : ");
+        //printing Fibonacci series upto number
+        for(int i=0; i<=position; i++){
+            System.out.print(fibonacciSequence(i) +" ");
+        }
 
- This library is free software; you can redistribute it and/or
- modify it under the terms of the GNU Lesser General Public
- License as published by the Free Software Foundation; either
- version 2.1 of the License, or (at your option) any later version.
-
- This library is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- Lesser General Public License for more details.
-
- You should have received a copy of the GNU Lesser General Public
- License along with this library; if not, write to the Free Software
- Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
- Contact:
-
- Andreas Poth
- lat/lon GmbH
- Aennchenstr. 19
- 53177 Bonn
- Germany
- E-Mail: poth@lat-lon.de
-
- Prof. Dr. Klaus Greve
- Department of Geography
- University of Bonn
- Meckenheimer Allee 166
- 53115 Bonn
- Germany
- E-Mail: greve@giub.uni-bonn.de
-
- ---------------------------------------------------------------------------*/
-package org.deegree.io.quadtree;
-
-import java.util.List;
-
-import org.deegree.model.spatialschema.Envelope;
-import org.deegree.model.spatialschema.Point;
-
-/**
- * 
- * 
- * 
- * @version $Revision: 10660 $
- * @author <a href="mailto:poth@lat-lon.de">Andreas Poth</a>
- * @author last edited by: $Author: apoth $
- * 
- * @version 1.0. $Revision: 10660 $, $Date: 2008-03-24 22:39:54 +0100 (Mo, 24. Mär 2008) $
- * @param <T>
- *            the datatype to be used as id
- * 
- * @since 2.0
- */
-public interface Quadtree<T> {
-
-    /**
-     * inserts a new item into the quadtree
-     * 
-     * @param itemKey
-     *            key of the Item to be inserted.
-     * @param envelope
-     *            bbox of the item.
-     * @throws IndexException
-     */
-    public abstract void insert( T itemKey, Envelope envelope )
-                            throws IndexException;
-
-    /**
-     * inserts a new item into the quadtree
-     * 
-     * @param itemKey
-     *            key of the Item to be inserted.
-     * @param point
-     *            if the item is a point.
-     * @throws IndexException
-     */
-    public abstract void insert( T itemKey, Point point )
-                            throws IndexException;
-
-    /**
-     * returns a List containing all items whose envelope intersects with the passed one
-     * 
-     * @param envelope
-     * @return a List containing all items whose envelope intersects with the passed one
-     * @throws IndexException
-     */
-    public abstract List query( Envelope envelope )
-                            throws IndexException;
-
-    /**
-     * deletes a specific item from the tree (not the item itself will be deleted, just its
-     * reference will be)
-     * 
-     * @param itemKey
-     *            key of item to be deleted.
-     * @throws IndexException
-     *             if the rootnode cannot be loaded, or the given item does not exist.
-     */
-    public abstract void deleteItem( T itemKey )
-                            throws IndexException;
-
-    /**
-     * updates spacial index of the specified item in the quadtree.
-     * 
-     * @param itemKey
-     *            the ID of the item.
-     * @param newBBox
-     *            the new BBoundingbox of the item.
-     * @throws IndexException
-     *             if the rootnode cannot be loaded, or the given item does not exist.
-     */
-    public abstract void update( T itemKey, Envelope newBBox )
-                            throws IndexException;
-
-    /**
-     * deletes all references of items whose envelope intersects with the passed one (
-     * 
-     * @see #deleteItem(Object) )
-     * @param envelope
-     */
-    public abstract void deleteRange( Envelope envelope );
-
-    /**
-     * 
-     * @return the maxium depth of the tree (which was configured at instantiation of the db ).
-     */
-    public abstract int getDepth();
-
-    /**
-     * returns the bounding box covered by the quadtrees root node
-     * 
-     * @return the bounding box covered by the quadtrees root node
-     * @throws IndexException
-     */
-    public abstract Envelope getRootBoundingBox()
-                            throws IndexException;
+	}
 
 }

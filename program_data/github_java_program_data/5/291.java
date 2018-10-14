@@ -1,50 +1,86 @@
-package org.interviewelements.graph.search;
+package tree_visualization;
 
-import org.interviewelements.graph.Graph;
+import meetup_21_avl_tree.AvlBinarySearchTree;
+import tree_visualization.avl.AvlInsertActionListener;
+import tree_visualization.avl.AvlRemoveActionListener;
 
-import java.util.Deque;
-import java.util.LinkedList;
+import javax.swing.*;
+import java.awt.*;
 
-/**
- * Depth first search.
- */
-public class DFS extends Search {
+public class AvlTreeDemo {
+    public static boolean RIGHT_TO_LEFT = false;
 
-    private Deque<Integer> queue = new LinkedList<Integer>();
+    public static void addComponentsToPane(GroupLayout layout, JFrame frame) {
+        JLabel valueLabel = new JLabel("Value:");
+        JTextField valueField = new JTextField();
 
-    public DFS(Graph graph) {
-        super(graph);
+        Insets buttonMargin = new Insets(0, 0, 0, 0);
+        JButton insertButton = new JButton("Insert");
+        insertButton.setMargin(buttonMargin);
+
+        AvlBinarySearchTree<Integer> tree = new AvlBinarySearchTree<>();
+        TreePanel treePanel = new TreePanel();
+
+        JButton removeButton = new JButton("Remove");
+        removeButton.setMargin(buttonMargin);
+        insertButton.addActionListener(new AvlInsertActionListener(treePanel, valueField, frame, tree));
+        removeButton.addActionListener(new AvlRemoveActionListener(treePanel, valueField, frame, tree));
+
+        layout.setHorizontalGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                                .addComponent(valueLabel)
+                                .addComponent(valueField)
+                                .addComponent(insertButton)
+                                .addComponent(removeButton))
+                        .addComponent(treePanel)));
+
+        layout.setVerticalGroup(layout.createSequentialGroup()
+                .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                .addComponent(valueLabel)
+                                .addComponent(valueField)
+                                .addComponent(insertButton)
+                                .addComponent(removeButton)))
+                .addComponent(treePanel));
     }
 
-    @Override
-    protected void put(int x) {
-        queue.push(x);
-    }
+    private static void createAndShowGUI() {
+        JFrame frame = new JFrame("AVL Binary Search Tree Demo");
+        frame.setResizable(false);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-    @Override
-    protected int get() {
-        return queue.pop();
-    }
+        Container contentPane = frame.getContentPane();
+        GroupLayout layout = new GroupLayout(contentPane);
+        contentPane.setLayout(layout);
 
-    @Override
-    protected boolean empty() {
-        return queue.isEmpty();
+        layout.setAutoCreateGaps(true);
+        layout.setAutoCreateContainerGaps(true);
+
+        addComponentsToPane(layout, frame);
+
+        frame.pack();
+        frame.setVisible(true);
     }
 
     public static void main(String[] args) {
-        Graph graph = new Graph(6);
-        graph.add(new Graph.Edge(0, 2));
-        graph.add(new Graph.Edge(2, 1));
-        graph.add(new Graph.Edge(2, 3));
-        graph.add(new Graph.Edge(1, 4));
-        graph.add(new Graph.Edge(1, 5));
-        graph.add(new Graph.Edge(4, 5));
+        /* Use an appropriate Look and Feel */
+        try {
+            //UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
+            UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
+        } catch (UnsupportedLookAndFeelException ex) {
+            ex.printStackTrace();
+        } catch (IllegalAccessException ex) {
+            ex.printStackTrace();
+        } catch (InstantiationException ex) {
+            ex.printStackTrace();
+        } catch (ClassNotFoundException ex) {
+            ex.printStackTrace();
+        }
 
-        DFS dfs = new DFS(graph);
-        dfs.setVisitor(x -> System.out.println(x));
-
-        boolean hasPath = dfs.search(0, 5);
-
-        System.out.println(hasPath);
+        //Schedule a job for the event dispatch thread:
+        //creating and showing this application's GUI.
+        SwingUtilities.invokeLater(() -> createAndShowGUI());
     }
+
 }

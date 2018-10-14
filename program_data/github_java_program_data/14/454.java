@@ -1,124 +1,300 @@
-/**
- * Heap's algorithm for generating all permutations
- * https://en.wikipedia.org/wiki/Heap%27s_algorithm
- */
-import java.util.Arrays;
-import java.util.Iterator;
-import java.lang.System;
 
-public class Permutation {
-    /**
-     * use recursion to generate all permutation of a given array.
-     */
-    static void generateAllPermutation(final int[] array) {
-        final int size = array.length;
-        final boolean[] selected = new boolean[size];
-        final int[] indices = new int[size];
-        gen(array, size, selected, indices, 0);
+//
+// This file is auto-generated. Please don't modify it!
+//
+package org.opencv.ml;
+
+import org.opencv.core.Mat;
+import org.opencv.core.TermCriteria;
+
+// C++: class LogisticRegression
+//javadoc: LogisticRegression
+public class LogisticRegression extends StatModel {
+
+    protected LogisticRegression(long addr) { super(addr); }
+
+
+    public static final int
+            REG_DISABLE = -1,
+            REG_L1 = 0,
+            REG_L2 = 1,
+            BATCH = 0,
+            MINI_BATCH = 1;
+
+
+    //
+    // C++:  Mat get_learnt_thetas()
+    //
+
+    //javadoc: LogisticRegression::get_learnt_thetas()
+    public  Mat get_learnt_thetas()
+    {
+        
+        Mat retVal = new Mat(get_learnt_thetas_0(nativeObj));
+        
+        return retVal;
     }
 
-    /**
-     * Since we need to check if a given item has been selected or not, there's N operation for at each step,
-     * this brings the complexity to O(n*n!). 
-     */
-    private static void gen(final int[] array, final int size, final boolean[] selected, int[] indices, int ind) {
-        if (ind == size) {
-            // we have finished generating a permutation, let's output it.
-            final int[] output = new int[size];
-            for (int i = 0; i < size; i++) {
-                output[i] = array[indices[i]];
-            }
-            System.out.println(Arrays.toString(output));
-        } else {
-            // select iteratively select an index that's not been selected, and move to the next element to be
-            // selected for the current permutation
-            for (int i = 0; i < size; i++) {
-                if (!selected[i]) { // this is really a naive way, another way is to just keep track of the unselected elements
-                    selected[i] = true;
-                    indices[ind] = i;
-                    gen(array, size, selected, indices, ind+1);
-                    selected[i] = false;
-                }
-            }
-        }
+
+    //
+    // C++: static Ptr_LogisticRegression create()
+    //
+
+    //javadoc: LogisticRegression::create()
+    public static LogisticRegression create()
+    {
+        
+        LogisticRegression retVal = new LogisticRegression(create_0());
+        
+        return retVal;
     }
 
-    static void permutationBySwapping(final int[] array) {
-        swapPermutate(array, array.length - 1);
+
+    //
+    // C++:  TermCriteria getTermCriteria()
+    //
+
+    //javadoc: LogisticRegression::getTermCriteria()
+    public  TermCriteria getTermCriteria()
+    {
+        
+        TermCriteria retVal = new TermCriteria(getTermCriteria_0(nativeObj));
+        
+        return retVal;
     }
 
-    /**
-     * by simply swapping the elements, we do not need to check if an element has been selected,
-     * bring the time complexity to be O(2*n!), each step uses 2 swap operations.
-     * The initial step, there are n iteration in the for-loop, the second step, there's n-1 iteration, etc.
-     * therefore O(2 * n * (n-1) * ... * 1) = O(2*n!).
-     */
-    private static void swapPermutate(final int[] array, final int n) {
-        if (n == 0) {
-            System.out.println(Arrays.toString(array));
-        } else {
-            for (int i = 0; i <= n; i++) { // each element appears once in location n.
-                swap(array, i, n);
-                swapPermutate(array, n-1);
-                swap(array, i, n);
-            }
-        }
+
+    //
+    // C++:  double getLearningRate()
+    //
+
+    //javadoc: LogisticRegression::getLearningRate()
+    public  double getLearningRate()
+    {
+        
+        double retVal = getLearningRate_0(nativeObj);
+        
+        return retVal;
     }
 
-    /**
-     * Using Heap's algorithm for generating permutation, we are able to use only 1 swap per permutation,
-     * reaching O(n!)
-     */
-    static void permutationByHeaps(final int[] array) {
-        permutateByHeaps(array, array.length - 1);
+
+    //
+    // C++:  float predict(Mat samples, Mat& results = Mat(), int flags = 0)
+    //
+
+    //javadoc: LogisticRegression::predict(samples, results, flags)
+    public  float predict(Mat samples, Mat results, int flags)
+    {
+        
+        float retVal = predict_0(nativeObj, samples.nativeObj, results.nativeObj, flags);
+        
+        return retVal;
     }
 
-    private static void permutateByHeaps(final int[] array, final int n) {
-        if (n == 0) {
-            System.out.println(Arrays.toString(array));
-        } else {
-            for (int i = 0; i <= n; i++) {
-                permutateByHeaps(array, n-1);
-                swap(array, (n % 2 == 0) ? i : 0, n);
-            }
-        }
+    //javadoc: LogisticRegression::predict(samples)
+    public  float predict(Mat samples)
+    {
+        
+        float retVal = predict_1(nativeObj, samples.nativeObj);
+        
+        return retVal;
     }
 
-    static void iterativeHeaps(final int[] array) {
-        final int n = array.length;
-        final int[] c = new int[n];
 
-        System.out.println(Arrays.toString(array));
+    //
+    // C++:  int getIterations()
+    //
 
-        int i = 0;
-        while (i < n) {
-            if (c[i] < i) {
-                swap(array, (n % 2 == 0) ? 0 : c[i], i);
-                c[i] += 1;
-                i = 0;
-                System.out.println(Arrays.toString(array));
-            } else {
-                c[i] = 0;
-                i += 1;
-            }
-        }
+    //javadoc: LogisticRegression::getIterations()
+    public  int getIterations()
+    {
+        
+        int retVal = getIterations_0(nativeObj);
+        
+        return retVal;
     }
 
-    private static void swap(final int[] array, final int i, final int j) {
-        final int t = array[i];
-        array[i] = array[j];
-        array[j] = t;
+
+    //
+    // C++:  int getMiniBatchSize()
+    //
+
+    //javadoc: LogisticRegression::getMiniBatchSize()
+    public  int getMiniBatchSize()
+    {
+        
+        int retVal = getMiniBatchSize_0(nativeObj);
+        
+        return retVal;
     }
 
-    public static void main(final String[] args) {
-        int[] case1 = {1, 2, 3, 4};
-        generateAllPermutation(case1);
-        System.out.println();
-        permutationBySwapping(case1);
-        System.out.println();
-        permutationByHeaps(case1);
-        System.out.println();
-        iterativeHeaps(case1);
+
+    //
+    // C++:  int getRegularization()
+    //
+
+    //javadoc: LogisticRegression::getRegularization()
+    public  int getRegularization()
+    {
+        
+        int retVal = getRegularization_0(nativeObj);
+        
+        return retVal;
     }
+
+
+    //
+    // C++:  int getTrainMethod()
+    //
+
+    //javadoc: LogisticRegression::getTrainMethod()
+    public  int getTrainMethod()
+    {
+        
+        int retVal = getTrainMethod_0(nativeObj);
+        
+        return retVal;
+    }
+
+
+    //
+    // C++:  void setIterations(int val)
+    //
+
+    //javadoc: LogisticRegression::setIterations(val)
+    public  void setIterations(int val)
+    {
+        
+        setIterations_0(nativeObj, val);
+        
+        return;
+    }
+
+
+    //
+    // C++:  void setLearningRate(double val)
+    //
+
+    //javadoc: LogisticRegression::setLearningRate(val)
+    public  void setLearningRate(double val)
+    {
+        
+        setLearningRate_0(nativeObj, val);
+        
+        return;
+    }
+
+
+    //
+    // C++:  void setMiniBatchSize(int val)
+    //
+
+    //javadoc: LogisticRegression::setMiniBatchSize(val)
+    public  void setMiniBatchSize(int val)
+    {
+        
+        setMiniBatchSize_0(nativeObj, val);
+        
+        return;
+    }
+
+
+    //
+    // C++:  void setRegularization(int val)
+    //
+
+    //javadoc: LogisticRegression::setRegularization(val)
+    public  void setRegularization(int val)
+    {
+        
+        setRegularization_0(nativeObj, val);
+        
+        return;
+    }
+
+
+    //
+    // C++:  void setTermCriteria(TermCriteria val)
+    //
+
+    //javadoc: LogisticRegression::setTermCriteria(val)
+    public  void setTermCriteria(TermCriteria val)
+    {
+        
+        setTermCriteria_0(nativeObj, val.type, val.maxCount, val.epsilon);
+        
+        return;
+    }
+
+
+    //
+    // C++:  void setTrainMethod(int val)
+    //
+
+    //javadoc: LogisticRegression::setTrainMethod(val)
+    public  void setTrainMethod(int val)
+    {
+        
+        setTrainMethod_0(nativeObj, val);
+        
+        return;
+    }
+
+
+    @Override
+    protected void finalize() throws Throwable {
+        delete(nativeObj);
+    }
+
+
+
+    // C++:  Mat get_learnt_thetas()
+    private static native long get_learnt_thetas_0(long nativeObj);
+
+    // C++: static Ptr_LogisticRegression create()
+    private static native long create_0();
+
+    // C++:  TermCriteria getTermCriteria()
+    private static native double[] getTermCriteria_0(long nativeObj);
+
+    // C++:  double getLearningRate()
+    private static native double getLearningRate_0(long nativeObj);
+
+    // C++:  float predict(Mat samples, Mat& results = Mat(), int flags = 0)
+    private static native float predict_0(long nativeObj, long samples_nativeObj, long results_nativeObj, int flags);
+    private static native float predict_1(long nativeObj, long samples_nativeObj);
+
+    // C++:  int getIterations()
+    private static native int getIterations_0(long nativeObj);
+
+    // C++:  int getMiniBatchSize()
+    private static native int getMiniBatchSize_0(long nativeObj);
+
+    // C++:  int getRegularization()
+    private static native int getRegularization_0(long nativeObj);
+
+    // C++:  int getTrainMethod()
+    private static native int getTrainMethod_0(long nativeObj);
+
+    // C++:  void setIterations(int val)
+    private static native void setIterations_0(long nativeObj, int val);
+
+    // C++:  void setLearningRate(double val)
+    private static native void setLearningRate_0(long nativeObj, double val);
+
+    // C++:  void setMiniBatchSize(int val)
+    private static native void setMiniBatchSize_0(long nativeObj, int val);
+
+    // C++:  void setRegularization(int val)
+    private static native void setRegularization_0(long nativeObj, int val);
+
+    // C++:  void setTermCriteria(TermCriteria val)
+    private static native void setTermCriteria_0(long nativeObj, int val_type, int val_maxCount, double val_epsilon);
+
+    // C++:  void setTrainMethod(int val)
+    private static native void setTrainMethod_0(long nativeObj, int val);
+
+    // native support for java finalize()
+    private static native void delete(long nativeObj);
+
 }
-

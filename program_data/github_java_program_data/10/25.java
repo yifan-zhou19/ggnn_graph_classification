@@ -1,63 +1,64 @@
-public class KnuthMorrisPratt {
-	private String pattern;
-	private int[] next;
+package dfs;
 
-	// create Knuth-Morris-Pratt NFA from pattern
-	public KnuthMorrisPratt(String pattern) {
-		this.pattern = pattern;
-		int M = pattern.length();
-		next = new int[M];
-		int j = -1;
-		for (int i = 0; i < M; i++) {
-			if (i == 0)
-				next[i] = -1;
-			else if (pattern.charAt(i) != pattern.charAt(j))
-				next[i] = j;
-			else
-				next[i] = next[j];
-			while (j >= 0 && pattern.charAt(i) != pattern.charAt(j)) {
-				j = next[j];
-			}
-			j++;
-		}
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-		
-		/*for (int i = 0; i < M; i++)
-			System.out.print(next[i] + " ");
+import common.Constants;
+import common.DFileID;
 
-		System.out.println();
-		*/
+public abstract class DFS
+{
+	private boolean _format;
+	private String _volName;
+
+	DFS(String volName, boolean format) {
+		_volName = volName;
+		_format = format;
+	}
+	
+	DFS(boolean format) {
+		this(Constants.vdiskName,format);
 	}
 
-	// return offset of first occurrence of text in pattern (or N if no match)
-	// simulate the NFA to find match
-	public int search(String text) {
-		int M = pattern.length();
-		int N = text.length();
-		int i, j;
-		for (i = 0, j = 0; i < N && j < M; i++) {
-			while (j >= 0 && text.charAt(i) != pattern.charAt(j))
-				j = next[j];
-			j++;
-		}
-		if (j == M)
-			return i - M;
-		return N;
+	DFS() {
+		this(Constants.vdiskName,false);
 	}
 
-	// test client
-	public static void main(String[] args) {
-		String pattern = "abababca";
-		String text = "abaabaabcaabbababcaabababca";
+	/*
+	 * If format is true, the system should format the underlying disk contents,
+	 * i.e., initialize to empty. On success returns true, else return false.
+	 */
+	public abstract boolean format();
+	
+	/* creates a new DFile and returns the DFileID, which is useful to uniquely identify the DFile*/
+	public abstract DFileID createDFile();
+	
+	/* destroys the file specified by the DFileID */
+	public abstract void destroyDFile(DFileID dFID);
 
-		KnuthMorrisPratt kmp = new KnuthMorrisPratt(pattern);
-		int offset = kmp.search(text);
+	/*
+	 * reads the file dfile named by DFileID into the buffer starting from the
+	 * buffer offset startOffset; at most count bytes are transferred
+	 */
+	public abstract int read(DFileID dFID, byte[] buffer, int startOffset, int count);
+	
+	/*
+	 * writes to the file specified by DFileID from the buffer starting from the
+	 * buffer offset startOffsetl at most count bytes are transferred
+	 */
+	public abstract int write(DFileID dFID, byte[] buffer, int startOffset, int count);
+	
+	/* returns the size in bytes of the file indicated by DFileID. */
+	public abstract int sizeDFile(DFileID dFID);
 
-		// print results
-		System.out.println("text:    " + text);
-		System.out.print("pattern: ");
-		for (int i = 0; i < offset; i++)
-			System.out.print(" ");
-		System.out.println(pattern);
-	}
+	/* 
+	 * List all the existing DFileIDs in the volume
+	 */
+	public abstract List<DFileID> listAllDFiles();
+	
+	/*
+	 *  Write back all dirty blocks to volume, and wait for completion.
+	 */
+	public abstract void sync();
 }

@@ -1,74 +1,38 @@
-import java.util.Optional;
+package epi;
 
-public class SkipList
-{
+import epi.test_framework.EpiTest;
+import epi.test_framework.EpiUserType;
+import epi.test_framework.GenericTestHandler;
 
+import java.util.List;
 
+public class HuffmanCoding {
+  @EpiUserType(ctorParams = {String.class, double.class})
 
+  public static class CharWithFrequency {
+    public char c;
+    public double freq;
+    public String code;
 
-}
+    public CharWithFrequency(String s, double freq) {
+      if (s.length() != 1) {
+        throw new RuntimeException(
+            "CharWithFrequency parser: string length is not 1");
+      }
+      this.c = s.charAt(0);
+      this.freq = freq;
+    }
+  }
 
+  @EpiTest(testfile = "huffman_coding.tsv")
 
-class LinkedList
-{
-	HeadNode head;
+  public static Double huffmanEncoding(List<CharWithFrequency> symbols) {
+    // Implement this placeholder.
+    return 0.0;
+  }
 
-	void setHead(HeadNode head)
-	{
-		this.head = head;
-	}
-
-	Optional<HeadNode> getHead()
-	{
-		return Optional.ofNullable(head);
-	}
-
-}
-
-class HeadNode
-{
-	Node next;
-	Integer value = -1;
-}
-
-class Node
-{
-	Node prior;
-	Node next;
-	Integer value;
-
-	public Node(Integer value)
-	{
-		this.value = vaule;
-	}
-
-	public Integer getValue()
-	{
-		return value;
-	}
-
-	public void setValue(Integer value)
-	{
-		this.value = value;
-	}
-
-	public setPrior(Node prior)
-	{
-		this.prior = prior;
-	}
-
-	public Optional<Node> getPrior()
-	{
-		return Optional.ofNullable(prior);
-	}
-
-	public setNext(Node next)
-	{
-		this.next = next;
-	}
-
-	public Optional<Node> getNext()
-	{
-		return Optional.ofNullable(next);
-	}
+  public static void main(String[] args) {
+    GenericTestHandler.executeTestsByAnnotation(
+        new Object() {}.getClass().getEnclosingClass(), args);
+  }
 }
