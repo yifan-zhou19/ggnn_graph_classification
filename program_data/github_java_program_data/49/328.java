@@ -1,66 +1,47 @@
-package mobicloud.myMllib.gotit;
+package com.baeldung.algorithms.ga.jenetics;
 
-import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.DoubleFunction;
-import org.apache.spark.api.java.function.Function;
-import org.apache.spark.mllib.classification.LogisticRegressionModel;
-import org.apache.spark.mllib.classification.LogisticRegressionWithSGD;
-import org.apache.spark.mllib.linalg.Vector;
-import org.apache.spark.mllib.linalg.Vectors;
-import org.apache.spark.mllib.regression.*;
-import scala.Tuple2;
+import static org.jenetics.engine.EvolutionResult.toBestPhenotype;
+import static org.jenetics.engine.limit.bySteadyFitness;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.stream.Stream;
 
-/**
- * Created with IntelliJ IDEA.
- * User: He Qi
- * Date: 14-8-13
- * Time: 10:50
- * 线性回归
- */
-public class JavaLinearRegression {
-	public static void main(String[] args) {
-		SparkConf sparkConf = new SparkConf()
-			  .setAppName("Regression")
-			  .setMaster("local[2]");
-		JavaSparkContext sc = new JavaSparkContext(sparkConf);
-		JavaRDD<String> data = sc.textFile("/home/nodin/data/ridge-data/lpsa.data");
-		JavaRDD<LabeledPoint> parsedData = data.map(line -> {
-			String[] parts = line.split(",");
-			double[] ds = Arrays.stream(parts[1].split(" "))
-				  .mapToDouble(Double::parseDouble)
-				  .toArray();
-			return new LabeledPoint(Double.parseDouble(parts[0]), Vectors.dense(ds));
-		}).cache();
+import org.jenetics.BitChromosome;
+import org.jenetics.BitGene;
+import org.jenetics.Mutator;
+import org.jenetics.Phenotype;
+import org.jenetics.RouletteWheelSelector;
+import org.jenetics.SinglePointCrossover;
+import org.jenetics.TournamentSelector;
+import org.jenetics.engine.Engine;
+import org.jenetics.engine.EvolutionStatistics;
 
-		int numIterations = 25;
-		LinearRegressionModel model = LinearRegressionWithSGD.train(parsedData.rdd(), numIterations);
-		RidgeRegressionModel model1 = RidgeRegressionWithSGD.train(parsedData.rdd(), numIterations);
-		LassoModel model2 = LassoWithSGD.train(parsedData.rdd(), numIterations);
+//The main class.
+public class Knapsack {
 
-		print(parsedData, model);//training Mean Squared Error = 6.206807793307759
-		print(parsedData, model1);//training Mean Squared Error = 6.416002077543526
-		print(parsedData, model2);//training Mean Squared Error = 6.972349839013683
+    public static void main(String[] args) {
+        int nItems = 15;
+        double ksSize = nItems * 100.0 / 3.0;
 
-		double[] d = new double[]{1.0, 1.0, 2.0, 1.0, 3.0, -1.0, 1.0, -2.0};
-		Vector v = Vectors.dense(d);
-		System.out.println("Prediction of linear: " + model.predict(v));
-		System.out.println("Prediction of ridge: " + model1.predict(v));
-		System.out.println("Prediction of lasso: " + model2.predict(v));
-	}
+        KnapsackFF ff = new KnapsackFF(Stream.generate(KnapsackItem::random)
+            .limit(nItems)
+            .toArray(KnapsackItem[]::new), ksSize);
 
-	public static void print(JavaRDD<LabeledPoint> parsedData, GeneralizedLinearModel model) {
-		JavaPairRDD<Double, Double> valuesAndPreds = parsedData.mapToPair(point -> {
-			double prediction = model.predict(point.features());
-			return new Tuple2<>(point.label(), prediction);
-		});
+        Engine<BitGene, Double> engine = Engine.builder(ff, BitChromosome.of(nItems, 0.5))
+            .populationSize(500)
+            .survivorsSelector(new TournamentSelector<>(5))
+            .offspringSelector(new RouletteWheelSelector<>())
+            .alterers(new Mutator<>(0.115), new SinglePointCrossover<>(0.16))
+            .build();
 
-		Double MSE = valuesAndPreds.mapToDouble((Tuple2<Double, Double> t) -> Math.pow(t._1() - t._2(), 2)).mean();
-		System.out.println(model.getClass().getName() + " training Mean Squared Error = " + MSE);
-	}
+        EvolutionStatistics<Double, ?> statistics = EvolutionStatistics.ofNumber();
+
+        Phenotype<BitGene, Double> best = engine.stream()
+            .limit(bySteadyFitness(7))
+            .limit(100)
+            .peek(statistics)
+            .collect(toBestPhenotype());
+
+        System.out.println(statistics);
+        System.out.println(best);
+    }
 }

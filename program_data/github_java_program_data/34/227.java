@@ -1,25 +1,63 @@
-package cs_760.naive_bayes_tan;
+class Celula{
+   Object info;
+   Celula prox;
+}
 
-public class ModelNaiveBayes extends Model {
+class CLLSL{
+   Celula pInicio;
 
-  public ModelNaiveBayes(Data training_data) {
-    super(training_data);
-  }
+   CLLSL(){
+      pInicio = null;
+   }
 
-  @Override
-  public int[] getParents(Instance[] instanceList) {
-    int[] parentList = new int[attributeList.length];
-    for (int i = 0; i < attributeList.length; i++) {
-      parentList[i] = attributeList.length;
-    }
-    return parentList;
-  }
+   Celula incluiInicioLLSL(Object x){
+      Celula pNovo = new Celula();
+      pNovo.info = x;
+      pNovo.prox = pInicio;
 
-  @Override
-  public double p_i_c(int attributeIndex, int classValue, Instance instance) {
-    return (double) (countsPerParent[attributeIndex][(int) instance.getAttributeValue(
-        attributeIndex).value()][classValue] + 1)
-        / (classCounts[classValue] + attributeList[attributeIndex].categoryCount());
-  }
+      return pNovo;
+   }
 
+   Object excluiInicioLLSL(){
+      if(pInicio == null) return null;
+      Object x = pInicio.info;
+      Celula pAux = pInicio;
+      pInicio = pInicio.prox;
+      pAux = null;
+      return x;
+   }
+
+   Object consultaLLSL(Object x){
+      Celula pAux = pInicio;
+      while(pAux != null && pAux.info != x)
+         pAux = pAux.prox;
+      return pAux;
+   }
+   
+   int tamanhoDaLLSL(){
+      Celula pAux = pInicio;
+      int n = 0;
+      while(pAux != null){
+         pAux = pAux.prox;
+         n++;
+      }
+      return n;
+   }
+
+   void destroiLLSL(){
+      while(pInicio != null){
+         Celula pAux = pInicio.prox;
+         pInicio = null;
+         pInicio = pAux;
+      }
+   }
+
+   public static void main(String[] args){
+      Object infoRetorno;
+      Celula inicio;
+      CLLSL lista = new CLLSL();
+      Celula novaCelula = new Celula();
+      inicio = lista.incluiInicioLLSL(novaCelula);
+      infoRetorno = lista.excluiInicioLLSL();
+   }
 }

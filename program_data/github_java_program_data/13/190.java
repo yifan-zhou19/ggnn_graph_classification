@@ -1,81 +1,332 @@
-// https://practice.geeksforgeeks.org/problems/merge-sort/1
-{
-import java.util.*;
-class Merge_Sort
-{
-	static void printArray(int arr[])
+//
+// This file is auto-generated. Please don't modify it!
+//
+package org.opencv.ml;
+
+import java.lang.String;
+import org.opencv.core.Mat;
+import org.opencv.core.TermCriteria;
+import org.opencv.ml.LogisticRegression;
+import org.opencv.ml.StatModel;
+
+// C++: class LogisticRegression
+//javadoc: LogisticRegression
+
+public class LogisticRegression extends StatModel {
+
+    protected LogisticRegression(long addr) { super(addr); }
+
+    // internal usage only
+    public static LogisticRegression __fromPtr__(long addr) { return new LogisticRegression(addr); }
+
+    public static final int
+            REG_DISABLE = -1,
+            REG_L1 = 0,
+            REG_L2 = 1,
+            BATCH = 0,
+            MINI_BATCH = 1;
+
+
+    //
+    // C++:  Mat get_learnt_thetas()
+    //
+
+    //javadoc: LogisticRegression::get_learnt_thetas()
+    public  Mat get_learnt_thetas()
     {
-        int n = arr.length;
-        for (int i=0; i<n; ++i)
-            System.out.print(arr[i] + " ");
-        System.out.println();
+        
+        Mat retVal = new Mat(get_learnt_thetas_0(nativeObj));
+        
+        return retVal;
     }
-    static void mergeSort(int arr[], int l, int r)
+
+
+    //
+    // C++: static Ptr_LogisticRegression create()
+    //
+
+    //javadoc: LogisticRegression::create()
+    public static LogisticRegression create()
     {
-        GfG g = new GfG();
-        if (l < r)
-        {
-            int m = (l+r)/2;
-            mergeSort(arr, l, m);
-            mergeSort(arr , m+1, r);
-            g.merge(arr, l, m, r);
-        }
+        
+        LogisticRegression retVal = LogisticRegression.__fromPtr__(create_0());
+        
+        return retVal;
     }
-	public static void main(String args[])
-	{
-		Scanner sc = new Scanner(System.in);
-		int T = sc.nextInt();
-		while(T>0)
-		{
-			int n = sc.nextInt();
-			Merge_Sort ms = new Merge_Sort();
-			int arr[] = new int[n];
-			for(int i=0;i<n;i++)
-				arr[i] = sc.nextInt();
-			GfG g = new GfG();
-			mergeSort(arr,0,arr.length-1);
-			ms.printArray(arr);
-		T--;
-		}
-	}
-}
+
+
+    //
+    // C++: static Ptr_LogisticRegression load(String filepath, String nodeName = String())
+    //
+
+    //javadoc: LogisticRegression::load(filepath, nodeName)
+    public static LogisticRegression load(String filepath, String nodeName)
+    {
+        
+        LogisticRegression retVal = LogisticRegression.__fromPtr__(load_0(filepath, nodeName));
+        
+        return retVal;
+    }
+
+    //javadoc: LogisticRegression::load(filepath)
+    public static LogisticRegression load(String filepath)
+    {
+        
+        LogisticRegression retVal = LogisticRegression.__fromPtr__(load_1(filepath));
+        
+        return retVal;
+    }
+
+
+    //
+    // C++:  TermCriteria getTermCriteria()
+    //
+
+    //javadoc: LogisticRegression::getTermCriteria()
+    public  TermCriteria getTermCriteria()
+    {
+        
+        TermCriteria retVal = new TermCriteria(getTermCriteria_0(nativeObj));
+        
+        return retVal;
+    }
+
+
+    //
+    // C++:  double getLearningRate()
+    //
+
+    //javadoc: LogisticRegression::getLearningRate()
+    public  double getLearningRate()
+    {
+        
+        double retVal = getLearningRate_0(nativeObj);
+        
+        return retVal;
+    }
+
+
+    //
+    // C++:  float predict(Mat samples, Mat& results = Mat(), int flags = 0)
+    //
+
+    //javadoc: LogisticRegression::predict(samples, results, flags)
+    public  float predict(Mat samples, Mat results, int flags)
+    {
+        
+        float retVal = predict_0(nativeObj, samples.nativeObj, results.nativeObj, flags);
+        
+        return retVal;
+    }
+
+    //javadoc: LogisticRegression::predict(samples)
+    public  float predict(Mat samples)
+    {
+        
+        float retVal = predict_1(nativeObj, samples.nativeObj);
+        
+        return retVal;
+    }
+
+
+    //
+    // C++:  int getIterations()
+    //
+
+    //javadoc: LogisticRegression::getIterations()
+    public  int getIterations()
+    {
+        
+        int retVal = getIterations_0(nativeObj);
+        
+        return retVal;
+    }
+
+
+    //
+    // C++:  int getMiniBatchSize()
+    //
+
+    //javadoc: LogisticRegression::getMiniBatchSize()
+    public  int getMiniBatchSize()
+    {
+        
+        int retVal = getMiniBatchSize_0(nativeObj);
+        
+        return retVal;
+    }
+
+
+    //
+    // C++:  int getRegularization()
+    //
+
+    //javadoc: LogisticRegression::getRegularization()
+    public  int getRegularization()
+    {
+        
+        int retVal = getRegularization_0(nativeObj);
+        
+        return retVal;
+    }
+
+
+    //
+    // C++:  int getTrainMethod()
+    //
+
+    //javadoc: LogisticRegression::getTrainMethod()
+    public  int getTrainMethod()
+    {
+        
+        int retVal = getTrainMethod_0(nativeObj);
+        
+        return retVal;
+    }
+
+
+    //
+    // C++:  void setIterations(int val)
+    //
+
+    //javadoc: LogisticRegression::setIterations(val)
+    public  void setIterations(int val)
+    {
+        
+        setIterations_0(nativeObj, val);
+        
+        return;
+    }
+
+
+    //
+    // C++:  void setLearningRate(double val)
+    //
+
+    //javadoc: LogisticRegression::setLearningRate(val)
+    public  void setLearningRate(double val)
+    {
+        
+        setLearningRate_0(nativeObj, val);
+        
+        return;
+    }
+
+
+    //
+    // C++:  void setMiniBatchSize(int val)
+    //
+
+    //javadoc: LogisticRegression::setMiniBatchSize(val)
+    public  void setMiniBatchSize(int val)
+    {
+        
+        setMiniBatchSize_0(nativeObj, val);
+        
+        return;
+    }
+
+
+    //
+    // C++:  void setRegularization(int val)
+    //
+
+    //javadoc: LogisticRegression::setRegularization(val)
+    public  void setRegularization(int val)
+    {
+        
+        setRegularization_0(nativeObj, val);
+        
+        return;
+    }
+
+
+    //
+    // C++:  void setTermCriteria(TermCriteria val)
+    //
+
+    //javadoc: LogisticRegression::setTermCriteria(val)
+    public  void setTermCriteria(TermCriteria val)
+    {
+        
+        setTermCriteria_0(nativeObj, val.type, val.maxCount, val.epsilon);
+        
+        return;
+    }
+
+
+    //
+    // C++:  void setTrainMethod(int val)
+    //
+
+    //javadoc: LogisticRegression::setTrainMethod(val)
+    public  void setTrainMethod(int val)
+    {
+        
+        setTrainMethod_0(nativeObj, val);
+        
+        return;
+    }
+
+
+    @Override
+    protected void finalize() throws Throwable {
+        delete(nativeObj);
+    }
+
+
+
+    // C++:  Mat get_learnt_thetas()
+    private static native long get_learnt_thetas_0(long nativeObj);
+
+    // C++: static Ptr_LogisticRegression create()
+    private static native long create_0();
+
+    // C++: static Ptr_LogisticRegression load(String filepath, String nodeName = String())
+    private static native long load_0(String filepath, String nodeName);
+    private static native long load_1(String filepath);
+
+    // C++:  TermCriteria getTermCriteria()
+    private static native double[] getTermCriteria_0(long nativeObj);
+
+    // C++:  double getLearningRate()
+    private static native double getLearningRate_0(long nativeObj);
+
+    // C++:  float predict(Mat samples, Mat& results = Mat(), int flags = 0)
+    private static native float predict_0(long nativeObj, long samples_nativeObj, long results_nativeObj, int flags);
+    private static native float predict_1(long nativeObj, long samples_nativeObj);
+
+    // C++:  int getIterations()
+    private static native int getIterations_0(long nativeObj);
+
+    // C++:  int getMiniBatchSize()
+    private static native int getMiniBatchSize_0(long nativeObj);
+
+    // C++:  int getRegularization()
+    private static native int getRegularization_0(long nativeObj);
+
+    // C++:  int getTrainMethod()
+    private static native int getTrainMethod_0(long nativeObj);
+
+    // C++:  void setIterations(int val)
+    private static native void setIterations_0(long nativeObj, int val);
+
+    // C++:  void setLearningRate(double val)
+    private static native void setLearningRate_0(long nativeObj, double val);
+
+    // C++:  void setMiniBatchSize(int val)
+    private static native void setMiniBatchSize_0(long nativeObj, int val);
+
+    // C++:  void setRegularization(int val)
+    private static native void setRegularization_0(long nativeObj, int val);
+
+    // C++:  void setTermCriteria(TermCriteria val)
+    private static native void setTermCriteria_0(long nativeObj, int val_type, int val_maxCount, double val_epsilon);
+
+    // C++:  void setTrainMethod(int val)
+    private static native void setTrainMethod_0(long nativeObj, int val);
+
+    // native support for java finalize()
+    private static native void delete(long nativeObj);
 
 }
-
-/*Please note that it's Function problem i.e.
-you need to write your solution in the form of Function(s) only.
-Driver Code to call/invoke your function is mentioned above.*/
-
-/* The task is to complete merge() which is used
-in below mergeSort() */
-class GfG
-{
-   // Merges two subarrays of arr[].  First subarray is arr[l..m]
-   // Second subarray is arr[m+1..r]
-    void merge(int arr[], int l, int m, int r)
-    {
-         // Your code here
-         int[] temp = new int[r-l+1];
-         int t=0, i=l, j=m+1;
-         while(i<=m && j<=r){
-             if(arr[i]<=arr[j]) temp[t++] = arr[i++];
-             else temp[t++] = arr[j++];
-         }
-         while(i<=m) temp[t++] = arr[i++];
-         while(j<=r) temp[t++] = arr[j++];
-         
-         for(t=0, i=l; i<=r;) arr[i++] = temp[t++];
-    }
-}
- /* This method is present in a class other than GfG class .
-static void mergeSort(int arr[], int l, int r)
- {
-    GfG g = new GfG();
-    if (l < r)   
-   {
-        int m = (l+r)/2;
-        mergeSort(arr, l, m);
-        mergeSort(arr , m+1, r);
-        g.merge(arr, l, m, r);
-    }
-}*/

@@ -1,113 +1,124 @@
-/*************************************************************************
- *  Compilation:  javac Heap.java
- *  Execution:    java Heap < input.txt
- *  Dependencies: StdOut.java StdIn.java
- *  Data files:   http://algs4.cs.princeton.edu/24pq/tiny.txt
- *                http://algs4.cs.princeton.edu/24pq/words3.txt
- *  
- *  Sorts a sequence of strings from standard input using heapsort.
- *
- *  % more tiny.txt
- *  S O R T E X A M P L E
- *
- *  % java Heap < tiny.txt
- *  A E E L M O P R S T X                 [ one string per line ]
- *
- *  % more words3.txt
- *  bed bug dad yes zoo ... all bad yet
- *
- *  % java Heap < words3.txt
- *  all bad bed bug dad ... yes yet zoo   [ one string per line ]
- *
- *************************************************************************/
+package com.hrishikeshmishra.ns.graph;
+
+import com.hrishikeshmishra.ns.stack.LinkedStack;
+import com.hrishikeshmishra.ns.stack.Stack;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
- *  The <tt>Heap</tt> class provides a static methods for heapsorting
- *  an array.
- *  <p>
- *  For additional documentation, see <a href="http://algs4.cs.princeton.edu/24pq">Section 2.4</a> of
- *  <i>Algorithms, 4th Edition</i> by Robert Sedgewick and Kevin Wayne.
+ * Topological Sort
  *
- *  @author Robert Sedgewick
- *  @author Kevin Wayne
+ * @author hrishikesh.mishra
+ * @link http://hrishikeshmishra.com/topological-sort/
  */
-public class Heap {
+public class TopologicalSort {
 
-    // This class should not be instantiated.
-    private Heap() { }
+    public <V> List<V> sortRecursive(Digraph<V> digraph) {
+        List<V> topologicalOrder = new ArrayList<>();
+        VertexInDegreeCounter vertexInDegreeCounter = new VertexInDegreeCounter(digraph);
+        Set<V> zeroInDegreeVertices = getZeroInDegreeVertices(digraph);
+        if (zeroInDegreeVertices.isEmpty()) throw new RuntimeException("Graph has loop.");
+        zeroInDegreeVertices.stream().forEach(vertex -> sortRecursive(topologicalOrder, vertex, digraph, vertexInDegreeCounter));
+        return topologicalOrder;
+    }
 
-    /**
-     * Rearranges the array in ascending order, using the natural order.
-     * @param pq the array to be sorted
-     */
-    public static void sort(Comparable[] pq) {
-        int N = pq.length;
-        for (int k = N/2; k >= 1; k--)
-            sink(pq, k, N);
-        while (N > 1) {
-            exch(pq, 1, N--);
-            sink(pq, 1, N);
+    private <V> void sortRecursive(List<V> topologicalOrder, V vertex, Digraph<V> digraph, VertexInDegreeCounter vertexInDegreeCounter) {
+        topologicalOrder.add(vertex);
+        for (V outgoingVertex : digraph.getOutboundNeighbors(vertex)) {
+            vertexInDegreeCounter.decreaseInDegreeCountByOne(outgoingVertex);
+            if (!vertexInDegreeCounter.hasMoreInDegree(outgoingVertex))
+                sortRecursive(topologicalOrder, outgoingVertex, digraph, vertexInDegreeCounter);
         }
     }
 
-   /***********************************************************************
-    * Helper functions to restore the heap invariant.
-    **********************************************************************/
+    public <V> List<V> sortNonRecursive(Digraph<V> digraph) {
+        List<V> topologicalOrder = new ArrayList<>();
+        Stack<V> stack = new LinkedStack<>();
 
-    private static void sink(Comparable[] pq, int k, int N) {
-        while (2*k <= N) {
-            int j = 2*k;
-            if (j < N && less(pq, j, j+1)) j++;
-            if (!less(pq, k, j)) break;
-            exch(pq, k, j);
-            k = j;
+        getZeroInDegreeVertices(digraph).forEach(stack::push);
+        VertexInDegreeCounter vertexInDegreeCounter = new VertexInDegreeCounter(digraph);
+
+        if (stack.isEmpty())
+            throw new RuntimeException("Graph has loop.");
+
+        while (!stack.isEmpty()) {
+            V vertex = stack.pop();
+            topologicalOrder.add(vertex);
+            for (V outgoingVertex : digraph.getOutboundNeighbors(vertex)) {
+                vertexInDegreeCounter.decreaseInDegreeCountByOne(outgoingVertex);
+                if (!vertexInDegreeCounter.hasMoreInDegree(outgoingVertex))
+                    stack.push(outgoingVertex);
+
+            }
         }
+
+        return topologicalOrder;
     }
 
-   /***********************************************************************
-    * Helper functions for comparisons and swaps.
-    * Indices are "off-by-one" to support 1-based indexing.
-    **********************************************************************/
-    private static boolean less(Comparable[] pq, int i, int j) {
-        return pq[i-1].compareTo(pq[j-1]) < 0;
+    private <V> Set<V> getZeroInDegreeVertices(Digraph<V> digraph) {
+        return digraph.getVertices().
+                stream().
+                filter(vertex -> digraph.getInboundNeighbors(vertex).size() == 0).
+                collect(Collectors.toCollection(() -> new LinkedHashSet<>()));
     }
 
-    private static void exch(Object[] pq, int i, int j) {
-        Object swap = pq[i-1];
-        pq[i-1] = pq[j-1];
-        pq[j-1] = swap;
-    }
+    private static class VertexInDegreeCounter<V> {
+        private final Map<V, Integer> vertexInDegreeCountMap;
 
-    // is v < w ?
-    private static boolean less(Comparable v, Comparable w) {
-        return (v.compareTo(w) < 0);
-    }
-        
-
-   /***********************************************************************
-    *  Check if array is sorted - useful for debugging
-    ***********************************************************************/
-    private static boolean isSorted(Comparable[] a) {
-        for (int i = 1; i < a.length; i++)
-            if (less(a[i], a[i-1])) return false;
-        return true;
-    }
-
-
-    // print array to standard output
-    private static void show(Comparable[] a) {
-        for (int i = 0; i < a.length; i++) {
-            StdOut.println(a[i]);
+        private VertexInDegreeCounter(Digraph<V> digraph) {
+            vertexInDegreeCountMap = getVertexInDegreeCountMap(digraph);
         }
-    }
 
-    /**
-     * Reads in a sequence of strings from standard input; heapsorts them; 
-     * and prints them to standard output in ascending order. 
-     */
+        public void decreaseInDegreeCountByOne(V vertex) {
+            vertexInDegreeCountMap.put(vertex, vertexInDegreeCountMap.get(vertex) - 1);
+        }
+
+        public boolean hasMoreInDegree(V vertex) {
+            return (vertexInDegreeCountMap.get(vertex) > 0);
+        }
+
+        private <V> Map<V, Integer> getVertexInDegreeCountMap(Digraph<V> digraph) {
+            Map<V, Integer> vertexInDegreeCountMap = new HashMap<>();
+            for (V vertex : digraph.getVertices())
+                vertexInDegreeCountMap.put(vertex, digraph.inDegree(vertex));
+            return vertexInDegreeCountMap;
+        }
+
+    }
+}
+
+
+class TopologicalSortTest {
+
     public static void main(String[] args) {
-        String[] a = StdIn.readAllStrings();
-        Heap.sort(a);
-        show(a);
+        Digraph<Integer> graph = new Digraph<>();
+
+        graph.addVertex(7);
+        graph.addVertex(5);
+        graph.addVertex(3);
+        graph.addVertex(11);
+        graph.addVertex(8);
+        graph.addVertex(2);
+        graph.addVertex(9);
+        graph.addVertex(10);
+
+        graph.addEdge(3, 8);
+        graph.addEdge(3, 10);
+        graph.addEdge(5, 11);
+        graph.addEdge(7, 11);
+        graph.addEdge(7, 8);
+        graph.addEdge(11, 2);
+        graph.addEdge(11, 9);
+        graph.addEdge(11, 10);
+        graph.addEdge(8, 9);
+
+        System.out.println("Graph:\n" + graph);
+
+        TopologicalSort topologicalSort = new TopologicalSort();
+        System.out.println("\n\nNon-Sort: " + topologicalSort.sortNonRecursive(graph));
+        System.out.println("\n\nRecursive Sort: " + topologicalSort.sortRecursive(graph));
+
+
     }
 }

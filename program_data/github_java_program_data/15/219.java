@@ -1,107 +1,56 @@
-import java.util.*;
-import java.io.*;
+/**
+ * Copyright (c) 2017, Kyle Fricilone <kfricilone@gmail.com>
+ * All rights reserved.
+ * <p>
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * <p>
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * <p>
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+package com.friz.algorithms;
 
-public class Heap { //MaxHeap
-    public int[] a;
-    int size;
+import com.friz.graphs.Vertex;
 
-    public Heap() {
-	this(10);
-    }
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-    public Heap(int n) {
-	a = new int[n];
-	size = 0;
-    }
+/**
+ * Created by Kyle Fricilone on Feb 13, 2018.
+ */
+public class TopologicalSort<V extends Object>
+{
 
-    public void grow() {
-	int[] temp = new int[a.length*2];
-	for (int i=0; i<a.length; i++)
-	    temp[i] = a[i];
-	a = temp;
-    }
+	private final List<Vertex> order;
 
-    public void insert(int x) {
-	size++;
-	if (size > a.length)
-	    grow();
+	public TopologicalSort(DepthFirstSearch<V> dfs)
+	{
+		this.order = new ArrayList<>();
 
-	a[size]=x;
-	int pos = size;
-	while (x > a[pos/2] && pos > 1) {
-	    a[pos] = a[pos/2];
-	    a[pos/2] = x;
-	    pos = pos/2;
-	}
-    }
-
-    public void delete(int r) {
-	int i=0;
-	while (i < a.length && a[i] != r)
-	    i++;
-	if (i < a.length) {
-	    a[i] = a[size];
-	    a[size] = 0;
-	    int x = a[i];
-	    int pos = i;
-	    try { //Allows for getMax(pos*2) to run
-		int max = getMax(pos*2);
-		while (pos*2 <= size && x < a[max]) {
-		    a[pos] = a[max];
-		    a[max] = x;
-		    pos = max;
-		    max = getMax(pos*2);
+		List<Vertex> postOrder = dfs.getPostOrder();
+		for (int i = postOrder.size() - 1; i >= 0; i--)
+		{
+			order.add(postOrder.get(i));
 		}
-	    } catch (ArrayIndexOutOfBoundsException e) {}
-	    while (x > a[pos/2] && pos > 1) {
-		a[pos] = a[pos/2];
-		a[pos/2] = x;
-		pos = pos/2;
-	    }
-	    size--;
 	}
-    }
 
-
-    public String toString() {
-	String s = "";
-	for (int i = 1; i<=size; i++)
-	    s += a[i] + ", ";
-	return s.substring(0,s.length()-2);
-    }
-	    
-    public int getMin(int pos) {
-	if (a[pos] < a[pos+1])
-	    return pos;
-	else
-	    return pos + 1;
-    }
-
-    public int getMax(int pos) {
-	if (a[pos] > a[pos+1])
-	    return pos;
-	else
-	    return pos + 1;
-    }
-
-    public static void main(String[] args) {
-	Heap h = new Heap();
-	h.insert(2);
-	h.insert(50);
-	h.insert(3);
-	h.insert(16);
-	h.insert(14);
-	h.insert(10);
-	System.out.println(h);
-	h.delete(16);
-	System.out.println(h);
-	h.delete(5);
-	System.out.println(h);
-	h.delete(50);
-	System.out.println(h);
-	h.insert(23);
-	h.insert(5);
-	h.delete(2);
-	System.out.println(h);
-    }
+	public List<Vertex> getOrder()
+	{
+		return Collections.unmodifiableList(order);
+	}
 }

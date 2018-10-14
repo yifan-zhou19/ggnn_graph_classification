@@ -1,110 +1,94 @@
-package perf.parse.consumers.gc;
-
-import org.apache.commons.math3.stat.regression.RegressionResults;
-import org.apache.commons.math3.stat.regression.SimpleRegression;
-import perf.parse.JsonConsumer;
-import perf.parse.Parser;
-import perf.parse.consumers.JsonKeyMapConsumer;
-import perf.parse.factory.OpenJdkGcFactory;
-import perf.parse.reader.TextLineReader;
-import perf.util.AsciiArt;
-import perf.util.file.FileUtility;
-import perf.util.json.Jsons;
-
-import java.util.List;
-import java.util.function.Function;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 
 /**
- * Created by wreicher
+ * Created by yxy on 4/19/2015.
  */
-public class LinearRegressionConsumer implements JsonConsumer {
+public class Knapsack {
+    public static long[] cache;
+    public static Item[] items;
 
-    private static class JsonAccessorFunction implements Function<Jsons, Double> {
+    public static void knapsack(String fileName) {
 
-        private String key;
-        public JsonAccessorFunction(String keyName){
-            this.key = keyName;
-        }
+        try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
+            String[] firstLine = br.readLine().split(" ");
+            int knapsackSize = Integer.parseInt(firstLine[0]);
+            int numOfItem = Integer.parseInt(firstLine[1]);
 
-        @Override
-        public Double apply(Jsons jsonObject) {
-            Double value = jsonObject.optDouble(key);
-            if(value.isNaN()){
-                //System.out.println(jsonObject.toString(2));
+            cache = new long[knapsackSize+1];
+            for (int i = 0; i < cache.length; i++)
+                cache[i] = 0;
+            items = new Item[numOfItem+1];
+            items[0] = new Item();
+
+            String line;
+            int index = 1;
+            while ((line = br.readLine()) != null) {
+                String[] valueAndWeight = line.split(" ");
+                int value = Integer.parseInt(valueAndWeight[0]);
+                int weight = Integer.parseInt(valueAndWeight[1]);
+
+                items[index++] = new Item(value, weight);
             }
-            return value;
+
+            for (int i = 1; i <= numOfItem; i++) {
+                long[] tempCache = new long[knapsackSize+1];
+                for (int j = 0; j <= knapsackSize; j++) {
+                    tempCache[j] = pickOptWithCache(j, i);
+                }
+                cache = tempCache;  // update cache
+            }
+
+            System.out.println(/*pickOpt(knapsackSize, numOfItem)*/ cache[knapsackSize]);
+
+        } catch (IOException ex) {
+            System.out.println(ex.getMessage());
         }
     }
 
-    Function<Jsons,Double> converterX;
-    Function<Jsons,Double> converterY;
-    SimpleRegression regression;
+    // has to be run in a increasing order
+    public static long pickOptWithCache(int currentKnapsackSize, int itemIndex) {
+        long withThisItem;
+        if (currentKnapsackSize >= items[itemIndex].weight) {
+            withThisItem = cache[currentKnapsackSize - items[itemIndex].weight];
+            withThisItem += items[itemIndex].value;
+        }
+        else {
+            withThisItem = 0;
+        }
 
-    long count = 0;
-    double sum = 0;
+        long withoutThisItem = cache[currentKnapsackSize];
 
-    public LinearRegressionConsumer(String keyX, String keyY){
-        this(new JsonAccessorFunction(keyX),new JsonAccessorFunction(keyY));
-    }
-    public LinearRegressionConsumer(Function<Jsons,Double> converterX, Function<Jsons,Double> converterY){
-        this.converterX = converterX;
-        this.converterY = converterY;
-        this.regression = new SimpleRegression();
-    }
-
-    @Override
-    public void consume(Jsons object) {
-        Double x = converterX.apply(object);
-        Double y = converterY.apply(object);
-
-        if(!y.isNaN() && !x.isNaN() && x > 120){
-            regression.addData(x,y);
+        if (withoutThisItem >= withThisItem) {
+            return withoutThisItem;
+        }
+        else {
+            return withThisItem;
         }
     }
 
-    public RegressionResults getRegression(){
-        return regression.regress();
-    }
-
-    public static void main(String[] args) {
-        TextLineReader r = new TextLineReader();
-        OpenJdkGcFactory f = new OpenJdkGcFactory();
-        Parser p = f.newGcParser();
-
-        JsonKeyMapConsumer keyMap = new JsonKeyMapConsumer();
-        p.add(keyMap);
-
-        LinearRegressionConsumer sc = new LinearRegressionConsumer(
-                new JsonAccessorFunction("elapsed"),
-                json-> {
-                    if( json.has("heap") ){
-                     return json.getJson("heap").getDouble("postgc");
-                    }
-                     return Double.NaN;
-                });
-        p.add(sc);
-
-        r.addParser(p);
-
-        List<String> files = FileUtility.getFiles("/home/wreicher/perfWork/amq/jdbc/00259/client1/",".gclog",true);
-
-        files.clear();
-
-        files.add("/home/wreicher/perfWork/amq/jdbc/00259/client1/specjms.verbose-gc-dc.gclog");
-        files.add("/home/wreicher/perfWork/amq/jdbc/00259/client1/specjms.verbose-gc-hq.gclog");
-        files.add("/home/wreicher/perfWork/amq/jdbc/00259/client1/specjms.verbose-gc-sm.gclog");
-        files.add("/home/wreicher/perfWork/amq/jdbc/00259/client1/specjms.verbose-gc-sp.gclog");
-
-        for(String file : files){
-            System.out.println(AsciiArt.ANSI_BLUE+file+AsciiArt.ANSI_RESET);
-            r.read(file);
-            System.out.printf("[%6d] %s±%s/s  + %s±%s%n",
-                sc.regression.getN(),
-                AsciiArt.printKMG(sc.regression.getSlope()),
-                AsciiArt.printKMG(sc.regression.getSlopeConfidenceInterval()),
-                AsciiArt.printKMG(sc.regression.getIntercept()),
-                AsciiArt.printKMG(sc.regression.getSlopeConfidenceInterval()));
-            sc.regression.clear();
+    /*public static long pickOpt(int currentKnapsackSize, int itemIndex) {
+        if (itemIndex == 0) {
+            return 0;
         }
-    }
+
+        long withThisItem;
+        if (currentKnapsackSize >= items[itemIndex].weight) {
+            withThisItem = pickOpt(currentKnapsackSize - items[itemIndex].weight, itemIndex - 1);
+            withThisItem += items[itemIndex].value;
+        }
+        else {
+            withThisItem = 0;
+        }
+
+        long withoutThisItem = pickOpt(currentKnapsackSize, itemIndex - 1);
+
+        if (withoutThisItem > withThisItem) {
+            return withoutThisItem;
+        }
+        else {
+            return withThisItem;
+        }
+    }*/
 }

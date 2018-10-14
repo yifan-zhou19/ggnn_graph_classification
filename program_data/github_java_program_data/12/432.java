@@ -1,30 +1,38 @@
-void go(List<Edge> edges, int nvertices) {
-	//(MAXINT/2)-1 to avoid overflow when we sum two non-existing edges
-	int MAXINT = (Integer.MAX_VALUE/2)-1 ;
-
-	//initialize matrix
-	int[][] adjency_matrix = new int[nvertices+1][nvertices+1] ;	
-	for(int i=0 ; i<adjency_matrix.length ; i++) 
-		Arrays.fill(adjency_matrix[i], MAXINT) ; 
-	
-	//fill matrix
-	for(Edge e : edges)
-		adjency_matrix[e.src][e.dst] = e.weight ;
-	
-	floydWarshall(adjency_matrix, nvertices) ;
-	
-	//...do something with the resulting matrix
-}
-
-
-void floydWarshall(int[][] adjency_matrix, int nvertices) {
-	//k -> middle path between i and j
-	for(int k=1 ; k<=nvertices ; k++)
-		for(int i=1 ; i<=nvertices ; i++)
-			for(int j=1 ; j<=nvertices ; j++) {
-				int dist_through_k = adjency_matrix[i][k]+adjency_matrix[k][j] ;
-				//if path through k is lower than previous direct path, update
-				if(dist_through_k < adjency_matrix[i][j]) 
-					adjency_matrix[i][j] = dist_through_k ;
-			}
+public class mergesort {	
+	public static void Sort(int[] array,int num) 
+    { 
+        int[] workArray = new int[array.length]; 
+        Sort(array, workArray, 0, num); 
+    } 
+    private static void Sort(int[] array, int[] workArray, int start, int count)
+    { 
+        if (count < 2) 
+            return; 
+      
+        Sort(array, workArray, start, count / 2); 
+        Sort(array, workArray, start + count / 2, count - count / 2); 
+        Merge(array, workArray, start, count / 2, start + count / 2, count - count / 2); 
+    } 
+      
+    private static void Merge(int[] array, int[] workArray, int leftStart, int leftCount, int rightStart, int rightCount) 
+    { 
+        int i = leftStart, j = rightStart, leftBound = leftStart + leftCount, rightBound = rightStart + rightCount, index = leftStart; 
+        while (i < leftBound || j < rightBound) 
+        { 
+            if (i < leftBound && j < rightBound) 
+            { 
+                if (array[j] < array[i]) 
+                    workArray[index] = array[j++]; 
+                else
+                    workArray[index] = array[i++]; 
+            } 
+            else if (i < leftBound) 
+                workArray[index] = array[i++]; 
+            else
+                workArray[index] = array[j++]; 
+            ++index; 
+        } 
+        for (i = leftStart; i < index; ++i) 
+            array[i] = workArray[i]; 
+    }
 }

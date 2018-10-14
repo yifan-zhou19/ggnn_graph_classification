@@ -1,34 +1,35 @@
-package wit.lk.algorithm.ch03;
+/**
+ * Created by IntelliJ IDEA.
+ * User: student5
+ * Date: 16.03.11
+ * Time: 19:32
+ * To change this template use File | Settings | File Templates.
+ */
 
-public class BucketSort {
-	private int[] buckets;
-	private int[] array;
-	
-	public BucketSort(int range,int[] array){
-		buckets = new int[range];
-		this.array = array;
-	}
-	
-	/**
-	 * ����
-	 */
-	public void sort(){
-		if(array != null && array.length > 1){
-			for(int i = 0; i < array.length; i++){
-				buckets[array[i]]++;
-			}
-		}
-	}
-	
-	/**
-	 * �Ӵ�С����
-	 */
-	public void print(){
-		//�����������
-		for(int i = buckets.length - 1; i >= 0; i--){
-			for(int j = 0; j < buckets[i]; j++){
-				System.out.println(i);
-			}
-		}
-	}
+public class Stack {
+    private LinkedList list = new LinkedList();
+
+    public void push(Object element) {
+        this.list.addLast(element);
+    } //adds an element at the top¬
+
+    public Object pop() {
+        if(this.list.getSize()==0){
+           return null;
+        }
+
+       //LinkedListElement item = (LinkedListElement) ((LinkedListElement) this.list.getLast()).clone();
+
+        this.list.removeLast();
+        return ((LinkedListElement) this.list.getLast()).getObject();
+    } //if Stack is not empty, returns the topmost element of the Stack and removes it from the Stack, otherwise returns null
+
+    public Object peek() {
+       if(this.list.getSize()==0){
+           return null;
+       }
+
+       return ((LinkedListElement)this.list.getLast()).getObject();
+    } //if Stack is not empty, returns the topmost element of the Stack, otherwise returns null
+
 }

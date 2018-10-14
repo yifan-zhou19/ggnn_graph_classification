@@ -1,162 +1,258 @@
-class QuickSort
-{
-    /* This function takes last element as pivot,
-       places the pivot element at its correct
-       position in sorted array, and places all
-       smaller (smaller than pivot) to left of
-       pivot and all greater elements to right
-       of pivot */
-    int partition(int arr[], int low, int high)
-    {
-        int pivot = arr[high]; 
-        int i = (low-1); // index of smaller element
-        for (int j=low; j<=high-1; j++)
-        {
-            // If current element is smaller than or
-            // equal to pivot
-            if (arr[j] <= pivot)
-            {
-                i++;
- 
-                // swap arr[i] and arr[j]
-                int temp = arr[i];
-                arr[i] = arr[j];
-                arr[j] = temp;
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package 树;
+
+/**
+ * 对于一个红黑树而言，它的高度最高不高于2lgN，因为红黑树的最坏情况就是它所对应的2-3树中构成最左边的路径节点全部都是3-节点，而其余都是2-节点
+ * 红黑树所满足的条件：
+ * 1.红链接均为左链接
+ * 2.没有任何一个节点同时和两个红链接相连
+ * 3.该树是完美黑色平衡的，即任何空链接到根节点的路径上的黑链接数量相同
+ */
+public class BlackRedTree {
+    public static void main(String args[]){
+       BlackRedTree bt = new BlackRedTree();
+       bt.put(7, "7");
+       bt.put(5,"5");
+       bt.put(3,"3");
+       bt.delete(1);
+       System.out.println(bt.root.val);
+       
+    }
+    private static final boolean Red = true;
+    private static final boolean Black = false;
+    public Node root;
+    
+    private class Node{
+        int key;
+        String val;
+        Node left;
+        Node right;
+        int total;
+        boolean color;
+        
+        Node(int key,String val, int total, boolean color){
+            this.key = key;
+            this.val = val;
+            this.total = total;
+            this.color = color;
+        }
+    }
+    
+    private boolean isRed(Node x){
+        if(x ==null) return false;
+        return x.color == Red;
+    }
+    
+    private String get(Node x, int key){
+        if(x==null) return null;
+        if(key>x.key){
+            return(get(x.right,key));
+        }else if(key<x.key){
+            return(get(x.left,key));
+        }else{
+            return x.val;
+        }
+    }
+    
+    public int min(){
+        return min(root).key;   
+    }
+    
+    private Node min(Node x){
+        if(x.left==null) return x;
+        return min(x.left);
+    }
+    
+    public int size(){
+        return(size(root));
+    }
+    
+    private int size(Node x){
+        if(x==null) return 0;
+        else return x.total;
+    }
+    
+    public void put(int key, String val){       // 红黑树插入节点的时候，总会在树的底部新增一个节点，但总是用红链接将节点和它的父节点相连
+        root = put(root,key,val);
+        root.color = Black;
+    }
+    
+    public Node put(Node h,int key, String val){
+        if(h==null) return new Node(key,val,1,Red);
+        if(h.key>key){
+            h.left = put(h.left,key,val);
+        }
+        else if(h.key<key){
+            h.right = put(h.right,key,val);
+        }else{
+            h.val =val;
+        }
+        
+        if(isRed(h.right) &&!isRed(h.left)) h = rotateLeft(h);
+        if(isRed(h.left) && isRed(h.left.left)) h = rotateRight(h);
+        if(isRed(h.left) && isRed(h.right)) flipColors(h);
+        
+        h.total = size(h.left)+size(h.right) +1;
+        return h;
+    }
+    
+    Node rotateLeft(Node h){
+        Node x = h.right;
+        h.right = x.left;
+        x.left = h;
+        x.color = h.color;
+        h.color = Red;
+        x.total = h.total;
+        h.total = size(h.left) +size(h.right)+1;
+        return x;
+    }
+    
+    Node rotateRight(Node h){
+        Node x = h.left;
+        h.left = x.right;
+        x.right = h;
+        x.color = h.color;
+        h.color = Red;
+        x.total = h.total;
+        h.total = size(h.left)+size(h.right)+1;
+        return x;
+    }
+    
+    void flipColors(Node h){       // 这是用于插入的颜色转换
+        h.color = Red;              // 当前节点的左边与右边都是红色时，意味着这三个节点在3-2中表示为一个节点，我们需要将中间的节点提出并不断的向上结合
+        h.left.color = Black;       // 在颜色的转换中，始终设置根节点为黑色， 但是当根节点由黑变红的时候，说明树的高度加一了，之后，我们再次将根节点设置为黑色
+        h.right.color = Black;     
+    }
+    
+    /**
+    * 红黑树的删除操作：
+    *   当删除最大值或最小值的时候，该节点如果是一个2-节点，删除他以后会改变红黑树的平衡性，我们就需要不断的组合节点让其不是2-节点
+    * 1.删除当前的节点不能是2-节点
+    * 2.如果有必要可以是4-节点
+    * 3.从底部删除节点
+    * 4.向上fix过程中，消除4-节点      
+    */
+    void moveflipColors(Node h ){   //  这是用于删除节点的flipColor方法，该方法用于节点的合并，将父节点中的部分给与子节点
+        h.color = Black;            
+        h.left.color = Red;       
+        h.right.color = Red;
+    }
+    private Node moveRedLeft(Node h){
+        /**
+         * 当前节点的左右子节点都是2-节点，左右节点需要从父节点中借一个节点
+         * 如果该节点的右节点的左节点是红色节点，说明兄弟节点不是2-节点，可以从兄弟节点中借一个
+         */
+        moveflipColors(h);     // 从父节点中借一个
+        if(isRed(h.right.left)){    // 判断兄弟节点，如果是非红节点，也从兄弟节点中借一个
+            h.right = rotateRight(h.right);
+            h = rotateLeft(h);
+            moveflipColors(h);  // 在从兄弟节点借了一个以后，我们就需要还一个节点给父节点了，因为一开始从父节点那里借了一个
+        }
+        return h;
+    }
+    
+    public void deleteMin(){
+        if(!isRed(root.left) && !isRed(root.right)){
+            root.color = Red;   // 如果根节点的左右子节点是2-节点，我们可以将根设为红节点，这样才能进行后面的moveRedLeft操作，因为左子要从根节点借一个
+        }
+        root = deleteMin(root);
+        root.color = Black;  // 借完以后，我们将根节点的颜色复原
+    }
+    
+    private Node deleteMin(Node x){
+        if(x.left == null) return null;
+        if(!isRed(x.left) && !isRed(x.left))    // 判断x的左节点是不是2-节点
+            x = moveRedLeft(x);
+        x.left = deleteMin(x.left);
+        return balance(x);  //   解除临时组成的4-节点
+    }
+    
+    private Node balance(Node h){
+        if (isRed(h.right)) h = rotateLeft(h);
+        if (isRed(h.right) && !isRed(h.left)) h=rotateLeft(h);
+        if (isRed(h.left) && isRed(h.left.left)) h=rotateRight(h);
+        if (isRed(h.left) && isRed(h.right))    flipColors(h);
+        h.total = size(h.left)+size(h.right)+1;
+        return h;
+    }
+    
+    // 删除最大键
+    private Node moveRedRight(Node h){
+        moveflipColors(h);
+        if(isRed(h.left.left)){         // 在这里对于兄弟节点的判断都是.left，因为红色节点只会出现在左边
+            h=rotateRight(h);
+            moveflipColors(h);
+        }
+        return h;
+    }
+    public void deleteMax(){
+        if(!isRed(root.left) && isRed(root.right)){
+            root.color = Red;
+        }
+        root = deleteMax(root);
+        root.color = Black;
+    }
+    
+    private Node deleteMax(Node h){
+        if(isRed(h.left)){             
+        /**
+         * 这里比deleteMin多了一步操作，因为右子节点从父节点中获得节点的时候，我们需要将左边节点给于到右边节点，如果我们不移动的话，会破坏树的平衡
+         *          5,6
+         *      1,2     9       对于所展示的这个红黑树，如果不把5从左边移到右边的话，我们会直接删除9，这样会导致树的不平衡，因为红节点总是在左边的，我们进行删除操作的时候，直接将结点给予，只需要改变颜色即可，不需要移动
+         *                      对于红黑树而言，6是黑结点，再删除的时候，是不需要移动的，我们移动的是5这样的红结点
+         *      
+        */                                         
+            h = rotateRight(h);
+        }
+        if(h.right == null){
+            return null;
+        }
+        if(!isRed(h.right) && !isRed(h.right.left)){
+            h = moveRedRight(h);
+        }
+        h.right = deleteMax(h.right);
+        return balance(h);
+    }
+    
+    public void delete(int key){
+        if(!isRed(root.left)&& !isRed(root.right)){
+            root.color = Red;
+        }
+        root = delete(root,key);
+        root.color = Black;
+    }
+    
+    private Node delete(Node h, int key){
+        if(key<h.key){          // 当目标键小于当前键的时候，我们做类似于寻找最小是的操作，向树左边移动，合并父子结点来消除2-结点
+            if(h.left == null){
+                return null;
             }
+            if(isRed(h.left) && !isRed(h.left.left)){
+                h = moveRedLeft(h);
+            }
+            h.left = delete(h.left,key);
+        }else{                  // 当目标键大于当前键的时候，我们向右移动，并做与deleteMax相同的操作，如果相同的话，我们使用和二叉树的删除一样的操作，获取当前键的右子树的最小健，然后交换，并将目标键删除
+            if(isRed(h.left)){
+                h = rotateRight(h);
+            }
+            if(key != h.key && h.right == null){    // 我们没有找到目标键，我们将其删除
+                return null;
+            }
+            if(!isRed(h.right) && isRed(h.right.left)){
+                h = moveRedRight(h);
+            }
+            if(key == h.key){
+                h.val = get(h.right,min(h.right).key);
+                h.key = min(h.right).key;
+                h.right = deleteMin(h.right);
+            }
+            else h.right = delete(h.right,key);
         }
- 
-        // swap arr[i+1] and arr[high] (or pivot)
-        int temp = arr[i+1];
-        arr[i+1] = arr[high];
-        arr[high] = temp;
- 
-        return i+1;
+        return balance(h);
     }
- 
- 
-    /* The main function that implements QuickSort()
-      arr[] --> Array to be sorted,
-      low  --> Starting index,
-      high  --> Ending index */
-    void sort(int arr[], int low, int high)
-    {
-        if (low < high)
-        {
-            /* pi is partitioning index, arr[pi] is 
-              now at right place */
-            int pi = partition(arr, low, high);
- 
-            // Recursively sort elements before
-            // partition and after partition
-            sort(arr, low, pi-1);
-            sort(arr, pi+1, high);
-        }
-    }
- 
-    /* A utility function to print array of size n */
-    static void printArray(int arr[])
-    {
-        int n = arr.length;
-        for (int i=0; i<n; ++i)
-            System.out.print(arr[i]+" ");
-        System.out.println();
-    }
- 
-    // Driver program
-    public static void main(String args[])
-    {
-        int arr[] = {10, 7, 8, 9, 1, 5};
-        int n = arr.length;
- 
-        QuickSort ob = new QuickSort();
-        ob.sort(arr, 0, n-1);
- 
-        System.out.println("sorted array");
-        printArray(arr);
-    }
+   
 }
-/*This code is contributed by Rajat Mishra */
-Run on IDE
-Output:
-Sorted array:
-1 5 7 8 9 10
-Illustration of partition() :
-arr[] = {10, 80, 30, 90, 40, 50, 70}
-Indexes:  0   1   2   3   4   5   6 
-
-low = 0, high =  6, pivot = arr[h] = 70
-Initialize index of smaller element, i = -1
-
-Traverse elements from j = low to high-1
-j = 0 : Since arr[j] <= pivot, do i++ and swap(arr[i], arr[j])
-i = 0 
-arr[] = {10, 80, 30, 90, 40, 50, 70} // No change as i and j 
-                                     // are same
-
-j = 1 : Since arr[j] > pivot, do nothing
-// No change in i and arr[]
-
-j = 2 : Since arr[j] <= pivot, do i++ and swap(arr[i], arr[j])
-i = 1
-arr[] = {10, 30, 80, 90, 40, 50, 70} // We swap 80 and 30 
-
-j = 3 : Since arr[j] > pivot, do nothing
-// No change in i and arr[]
-
-j = 4 : Since arr[j] <= pivot, do i++ and swap(arr[i], arr[j])
-i = 2
-arr[] = {10, 30, 40, 90, 80, 50, 70} // 80 and 40 Swapped
-j = 5 : Since arr[j] <= pivot, do i++ and swap arr[i] with arr[j] 
-i = 3 
-arr[] = {10, 30, 40, 50, 80, 90, 70} // 90 and 50 Swapped 
-
-We come out of loop because j is now equal to high-1.
-Finally we place pivot at correct position by swapping
-arr[i+1] and arr[high] (or pivot) 
-arr[] = {10, 30, 40, 50, 70, 90, 80} // 80 and 70 Swapped 
-
-Now 70 is at its correct place. All elements smaller than
-70 are before it and all elements greater than 70 are after
-it.
-Analysis of QuickSort
-Time taken by QuickSort in general can be written as following.
- T(n) = T(k) + T(n-k-1) + \theta(n)
-The first two terms are for two recursive calls, the last term is for the partition process. k is the number of elements which are smaller than pivot.
-The time taken by QuickSort depends upon the input array and partition strategy. Following are three cases.
-Worst Case: The worst case occurs when the partition process always picks greatest or smallest element as pivot. If we consider above partition strategy where last element is always picked as pivot, the worst case would occur when the array is already sorted in increasing or decreasing order. Following is recurrence for worst case.
- T(n) = T(0) + T(n-1) + \theta(n)
-which is equivalent to  
- T(n) = T(n-1) + \theta(n)
-The solution of above recurrence is \theta(n2).
-Best Case: The best case occurs when the partition process always picks the middle element as pivot. Following is recurrence for best case.
- T(n) = 2T(n/2) + \theta(n)
-The solution of above recurrence is \theta(nLogn). It can be solved using case 2 of Master Theorem.
-Average Case:
-To do average case analysis, we need to consider all possible permutation of array and calculate time taken by every permutation which doesn’t look easy.
-We can get an idea of average case by considering the case when partition puts O(n/9) elements in one set and O(9n/10) elements in other set. Following is recurrence for this case.
- T(n) = T(n/9) + T(9n/10) + \theta(n)
-Solution of above recurrence is also O(nLogn)
-Although the worst case time complexity of QuickSort is O(n2) which is more than many other sorting algorithms like Merge Sort and Heap Sort, QuickSort is faster in practice, because its inner loop can be efficiently implemented on most architectures, and in most real-world data. QuickSort can be implemented in different ways by changing the choice of pivot, so that the worst case rarely occurs for a given type of data. However, merge sort is generally considered better when data is huge and stored in external storage.
-What is 3-Way QuickSort?
-In simple QuickSort algorithm, we select an element as pivot, partition the array around pivot and recur for subarrays on left and right of pivot.
-Consider an array which has many redundant elements. For example, {1, 4, 2, 4, 2, 4, 1, 2, 4, 1, 2, 2, 2, 2, 4, 1, 4, 4, 4}. If 4 is picked as pivot in Simple QuickSort, we fix only one 4 and recursively process remaining occurrences. In 3 Way QuickSort, an array arr[l..r] is divided in 3 parts:
-a) arr[l..i] elements less than pivot.
-b) arr[i+1..j-1] elements equal to pivot.
-c) arr[j..r] elements greater than pivot.
-See this for implementation.
-How to implement QuickSort for Linked Lists?
-QuickSort on Singly Linked List
-QuickSort on Doubly Linked List
-Can we implement QuickSort Iteratively?
-Yes, please refer Iterative Quick Sort.
-Why Quick Sort is preferred over MergeSort for sorting Arrays
-Quick Sort in its general form is an in-place sort (i.e. it doesn’t require any extra storage) whereas merge sort requires O(N) extra storage, N denoting the array size which may be quite expensive. Allocating and de-allocating the extra space used for merge sort increases the running time of the algorithm. Comparing average complexity we find that both type of sorts have O(NlogN) average complexity but the constants differ. For arrays, merge sort loses due to the use of extra O(N) storage space.
-Most practical implementations of Quick Sort use randomized version. The randomized version has expected time complexity of O(nLogn). The worst case is possible in randomized version also, but worst case doesn’t occur for a particular pattern (like sorted array) and randomized Quick Sort works well in practice.
-Quick Sort is also a cache friendly sorting algorithm as it has good locality of reference when used for arrays.
-Quick Sort is also tail recursive, therefore tail call optimizations is done.
-Why MergeSort is preferred over QuickSort for Linked Lists?
-In case of linked lists the case is different mainly due to difference in memory allocation of arrays and linked lists. Unlike arrays, linked list nodes may not be adjacent in memory. Unlike array, in linked list, we can insert items in the middle in O(1) extra space and O(1) time. Therefore merge operation of merge sort can be implemented without extra space for linked lists.
-In arrays, we can do random access as elements are continuous in memory. Let us say we have an integer (4-byte) array A and let the address of A[0] be x then to access A[i], we can directly access the memory at (x + i*4). Unlike arrays, we can not do random access in linked list. Quick Sort requires a lot of this kind of access. In linked list to access i’th index, we have to travel each and every node from the head to i’th node as we don’t have continuous block of memory. Therefore, the overhead increases for quick sort. Merge sort accesses data sequentially and the need of random access is low.
-How to optimize QuickSort so that it takes O(Log n) extra space in worst case?
-Please see QuickSort Tail Call Optimization (Reducing worst case space to Log n )
- 

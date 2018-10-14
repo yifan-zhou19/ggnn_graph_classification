@@ -1,52 +1,33 @@
-package com.zedray.search;
+package com.balaji;//11) WAP to identify if an int number is a palindrome!
 
-import java.util.Arrays;
+public class Palindrome{
+	public static void main(String[] args) {
+		int num=121;
+		System.out.println("The number, "+num+" is : "+ (checkPalindrome(num)?"Palindrome":"not Palindrome"));
+		num=1213;
+		System.out.println("The number, "+num+" is : "+ (checkPalindrome(num)?"Palindrome":"not Palindrome"));
+		num=12121;
+		System.out.println("The number, "+num+" is : "+ (checkPalindrome(num)?"Palindrome":"not Palindrome"));
+		num=543735;
+		System.out.println("The number, "+num+" is : "+ (checkPalindrome(num)?"Palindrome":"not Palindrome"));
 
-/***
- * Binary search.
- *
- * Search takes (log N) iterations.
- * O(1) best or O(log N) worst.
- */
-public final class JavaBinarySearch {
-
-    /***
-     * Private constructor.
-     */
-    private JavaBinarySearch() {
-        // Do nothing.
-    }
-
-    /***
-     * Main entry point.
-     *
-     * @param args Command line arguments.
-     */
-    public static void main(final String[] args) {
-        System.out.println("Start " + JavaBinarySearch.class.getName());
-        search(new int[]{}, 5, -1);
-        search(new int[]{5}, 5, 0);
-        search(new int[]{0, 5}, 5, 1);
-        search(new int[]{0, 5, 13, 19, 22, 41, 55, 68, 72, 81, 98}, 81, 9);
-        search(new int[]{0, 5, 13, 19, 22, 41, 55, 68, 72, 81, 98}, 111, -1);
-
-        System.out.println("Done");
-    }
-
-    /***
-     * Search the given array for the given value.
-     *
-     * @param data Data to search.
-     * @param value Value to search.
-     * @param actualLocation Actual location of value (for testing).
-     */
-    private static void search(final int[] data, final int value,
-            final int actualLocation) {
-        long time = System.currentTimeMillis();
-        if (actualLocation == -1 && 0 < Arrays.binarySearch(data, value)) {
-            throw new RuntimeException("Incorrect value locatoin returned");
-        }
-        System.out.println("Value found from " + data.length + " values in "
-                + (System.currentTimeMillis() - time) + "ms");
-    }
+	}
+	public static boolean checkPalindrome(int num) {
+			int a=num;
+			int result=0;
+		while(num>0){
+			
+			int b=num%10;
+			num=num/10;
+			result=(result*10)+b;
+			
+		}
+		 if(result==a)
+		 	return true;
+		 else
+		 	return false;
+		
+	}
 }
+
+

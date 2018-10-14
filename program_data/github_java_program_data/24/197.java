@@ -1,30 +1,34 @@
-package sedgewick_algo.course2.week2_mst;
+public class Permutation {
+	
+	public char chiffrer(char c, String key){
+		return key.charAt(c-97);	
+	}
 
-import edu.princeton.cs.algs4.In;
-import edu.princeton.cs.algs4.StdOut;
+	public char dechiffrer(char c, String key){
+		return (char) (key.indexOf(c)+97);	
+	}
 
-public class MinimumSpanningTree {
-    MinimumSpanningTree(EdgeWeightedGraph graph){
+	public String chiffrer(String s, String key){
+		String s2 = "";
 
-    }
+		for(int i=0, l=s.length();i<l;i++){
+			if(s.charAt(i) >= 97 && s.charAt(i) <= 122)
+				s2 += chiffrer(s.charAt(i),key);
+			else
+				s2 += s.charAt(i);
+		}
+		return s2;
+	}
 
-    public Iterable<Edge> edges(){
-        return null;
-    }
+	public String dechiffrer(String s, String key){
+		String s2 = "";
 
-    public double weight(){
-        return 0.0;
-    }
-
-    public static void main(String args[]){
-        In in = new In(args[0]);
-        EdgeWeightedGraph graph = new EdgeWeightedGraph(in);
-        MinimumSpanningTree mst = new MinimumSpanningTree(graph);
-
-        for(Edge e : mst.edges()){
-            StdOut.print(e);
-        }
-
-        StdOut.printf("%.2f\n", mst.weight());
-    }
+		for(int i=0, l=s.length();i<l;i++){
+			if(s.charAt(i) >= 97 && s.charAt(i) <= 122)
+				s2 += dechiffrer(s.charAt(i),key);
+			else
+				s2 += s.charAt(i);
+		}
+		return s2;
+	}
 }

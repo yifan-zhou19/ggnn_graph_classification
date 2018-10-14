@@ -1,66 +1,85 @@
-package com.baeldung.string;
+package org.apache.pig.builtin;
 
-import java.util.stream.IntStream;
+/**
+ * A RegressionModel that fits a straight line to a data set
+ */
+public class LinearRegressionModel extends RegressionModel {
 
-public class Palindrome {
+  /** The y intercept of the straight line */
+  private double a;
 
-    public boolean isPalindrome(String text) {
-        String clean = text.replaceAll("\\s+", "").toLowerCase();
-        int length = clean.length();
-        int forward = 0;
-        int backward = length - 1;
-        while (backward > forward) {
-            char forwardChar = clean.charAt(forward++);
-            char backwardChar = clean.charAt(backward--);
-            if (forwardChar != backwardChar)
-                return false;
-        }
-        return true;
+  /** The gradient of the line */
+  private double b;
+  
+  /** The type of g(x) */
+  private int tp = 0;
+
+  /**
+   * Construct a new LinearRegressionModel with the supplied data set
+   * 
+   * @param x
+   *          The x data points
+   * @param y
+   *          The y data points
+   */
+  public LinearRegressionModel(double[] x, double[] y, int type) {
+    super(x, y, type);
+    a = b = 0;
+    tp = type;
+  }
+
+  /**
+   * Get the coefficents of the fitted straight line
+   * 
+   * @return An array of coefficients {intercept, gradient}
+   * 
+   * @see RegressionModel#getCoefficients()
+   */
+  @Override
+  public double[] getCoefficients() {
+    if (!computed)
+      throw new IllegalStateException("Model has not yet computed");
+
+    return new double[] { a, b };
+  }
+
+  /**
+   * Compute the coefficients of a straight line the best fits the data set
+   * 
+   * @see RegressionModel#compute()
+   */
+  @Override
+  public void compute() {
+
+    // throws exception if regression can not be performed
+    if (xValues.length < 2 | yValues.length < 2) {
+      throw new IllegalArgumentException("Must have more than two values");
     }
 
-    public boolean isPalindromeReverseTheString(String text) {
-        StringBuilder reverse = new StringBuilder();
-        String clean = text.replaceAll("\\s+", "").toLowerCase();
-        char[] plain = clean.toCharArray();
-        for (int i = plain.length - 1; i >= 0; i--)
-            reverse.append(plain[i]);
-        return (reverse.toString()).equals(clean);
-    }
+    // get the value of the gradient using the formula b = cov[x,y] / var[x]
+    b = MathUtils.covariance(xValues, yValues) / MathUtils.variance(xValues);
 
-    public boolean isPalindromeUsingStringBuilder(String text) {
-        String clean = text.replaceAll("\\s+", "").toLowerCase();
-        StringBuilder plain = new StringBuilder(clean);
-        StringBuilder reverse = plain.reverse();
-        return (reverse.toString()).equals(clean);
-    }
+    // get the value of the y-intercept using the formula a = ybar + b * xbar
+    a = MathUtils.mean(yValues) - b * MathUtils.mean(xValues);
 
-    public boolean isPalindromeUsingStringBuffer(String text) {
-        String clean = text.replaceAll("\\s+", "").toLowerCase();
-        StringBuffer plain = new StringBuffer(clean);
-        StringBuffer reverse = plain.reverse();
-        return (reverse.toString()).equals(clean);
-    }
+    // set the computed flag to true after we have calculated the coefficients
+    computed = true;
+  }
 
-    public boolean isPalindromeRecursive(String text) {
-        String clean = text.replaceAll("\\s+", "").toLowerCase();
-        return recursivePalindrome(clean, 0, clean.length() - 1);
-    }
+  /**
+   * Evaluate the computed model at a certain point
+   * 
+   * @param x
+   *          The point to evaluate at
+   * @return The value of the fitted straight line at the point x
+   * 
+   * @see RegressionModel#evaluateAt(double)
+   */
+  @Override
+  public double evaluateAt(double x) {
+    if (!computed)
+      throw new IllegalStateException("Model has not yet computed");
 
-    private boolean recursivePalindrome(String text, int forward, int backward) {
-        if (forward == backward)
-            return true;
-        if ((text.charAt(forward)) != (text.charAt(backward)))
-            return false;
-        if (forward < backward + 1) {
-            return recursivePalindrome(text, forward + 1, backward - 1);
-        }
-
-        return true;
-    }
-
-    public boolean isPalindromeUsingIntStream(String text) {
-        String temp = text.replaceAll("\\s+", "").toLowerCase();
-        return IntStream.range(0, temp.length() / 2)
-            .noneMatch(i -> temp.charAt(i) != temp.charAt(temp.length() - i - 1));
-    }
+    return a + b * x;
+  }
 }

@@ -1,26 +1,49 @@
-package Algorithm;
+package idv.workshop.homework;
 
-/**
- * Created by tonytan on 12/1/2017.
- *
- * Bucket sort: cost most memory
- */
-public class BucketSort {
+import java.util.ArrayDeque;
+import java.util.Deque;
 
-    static int[] data = {1,2,7,4,6,3,9};//assume all data < 10
-    static int[] bucket = new int[10];
+public class Stack {
+    private Deque elems = new ArrayDeque();
+    private int capacity;
 
-    public static void bucketSort(int[] data){
-        for (int i=0; i<data.length; i++){
-            bucket[data[i]] = data[i];
-        }
+    public Stack(int capacity) {
+        this.capacity = capacity;
     }
 
-    public static void main(String[] args){
-        bucketSort(data);
-        for (int i:bucket) {
-            if (i==0) continue;
-            System.out.print(i);
+    public boolean push(Object elem) {
+        if(isFull()) {
+            return false;
         }
+        return elems.offerLast(elem);
+    }
+
+    private boolean isFull() {
+        return elems.size() + 1 > capacity;
+    }
+
+    public Object pop() {
+        return elems.pollLast();
+    }
+
+    public Object peek() {
+        return elems.peekLast();
+    }
+
+    public int size() {
+        return elems.size();
+    }
+
+    public static void main(String[] args) {
+        Stack stack = new Stack(5);
+        stack.push("Kiyomitsu");
+        stack.push("Yasusada");
+        stack.push("Okita");
+
+        System.out.println(stack.pop());
+        System.out.println(stack.pop());
+        System.out.println(stack.pop());
+
+        //從最後進去的開始取出
     }
 }

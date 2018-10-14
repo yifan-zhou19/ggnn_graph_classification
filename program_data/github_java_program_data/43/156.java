@@ -1,26 +1,47 @@
-package Algorithm;
+package stackSample;
 
-/**
- * Created by tonytan on 12/1/2017.
- *
- * Bucket sort: cost most memory
- */
-public class BucketSort {
+import java.util.Arrays;
 
-    static int[] data = {1,2,7,4,6,3,9};//assume all data < 10
-    static int[] bucket = new int[10];
 
-    public static void bucketSort(int[] data){
-        for (int i=0; i<data.length; i++){
-            bucket[data[i]] = data[i];
-        }
-    }
+public class Stack {
 
-    public static void main(String[] args){
-        bucketSort(data);
-        for (int i:bucket) {
-            if (i==0) continue;
-            System.out.print(i);
-        }
-    }
+	private final static int MSIZE = 3; 
+	private int currPos = 0;
+	private int[] val = new int[MSIZE];
+	private int depth=1;
+
+	public void push(int a) {
+		if (!pushPre()) {
+			throw new RuntimeException("cannot push; full stack");
+		}
+		val[currPos++] = a;
+		System.out.println("## Push:"+currPos+":"+depth);		
+		depth++;
+	}
+
+	public void pop() {
+		if (!popPre()) {
+			throw new RuntimeException("cannot pop; empty stack");
+		}
+		val[--currPos] = 0;
+		System.out.println("## Pop:"+currPos+":"+depth);
+		depth++;
+	}
+
+	public boolean pushPre() {		
+		return currPos >= 0 && currPos < MSIZE;
+	}
+
+	public boolean popPre() {
+		return currPos > 0 && currPos <= MSIZE;
+	}
+	
+	public String toString() {
+		StringBuffer sb = new StringBuffer();
+		sb.append("currPost="+currPos);
+		sb.append("\\n");
+		sb.append("val="+Arrays.toString(val));
+		return sb.toString();
+	}
+
 }

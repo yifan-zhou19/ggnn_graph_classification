@@ -1,79 +1,150 @@
-class Node {
-	int data;
-	Node next;
-	
-	Node(int d) {
-        data = d;
-        next = null;
+// Java program to demonstrate insert operation in binary search tree
+class BinarySearchTree {
+ 
+    /* Class containing left and right child of current node and key value*/
+    class Node {
+        int key;
+        Node left, right;
+ 
+        public Node(int item) {
+            key = item;
+            left = right = null;
+        }
     }
-}
-public static Node insert(Node head,int data) {
-
-	// Create a new node corresponding to data
-	Node n = new Node(data);
-	
-	// if list has no elements, return new node as head
-        if (head == null) return n; 
-        
-        // else iterate through list, add node to tail, and return head
-        Node temp = head;
-        while (temp.next != null) temp = temp.next; 
-        temp.next = n;
-        return head;
+ 
+    // Root of BST
+    Node root;
+ 
+    // Constructor
+    BinarySearchTree() { 
+        root = null; 
     }
 
-void Print(Node head) {
-	// To print the elements of a linked list, we need to traverse the entire list and print the value of every node.
-	// The basic idea behind traversing the linked list is to follow the next pointers untill NULL is encountered. 
-	Node temp = head;
-	while (temp != null) {
-		System.out.println(temp.data);
-		temp = temp.next;
-	}
-}
-Node Delete(Node head, int position) {
-// 0-->1-->2-->3-->4 ...want to delete 3
-// (0, 3) calls (1, 2) calls (2, 1) calls (3, 0) returns 4
-// so 2.next = 4. end of recursion
-// then return head ref
-
-    if (position == 0) return head.next;
-    head.next = Delete(head.next, position - 1);
-    return head;
-}
-void ReversePrint(Node head) {
-// [1] --> [2] --> [3]
-// (1) calls (2) calls (3) calls null--do nothing. end of recursion
-// go back up: (3) -- print[3] -> (2) -- print[2] -> (1) print [1]
-
-   if (head != null) {
-   		ReversePrint(head.next);
-   		/*----------------------------------------------
-        The recursion will get "stacked" right here!
-        The code below this area will not get called
-        until we go back up through the recursive stack.
-        -----------------------------------------------*/
-   		System.out.println(head.data);
-   }
-}
-Node Reverse(Node head) {
-// [1] --> [2] --> [3] --> null
-// (1) calls (2) calls (3) returns 3. end of recursion
-// go back up: (2) -- newHead = 3 -- 2.n.n = 3.n = 2 -- 2.n = null -- returns 3 
-//             (1) -- newHead = 3 -- 1.n.n = 2.n = 1 -- 1.n = null -- returns 3
-
-    if (head == null || head.next == null) {
-        return head;
+ // This method mainly calls deleteRec()
+    void deleteKey(int key)
+    {
+        root = deleteRec(root, key);
     }
 
-    Node newHead = Reverse(head.next); 
-    /* When the recursion creates the stack for A -> B -> C
-   	(RevA(RevB(RevC()))) it will stop at the last node and
-   	the recursion will end, beginning the unraveling of the
-   	nested functions from the inside, out. 
-	-----------------------------------------------------*/
-    head.next.next = head; 
-    head.next = null; 
+int minValue(Node root)
+    {
+        int minv = root.key;
+        while (root.left != null)
+        {
+            minv = root.left.key;
+            root = root.left;
+        }
+        return minv;
+    }
+ 
+    /* A recursive function to insert a new key in BST */
+    Node deleteRec(Node root, int key)
+    {
+        /* Base Case: If the tree is empty */
+        if (root == null)  return root;
+ 
+        /* Otherwise, recur down the tree */
+        if (key < root.key)
+            root.left = deleteRec(root.left, key);
+        else if (key > root.key)
+            root.right = deleteRec(root.right, key);
+ 
+        // if key is same as root's key, then This is the node
+        // to be deleted
+        else
+        {
+            // node with only one child or no child
+            if (root.left == null)
+                return root.right;
+            else if (root.right == null)
+                return root.left;
+ 
+            // node with two children: Get the inorder successor (smallest
+            // in the right subtree)
+            root.key = minValue(root.right);
+ 
+            // Delete the inorder successor
+            root.right = deleteRec(root.right, root.key);
+        }
+ 
+        return root;
+    }
 
-    return newHead;
+ 
+    // This method mainly calls insertRec()
+    void insert(int key) {
+       root = insertRec(root, key);
+    }
+     
+    /* A recursive function to insert a new key in BST */
+    Node insertRec(Node root, int key) {
+ 
+        /* If the tree is empty, return a new node */
+        if (root == null) {
+            root = new Node(key);
+            return root;
+        }
+ 
+        /* Otherwise, recur down the tree */
+        if (key < root.key)
+            root.left = insertRec(root.left, key);
+        else if (key > root.key)
+            root.right = insertRec(root.right, key);
+ 
+        /* return the (unchanged) node pointer */
+        return root;
+    }
+ 
+    // This method mainly calls InorderRec()
+    void inorder()  {
+       inorderRec(root);
+    }
+ 
+    // A utility function to do inorder traversal of BST
+    void inorderRec(Node root) {
+        if (root != null) {
+            inorderRec(root.left);
+            System.out.println(root.key);
+            inorderRec(root.right);
+        }
+    }
+
+
+// A utility function to search a given key in BST
+public Node search(Node root, int key)
+{
+    // Base Cases: root is null or key is present at root
+    if (root==null || root.key==key)
+        return root;
+ 
+    // val is greater than root's key
+    if (root.key > key)
+        return search(root.left, key);
+ 
+    // val is less than root's key
+    return search(root.right, key);
 }
+ 
+    // Driver Program to test above functions
+    public static void main(String[] args) {
+        BinarySearchTree tree = new BinarySearchTree();
+ 
+        /* Let us create following BST
+              50
+           /     \
+          30      70
+         /  \    /  \
+       20   40  60   80 */
+        tree.insert(50);
+        tree.insert(30);
+        tree.insert(20);
+        tree.insert(40);
+        tree.insert(70);
+        tree.insert(60);
+        tree.insert(80);
+ 
+        // print inorder traversal of the BST
+        tree.inorder();
+    }
+}
+// This code is contributed by Ankur Narain Verm

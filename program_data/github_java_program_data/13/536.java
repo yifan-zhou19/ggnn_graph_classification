@@ -1,35 +1,46 @@
-package keeyeong.codility.others;
+package ml.example;
 
-import java.util.Arrays;
+import ml.*;
+import org.apache.spark.sql.SchemaRDD;
+import scala.Some;
 
-public class MergeSortSort {
-	/*
-	 * I forgot to save this one so this is purely from memory!
-	 */
+public class JavaLogisticRegression extends Estimator {
 
-	/*
-	 * The solution I came up with that should be correct. I was misled by their
-	 * sample input!
-	 */
-	int solution(int[] times) {
-		Arrays.sort(times);
-		int result = 0;
-		for (int i : times) {
-			result = result + (result + i);
-		}
-		return result;
-	}
+  private String _id;
 
-	/*
-	 * The solution I submitted which got me 0 points :( Well at least i think
-	 * this was it?
-	 */
-	int solutionBad(int[] times) {
-		Arrays.sort(times);
-		int result = 0;
-		for (int i = 1; i <= times.length; i++) {
-			result = times[i - 1] + (i * result);
-		}
-		return result;
-	}
+  public JavaLogisticRegression(String id) {
+    _id = id;
+  }
+
+  @Override
+  public Model fit(SchemaRDD dataset, ParamMap paramMap) {
+    return null;
+  }
+
+  @Override
+  public String id() {
+    return _id;
+  }
+
+  private Param<Double> _alpha = new Param<>(this, "alpha", "regularization parameter", new Some<>(0.1));
+  public Param<Double> alpha() { return _alpha; }
+
+  public static class Model extends Transformer {
+
+    private String _id;
+
+    public Model(String id) {
+      _id = id;
+    }
+
+    @Override
+    public SchemaRDD transform(SchemaRDD dataset, ParamMap paramMap) {
+      return null;
+    }
+
+    @Override
+    public String id() {
+      return _id;
+    }
+  }
 }

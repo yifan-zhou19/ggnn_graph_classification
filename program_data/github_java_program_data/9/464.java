@@ -1,33 +1,69 @@
-/**
- * 
- */
-package algorithm.sort.stable;
+package dfs;
 
-/**
- * @author aaaajl
- * 
- */
-public class Insertion_InsertionSort {
+import java.util.List;
+
+import common.Constants;
+import common.DFileID;
+
+public abstract class DFS {
+
+	protected boolean _format;
+	protected String _volName;
+
 	/**
-	 * Worst case performance O(n2) Best case performance O(n) Average case
-	 * performance O(n2) Worst case space complexity O(n) total, O(1) auxiliary
-	 * */
-	public static void sort(Comparable[] data) {
-		long start = System.nanoTime();
-		int len = data.length;
-		for (int i = 1; i < len; i++) {
-			Comparable c = data[i];
-			int position = 0;
-			for (position = i; position > 0; position--) {
-				if (c.compareTo(data[position - 1]) < 0) {
-					data[position] = data[position - 1];
-				} else {
-					break;
-				}
-			}
-			data[position] = c;
-		}
-		long end = System.nanoTime();
-		System.out.println("\nInsertionSort Execute time:" + (end - start));
+	 * @volName: Explicitly overwrite volume name
+	 * @format: If format is true, the system should earse the underlying disk
+	 *          contents and reinialize the volume.
+	 */
+
+	DFS(String volName, boolean format) {
+		_volName = volName;
+		_format = format;
 	}
+
+	DFS(boolean format) {
+		this(Constants.vdiskName, format);
+	}
+
+	DFS() {
+		this(Constants.vdiskName, false);
+	}
+
+	/**
+	 * Initialize all the necessary structures with sizes as specified in the
+	 * common/Constants.java
+	 */
+	public abstract void init();
+
+	/**
+	 * creates a new DFile and returns the DFileID, which is useful to uniquely
+	 * identify the DFile
+	 */
+	public abstract DFileID createDFile();
+
+	/** destroys the file specified by the DFileID */
+	public abstract void destroyDFile(DFileID dFID);
+
+	/**
+	 * reads the file dfile named by DFileID into the buffer starting from the
+	 * buffer offset startOffset; at most count bytes are transferred
+	 */
+	public abstract int read(DFileID dFID, byte[] buffer, int startOffset, int count);
+
+	/**
+	 * writes to the file specified by DFileID from the buffer starting from the
+	 * buffer offset startOffset; at most count bytes are transferred
+	 */
+	public abstract int write(DFileID dFID, byte[] buffer, int startOffset, int count);
+
+	/** returns the size in bytes of the file indicated by DFileID. */
+	public abstract int sizeDFile(DFileID dFID);
+
+	/**
+	 * List all the existing DFileIDs in the volume
+	 */
+	public abstract List<DFileID> listAllDFiles();
+
+	/** Write back all dirty blocks to the volume, and wait for completion. */
+	public abstract void sync();
 }

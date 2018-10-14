@@ -1,76 +1,76 @@
-package com.vivek.graph;
+package com.pwr.zpi.util;
+
+import com.pwr.zpi.language.Formula;
 
 import java.util.*;
 
-public class MinimumSpanningTree {
+import static java.util.stream.Collectors.toSet;
 
-    public static void main(String[] args) {
+/**
+ * Class enables permute certain List.
+ *
+ * Based on code at http://www.programcreek.com.
+ */
+public class Permutation {
 
-        try (Scanner in = new Scanner(System.in)) {
-            int n = in.nextInt();
-            int m = in.nextInt();
+    static public <Formula>void  nextPermutation(ArrayList<Formula> nums, Comparator<Formula> c) {
 
-            List<Graph.Vertex> vertices = new ArrayList<>();
-            List<Graph.Edge> edges = new ArrayList<>();
+        if(nums == null || nums.size()<2)
+            return;
 
-            for (int i = 1; i <= n; i++) {
-                vertices.add(new Graph.Vertex(i));
+        int p=0;
+        for(int i=nums.size()-2; i>=0; i--){
+            if(c.compare(nums.get(i), nums.get(i+1))==-1){
+                p=i;
+                break;
             }
-
-            for (int i = 0; i < m; i++) {
-                Graph.Vertex u = vertices.get(in.nextInt() - 1);
-                Graph.Vertex v = vertices.get(in.nextInt() - 1);
-                int w = in.nextInt();
-                Graph.Edge e = new Graph.Edge(u, v, w);
-                u.addAdjacentEdge(v, e);
-                v.addAdjacentEdge(u, e);
-                edges.add(e);
-            }
-
-            Graph graph = new Graph(vertices, edges);
-            System.out.println(getMst(graph, vertices.get(in.nextInt() - 1)));
-
         }
 
-    }
-
-
-    static int getMst(Graph graph, Graph.Vertex start) {
-        int cost = 0;
-
-        final Set<Graph.Vertex> unvisited = new HashSet<>();
-        unvisited.addAll(graph.getVertices());
-        unvisited.remove(start);
-
-        final Queue<Graph.Edge> edgesAvailable = new PriorityQueue<>();
-
-        Graph.Vertex vertex = start;
-
-        while (!unvisited.isEmpty()) {
-            // Add all edges to unvisited vertices
-            for (Graph.Edge e : vertex.getAdjacencyMap().values()) {
-                if (unvisited.contains(e.getDest()) ||
-                        unvisited.contains(e.getSrc()))
-                    edgesAvailable.add(e);
+        int q = 0;
+        for(int i=nums.size()-1; i>p; i--){
+            if(c.compare(nums.get(i), nums.get(p)) == 1){
+                q=i;
+                break;
             }
-
-            // Remove the lowest cost edge
-            Graph.Edge e = edgesAvailable.remove();
-            while (!unvisited.contains(e.getDest()) && !unvisited.contains(e.getSrc())) {
-                e = edgesAvailable.remove();
-            }
-            cost += e.getWeight();
-
-            vertex = vertex != e.getDest() ? e.getDest() : e.getSrc();
-            if (!unvisited.contains(vertex)) {
-                for (Graph.Vertex v : unvisited) {
-                    vertex = v;
-                    break;
-                }
-            }
-            unvisited.remove(vertex);
         }
-        return cost;
+
+        if(p==0 && q==0){
+            reverse(nums, 0, nums.size()-1);
+            return;
+        }
+
+        reverse(nums, p, q);
+
+        if(p<nums.size()-1){
+            reverse(nums, p+1, nums.size()-1);
+        }
     }
 
+    static private <Formula>void reverse(ArrayList<Formula> nums, int left, int right){
+        Collections.swap(nums, left, right);
+    }
+
+    public static List<ArrayList<Formula>> getAllPossiblePermutations(ArrayList<Formula> elems, Comparator<Formula> comp) {
+        Set<ArrayList<Formula>> t = new HashSet<>();
+        for (int i = 0; i < factorial(elems.size()); i++) {
+            t.add(new ArrayList<Formula>(elems));
+            Permutation.nextPermutation(elems, comp);
+        }
+
+        List<ArrayList<Formula>> res = new ArrayList<>();
+        for (int i = t.iterator().next().size(); i > 1; i--)
+            res.addAll(t = t
+                    .stream()
+                    .map(l -> new ArrayList<>(l.subList(0, l.size() - 1)))
+                    .collect(toSet()));
+
+        return res;
+    }
+
+    private static int factorial(int n) {
+        int fact = 1;
+        for (int i = 1; i <= n; i++)
+            fact *= i;
+        return fact;
+    }
 }

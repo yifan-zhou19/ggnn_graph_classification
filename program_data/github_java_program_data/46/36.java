@@ -1,29 +1,35 @@
-package QnA;
+public class BinarySearch {
 
-public class SegmentTree {
-	int st[];
-	SegmentTree(int arr[],int n){
-		int x = (int) (Math.ceil(Math.log(n) / Math.log(2)));
-        int max_size = 2 * (int) Math.pow(2, x) - 1;
-		st = new int[max_size];
-		constructTree(arr,0,n-1,0);
-	}
-	public static void main(String args[]){
-		int arr[] ={1, 3, 5, 7, 9, 11};
-		int n= arr.length;
-		SegmentTree stree= new SegmentTree(arr, n);
-		for(int s: stree.st){
-			System.out.println(s);
-		}
-	}
-	public int constructTree(int arr[],int s,int e,int cur){
-		if(s ==e){
-			st[cur] = arr[s];
-			return st[cur];
-		}
-		
-		int mid = s+(e-s)/2;
-		st[cur] = constructTree(arr, s, mid, 2*cur+1)+constructTree(arr, mid+1, e, 2*cur+2);
-		return st[cur];
-	}
+   int binarySearch(int arr[], int l, int r, int x) {
+      if (r >= l) {
+         int mid = l + (r - l) / 2;
+
+         if (arr[mid] == x) {
+            return mid;
+         }
+
+         if (arr[mid] > x) {
+            return binarySearch(arr, l, mid - 1, x);
+         }
+
+         return binarySearch(arr, mid + 1, r, x);
+      }
+
+      return -1;
+   }
+
+   public static void main(String args[]) {
+      BinarySearch bs = new BinarySearch();
+      int arr[] = {3,6,9,15,22,99};
+      int n = arr.length;
+      int x = 9;
+      int result = bs.binarySearch(arr, 0, n - 1, x);
+      if (result == -1) {
+         System.out.println("Element not present");
+      } else {
+         System.out.println("Element found at index " + result);
+      }
+   }
 }
+
+

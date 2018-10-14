@@ -1,23 +1,13 @@
-
-import java.util.*;
-import java.math.BigInteger;
-
-public class Fibonacci {
-	static Hashtable<Integer, BigInteger> memo = new Hashtable<>();
-	static BigInteger f;
-	public static void main (String [] args){
-		System.out.println("Enter the n: ");
-		System.out.println("Answer: " + calculateNthFibonacci((new Scanner(System.in)).nextInt()));
-	}
-
-	public static BigInteger calculateNthFibonacci(int n){
-
-		if(memo.containsKey(n)) return memo.get(n);
-
-		if(n <= 2) f = BigInteger.valueOf(1);
-
-		else f = calculateNthFibonacci(n-1).add(calculateNthFibonacci(n-2));
-		return f;
-	}
-
-}
+public <T extends Comparable<T>> void sort(T[] elems) {
+ 7         int size = elems.length;
+ 8 
+ 9         for (int outerLoopIdx = 1; outerLoopIdx < size; ++outerLoopIdx) {
+10             for (int innerLoopIdx = outerLoopIdx; innerLoopIdx > 0; --innerLoopIdx) {
+11                 if (elems[innerLoopIdx - 1].compareTo(elems[innerLoopIdx]) > 0) {
+12                     T temp = elems[innerLoopIdx - 1];
+13                     elems[innerLoopIdx - 1] = elems[innerLoopIdx];
+14                     elems[innerLoopIdx] = temp;
+15                 }
+16             }
+17         }
+18     }

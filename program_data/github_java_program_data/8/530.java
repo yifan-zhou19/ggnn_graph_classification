@@ -1,31 +1,31 @@
-package recursive;
+import java.util.Arrays;
 
-import java.util.Scanner;
+public class Sort_InsertionSort {
+    public static void main(String[] args) {
 
+        // Относително ефективен при малки и почти сортирани списъци
+        // Взема всеки елемент един по-един от списъка и го вмъква на
+        // съответното си място в нов сортиран списък.
 
-public class Fibonacci {
+        int[] array = {13, 4, 1, 2, 0, 16, 8, -3, -6};
 
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-		Scanner scan=new Scanner(System.in);
-		System.out.println("enter an Integer");
-		int num=scan.nextInt();
-		int op=fib(num);
-		System.out.println(op);
-		scan.close();
-	}
+        InsertionSort(array);
+        System.out.println(Arrays.toString(array));
 
-	private static int fib(int num) {
-		// TODO Auto-generated method stub
-		if(num==0||num==1){
-			return num;
-		}
-		//System.out.println("fib(" + new Integer(num) + ") calling fib("+ new Integer(num-1) + ") and fib("+ new Integer(num-2)+")");
-		int res=fib(num-1)+fib(num-2);
-		//System.out.println("result came: fib(" + new Integer(num) + ") calling fib("+ new Integer(num-1) + ") and fib("+ new Integer(num-2)+")");
-
-		return res;
-		
-	}
-
+    }
+    public static void InsertionSort(int[] array) {
+        for (int i = 1; i < array.length; i++) {
+            for (int j = i; j > 0; j--) {
+                if (array[j] < array[j - 1]) {
+                    swap(array, j, j - 1);
+                } else
+                    break;
+            }
+        }
+    }
+    public static void swap(int[] array, int ind1, int ind2) {
+        int temp = array[ind1];
+        array[ind1] = array[ind2];
+        array[ind2] = temp;
+    }
 }

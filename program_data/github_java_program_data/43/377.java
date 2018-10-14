@@ -1,34 +1,50 @@
-package wit.lk.algorithm.ch03;
+public class Stack<T> {
+	//Top of the stack
+	private Node top;
 
-public class BucketSort {
-	private int[] buckets;
-	private int[] array;
-	
-	public BucketSort(int range,int[] array){
-		buckets = new int[range];
-		this.array = array;
-	}
-	
-	/**
-	 * ����
-	 */
-	public void sort(){
-		if(array != null && array.length > 1){
-			for(int i = 0; i < array.length; i++){
-				buckets[array[i]]++;
-			}
+	private class Node {
+		T data;
+		Node next;
+
+		public Node (T item) {
+			data = item;
 		}
 	}
-	
-	/**
-	 * �Ӵ�С����
-	 */
-	public void print(){
-		//�����������
-		for(int i = buckets.length - 1; i >= 0; i--){
-			for(int j = 0; j < buckets[i]; j++){
-				System.out.println(i);
-			}
+
+	public Stack() {
+		top = null;
+	}
+
+	//Push item to stack
+	public void push(T item) {
+		Node n = new Node(item);
+			n.next = top;
+			top = n;
+	}
+
+	//Pop top of stack
+	public T pop() {
+		if(top == null) {
+			return null;
 		}
+		else {
+			top = top.next;
+			return top == null ? null : top.data;
+		}
+	}
+
+	//Peek top of stack
+	public T peek() {
+		if(top == null) {
+			return null;
+		} else {
+			return top.data;
+		}
+	}
+
+	//Check if stack is empty
+	public boolean empty() {
+		return top == null;
 	}
 }
+

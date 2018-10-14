@@ -1,81 +1,79 @@
-/*
- *   This program is free software: you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation, either version 3 of the License, or
- *   (at your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * NaiveBayes.java
- * Copyright (C) 2004-2012 University of Waikato, Hamilton, New Zealand
- * 
- */
-package weka.classifiers.bayes.net.search.fixed;
-
-import weka.classifiers.bayes.BayesNet;
-import weka.classifiers.bayes.net.search.SearchAlgorithm;
-import weka.core.Instances;
-import weka.core.RevisionUtils;
-
-/** 
- <!-- globalinfo-start -->
- * The NaiveBayes class generates a fixed Bayes network structure with arrows from the class variable to each of the attribute variables.
- * <p/>
- <!-- globalinfo-end -->
- *
- <!-- options-start -->
- <!-- options-end -->
- * 
- * @author Remco Bouckaert
- * @version $Revision: 8034 $
- */
-public class NaiveBayes 
-	extends SearchAlgorithm {
-
-  	/** for serialization */
-  	static final long serialVersionUID = -4808572519709755811L;
-  	    
-  	/**
-  	 * Returns a string describing this object
-  	 * @return a description of the classifier suitable for
-  	 * displaying in the explorer/experimenter gui
-  	 */
-  	public String globalInfo() {
-  	  return 
-  	      "The NaiveBayes class generates a fixed Bayes network structure "
-  	    + "with arrows from the class variable to each of the attribute "
-  	    + "variables.";
-  	}
+class Node {
+	int data;
+	Node next;
 	
-  	/**
-  	 * 
-  	 * @param bayesNet
-  	 * @param instances the instances to work with
-  	 * @throws Exception if something goes wrong
-  	 */
-	public void buildStructure (BayesNet bayesNet, Instances instances) throws Exception {
-	  for (int iAttribute = 0; iAttribute < instances.numAttributes(); iAttribute++) {
-	    if (iAttribute != instances.classIndex()) {
-	      bayesNet.getParentSet(iAttribute).addParent(instances.classIndex(), instances);
-	    }
-	  }
-	} // buildStructure
+	Node(int d) {
+        data = d;
+        next = null;
+    }
+}
+public static Node insert(Node head,int data) {
 
-	/**
-	 * Returns the revision string.
-	 * 
-	 * @return		the revision
-	 */
-	public String getRevision() {
-	  return RevisionUtils.extract("$Revision: 8034 $");
+	// Create a new node corresponding to data
+	Node n = new Node(data);
+	
+	// if list has no elements, return new node as head
+        if (head == null) return n; 
+        
+        // else iterate through list, add node to tail, and return head
+        Node temp = head;
+        while (temp.next != null) temp = temp.next; 
+        temp.next = n;
+        return head;
+    }
+
+void Print(Node head) {
+	// To print the elements of a linked list, we need to traverse the entire list and print the value of every node.
+	// The basic idea behind traversing the linked list is to follow the next pointers untill NULL is encountered. 
+	Node temp = head;
+	while (temp != null) {
+		System.out.println(temp.data);
+		temp = temp.next;
 	}
-	
-} // class NaiveBayes
+}
+Node Delete(Node head, int position) {
+// 0-->1-->2-->3-->4 ...want to delete 3
+// (0, 3) calls (1, 2) calls (2, 1) calls (3, 0) returns 4
+// so 2.next = 4. end of recursion
+// then return head ref
+
+    if (position == 0) return head.next;
+    head.next = Delete(head.next, position - 1);
+    return head;
+}
+void ReversePrint(Node head) {
+// [1] --> [2] --> [3]
+// (1) calls (2) calls (3) calls null--do nothing. end of recursion
+// go back up: (3) -- print[3] -> (2) -- print[2] -> (1) print [1]
+
+   if (head != null) {
+   		ReversePrint(head.next);
+   		/*----------------------------------------------
+        The recursion will get "stacked" right here!
+        The code below this area will not get called
+        until we go back up through the recursive stack.
+        -----------------------------------------------*/
+   		System.out.println(head.data);
+   }
+}
+Node Reverse(Node head) {
+// [1] --> [2] --> [3] --> null
+// (1) calls (2) calls (3) returns 3. end of recursion
+// go back up: (2) -- newHead = 3 -- 2.n.n = 3.n = 2 -- 2.n = null -- returns 3 
+//             (1) -- newHead = 3 -- 1.n.n = 2.n = 1 -- 1.n = null -- returns 3
+
+    if (head == null || head.next == null) {
+        return head;
+    }
+
+    Node newHead = Reverse(head.next); 
+    /* When the recursion creates the stack for A -> B -> C
+   	(RevA(RevB(RevC()))) it will stop at the last node and
+   	the recursion will end, beginning the unraveling of the
+   	nested functions from the inside, out. 
+	-----------------------------------------------------*/
+    head.next.next = head; 
+    head.next = null; 
+
+    return newHead;
+}

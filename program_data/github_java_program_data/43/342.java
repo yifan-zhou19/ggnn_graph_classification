@@ -1,103 +1,49 @@
-package sort.impl;
+package idv.workshop.homework;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.ArrayDeque;
+import java.util.Deque;
 
-import sort.Sorter;
+public class Stack {
+    private Deque elems = new ArrayDeque();
+    private int capacity;
 
-public class BucketSort implements Sorter{
+    public Stack(int capacity) {
+        this.capacity = capacity;
+    }
 
-	@Override
-	public void sort(List<Integer> arrayList) {
-		// TODO Auto-generated method stub
-		
-		bucketSort(arrayList,8);
-		
-		
-	}
-	
-	void bucketSort(List<Integer> arrayList,int k){
-		
-		//
-		boolean finish = false;
-		
-		//
-		List<Integer> bits = new ArrayList<Integer>();
-		
-		//initialize the bits List
-		for(int i=0;i<arrayList.size();i++){
-			bits.add(arrayList.get(i)%k);
-		}
-		
-		System.out.println("bits is:"+bits);
-		
-		//
-		int pow = k;
-		int pow_count = 1;
-		
-		//
-		while(!finish){
-			
-			//sort according to the bits list
-			for(int i=0;i<bits.size();i++){
-				for(int j=i;j<bits.size();j++){
-					if(bits.get(i)>bits.get(j)){
-						
-						//
-						int tempBit;
-						tempBit = bits.get(i);
-						bits.set(i, bits.get(j));
-						bits.set(j, tempBit);
-						
-						//
-						int tempSort;
-						tempSort = arrayList.get(i);
-						arrayList.set(i, arrayList.get(j));
-						arrayList.set(j, tempSort);
-					}
-				}
-			}
-			System.out.println("bits is:"+bits);
-			System.out.println("arrayList is:"+arrayList);
-			
-			//
-			pow = (int) Math.pow(k, pow_count);
-			
-			//
-			for(int i=0;i<bits.size();i++){
-				bits.set(i, (int)(arrayList.get(i)/pow));
-			}
-			System.out.println("bits is:"+bits);
-		
-			for(int i=0;i<bits.size();i++){
-				bits.set(i, bits.get(i)%k);
-			}
-			System.out.println("bits is:"+bits);
-			
-			
-			pow_count++;
-			
-			
-			//
-			int count = 0;
-			
-			for(int i=0;i<bits.size();i++){
-				if(bits.get(i) == 0){
-					count++;
-				}
-			}
-			
-			if(count == bits.size()){
-				finish = true;
-			}
-			
-			System.out.println("finish is:"+finish);
-			
-		}
-		
-	}
-	
-	
-	
+    public boolean push(Object elem) {
+        if(isFull()) {
+            return false;
+        }
+        return elems.offerLast(elem);
+    }
 
+    private boolean isFull() {
+        return elems.size() + 1 > capacity;
+    }
+
+    public Object pop() {
+        return elems.pollLast();
+    }
+
+    public Object peek() {
+        return elems.peekLast();
+    }
+
+    public int size() {
+        return elems.size();
+    }
+
+    public static void main(String[] args) {
+        Stack stack = new Stack(5);
+        stack.push("Kiyomitsu");
+        stack.push("Yasusada");
+        stack.push("Okita");
+
+        System.out.println(stack.pop());
+        System.out.println(stack.pop());
+        System.out.println(stack.pop());
+
+        //從最後進去的開始取出
+    }
 }

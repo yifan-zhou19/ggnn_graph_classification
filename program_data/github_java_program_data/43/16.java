@@ -1,26 +1,50 @@
-package Algorithm;
+public class Stack<T> {
+	//Top of the stack
+	private Node top;
 
-/**
- * Created by tonytan on 12/1/2017.
- *
- * Bucket sort: cost most memory
- */
-public class BucketSort {
+	private class Node {
+		T data;
+		Node next;
 
-    static int[] data = {1,2,7,4,6,3,9};//assume all data < 10
-    static int[] bucket = new int[10];
+		public Node (T item) {
+			data = item;
+		}
+	}
 
-    public static void bucketSort(int[] data){
-        for (int i=0; i<data.length; i++){
-            bucket[data[i]] = data[i];
-        }
-    }
+	public Stack() {
+		top = null;
+	}
 
-    public static void main(String[] args){
-        bucketSort(data);
-        for (int i:bucket) {
-            if (i==0) continue;
-            System.out.print(i);
-        }
-    }
+	//Push item to stack
+	public void push(T item) {
+		Node n = new Node(item);
+			n.next = top;
+			top = n;
+	}
+
+	//Pop top of stack
+	public T pop() {
+		if(top == null) {
+			return null;
+		}
+		else {
+			top = top.next;
+			return top == null ? null : top.data;
+		}
+	}
+
+	//Peek top of stack
+	public T peek() {
+		if(top == null) {
+			return null;
+		} else {
+			return top.data;
+		}
+	}
+
+	//Check if stack is empty
+	public boolean empty() {
+		return top == null;
+	}
 }
+

@@ -1,295 +1,181 @@
-/*
- * This is free and unencumbered software released into the public domain.
- * Anyone is free to copy, modify, publish, use, compile, sell, or
- * distribute this software, either in source code form or as a compiled
- * binary, for any purpose, commercial or non-commercial, and by any means.
- * 
- * In jurisdictions that recognize copyright laws, the author or authors
- * of this software dedicate any and all copyright interest in the
- * software to the public domain. We make this dedication for the benefit
- * of the public at large and to the detriment of our heirs and
- * successors. We intend this dedication to be an overt act of
- * relinquishment in perpetuity of all present and future rights to this
- * software under copyright law.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
- * IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
- * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
- * OTHER DEALINGS IN THE SOFTWARE.
- * 
- * For more information, please refer to <http://unlicense.org/>
- */
-package net.cpdomina.splaytree;
-
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-import java.util.Stack;
+package hr.fer.bioinformatika.projekt.bloomfilter;
 
 /**
- * Top-Down Splay Tree implementation (http://en.wikipedia.org/wiki/Splay_tree).
- * Largely based on the implementation by Danny Sleator <sleator@cs.cmu.edu>, available at http://www.link.cs.cmu.edu/splay/ (public domain).
- * Cleaned & refactored code, added generics, builders, iterator, and a couple of minor performance improvements.
+ * A Partitioned Bloom Filter is a variant of the original Bloom Filter.
+ * <p>
+ * The only difference is that the <em>m</em>-bit array of a Partitioned Bloom
+ * Filter is divided in to <em>k</em> slices (<em>k</em> is the number of hash
+ * functions in use) so that every hash function produces an index in his own
+ * splice.
+ * </p>
+ * <p>
+ * Partitioned Bloom Filters are more robust than regular Bloom Filters and with
+ * no elements specially sensitive to false positives.
+ * </p>
  * 
- * @author Pedro Oliveira (http://www.cpdomina.net), original by Danny Sleator (sleator@cs.cmu.edu)
- *
- * @param <T>
+ * @see BloomFilter
+ * 
+ * @author Ivan Kraljević
+ * 
  */
-public class SplayTree<T extends Comparable<T>> implements Iterable<T> {
+public class PartitionedBloomFilter<T> extends BloomFilter<T> {
+	/** Array for storing upper bounds of the array splices */
+	protected int[] partitionIndexes;
 
-	private BinaryNode root;
-	private final BinaryNode aux;
-
-	public SplayTree() {
-		root = null;
-		aux = new BinaryNode(null);
+	/**
+	 * Constructs a {@code PartitionedBloomFilter} object with the specified
+	 * array size and number of hash functions used.
+	 * 
+	 * @param m
+	 *            array size.
+	 * @param k
+	 *            number of hash functions.
+	 */
+	public PartitionedBloomFilter(int m, int k) {
+		super(m, k);
+		setPartitionIndexes(createPartitionIndexes(m, k));
 	}
 
 	/**
-	 * Build an empty Splay Tree
-	 * @param <T>
-	 * @return
+	 * Constructs a {@code PartitionedBloomFilter} where the array size and
+	 * number of hash functions are determined by the estimated number of items
+	 * that will be added to the filter and the acceptable false positive
+	 * probability.
+	 * 
+	 * @param estimatedNumOfItems
+	 *            estimated number of items that will be added to the filter.
+	 * @param falsePositiveProbability
+	 *            acceptable false positive probability.
 	 */
-	public static <T extends Comparable<T>> SplayTree<T> create() {
-		return new SplayTree<T>();
+	public PartitionedBloomFilter(int estimatedNumOfItems,
+			double falsePositiveProbability) {
+		super(estimatedNumOfItems, falsePositiveProbability);
+		setPartitionIndexes(createPartitionIndexes(array.length, k));
 	}
 
 	/**
-	 * Build a Splay Tree with the given elements
-	 * @param <T>
-	 * @param elements
-	 * @return
+	 * Constructs a {@code PartitionedBloomFilter} with the specified array size
+	 * and where the number of hash functions is determined by the acceptable
+	 * false positive probability.
+	 * 
+	 * @param falsePositiveProbability
+	 *            acceptable false positive probability.
+	 * @param m
+	 *            array size.
 	 */
-	public static <T extends Comparable<T>> SplayTree<T> create(T... elements) {
-		SplayTree<T> tree = new SplayTree<T>();
-		for(T element: elements) {
-			tree.insert(element);
+	public PartitionedBloomFilter(double falsePositiveProbability, int m) {
+		super(falsePositiveProbability, m);
+		setPartitionIndexes(createPartitionIndexes(array.length, k));
+	}
+
+	@Override
+	public void add(T item) {
+		if (item == null) {
+			throw new NullPointerException("Invalid input item: " + item);
 		}
-		return tree;
+		byte[] itemBytes = getBytes(item);
+		long h1 = hashFunctions[0].getHash(itemBytes);
+		long h2 = hashFunctions[1].getHash(itemBytes);
+
+		// calculate the first two indexes and set their array values to true
+		int partitionLength = partitionIndexes[1] - partitionIndexes[0];
+		int h1Index = (int) (h1 % partitionIndexes[0]);
+		int h2Index = (int) (h2 % partitionLength) + partitionIndexes[0];
+		array[h1Index] = true;
+		array[h2Index] = true;
+
+		// calculate the remaining indexes and set their array values to true
+		for (int i = 2; i < k; i++) {
+			partitionLength = partitionIndexes[i] - partitionIndexes[i - 1];
+			int index = (int) ((h1 + i * h2) % partitionLength);
+			// if the previous statement caused an overflow the index will be <0
+			if (index < 0) {
+				index += partitionLength;
+			}
+
+			index += partitionIndexes[i - 1];
+			array[index] = true;
+		}
 	}
 
-	/**
-	 * Insert the given element into the tree.
-	 * @param element The element to insert
-	 * @return False if element already present, true otherwise
-	 */
-	public boolean insert(T element) {
-		if (root == null) {
-			root = new BinaryNode(element);
-			return true;
+	@Override
+	public boolean query(T item) {
+		if (item == null) {
+			throw new NullPointerException("Invalid input item: " + item);
 		}
-		splay(element);
+		byte[] itemBytes = getBytes(item);
+		long h1 = hashFunctions[0].getHash(itemBytes);
+		long h2 = hashFunctions[1].getHash(itemBytes);
 
-		final int c = element.compareTo(root.key);
-		if (c == 0) {
+		// calculate indexes of the first two hashes and query the array
+		int partitionLength = partitionIndexes[1] - partitionIndexes[0];
+		int h1Index = (int) (h1 % partitionIndexes[0]);
+		int h2Index = (int) (h2 % partitionLength) + partitionIndexes[0];
+		if (!array[h1Index] || !array[h2Index]) {
 			return false;
 		}
 
-		BinaryNode n = new BinaryNode(element);
-		if (c < 0) {
-			n.left = root.left;
-			n.right = root;
-			root.left = null;
-		} else {
-			n.right = root.right;
-			n.left = root;
-			root.right = null;
-		}
-		root = n;
-		return true;
-	}
+		// calculate the remaining indexes and query the array
+		boolean isInFilter = true;
+		for (int i = 2; i < k; i++) {
+			partitionLength = partitionIndexes[i] - partitionIndexes[i - 1];
+			int index = (int) ((h1 + i * h2) % partitionLength);
+			// if the previous statement caused an overflow the index will be <0
+			if (index < 0) {
+				index += partitionLength;
+			}
+			index += partitionIndexes[i - 1];
 
-	/**
-	 * Remove the given element from the tree.
-	 * @param element The element to remove.
-	 * @return False if element not present, true otherwise
-	 */
-	public boolean remove(T element) {
-		splay(element);
-
-		if (element.compareTo(root.key) != 0) {
-			return false;
-		}
-
-		// Now delete the root
-		if (root.left == null) {
-			root = root.right;
-		} else {
-			BinaryNode x = root.right;
-			root = root.left;
-			splay(element);
-			root.right = x;
-		}
-		return true;
-	}
-
-	/**
-	 * Find the smallest element in the tree.
-	 * @return
-	 */
-	public T findMin() {
-		BinaryNode x = root;
-		if(root == null) return null;
-		while(x.left != null) x = x.left;
-		splay(x.key);
-		return x.key;
-	}
-
-	/**
-	 * Find the largest element in the tree.
-	 * @return
-	 */
-	public T findMax() {
-		BinaryNode x = root;
-		if(root == null) return null;
-		while(x.right != null) x = x.right;
-		splay(x.key);
-		return x.key;
-	}
-
-	/**
-	 * Find an item in the tree.
-	 * @param element The element to find
-	 * @return
-	 */
-	public T find(T element) {
-		if (root == null) return null;
-		splay(element);
-		if(root.key.compareTo(element) != 0) return null;
-		return root.key;
-	}
-
-	/**
-	 * Check if the tree contains the given element.
-	 * @param element
-	 * @return True if present, false otherwise
-	 */
-	public boolean contains(T element) {
-		return find(element) != null;
-	}
-
-	/**
-	 * Test if the tree is logically empty.
-	 * @return True if empty, false otherwise.
-	 */
-	public boolean isEmpty() {
-		return root == null;
-	}
-
-	/* (non-Javadoc)
-	 * @see java.lang.Iterable#iterator()
-	 */
-	public Iterator<T> iterator() {
-		return new SplayTreeIterator();
-	}
-
-	/**
-	 * Internal method to perform a top-down splay.
-	 * If the element is in the tree, then the {@link BinaryNode} containing that element becomes the root. 
-	 * Otherwise, the root will be the ceiling or floor {@link BinaryNode} of the given element.
-	 * @param element
-	 */
-	private void splay(T element) {
-		BinaryNode l, r, t, y;
-		l = r = aux;
-		t = root;
-		aux.left = aux.right = null;
-		while(true) {
-			final int comp = element.compareTo(t.key);
-			if (comp < 0) {
-				if (t.left == null) break;
-				if (element.compareTo(t.left.key) < 0) {
-					y = t.left;                            /* rotate right */
-					t.left = y.right;
-					y.right = t;
-					t = y;
-					if (t.left == null) break;
-				}
-				r.left = t;                                 /* link right */
-				r = t;
-				t = t.left;
-			} else if (comp > 0) {
-				if (t.right == null) break;
-				if (element.compareTo(t.right.key) > 0) {
-					y = t.right;                            /* rotate left */
-					t.right = y.left;
-					y.left = t;
-					t = y;
-					if (t.right == null) break;
-				}
-				l.right = t;                                /* link left */
-				l = t;
-				t = t.right;
-			} else {
+			if (!array[index]) {
+				isInFilter = false;
 				break;
 			}
 		}
-		l.right = t.left;                                   /* assemble */
-		r.left = t.right;
-		t.left = aux.right;
-		t.right = aux.left;
-		root = t;
+		return isInFilter;
 	}
 
-
 	/**
-	 * {@link SplayTree} internal node
+	 * Returns the array with the upper bounds of <em>m-bit</em> array splices.
 	 * 
-	 * @author Pedro Oliveira
-	 *
+	 * @param m
+	 *            number of bits.
+	 * @param k
+	 *            number of splices/partitions.
+	 * @return array with the upper bounds.
 	 */
-	private class BinaryNode {
-
-		public final T key;          // The data in the node
-		public BinaryNode left;         // Left child
-		public BinaryNode right;        // Right child
-
-		public BinaryNode(T theKey) {
-			key = theKey;
-			left = right = null;
+	public int[] createPartitionIndexes(int m, int k) {
+		int[] indexes = new int[k];
+		int bitsPerFunction = m / k;
+		int remainder = m % k;
+		int lastIndex = 0;
+		for (int i = 0; i < k; i++) {
+			int additionalBit = (remainder > 0) ? 1 : 0;
+			remainder--;
+			indexes[i] = lastIndex + bitsPerFunction + additionalBit;
+			lastIndex = indexes[i];
 		}
+		return indexes;
 	}
 
 	/**
-	 * Stack-based {@link SplayTree} iterator
-	 * @author Pedro Oliveira
-	 *
+	 * Returns the upper bounds of the <em>m-bit</em> array splices.
+	 * 
+	 * @return array with the upper bounds of the <em>m-bit</em> array splices.
 	 */
-	private class SplayTreeIterator implements Iterator<T> {
-
-		private final Stack<BinaryNode> nodes;
-
-		public SplayTreeIterator() {
-			nodes = new Stack<BinaryNode>();
-			pushLeft(root);
-		}
-
-		public boolean hasNext() {
-			return !nodes.isEmpty();
-		}
-
-		public T next() {
-			BinaryNode node = nodes.pop();
-			if(node != null) {
-				pushLeft(node.right);
-				return node.key;
-			}
-			throw new NoSuchElementException();
-		}
-
-		public void remove() {
-			throw new UnsupportedOperationException();
-		}
-
-		private void pushLeft(BinaryNode node) {
-			while (node != null) {
-				nodes.push(node);
-				node = node.left;
-			}
-		}
-
+	protected int[] getPartitionIndexes() {
+		return partitionIndexes;
 	}
 
+	/**
+	 * Sets the upper bounds of the <em>m-bit</em> array splices.
+	 * 
+	 * @param partitionIndexes
+	 *            array containing the upper bounds.
+	 */
+	protected void setPartitionIndexes(int[] partitionIndexes) {
+		if (partitionIndexes == null) {
+			throw new NullPointerException();
+		}
+		this.partitionIndexes = partitionIndexes;
+	}
 }

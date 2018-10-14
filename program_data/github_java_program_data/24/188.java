@@ -1,83 +1,61 @@
-package graph;
+/**
+ * Utilities: Prints a pseudorandom permution of the integers 0 through N.
+ * 
+ * @version 9/1/08
+ *
+ *    % java Shuffle 6
+ *    5 0 2 3 1 4 
+ *    . * . . . . 
+ *    . . . . * . 
+ *    . . * . . . 
+ *    . . . * . . 
+ *    . . . . . * 
+ *    * . . . . . 
+ *
+ **/
 
-import datastructure.BinaryHeap;
-import datastructure.DisjSets;
+package util;
 
-// ��С������
-public class MinimumSpanningTree extends UndirectedGraph {
+import java.util.Random;
 
-	public static void main(String[] args) {
-		MinimumSpanningTree demo = new MinimumSpanningTree(7);
-		demo.init("resources/UDG.txt", true);
-		System.out.println("Prim�㷨������С��������");
-		demo.Prim();
-		demo.print();
-		System.out.println("kruskal�㷨������С��������");
-		demo.kruskal();
-	}
+public class Permutation { 
 	
-	protected MinimumSpanningTree(int size) {
-		super(size);
-	}
-	
-	// �ʺϳ���ͼ������ͼ���ڽӾ����ʾ
-	// �˴���Ȼ���ڽӱ�������
-	public void Prim() {
-		for (int i = 0; i < NUM_VERTICES;i ++) {
-			graph[i].known = false;
-			graph[i].dist = INFINITY;
-			graph[i].path = null;
-		}
-		
-		graph[0].dist = 0;
-		
-		for ( ; ; ) {
-			Vertex v = findSmall();
-			if (v.name == null)
-				break;
-			v.known = true;
-			
-			for (int i = 0; i < v.adj.size(); i++) {
-				Vertex w = v.adj.get(i).next;
-				if (!w.known && v.adj.get(i).weight < w.dist) {
-					w.dist = v.adj.get(i).weight;
-					w.path = v;
-				}
-			}
-			
-		}
-	}
+   public static void main(String[] args) { 
+	   
+	   int N = 20;
+	   int[] a = Permutation.permute(N, new Random());
+		   
+	   // print permutation
+	   for (int i = 0; i < N; i++)
+	      System.out.print(a[i] + " ");
+	   System.out.println("");
 
-	// �ʺ�ϡ��ͼ
-	public void kruskal() {
-		int edgesAccepted = 0;
-		DisjSets ds = new DisjSets(NUM_VERTICES);
-		BinaryHeap<MyEdge> pq = new BinaryHeap<>(getEdges());
-		MyEdge e;
-		Vertex u, v;
-		MyEdge[] result = new MyEdge[NUM_VERTICES-1];
-		
-		while (edgesAccepted < NUM_VERTICES - 1) {
-			e = pq.deleteMin(); // Edge e = (u,v)
-			u = e.cur;
-			v = e.next;
-			int us = ds.find(u.topNum-1);
-			int vs = ds.find(v.topNum-1);
-			if (us != vs) {
-				result[edgesAccepted++] = e;
-				ds.union(us, vs);
-			}
-		}
-		
-		for (int i = 0; i < result.length; i++)
-			System.out.println(result[i].cur.name + "--" + result[i].next.name);
-	}
-	
-	// ��ӡ��С������
-	public void print() {
-		for (int i = 0; i < NUM_VERTICES; i++)
-			if (graph[i].path != null)
-				System.out.println(graph[i].name + "--" + graph[i].path.name);
-	}
-	
+	   // print checkerboard visualization
+	   for (int i = 0; i < N; i++) {
+	      for (int j = 0; j < N; j++) {
+	         if (a[j] == i) System.out.print("* ");
+	         else           System.out.print(". ");
+	      }
+	      System.out.println("");
+	   }
+   }
+   
+   public static int[] permute(int N, Random rand) {
+
+      int[] a = new int[N];
+
+      // insert integers 0..N-1
+      for (int i = 0; i < N; i++)
+         a[i] = i;
+
+      // shuffle
+      for (int i = 0; i < N; i++) {
+         int r = rand.nextInt(i+1);     // int between 0 and i
+         int swap = a[r];
+         a[r] = a[i];
+         a[i] = swap;
+      }
+      
+      return a;
+   }
 }

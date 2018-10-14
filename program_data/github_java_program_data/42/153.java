@@ -1,35 +1,34 @@
-class SelectionSort{
-public static int findMin(int[] array, int index)
-{
-    int min = index - 1;
-    if (index < array.length - 1)
-        min = findMin(array, index + 1);
-    if (array[index] < array[min])
-        min = index;
-    return min;
-}
+package wit.lk.algorithm.ch03;
 
-public static void selectionSort(int[] array)
-{
-    selectionSort(array, 0);
-}
-
-public static void selectionSort(int[] array, int left)
-{
-    if (left < array.length - 1)
-    {
-        swap(array, left, findMin(array, left));
-        selectionSort(array, left+1);
-    }
-}
-
-public static void swap(int[] array, int index1, int index2)
-{
-    int temp = array[index1];
-    array[index1] = array[index2];
-    array[index2] = temp;
-}
-
-
-
+public class BucketSort {
+	private int[] buckets;
+	private int[] array;
+	
+	public BucketSort(int range,int[] array){
+		buckets = new int[range];
+		this.array = array;
+	}
+	
+	/**
+	 * ����
+	 */
+	public void sort(){
+		if(array != null && array.length > 1){
+			for(int i = 0; i < array.length; i++){
+				buckets[array[i]]++;
+			}
+		}
+	}
+	
+	/**
+	 * �Ӵ�С����
+	 */
+	public void print(){
+		//�����������
+		for(int i = buckets.length - 1; i >= 0; i--){
+			for(int j = 0; j < buckets[i]; j++){
+				System.out.println(i);
+			}
+		}
+	}
 }

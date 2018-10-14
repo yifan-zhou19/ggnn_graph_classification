@@ -1,85 +1,79 @@
-// Ilay Raz
-// ilraz
-// CMPS12B-02
-// 2/23/18
-// Queue.java
+import java.awt.Color;
+import java.util.ArrayList;
 
-public class Queue implements QueueInterface {
-    private class Node {
-        public Object data;
-        public Node next;
 
-        public Node(Object myData) {
-            data = myData;
-            next = null;
-        }
-    }
+public class ConvexHull {
+	public static class Point {
+		public double x;
+		public double y;
+		public Point(double x, double y) {
+			this.x = x; 
+			this.y = y;
+		}
+		public Point() {
+			x = StdRandom.uniform(500)+10;
+			y = StdRandom.uniform(500)+10;
+		}
+		public void drawTo(Point that,Color color) {
+			StdDraw.setPenColor(color);
+			StdDraw.line(this.x, this.y, that.x, that.y);
+		}
+		public void draw(Color color) {
+			StdDraw.setPenColor(color);
+			StdDraw.filledCircle(x, y, 3);
+		}
+	}
+	
+	static int N = 100;
+	static Point[] arr;
+	
+	public static double ccw(Point a, Point b, Point c) {
+		return (b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x);
+	}
+	
+	public static void main(String[] args) {
+		StdDraw.setScale(0, 550);
+		if (args.length > 0) N = Integer.parseInt(args[0]);
+			
+		arr = new Point[N];
+			
+		for (int i = 0; i<N; i++) {
+			arr[i] = new Point();
+			arr[i].draw(Color.black);
+		}
+			
+		int m = 0;
+		for (int i = 0; i<N; i++) {
+			if (arr[i].y < arr[m].y) m = i;
+			else if (arr[i].y == arr[m].y && arr[i].x < arr[m].x) m = i;
+		}
+		
+		int current = m;
+		ArrayList <Point> res = new ArrayList<>();
 
-    private int size;
-    private Node head;
-    private Node tail;
+		do {
+			res.add(arr[current]);
+			int next = current%(N-1) + 1;
+			for (int i = 0; i<N; i++) {
+				StdDraw.clear();
+				for (int j = 0; j<N; j++) arr[j].draw(Color.BLACK);
+				
+				arr[current].drawTo(arr[next], Color.BLACK);
+				arr[next].drawTo(arr[i], Color.GREEN);
 
-    public Queue() {
-        size = 0;
-        head = null;
-        tail = null;
-    }
+				
+				for (int j = 0; j<=res.size() - 2; j++) res.get(j).drawTo(res.get(j+1), Color.RED);
+				
 
-    public boolean isEmpty() {
-        return size == 0;
-    }
-
-    public int length() {
-        return size;
-    }
-
-    public void enqueue(Object newItem) {
-        if (tail == null)
-            head = tail = new Node(newItem);
-        else {
-            tail.next = new Node(newItem);
-            tail = tail.next;
-        }
-        size++;
-    }
-
-    public Object dequeue() throws QueueEmptyException {
-        if (isEmpty())
-            throw new QueueEmptyException("Queue is empty");
-        Node node = head;
-        head = head.next;
-        size--;
-        if (head == null)
-            tail = null;
-        return node.data;
-    }
-
-    public Object peek() throws QueueEmptyException {
-        if (isEmpty())
-            throw new QueueEmptyException("Queue is empty");
-        return head.data;
-    }
-
-    public void dequeueAll() throws QueueEmptyException {
-        if (isEmpty())
-            throw new QueueEmptyException("Queue is empty");
-        head = null;
-        tail = null;
-        size = 0;
-    }
-
-    public Queue clone() {
-        Queue queue = new Queue();
-        for (Node node = head; node != null; node = node.next)
-            queue.enqueue(node.data);
-        return queue;
-    }
-
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-
-        for (Node node = head; node != null; node = node.next)
-            builder.append(node.data.toString() + " ");
-        return builder.toString();
-    }
+				
+				if (ccw(arr[current], arr[next], arr[i] ) < 0 ) next = i;
+				StdDraw.show(50);
+			}
+			current = next;
+		}	while (current != m);
+		
+		res.get(res.size()-1).drawTo(res.get(0),Color.RED);
+		StdDraw.show();
+		
+	}
 }

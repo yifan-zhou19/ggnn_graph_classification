@@ -1,50 +1,53 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-package javastringreverse;
-
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.*;
 
-/**
- *
- * @author IMG
- */
-public class JavaStringReverse {
-//    https://www.hackerrank.com/challenges/java-string-reverse/problem
+public class KnuthMorrisPratt {
+    class FastScanner {
+        StringTokenizer tok = new StringTokenizer("");
+        BufferedReader in;
 
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String[] args) {
-        /* Enter your code here. Print output to STDOUT. */
-        Scanner in = new Scanner(System.in);
-        // Store word to be checked
-        String A = in.next();
-        
-        // Store reversed string
-        String B = "";
-        // Array list of Characters
-        ArrayList<Character> list = new ArrayList<>();
-        
-        // Store word in reverse to ArrayList
-        for (int i = A.length(); i > 0; i--) {
-            list.add(A.charAt(i-1));
+        FastScanner() {
+            in = new BufferedReader(new InputStreamReader(System.in));
         }
-        
-        // Move ArrayList Characters to new string
-        for (int i = 0; i < list.size(); i++) {
-            B += list.get(i);
+
+        String next() throws IOException {
+            while (!tok.hasMoreElements())
+                tok = new StringTokenizer(in.readLine());
+            return tok.nextToken();
         }
-        
-        // Check if word is a palindrome
-        if ( B.equals(A) ) {
-            System.out.println("Yes");
-        }
-        else {
-            System.out.println("No");
+
+        int nextInt() throws IOException {
+            return Integer.parseInt(next());
         }
     }
-    
+
+    // Find all the occurrences of the pattern in the text and return
+    // a list of all positions in the text (starting from 0) where
+    // the pattern starts in the text.
+    public List<Integer> findPattern(String pattern, String text) {
+        ArrayList<Integer> result = new ArrayList<Integer>();
+        // Implement this function yourself
+        return result;
+    }
+
+    static public void main(String[] args) throws IOException {
+        new KnuthMorrisPratt().run();
+    }
+
+    public void print(List<Integer> x) {
+        for (int a : x) {
+            System.out.print(a + " ");
+        }
+        System.out.println();
+    }
+
+    public void run() throws IOException {
+        FastScanner scanner = new FastScanner();
+        String pattern = scanner.next();
+        String text = scanner.next();
+        List<Integer> positions = findPattern(pattern, text);
+        print(positions);
+    }
 }

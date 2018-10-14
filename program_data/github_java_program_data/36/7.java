@@ -1,58 +1,56 @@
-//Generic binary Tree
-class bnode{
-	int value;
-	bnode left, right;
-	bnode(int val){
-		this.value=val;
-		this.left = null;
-		this.right = null;
-	}
-}
 
-public class bTree {
-	bnode root=null;
+package algorithms.dynamic_programming;
 
-	void add(int val){
-		bnode newnode= new bnode(val);
-		bnode curr = this.root;
-		bnode parent = null;
+import java.util.Arrays;
 
-		if(this.root == null){
-			this.root = newnode;
-			System.out.println("Inserted at root \t"+newnode.value);
-		}
-		else{
-				System.out.println("Current Left and Right\t"+curr.left+"\t"+curr.right);
+/*
 
-				if(curr.left == null){
-					curr.left = newnode;
-					System.out.println("Inserted Left\t" +newnode.value);
-					return;
-				}
-				if(curr.right ==  null){
-					curr.right = newnode;
-					System.out.println("Inserted Right\t" +newnode.value);
-					return;
-				}
-			}
-	}
-	
-	void preOrder(bnode root){
-		if(root != null){
-			System.out.println(root.value);
-			preOrder(root.left);
-			preOrder(root.right);
-		}
-	}
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-		bTree b = new bTree();
-		b.add(5);
-		b.add(6);
-		b.add(7);
-		b.add(20);
-		b.add(21);
-		b.preOrder(b.root);
-	}
+The rod-cutting problem is the following. 
+Given a rod of length n inches and a table of prices pi for i D 1, 2, ..., n, 
+determine the maximum revenue rn obtainable by cutting up the rod and selling the pieces. 
+ 
+*/
+
+public class Rod_Cutting {
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    public int cutRod_Recursive(int n, int[] prize, int[] r) {
+        Arrays.fill(r, Integer.MIN_VALUE);
+        return cutRod_Recursive_Aux(n, prize, r);
+    }
+
+    private int cutRod_Recursive_Aux(int n, int[] prize, int[] r) {
+        int max = 0;
+        if (r[n] >= 0) {
+            return r[n];
+        } else {
+            for (int i = 1; i <= n; i++) {
+                max = Math.max(max, prize[i] + cutRod_Recursive_Aux(n - i, prize, r));
+            }
+            return r[n] = max;
+        }
+    }
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    public int cutRod(int n, int[] prize, int[] r) {
+        for (int j = 1; j <= n; j++) {
+            int max = 0;
+            for (int i = 1; i <= j; i++) {
+                max = Math.max(max, prize[i] + r[j - i]);
+            }
+            r[j] = max;
+        }
+        return r[n];
+    }
+
+    public static void main(String[] args) {
+        int[] prize = new int[] { 0, 1, 5, 8, 9, 10, 17, 17, 20, 24, 30 };
+        int n = 6;
+        int[] r = new int[n + 1];
+        System.out.println(new Rod_Cutting().cutRod(n, prize, r));
+        System.out.println(new Rod_Cutting().cutRod_Recursive(n, prize, r));
+    }
 
 }

@@ -1,47 +1,48 @@
-package com.practice.after2017.algorithm.sorting;
+package cuiods.list.skiplist;
 
-public class HeapSort {
+/**
+ * 跳转表节点
+ * @author cuiods
+ */
+public class SkipListNode<T extends Comparable<? super T>> {
+    private T data;
+    /**
+     * 用数组保存其他节点的引用
+     */
+    private SkipListNode[] next;
 
-    public void sortII(int[] arr) {
-    	for(int i = arr.length / 2 - 1; i>=0; i--) {
-    		heapifyII(arr, arr.length, i);
-    	}
-    	for(int i = arr.length -1; i>=0; i--) {
-    		swap(arr, 0, i);
-    		heapifyII(arr, i, 0);
-    	}
-    }
-    
-    private void heapifyII(int[] arr, int size, int i) {
-    	int l = 2*i + 1;
-    	int r = 2*i + 2;
-    	int largest = i;
-    	
-    	if(l < size && arr[l] > arr[largest]) {
-    		largest = l;
-    	} 
-    	if(r < size && arr[r] > arr[largest]) {
-    		largest = r;
-    	}
-    	if(largest != i) {
-    		swap(arr, largest, i);
-    		heapifyII(arr, size, largest);
-    	}
+    /**
+     * @param data
+     *      节点保存的数据
+     * @param maxLevel
+     *      若跳转表最多保存n个数据，则最多的层次为[log2(n)]
+     */
+    public SkipListNode(T data, int maxLevel) {
+        this.data = data;
+        next = new SkipListNode[maxLevel];
     }
 
-    private void swap(int[] arr, int i, int j) {
-        int temp = arr[i];
-        arr[i] = arr[j];
-        arr[j] = temp;
+    public T getData() {
+        return data;
     }
 
-    public static void main (String[]  args) {
-        HeapSort hs = new HeapSort();
-        int[] arr = new int[]{1,77, 0, 89,5,60};
-        hs.sortII(arr);
-        System.out.println();
-        for(Integer each : arr) {
-            System.out.print(each+" - ");
-        }
+    public void setData(T data) {
+        this.data = data;
+    }
+
+    public SkipListNode[] getNext() {
+        return next;
+    }
+
+    public SkipListNode getNext(int index) {
+        return next[index];
+    }
+
+    public void setNext(SkipListNode[] next) {
+        this.next = next;
+    }
+
+    public void setNext(SkipListNode next, int i) {
+        this.next[i] = next;
     }
 }

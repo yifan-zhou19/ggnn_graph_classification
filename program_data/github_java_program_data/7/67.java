@@ -1,19 +1,34 @@
-package DSA.TowerOfHanoi;
-import java.util.Scanner;
-public class TowerOfHanoi {
-    public static void MoveTower(int i, String source, String Spare, String destination){
-        if(i > 0){
-            MoveTower(i-1, source, destination, Spare);
-            System.out.println("Move disk " + i + " from " + source + " to " + destination);
-            MoveTower(i-1, Spare, source, destination);
-        }
-    }
-    public static void main(String[] args) {
-        String s1 = "Peg 1";
-        String s2 = "Peg 2";
-        String s3 = "Peg 3";
-        Scanner kb = new Scanner(System.in);
-        int num = kb.nextInt();
-        MoveTower(num, s1, s2, s3);
-    }
+
+/**
+ * 
+ * 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89 - it is Fibonacci sequence
+ * O, O, E, O, O, E,  O,  O,  E,  O,  O - it is Fibonacci sequence, where even numbers - E,
+ * and odd numbers - O. You can see that every third number - even number, 
+ * for this reason, parity check of all numbers is unnecessary
+ * 
+ * @author Sluva
+ *
+ */ 
+public class Fibonacci {
+	public static void main (String[] args) {
+		// the first three values
+		int first = 1; int second = 1; int third = 2;
+		// the limit calculations
+		int limit = 4_000_000;
+		// the initial value of the sum
+		int sum = 0;
+		// summation until the value is less than limit
+		while (third <= limit) {
+			// addition of even value to the result
+			sum += third;
+			// calculation of the first odd value
+			first = second + third;
+			// calculation of the second odd value
+			second = third + first;
+			// calculation of the even value
+			third = first + second;
+		}
+		// output sum
+		System.out.println(sum);
+	}
 }

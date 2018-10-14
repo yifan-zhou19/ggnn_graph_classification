@@ -1,44 +1,45 @@
+import java.util.*;
 
-// https://www.slideshare.net/iwiwi/ss-3578491
+class BSearch{
+    static Scanner sc = new Scanner(System.in);
 
-public class SegmentTree {
-    private int[] data;
-    private int n;
+    static void bubbleSort(int[] lst, int number){
+        for(int i = 0; i < lst.length; i++){
+            for(int j = 0; j < lst.length - 1;j++){
+                if(lst[j] > lst[j + 1]){
+                    int temp = lst[j];
+                    lst[j] = lst[j + 1];
+                    lst[j + 1] = temp;
+                }
+            }
+        }
+        binarySearch(lst, number);
+    }
 
-    public SegmentTree(int n) {
-        this.n = n;
-        data = new int[n * 2 - 1];
-
-        for (int i = 0; i < n * 2 - 1; i++) {
-            data[i] = Integer.MAX_VALUE;
+    static void binarySearch(int[] nums, int number){
+        int n = nums.length / 2;
+        
+        if(nums[n] == number){
+            System.out.println("The number is found at: " + n + 1);
+        } else {
+            if(number < nums[n]){
+                int[] result = new int[n];
+                for(int i = 0; i < n; i++){
+                    result[i] = nums[i];
+                }
+                binarySearch(result, number);    
+            } else {
+                int[] result = new int[n];
+            }
         }
     }
 
-    public void update(int i, int x) {
-        i += n - 1;
-        data[i] = x;
+    public static void main(String[] args){
+        int[] numbers = {1,2,3,5,6,4};
 
-        while (i > 0) {
-            i = (i - 1) / 2;
-            data[i] = Math.min(data[i * 2 + 1], data[i * 2 + 2]);
-        }
-    }
+        System.out.println("Enter number you want to search:");
+        int number = sc.nextInt();
 
-    public int at(int i) {
-        return data[n - 1 + i];
-    }
-
-    public int minInHalfOpenInterval(int a, int b, int node, int nodeLeftIdx, int nodeRightIdx) {
-        if (a >= nodeRightIdx || b <= nodeLeftIdx) return Integer.MAX_VALUE;
-        if (a <= nodeLeftIdx && b >= nodeRightIdx) return data[node];
-        else {
-            int vl = minInHalfOpenInterval(a, b, node * 2 + 1, nodeLeftIdx, (nodeLeftIdx + nodeRightIdx) / 2);
-            int vr = minInHalfOpenInterval(a, b, node * 2+ 2, (nodeLeftIdx + nodeRightIdx) / 2, nodeLeftIdx);
-            return Math.min(vl, vr);
-        }
-    }
-
-    public static void main(String[] args) {
-        System.out.println("Hello World!");
+        bubleSort(numbers, number);
     }
 }

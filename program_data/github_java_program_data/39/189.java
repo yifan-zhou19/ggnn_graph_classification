@@ -1,81 +1,64 @@
-package kuvaldis.algorithm.geometry;
 
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+public class Sort_QuickSort {
 
-public class GrahamConvexHull {
+    static int[] arr;
 
-    private final List<Point> points;
+    public static void main(String[] args){
 
-    public GrahamConvexHull(final Point... points) {
-        this.points = Stream.of(points).collect(Collectors.toList());
-    }
-
-    public List<Point> build() {
-        // 0. It's possible to create a convex hull only out of 3 or more points
-        if (points.size() < 3) {
-            return Collections.emptyList();
+        arr = new int[50];
+        for(int i=0; i<50; i++){
+            arr[i] = (int)(Math.random()*100);
         }
 
-        // 1. Pick p0, the point with lowest y coordinate.
-        // If there are two or more points with lowest coordinate, pick one with lowest x coordinate.
-        final Point p0 = points.stream()
-                .min(Comparator.comparingInt(Point::getY)
-                        .thenComparingInt(Point::getX))
-                .orElseThrow(IllegalStateException::new);
+        for(int x: arr){
+            System.out.print(x+" ");
+        }
+        System.out.println();
 
-        // 2. Sort other points (pi) by angle between horizontal vector starting from p0 and p0pi, lowest first.
-        // Note, that possible angle values are from 0 to 180 degrees, since p0 is lowest point or all points are to the right.
-        // Additionally, cos(0) is 1.0 and cos(180) is -1.0.
-        // Thus, if we sort the points by cos in descendant order, i.e. from highest to lowest values, it would be the same.
+        quicksort(0, 49);
 
-        // this is our horizontal vector
-        final Vector v0 = new Vector(p0, new Point(p0.getX() + 1, p0.getY()));
-        final LinkedList<Point> sortedPoints = points.stream()
-                .filter(point -> !p0.equals(point))
-                .sorted(Comparator.<Point>comparingDouble(p -> v0.cos(new Vector(p0, p)))
-                        .reversed())
-                .collect(Collectors.toCollection(LinkedList::new));
+        for(int x: arr){
+            System.out.print(x+" ");
+        }
+        System.out.println();
+    }
 
-        // 3. Put 3 first points, including p0 to the resulting stack
-        // They are base for calculation.
-        // Note, that if we take only these 3 points into account, the stack basically contains the solution,
-        // that is, 3 points out of 3 in total make a convex hull.
-        // Thus, on the first step stack contains correct result for it.
-        final LinkedList<Point> stack = new LinkedList<>();
-        // p0
-        stack.push(p0);
-        // p1
-        stack.push(sortedPoints.pollFirst());
-        // p2
-        stack.push(sortedPoints.pollFirst());
+    public static void quicksort(int left, int right){
 
-        // 4.
-        for (Point point : sortedPoints) {
-            while (true) {
-                final Point top = stack.pop();
-                final Point nextToTop = stack.peek();
+        if(right-left<=0){
+            return;
+        }else{
+            int partition = partition(left, right, arr[left]);
+            quicksort(left, partition-1);
+            quicksort(partition+1, right);
+        }
 
-                final Vector v1 = new Vector(nextToTop, top);
-                final Vector v2 = new Vector(nextToTop, point);
-                // It means that v2 is located to the right of v1, that is, we are moving to the right.
-                // Thus, with the fact that all points are sorted by angle, the 'point' spans the 'top',
-                // i.e. 'point' puts 'top' inside the convex hull if included into the resulting set.
-                if (v1.multiply(v2) < 0) {
-                    // we already popped top point, so nothing to do here
-                    continue;
-                }
-                // otherwise push top back, since if we are here it means that we 'moved to the left',
-                // that is, both top and point add up to the result for this step.
-                stack.push(top);
-                stack.push(point);
+    }
+
+    public static int partition(int left, int right, int pivot){
+
+        int leftMark = left;
+        int rightMark = right+1;
+
+        while(true){
+            while(leftMark<right && arr[++leftMark]<pivot){}
+            while(rightMark>left && arr[--rightMark]>pivot){}
+            if(leftMark>=rightMark){
                 break;
+            }else{
+                swap(leftMark, rightMark);
             }
         }
+        swap(rightMark,left);
+        return rightMark;
 
-        Collections.reverse(stack);
-
-        return stack;
     }
+
+    public static void swap(int a, int b){
+        int temp = arr[a];
+        arr[a] = arr[b];
+        arr[b] = temp;
+    }
+
 }
+

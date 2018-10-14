@@ -1,34 +1,40 @@
 /**
- * Created by hongboing on 5/7/16.
- */
+ * Class for doing Radix sort
+ *
+ * @author Akhil Batra
+ * @version 1.4 - April 14, 2016
+ *
+ **/
+public class RadixSort
+{
 
-import javafx.application.Application;
-import javafx.stage.Stage;
-
-public class testApp extends Application {
-
-    public static void main(String[] args) {
-        launch(args);
+    /**
+     * Does Radix sort on the passed in array with the following restrictions:
+     *  The array can only have ASCII Strings (sequence of 1 byte characters)
+     *  The sorting is stable and non-destructive
+     *  The Strings can be variable length (all Strings are not constrained to 1 length)
+     *
+     * @param asciis String[] that needs to be sorted
+     *
+     * @return String[] the sorted array
+     **/
+    public static String[] sort(String[] asciis)
+    {
+        return null;
     }
 
-    @Override
-    public void start(Stage primaryStage) {
-        System.out.println("Hello world");
-        int[] myList = {2, 5, 9, 3, 12, 6};
-
-        // Print all the array elements
-        for (int i = 0; i < myList.length-1; i ++) {
-            for (int j = 0; j < myList.length-1-i; j++){
-                if(myList[j] > myList[j+1]){
-                    int temp = myList[j+1];
-                    myList[j+1] = myList[j];
-                    myList[j] = temp;
-                }
-            }
-        }
-        for(int x = 0; x < myList.length; x++){
-            System.out.println(myList[x]);
-        }
-
+    /**
+     * Radix sort helper function that recursively calls itself to achieve the sorted array
+     *  destructive method that changes the passed in array, asciis
+     *
+     * @param asciis String[] to be sorted
+     * @param start int for where to start sorting in this method (includes String at start)
+     * @param end int for where to end sorting in this method (does not include String at end)
+     * @param index the index of the character the method is currently sorting on
+     *
+     **/
+    private static void sortHelper(String[] asciis, int start, int end, int index)
+    {
+        //TODO use if you want to
     }
 }

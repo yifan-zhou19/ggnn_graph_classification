@@ -1,133 +1,83 @@
+[start,end]跟mid相比，可能：
+全在mid左
+全在mid右
+包含了mid： 这里要特别break into 2 query method
+
+按定义：
+mid = (root.start + root.end)/2
+```
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-package graph_algorithms.maxflow_micut;
+For an integer array (index from 0 to n-1, where n is the size of this array), in the corresponding SegmentTree, each node stores an extra attribute max to denote the maximum number in the interval of the array (index from start to end).
 
-import edu.princeton.cs.algs4.StdOut;
-import java.util.LinkedList;
-import java.util.Queue;
+Design a query method with three parameters root, start and end, find the maximum number in the interval [start, end] by the given root of segment tree.
 
+Example
+For array [1, 4, 2, 3], the corresponding Segment Tree is:
+
+                  [0, 3, max=4]
+                 /             \
+          [0,1,max=4]        [2,3,max=3]
+          /         \        /         \
+   [0,0,max=1] [1,1,max=4] [2,2,max=2], [3,3,max=3]
+query(root, 1, 1), return 4
+
+query(root, 1, 2), return 4
+
+query(root, 2, 3), return 3
+
+query(root, 0, 2), return 4
+
+Note
+It is much easier to understand this problem if you finished Segment Tree Build first.
+
+Tags Expand 
+LintCode Copyright Binary Tree Segment Tree
+*/
+
+/*
+	Thoughts:
+	Search the segment tree, and find the node that matches the interval (start, end)
+	if (start == root.start && right == root.end) return max;
+	if end <= (root.left + root.right) / 2 : go left;
+	if start> (root.left + root.right): go right
+	However if start <= mid < end, break it into 2 segments and meger afterwards.
+*/
 /**
- * The class implements Ford-Fulkerson Algorithm for solving Maxflow-Mincut
- * problem.
- *
- * @author manishjoshi394
+ * Definition of SegmentTreeNode:
+ * public class SegmentTreeNode {
+ *     public int start, end, max;
+ *     public SegmentTreeNode left, right;
+ *     public SegmentTreeNode(int start, int end, int max) {
+ *         this.start = start;
+ *         this.end = end;
+ *         this.max = max
+ *         this.left = this.right = null;
+ *     }
+ * }
  */
-public class FordFulkerson {
-
-    private boolean[] marked;       // vertex indexed array for checking reachability
-    private FlowEdge[] edgeTo;      // last edge on path to v
-    private double value;           // current value of the maxflow
-
+public class Solution {
     /**
-     * Pre-processes the FlowNetwork G to efficiently respond to the client
-     * queries.
-     *
-     * @param G the FlowNetwork
-     * @param s the source vertex
-     * @param t the target vertex
+     *@param root, start, end: The root of segment tree and 
+     *                         an segment / interval
+     *@return: The maximum number in the interval [start, end]
      */
-    public FordFulkerson(FlowNetwork G, int s, int t) {
-        value = 0;
-        while (hasAugmentingPath(G, s, t)) {
+    public int query(SegmentTreeNode root, int start, int end) {
+    	if (start == root.start && end == root.end) {
+    		return root.max;
+    	}
+    	int mid = (root.start + root.end)/2;
+    	if (end <= mid) {
+    		return query(root.left, start, end);
+    	}
+    	if (start > mid) {
+    		return query(root.right, start, end);
+    	}
+    	//start <= mid && end > mid
+    	int maxLeft = query(root.left, start, root.left.end);
+    	int maxRight = query(root.right, root.right.start, end);
 
-            // compute bottle-neck capacity 
-            double bottle = Double.POSITIVE_INFINITY;
-            for (int v = t; v != s; v = edgeTo[v].other(v)) {
-                //System.out.println(edgeTo[v].residualCapacityTo(v));
-                bottle = Math.min(edgeTo[v].residualCapacityTo(v), bottle);
-            }
-
-            // Augment the flow
-            for (int v = t; v != s; v = edgeTo[v].other(v)) {
-                edgeTo[v].addResidualFlowTo(v, bottle);
-            }
-
-            // update Flow value
-            value += bottle;
-        }
-    }
-
-    private boolean hasAugmentingPath(FlowNetwork G, int s, int t) {
-        marked = new boolean[G.V()];
-        edgeTo = new FlowEdge[G.V()];
-
-        // Breadth first search 
-        Queue<Integer> q = new LinkedList<>();
-        q.add(s);
-        marked[s] = true;               // Mark the source
-        while (!q.isEmpty() && !marked[t]) {
-            int v = q.remove();
-
-            for (FlowEdge e : G.adj(v)) {
-                int w = e.other(v);
-
-                if (e.residualCapacityTo(w) > 0 && !marked[w]) {
-                    // mark the vertex, update the path to it, put ont the queue
-                    marked[w] = true;
-                    edgeTo[w] = e;
-                    q.add(w);
-                }
-            }
-        }
-        return marked[t];
-    }
-
-    /**
-     * Returns the value of the Max-Flow.
-     *
-     * @return the value of the Max-Flow
-     */
-    public double value() {
-        return value;
-    }
-
-    /**
-     * Returns true if v is reachable from source vertex s.
-     *
-     * @param v a FlowNetwork vertex
-     * @return true if v is reachable from source vertex s
-     */
-    public boolean inCut(int v) {
-        return marked[v];
-    }
-
-    // Unit tester for the class
-    public static void main(String[] args) {
-
-        // create flow network with V vertices and E edges
-        int V = 5;
-        int s = 0, t = V - 1;
-        FlowNetwork G = new FlowNetwork(V);
-        G.addEdge(new FlowEdge(0, 1, 2.0));
-        G.addEdge(new FlowEdge(0, 2, 2.0));
-        G.addEdge(new FlowEdge(0, 3, 2.0));
-        G.addEdge(new FlowEdge(1, 4, 10.0));
-        G.addEdge(new FlowEdge(2, 4, 1.0));
-        G.addEdge(new FlowEdge(3, 4, 10.0));
-
-        // compute maximum flow and minimum cut
-        FordFulkerson maxflow = new FordFulkerson(G, s, t);
-        StdOut.println("Max flow from " + s + " to " + t);
-        for (int v = 0; v < G.V(); v++) {
-            for (FlowEdge e : G.adj(v)) {
-                if ((v == e.from()) && e.flow() > 0) {
-                    StdOut.println("   " + e);
-                }
-            }
-        }
-
-        // print min-cut
-        StdOut.print("Min cut: ");
-        for (int v = 0; v < G.V(); v++) {
-            if (maxflow.inCut(v)) {
-                StdOut.print(v + " ");
-            }
-        }
-        StdOut.println();
-
-        StdOut.println("Max flow value = " + maxflow.value());
+    	return Math.max(maxLeft, maxRight);
     }
 }
+
+```

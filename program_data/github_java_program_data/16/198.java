@@ -1,208 +1,156 @@
-/*
- * Minecraft Forge
- * Copyright (c) 2016-2018.
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation version 2.1
- * of the License.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- */
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
+import java.util.stream.Collectors;
 
-package net.minecraftforge.fml.common.toposort;
+public class SuffixTreeJava {
+    class FastScanner {
+        StringTokenizer tok = new StringTokenizer("");
+        BufferedReader in;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
-
-import net.minecraftforge.fml.common.FMLLog;
-
-import com.google.common.collect.Sets;
-import com.google.common.collect.Sets.SetView;
-
-/**
- * Topological sort for mod loading
- *
- * Based on a variety of sources, including http://keithschwarz.com/interesting/code/?dir=topological-sort
- * @author cpw
- *
- */
-public class TopologicalSort
-{
-    public static class DirectedGraph<T> implements Iterable<T>
-    {
-        private final Map<T, SortedSet<T>> graph = new HashMap<T, SortedSet<T>>();
-        private List<T> orderedNodes = new ArrayList<T>();
-
-        public boolean addNode(T node)
-        {
-            // Ignore nodes already added
-            if (graph.containsKey(node))
-            {
-                return false;
-            }
-
-            orderedNodes.add(node);
-            graph.put(node, new TreeSet<T>(Comparator.comparingInt(o -> orderedNodes.indexOf(o))));
-            return true;
+        FastScanner() {
+            in = new BufferedReader(new InputStreamReader(System.in));
         }
 
-        public void addEdge(T from, T to)
-        {
-            if (!(graph.containsKey(from) && graph.containsKey(to)))
-            {
-                throw new NoSuchElementException("Missing nodes from graph");
-            }
-
-            graph.get(from).add(to);
+        String next() throws IOException {
+            while (!tok.hasMoreElements())
+                tok = new StringTokenizer(in.readLine());
+            return tok.nextToken();
         }
 
-        public void removeEdge(T from, T to)
-        {
-            if (!(graph.containsKey(from) && graph.containsKey(to)))
-            {
-                throw new NoSuchElementException("Missing nodes from graph");
-            }
-
-            graph.get(from).remove(to);
-        }
-
-        public boolean edgeExists(T from, T to)
-        {
-            if (!(graph.containsKey(from) && graph.containsKey(to)))
-            {
-                throw new NoSuchElementException("Missing nodes from graph");
-            }
-
-            return graph.get(from).contains(to);
-        }
-
-        public Set<T> edgesFrom(T from)
-        {
-            if (!graph.containsKey(from))
-            {
-                throw new NoSuchElementException("Missing node from graph");
-            }
-
-            return Collections.unmodifiableSortedSet(graph.get(from));
-        }
-        @Override
-        public Iterator<T> iterator()
-        {
-            return orderedNodes.iterator();
-        }
-
-        public int size()
-        {
-            return graph.size();
-        }
-
-        public boolean isEmpty()
-        {
-            return graph.isEmpty();
-        }
-
-        @Override
-        public String toString()
-        {
-            return graph.toString();
+        int nextInt() throws IOException {
+            return Integer.parseInt(next());
         }
     }
 
-    /**
-     * Sort the input graph into a topologically sorted list
-     *
-     * Uses the reverse depth first search as outlined in ...
-     * @param graph
-     * @return The sorted mods list.
-     */
-    public static <T> List<T> topologicalSort(DirectedGraph<T> graph)
-    {
-        DirectedGraph<T> rGraph = reverse(graph);
-        List<T> sortedResult = new ArrayList<T>();
-        Set<T> visitedNodes = new HashSet<T>();
-        // A list of "fully explored" nodes. Leftovers in here indicate cycles in the graph
-        Set<T> expandedNodes = new HashSet<T>();
-
-        for (T node : rGraph)
-        {
-            explore(node, rGraph, sortedResult, visitedNodes, expandedNodes);
+    int letterToIndex(char letter) {
+        switch (letter) {
+            case 'A':
+                return 0;
+            case 'C':
+                return 1;
+            case 'G':
+                return 2;
+            case 'T':
+                return 3;
+            case '$':
+                return 4;
+            default:
+                assert (false);
+                return JavaNode.NA;
         }
-
-        return sortedResult;
     }
 
-    public static <T> DirectedGraph<T> reverse(DirectedGraph<T> graph)
-    {
-        DirectedGraph<T> result = new DirectedGraph<T>();
+    List<JavaNode> textToTree(String text) {
+        List<JavaNode> tree = new ArrayList<>();
+        int count = 0;
+        tree.add(new JavaNode(0, -1, count++));
+        int length = text.length();
 
-        for (T node : graph)
-        {
-            result.addNode(node);
-        }
+        for (int j = 0; j < length; j++) {
+            int initialStart = length - 1 - j;
+            int initialOffset = j;
+            JavaNode currentJavaNode = tree.get(0);
+            while (currentJavaNode.next[letterToIndex(text.charAt(initialStart))] > 0) {
+                currentJavaNode = tree.get(currentJavaNode.next[letterToIndex(text.charAt(initialStart))]);
+                int currentStart = currentJavaNode.start;
+                int currentOffset = currentJavaNode.offset;
+                int removeIndex = 1;
+                for (int i = 1; i < currentOffset + 1; i++) {
+                    if (text.charAt(currentStart + i) != text.charAt(initialStart + i)) {
+                        break;
+                    }
+                    removeIndex++;
+                }
 
-        for (T from : graph)
-        {
-            for (T to : graph.edgesFrom(from))
-            {
-                result.addEdge(to, from);
+                if (currentOffset + 1 - removeIndex > 0) {
+                    JavaNode newJavaNode = new JavaNode(currentStart + removeIndex, currentOffset - removeIndex, count++);
+                    currentJavaNode.start = initialStart;
+                    currentJavaNode.offset = removeIndex - 1;
+                    tree.add(newJavaNode);
+                    if (currentJavaNode.haveNeighbours) {
+                        newJavaNode.next = Arrays.copyOf(currentJavaNode.next, currentJavaNode.next.length);
+                        newJavaNode.haveNeighbours = true;
+                        currentJavaNode.initNext();
+                    }
+                    currentJavaNode.next[letterToIndex(text.charAt(newJavaNode.start))] = newJavaNode.id;
+                    currentJavaNode.haveNeighbours = true;
+                }
+                initialStart += removeIndex;
+                initialOffset -= removeIndex;
             }
+            JavaNode newJavaNode = new JavaNode(initialStart, initialOffset, count++);
+            tree.add(newJavaNode);
+            currentJavaNode.next[letterToIndex(text.charAt(initialStart))] = newJavaNode.id;
+            currentJavaNode.haveNeighbours = true;
         }
-
-        return result;
+        return tree;
     }
 
-    public static <T> void explore(T node, DirectedGraph<T> graph, List<T> sortedResult, Set<T> visitedNodes, Set<T> expandedNodes)
-    {
-        // Have we been here before?
-        if (visitedNodes.contains(node))
-        {
-            // And have completed this node before
-            if (expandedNodes.contains(node))
-            {
-                // Then we're fine
-                return;
+    // Build a suffix tree of the string text and return a list
+    // with all of the labels of its edges (the corresponding
+    // substrings of the text) in any order.
+    public List<String> computeSuffixTreeEdges(String text) {
+        List<String> result = new ArrayList<String>();
+        List<JavaNode> tree = textToTree(text);
+        Queue<Integer> queue = new LinkedList<>();
+        queue.add(0);
+        while (!queue.isEmpty()) {
+            JavaNode currentJavaNode = tree.get(queue.poll());
+            if (currentJavaNode.offset != -1) {
+                result.add(text.substring(currentJavaNode.start, currentJavaNode.start + currentJavaNode.offset + 1));
             }
-
-            FMLLog.log.fatal("Mod Sorting failed.");
-            FMLLog.log.fatal("Visiting node {}", node);
-            FMLLog.log.fatal("Current sorted list : {}", sortedResult);
-            FMLLog.log.fatal("Visited set for this node : {}", visitedNodes);
-            FMLLog.log.fatal("Explored node set : {}", expandedNodes);
-            SetView<T> cycleList = Sets.difference(visitedNodes, expandedNodes);
-            FMLLog.log.fatal("Likely cycle is in : {}", cycleList);
-            throw new ModSortingException("There was a cycle detected in the input graph, sorting is not possible", node, cycleList);
+            for (int i = 0; i < JavaNode.Letters; i++) {
+                if (currentJavaNode.next[i] > 0) queue.add(currentJavaNode.next[i]);
+            }
         }
+        return result.stream().map(String::trim).collect(Collectors.toList());
+    }
 
-        // Visit this node
-        visitedNodes.add(node);
 
-        // Recursively explore inbound edges
-        for (T inbound : graph.edgesFrom(node))
-        {
-            explore(inbound, graph, sortedResult, visitedNodes, expandedNodes);
+    static public void main(String[] args) throws IOException {
+        new SuffixTreeJava().run();
+    }
+
+    public void print(List<String> x) {
+        for (String a : x) {
+            System.out.println(a);
         }
+    }
 
-        // Add ourselves now
-        sortedResult.add(node);
-        // And mark ourselves as explored
-        expandedNodes.add(node);
+    public void run() throws IOException {
+        FastScanner scanner = new FastScanner();
+        String text = scanner.next();
+        List<String> edges = computeSuffixTreeEdges(text);
+        print(edges);
+    }
+}
+
+class JavaNode {
+    public static final int Letters = 5;
+    public static final int NA = -1;
+    public int next[];
+    int start;
+    int offset;
+    public int id;
+    public boolean haveNeighbours;
+
+    JavaNode() {
+        next = new int[Letters];
+        Arrays.fill(next, NA);
+    }
+
+
+    JavaNode(int start, int offset, int id) {
+        this();
+        this.start = start;
+        this.offset = offset;
+        this.id = id;
+    }
+
+    public void initNext() {
+        Arrays.fill(next, NA);
+        haveNeighbours = false;
     }
 }

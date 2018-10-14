@@ -1,40 +1,73 @@
-package other_algorithms;
+package _SortingAndSeaechingAlgorithms;
 
-/*
- * Convex Hull Optimization
- * dp[i] = min(j < i){ dp[j] + a[i] * b[j] } where b[j] >= b[j + 1]
- * 
- * Original Complexity: O(n^2)
- * Optimized Complexity: O(n log n) or O(n) if a[i] <= a[i + 1]
- * 
- * Following operations are used within the DP function
- * 
- * Overflow avoided assuming integer x coordinates required for queries (slower due to divisions)
- */
-public class ConvexHullOptimization2 {
+import java.util.Arrays;
 
-	long[] A, B, lst; 			//initialized with size n
-	int head, end;
-	
-	void addLine(long a, long b)		// O(n) with amortized complexity
-	{
-		while(end - head > 0)
-		{
-			lst[end - 1] = Math.floorDiv(b - B[end - 1], A[end - 1] - a);
-			if(end - head == 1 || lst[end - 1] > lst[end - 2])
-				break;
-			--end;
+public class QuickSortJava {
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		
+		int[] arr = {3, 44, 38, 5, 47, 15, 3, 36, 26, 27, 2, 46, 4, 19, 50, 48, 50};
+		System.out.println(Arrays.toString(arr));
+		
+		int low = 0;
+		int high = arr.length -1;
+		
+		quickSort(arr, low, high);
+		
+		System.out.println(Arrays.toString(arr));
+		
+
+	}
+
+	public static void quickSort(int[] arr, int low, int high) {
+		// TODO Auto-generated method stub
+		
+		if(arr == null || arr.length == 0){
+			return;
 		}
-		A[end] = a;
-		B[end] = b;
-		lst[end] = Long.MAX_VALUE;
-		++end;
+		
+		if(low > high){
+			return;
+		}
+		
+		//make pivot
+		
+		int middle = low +(high - low)/ 2;
+		int pivot = arr[middle];
+		
+		//make Left <pivot and Right > pivot
+		
+		int i = low;
+		int j = high;
+		
+		while(i <= j){
+			
+			while(arr[i] < pivot){
+				i++;
+			}
+			
+			while(arr[j] > pivot){
+				j--;
+			}
+			
+			if(i <= j){
+				int temp = arr[i];
+				arr[i] = arr[j];
+				arr[j] = temp;
+				i++;
+				j--;
+			}
+		}
+		
+		if(low < j){
+			quickSort(arr, low, j);
+		}
+		
+		if(high > i){
+			quickSort(arr, i, high);
+		}
+		
 	}
-	
-	long queryPointer(long x)	// O(n), queries must be performed in increasing order
-	{
-		while(lst[head] < x)
-			++head;
-		return A[head] * x + B[head];
-	}
+
 }

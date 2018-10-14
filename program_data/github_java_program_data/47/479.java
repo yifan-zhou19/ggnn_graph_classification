@@ -1,45 +1,20 @@
-  public void insertItem(Object key, Object element)
-    throws InvalidKeyException  {
-    checkKey(key); // may throw an InvalidKeyException
-    Position insPos = T.root();
-    do {
-      insPos = findPosition(key, insPos);
-      if (T.isExternal(insPos))
-        break;
-      else // the key already exists
-        insPos = T.rightChild(insPos);
-    } while (true);
-    T.expandExternal(insPos);
-    Item newItem = new Item(key, element);
-    T.replaceElement(insPos, newItem);
-    actionPos = insPos; // node where the new item was inserted
-  }
-  
-  public Object removeElement(Object key) throws InvalidKeyException  {
-    Object toReturn;
-    checkKey(key); // may throw an InvalidKeyException
-    Position remPos = findPosition(key, T.root());
-    if(T.isExternal(remPos)) {
-      actionPos = remPos; // node where the search ended unsuccessfully
-      return NO_SUCH_KEY;
+package com.github.nhuray.javatests.ypg;
+
+/**
+ * Write a method to check if a word is a Palindrome
+ */
+public class Palindrome {
+
+    public static boolean isPalindrome(String word) {
+        int length = word.length();
+        for (int i = 0; i < length / 2; i++) {
+            char a = word.charAt(i);
+            char b = word.charAt(length - 1 - i);
+            if (a != b) return false;
+        }
+        return true;
+        // Another way to do that is to use a StringBuffer
+        // String reversed = new StringBuffer(word).reverse().toString();
+        // return word.equals(reversed);
     }
-    else{
-      toReturn = element(remPos); // element to be returned
-      if (T.isExternal(T.leftChild(remPos)))
-        remPos = T.leftChild(remPos);
-      else if (T.isExternal(T.rightChild(remPos)))
-        remPos = T.rightChild(remPos);
-      else { // key is at a node with internal children
-        Position swapPos = remPos; // find node for swapping items
-        remPos = T.rightChild(swapPos);
-        do
-	  remPos = T.leftChild(remPos);
-	while (T.isInternal(remPos));
-	swap(swapPos, T.parent(remPos));
-      }
-      actionPos = T.sibling(remPos); // sibling of the leaf to be removed
-      T.removeAboveExternal(remPos);
-      return toReturn;
-    }
-  }
 }

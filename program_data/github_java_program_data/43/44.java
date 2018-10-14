@@ -1,26 +1,37 @@
-package Algorithm;
+package dcll.Ouss.mysimplestack;
 
-/**
- * Created by tonytan on 12/1/2017.
- *
- * Bucket sort: cost most memory
- */
-public class BucketSort {
+public class Stack implements SimpleStack {
 
-    static int[] data = {1,2,7,4,6,3,9};//assume all data < 10
-    static int[] bucket = new int[10];
+	private int size;
+	
+	@Override
+	public boolean isEmpty() {
+		// TODO Auto-generated method stub
+		return false;
+	}
 
-    public static void bucketSort(int[] data){
-        for (int i=0; i<data.length; i++){
-            bucket[data[i]] = data[i];
-        }
-    }
+	@Override
+	public int getSize() {
+		// TODO Auto-generated method stub
+		return size;
+	}
 
-    public static void main(String[] args){
-        bucketSort(data);
-        for (int i:bucket) {
-            if (i==0) continue;
-            System.out.print(i);
-        }
-    }
+	@Override
+	public void push(Item item) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public Item peek() throws EmptyStackException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Item pop() throws EmptyStackException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

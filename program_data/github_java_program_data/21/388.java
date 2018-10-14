@@ -1,15 +1,51 @@
-/*
- Given two words word1 and word2 , find the minimum number of steps required to
-convert word1 to word2 . (each operation is counted as 1 step.)  You have the
-following 3 operations permitted on a word:  a) Insert a character b) Delete a
-character c) Replace a character    Subscribe to see which companies asked this
-question    Show Tags   Dynamic Programming  String     Show Similar Problems
-(M) One Edit Distance
+/**
+参见《算法》P205-P209
 */
 
+public class Sort_HeapSort<Key extends  Comparable<Key>>  {
 
-public class Solution {
-    public int minDistance(String word1, String word2) {
-        
+
+    private boolean less(Comparable a[], int i, int j){
+        return a[i].compareTo(a[j]) < 0;
+    }
+
+    private void exch(Comparable a[], int i, int j){
+        Comparable t = a[i];
+        a[i] = a[j];
+        a[j] = t;
+    }
+
+    /**
+     * 下沉(sink)
+     * @param k
+     */
+    private void sink(Comparable a[], int k, int N){
+        while(2*k <= N){
+            int j = 2*k;
+            if(j < N && less(a, j,j+1))
+                j++;
+            if(!less(a, k,j))
+                break;
+            exch(a, k,j );
+            k=j;
+        }
+    }
+
+
+    /*
+    堆排序
+     */
+    public void sort(Comparable a[]){
+        int N = a.length;
+        for(int k=N/2; k>=1; k--)  //构建堆
+        {
+            sink(a, k, N);
+        }
+
+        while(N>1){
+            exch(a, 1, N--);  //将最大与最小交换，会导致堆平衡被破坏
+            sink(a, 1, N);  // 修复堆
+        }
+
     }
 }

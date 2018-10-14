@@ -1,45 +1,13 @@
-package vlad.euler;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-
-public class Fibonacci {
-
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		System.out.println("result=" + sumFibonacci(new Long[] {1L, 2L}, 4000000L));
-	}
-	
-	public static long sumFibonacci(Long[] start, long limit) {
-		long sum = 0;
-		ArrayList<Long> list = new ArrayList<Long>(Arrays.asList(start));
-		
-		for(int i=0; i<list.size(); i++) {
-			if((list.get(i) % 2L) == 0) {
-				sum += 0L + list.get(i);
-				System.out.println("sum=" + sum);
-			}
-		}
-		
-		while(true) {
-			int lastIndex = list.size()-1;
-			Long nextTerm = 0L + list.get(lastIndex) + list.get(lastIndex-1);
-			System.out.println("" + nextTerm);
-			
-			if(nextTerm > limit) {
-				break;
-			}
-
-			list.add(nextTerm);
-			if((nextTerm % 2L) == 0) {
-				sum += 0L + nextTerm;
-				System.out.println("sum=" + sum);
-			}
-		}
-		
-		return sum;
-	}
-
-}
+public <T extends Comparable<T>> void sort(T[] elems) {
+ 7         int size = elems.length;
+ 8 
+ 9         for (int outerLoopIdx = 1; outerLoopIdx < size; ++outerLoopIdx) {
+10             for (int innerLoopIdx = outerLoopIdx; innerLoopIdx > 0; --innerLoopIdx) {
+11                 if (elems[innerLoopIdx - 1].compareTo(elems[innerLoopIdx]) > 0) {
+12                     T temp = elems[innerLoopIdx - 1];
+13                     elems[innerLoopIdx - 1] = elems[innerLoopIdx];
+14                     elems[innerLoopIdx] = temp;
+15                 }
+16             }
+17         }
+18     }

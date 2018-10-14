@@ -1,80 +1,91 @@
-/**
- * Copyright (C) 2001-2018 by RapidMiner and the contributors
- * 
- * Complete list of developers available at our web site:
- * 
- * http://rapidminer.com
- * 
- * This program is free software: you can redistribute it and/or modify it under the terms of the
- * GNU Affero General Public License as published by the Free Software Foundation, either version 3
- * of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Affero General Public License for more details.
- * 
- * You should have received a copy of the GNU Affero General Public License along with this program.
- * If not, see http://www.gnu.org/licenses/.
-*/
-package com.rapidminer.operator.learner.functions.kernel.jmysvm.util;
+package GeekCoder;
 
-/**
- * Implements a Heap on n doubles and ints
- * 
- * @author Stefan Rueping
- */
-public abstract class Heap {
+import java.util.*;
 
-	protected int the_size;
+public class TopologicalSort {
 
-	protected int last;
+    private Map<Node, Set<Node>> adjList = new HashMap<>();
 
-	protected double[] heap;
+    private Stack<Node> topoSorted = new Stack<>();
 
-	protected int[] indizes;
+    public TopologicalSort() {}
 
-	public Heap() {};
+    void addNeighbor(Node from, Node to) {
+        adjList.computeIfAbsent(from, s -> new HashSet<>()).add(to);
+    }
 
-	public Heap(int n) {
-		the_size = 0;
-		init(n);
-	};
+    void topologicalSort() throws Exception {
 
-	public int size() {
-		return last; // last = number of elements
-	};
+        for (Node n: adjList.keySet()) {
+            if (n.visited == 0) {
+                dfs(n);
+            }
+        }
+    }
 
-	public void init(int n) {
-		if (the_size != n) {
-			the_size = n;
-			heap = new double[n];
-			indizes = new int[n];
-		}
-		;
-		last = 0;
-	};
+    void dfs(Node node) throws Exception {
 
-	public void clear() {
-		the_size = 0;
-		last = 0;
-		heap = null;
-		indizes = null;
-	};
+        if (node.visited == 1) {
+            throw new Exception("graph cyclic");
+        }
 
-	public int[] get_values() {
-		return indizes;
-	};
+        if (node.visited == 0) {
+            node.visited = 1;
+            if (adjList.containsKey(node)) {
+                for (Node m : adjList.get(node)) {
+                    dfs(m);
+                }
+            }
 
-	public abstract void add(double value, int index);
+            node.visited = 2;
+            topoSorted.push(node);
+        }
+    }
 
-	public double top_value() {
-		return heap[0];
-	};
 
-	public boolean empty() {
-		return (last == 0);
-	};
+    public class Node {
+        String value;
+        int visited = 0;
 
-	protected abstract void heapify(int start, int size);
+        Node (String value) {
+            this.value = value;
+        }
+    }
 
-};
+    public static void main(String[] args) {
+        TopologicalSort g = new TopologicalSort();
+        g.instantiateGraph();
+    }
+
+    void instantiateGraph() {
+        Node seven = new Node("7");
+        Node five = new Node("5");
+        Node three = new Node("3");
+        Node eleven = new Node("11");
+        Node eight = new Node("8");
+        Node two = new Node("2");
+        Node nine = new Node("9");
+        Node ten = new Node("10");
+
+        addNeighbor(seven, eleven);
+        addNeighbor(seven, eight);
+        addNeighbor(five, eleven);
+        addNeighbor(three, eight);
+        addNeighbor(three, ten);
+        addNeighbor(eleven, two);
+        addNeighbor(eleven, nine);
+        addNeighbor(eleven, ten);
+        addNeighbor(eight, nine);
+
+        try {
+            topologicalSort();
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        for (Node node: topoSorted) {
+            System.out.print(node.value + " ");
+        }
+    }
+}

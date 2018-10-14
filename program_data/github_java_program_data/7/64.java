@@ -1,18 +1,25 @@
-class TowerOfHanoi {
-   static void Hanoi(int size, String source, String destination, String transit) {
-      if (size == 1) {
-         System.out.println("Move from " + source + " to " + destination);
-      } else {
-         Hanoi(size-1, source, transit, destination);
-         System.out.println("Move from " + source + " to " + destination);
-         Hanoi(size-1, transit, destination, source);
-      }
-   }
+package generics;// : generics/Fibonacci.java
 
-   public static void main(String[] args) {
-      if (args.length != 0) {
-         int size = Integer.parseInt(args[0]);
-         Hanoi(size, "source", "destination", "transit");
-      }
-   }
-}
+// Generate a Fibonacci sequence.
+import net.mindview.util.*;
+
+public class Fibonacci implements Generator<Integer> {
+    private int count = 0;
+
+    public Integer next() {
+        return fib(count++);
+    }
+
+    private int fib(int n) {
+        if (n < 2) return 1;
+        return fib(n - 2) + fib(n - 1);
+    }
+
+    public static void main(String[] args) {
+        Fibonacci gen = new Fibonacci();
+        for (int i = 0; i < 18; i++)
+            System.out.print(gen.next() + " ");
+    }
+} /*
+   * Output: 1 1 2 3 5 8 13 21 34 55 89 144 233 377 610 987 1597 2584
+   */// :~

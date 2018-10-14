@@ -1,42 +1,47 @@
-package sorting.noncomparison;
+package stackSample;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
-public class BucketSort {
 
-    public void sort(Double[] A) {
+public class Stack {
 
-        int n = A.length;
-        List[] B = new ArrayList[n];
+	private final static int MSIZE = 3; 
+	private int currPos = 0;
+	private int[] val = new int[MSIZE];
+	private int depth=1;
 
-        for (int i = 0; i < n; i++)
-            B[i] = new ArrayList<>();
+	public void push(int a) {
+		if (!pushPre()) {
+			throw new RuntimeException("cannot push; full stack");
+		}
+		val[currPos++] = a;
+		System.out.println("## Push:"+currPos+":"+depth);		
+		depth++;
+	}
 
-        for (int i = 0; i < n; i++)
-            B[(int) Math.floor(n * A[i])].add(A[i]);
+	public void pop() {
+		if (!popPre()) {
+			throw new RuntimeException("cannot pop; empty stack");
+		}
+		val[--currPos] = 0;
+		System.out.println("## Pop:"+currPos+":"+depth);
+		depth++;
+	}
 
-        for (List b : B)
-            Collections.sort(b);
+	public boolean pushPre() {		
+		return currPos >= 0 && currPos < MSIZE;
+	}
 
-        int i = 0;
-        for (List b : B)
-            for (Object d : b)
-                A[i++] = (Double) d;
-
-    }
-
-    public static void main(String... args) {
-
-        Double[] numbers = {0.15, 0.84, 0.36, 0.99, 0.13, 0.34, 0.91, 0.51};
-        BucketSort bucketSort = new BucketSort();
-        bucketSort.sort(numbers);
-
-        Arrays.asList(numbers).stream().forEach(System.out::println);
-
-    }
-
+	public boolean popPre() {
+		return currPos > 0 && currPos <= MSIZE;
+	}
+	
+	public String toString() {
+		StringBuffer sb = new StringBuffer();
+		sb.append("currPost="+currPos);
+		sb.append("\\n");
+		sb.append("val="+Arrays.toString(val));
+		return sb.toString();
+	}
 
 }

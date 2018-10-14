@@ -1,42 +1,58 @@
-package sorting.noncomparison;
+package stacksAndQueues;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.Iterator;
 
-public class BucketSort {
+public class Stack<T> implements Iterable<T> {
 
-    public void sort(Double[] A) {
-
-        int n = A.length;
-        List[] B = new ArrayList[n];
-
-        for (int i = 0; i < n; i++)
-            B[i] = new ArrayList<>();
-
-        for (int i = 0; i < n; i++)
-            B[(int) Math.floor(n * A[i])].add(A[i]);
-
-        for (List b : B)
-            Collections.sort(b);
-
-        int i = 0;
-        for (List b : B)
-            for (Object d : b)
-                A[i++] = (Double) d;
-
+    @Override
+    public Iterator<T> iterator() {
+        return null;
     }
 
-    public static void main(String... args) {
+    private class LinkedListIterator implements Iterator<T>{
+        private Node current = null;
 
-        Double[] numbers = {0.15, 0.84, 0.36, 0.99, 0.13, 0.34, 0.91, 0.51};
-        BucketSort bucketSort = new BucketSort();
-        bucketSort.sort(numbers);
+        @Override
+        public boolean hasNext() {
+            return current.next != null;
+        }
 
-        Arrays.asList(numbers).stream().forEach(System.out::println);
+        @Override
+        public T next() {
+            T item = current.item;
+            current = current.next;
 
+            return item;
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
     }
 
+    private class Node{
+        T item;
+        Node next;
+    }
 
+    private Node firstNode = null;
+
+    public boolean IsEmpty(){
+        return firstNode == null;
+    }
+
+    public void Push(T item){
+        Node oldFirstNode = firstNode;
+        Node newNode = new Node();
+        newNode.next = oldFirstNode;
+        newNode.item = item;
+        firstNode = newNode;
+    }
+
+    public T Pop(){
+        T item = firstNode.item;
+        firstNode = firstNode.next;
+        return item;
+    }
 }

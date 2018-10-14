@@ -1,31 +1,34 @@
-import java.util.Arrays;
+package wit.lk.algorithm.ch03;
 
-public class Example {
-
-   public static void main(String[] args) {
-
-      int[] arr = {95,74,58,32,11,88,64,42,23,3};
-      System.out.println("Unsorted: " + Arrays.toString(arr));
-
-      selectionSort(arr);
-      System.out.println("Sorted  : " + Arrays.toString(arr));
-   }
-
-   public static void selectionSort(int[] arr) {
-
-      for (int i = 0; i < arr.length - 1; i++) {
-         int index = i;
-         for (int j = i + 1; j < arr.length; j++) {
-            if (arr[j] < arr[index]) {
-               index = j;
-            }
-         }
-
-         int tmp = arr[index];
-         arr[index] = arr[i];
-         arr[i] = tmp;
-      }
-   }
+public class BucketSort {
+	private int[] buckets;
+	private int[] array;
+	
+	public BucketSort(int range,int[] array){
+		buckets = new int[range];
+		this.array = array;
+	}
+	
+	/**
+	 * ����
+	 */
+	public void sort(){
+		if(array != null && array.length > 1){
+			for(int i = 0; i < array.length; i++){
+				buckets[array[i]]++;
+			}
+		}
+	}
+	
+	/**
+	 * �Ӵ�С����
+	 */
+	public void print(){
+		//�����������
+		for(int i = buckets.length - 1; i >= 0; i--){
+			for(int j = 0; j < buckets[i]; j++){
+				System.out.println(i);
+			}
+		}
+	}
 }
-
-

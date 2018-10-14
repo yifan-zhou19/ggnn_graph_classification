@@ -1,27 +1,13 @@
-package com.wang.domain.fanxing.complexmodel;
-
-/**
- * Created by chao.wang2 on 2018/6/14  12:59
- */
-public class Fibonacci implements Generator<Integer> {
-
-    private int count = 0;
-
-    @Override
-    public Integer next() {
-        return fib(count++);
-    }
-
-    private int fib(int n){
-        if (n<2) return 1;
-        return fib(n-1)+fib(n-2);
-    }
-
-    public static void main(String[] args) {
-        Fibonacci fibonacci = new Fibonacci();
-        for (int i = 0; i < 18; i++) {
-            System.out.print(fibonacci.next()+ " ");
-        }
-    }
-
-}
+public <T extends Comparable<T>> void sort(T[] elems) {
+ 7         int size = elems.length;
+ 8 
+ 9         for (int outerLoopIdx = 1; outerLoopIdx < size; ++outerLoopIdx) {
+10             for (int innerLoopIdx = outerLoopIdx; innerLoopIdx > 0; --innerLoopIdx) {
+11                 if (elems[innerLoopIdx - 1].compareTo(elems[innerLoopIdx]) > 0) {
+12                     T temp = elems[innerLoopIdx - 1];
+13                     elems[innerLoopIdx - 1] = elems[innerLoopIdx];
+14                     elems[innerLoopIdx] = temp;
+15                 }
+16             }
+17         }
+18     }

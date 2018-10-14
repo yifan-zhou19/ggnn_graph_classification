@@ -1,65 +1,72 @@
-按定义：
-左孩子：（A.left, (A.left+A.rigth)/2）
-右孩子：（(A.left+A.rigth)/2＋1， A.right）
-```
-/*
-The structure of Segment Tree is a binary tree which each node has two attributes start and end denote an segment / interval.
+package p1;
 
-start and end are both integers, they should be assigned in following rules:
+import java.util.Arrays;
 
-The root's start and end is given by build method.
-The left child of node A has start=A.left, end=(A.left + A.right) / 2.
-The right child of node A has start=(A.left + A.right) / 2 + 1, end=A.right.
-if start equals to end, there will be no children for this node.
-Implement a build method with two parameters start and end, so that we can create a corresponding segment tree with every node has the correct start and end value, return the root of this segment tree.
+public class Main {
 
-Example
-Given start=0, end=3. The segment tree will be:
+	public static void main(String[] args){
+		
+		int n1 = 1;
+		int n2 = 1;
+		int sum = 0;
+		
+		for(int i = 0; i < 10; i++){
+			
+			System.out.println(n1);
+			sum = n1 + n2;
+			n1 = n2;
+			n2 = sum;
+			
+		}
+		
+		int[] list1 = {1, 2, 3, 4, 8, 5, 10, 1, 3, 4, 7, 9, 0};
+		int[] list2 = {1, 10, 2};
+		
+		check(list1, list2);
+		Arrays.sort(list1);
+		encontrarDoble(list1, 10);
+		
+		
+	}
 
-               [0,  3]
-             /        \
-      [0,  1]           [2, 3]
-      /     \           /     \
-   [0, 0]  [1, 1]     [2, 2]  [3, 3]
-
-Given start=1, end=6. The segment tree will be:
-
-               [1,  6]
-             /        \
-      [1,  3]           [4,  6]
-      /     \           /     \
-   [1, 2]  [3,3]     [4, 5]   [6,6]
-   /    \           /     \
-[1,1]   [2,2]     [4,4]   [5,5]
-
-Clarification
-Segment Tree (a.k.a Interval Tree) is an advanced data structure which can support queries like:
-
-which of these intervals contain a given point
-which of these points are in a given interval
-See wiki:
-Segment Tree
-Interval Tree
-
-Tags Expand 
-LintCode Copyright Binary Tree Segment Tree
-*/
-
-public class Solution {
-    /**
-     *@param start, end: Denote an segment / interval
-     *@return: The root of Segment Tree
-     */
-    public SegmentTreeNode build(int start, int end) {
-    	if (start > end) {
-    		return null;
-    	} else if (start == end) {
-    		return new SegmentTreeNode(start, end);
-    	}
-    	SegmentTreeNode node = new SegmentTreeNode(start, end);
-    	node.left = build(start, (start + end)/2);
-    	node.right  = build((start + end)/2 + 1, end);
-    	return node;
-    }
+	private static void check(int[] list1, int[] list2) {
+		
+		
+		for(int i = 0; i < list1.length; i++ ){
+			for (int j = 0; j < list2.length; j++){
+				
+				if (list1[i] == list2[j]){
+					System.out.println("Duplicate #: " + list1[i]);
+				}
+			}
+		}
+	}
+	
+	private static void encontrarDoble(int[] list, int value){
+		
+		int lowIndex = 0;
+		int highIndex = list.length - 1;
+		
+		while( lowIndex <= highIndex){
+			
+			
+			int middleIndex = (lowIndex + highIndex)/2;
+			
+			if (list[middleIndex] > value){
+				highIndex = middleIndex - 1; 
+			} else if (list[middleIndex] < value){
+				lowIndex = middleIndex +1;
+			} else {
+				System.out.println("We found a match: list[" + middleIndex + "]= " + list[middleIndex]);
+				return;
+			}
+			System.out.println("iterating...");
+			
+		}
+		
+		
+	}
+	
+	
+	
 }
-```

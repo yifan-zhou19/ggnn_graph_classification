@@ -3,28 +3,28 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package Theory;
-
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
+package newpackage;
 
 /**
  *
- * @author Zhang
+ * @author Alina
  */
-public class List_LinkedList {
+public class bTreeNode
+{
 
-    public static void main(String[] args) {
-        /*
-            LINKEDLIST
-                - Là 1 class implements DQUEUE, extends AbstractSequentialList
-                - LinkedList là 1 class tuân thủ theo Linked List truyền thống: FIFO (vào trước ra trước)
-                - 
-         */
-//        Queue linkedList =new LinkedList(); khai báo ntn, hoặc như ở dưới
-        List linkedList = new LinkedList();
-//        linkedList. 
-//  Tự demo hàm 
+    //create left & right nodes to sort
+    public String data;
+    int counter;
+    bTreeNode leftnode;
+    bTreeNode rightnode;
+
+    //get
+    public String getData() {
+        return data;
+    }
+    
+    public void setData(String data) {
+        this.data = data;
+        counter = 1;
     }
 }

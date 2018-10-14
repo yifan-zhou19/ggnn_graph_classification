@@ -1,37 +1,60 @@
-  /** Auxiliary method used by removeElement. */
-  protected void swap(Position swapPos, Position remPos){
-    T.replaceElement(swapPos, remPos.element());
-  }
-  /** Auxiliary method used by findElement, insertItem, and removeElement. */
-  protected Position findPosition(Object key, Position pos) {
-    if (T.isExternal(pos))
-      return pos; // key not found and external node reached returned
-    else {
-      Object curKey = key(pos);
-      if(C.isLessThan(key, curKey))
-        return findPosition(key, T.leftChild(pos));
-      else if(C.isGreaterThan(key, curKey)) // search in left subtree
-        return findPosition(key, T.rightChild(pos)); // search in right subtree
-      else
-        return pos; // return internal node where key is found
-    }
-  }
+import java.util.ArrayDeque;
+import java.util.Queue;
+import java.util.Scanner;
+import java.util.Stack;
 
-  // methods of the dictionary ADT
-  public int size()  { 
-    return (T.size() - 1) / 2; 
-  }
-  
-  public boolean isEmpty() { 
-    return T.size() == 1;
-  }
-  
-  public Object findElement(Object key) throws InvalidKeyException {
-    checkKey(key); // may throw an InvalidKeyException
-    Position curPos = findPosition(key, T.root());
-    actionPos = curPos; // node where the search ended
-    if (T.isInternal(curPos))
-      return element(curPos);
-    else
-      return NO_SUCH_KEY;
-  }
+/**
+ * Created by Sourav on 11/10/2017.
+ */
+public class Palindrome {
+
+    Stack<Character> stack;
+    Queue<Character> queue;
+    Palindrome(){
+        stack = new Stack<>();
+        queue =  new ArrayDeque<>();
+    }
+    public void pushCharacter(Character c){
+        stack.push(c);
+    }
+    public Character popCharacter(){
+        return stack.pop();
+    }
+    public Character dequeueCharacter(){
+        return queue.poll();
+    }
+    public void enqueueCharacter(Character c){
+        queue.add(c);
+    }
+
+    public static void main(String[] args) {
+        Scanner scan = new Scanner(System.in);
+        String input = scan.nextLine();
+        scan.close();
+
+        // Convert input String to an array of characters:
+        char[] s = input.toCharArray();
+
+        // Create a Solution object:
+        Palindrome p = new Palindrome();
+
+        // Enqueue/Push all chars to their respective data structures:
+        for (char c : s) {
+            p.pushCharacter(c);
+            p.enqueueCharacter(c);
+        }
+
+        // Pop/Dequeue the chars at the head of both data structures and compare them:
+        boolean isPalindrome = true;
+        for (int i = 0; i < s.length/2; i++) {
+            if (p.popCharacter() != p.dequeueCharacter()) {
+                isPalindrome = false;
+                break;
+            }
+        }
+
+        //Finally, print whether string s is palindrome or not.
+        System.out.println( "The word, " + input + ", is "
+                + ( (!isPalindrome) ? "not a palindrome." : "a palindrome." ) );
+    }
+}

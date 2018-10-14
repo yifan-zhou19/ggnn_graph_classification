@@ -1,34 +1,13 @@
-package wit.lk.algorithm.ch03;
+package java.util;
+import org.checkerframework.checker.igj.qual.*;
 
-public class BucketSort {
-	private int[] buckets;
-	private int[] array;
-	
-	public BucketSort(int range,int[] array){
-		buckets = new int[range];
-		this.array = array;
-	}
-	
-	/**
-	 * ����
-	 */
-	public void sort(){
-		if(array != null && array.length > 1){
-			for(int i = 0; i < array.length; i++){
-				buckets[array[i]]++;
-			}
-		}
-	}
-	
-	/**
-	 * �Ӵ�С����
-	 */
-	public void print(){
-		//�����������
-		for(int i = buckets.length - 1; i >= 0; i--){
-			for(int j = 0; j < buckets[i]; j++){
-				System.out.println(i);
-			}
-		}
-	}
+@I
+public class Stack<E> extends @I Vector<E> {
+    private static final long serialVersionUID = 0L;
+  public Stack() { throw new RuntimeException("skeleton method"); }
+  public E push(@Mutable Stack<E> this, E a1) { throw new RuntimeException("skeleton method"); }
+  public synchronized E pop(@Mutable Stack<E> this) { throw new RuntimeException("skeleton method"); }
+  public synchronized E peek(@ReadOnly Stack<E> this) { throw new RuntimeException("skeleton method"); }
+  public boolean empty(@ReadOnly Stack<E> this) { throw new RuntimeException("skeleton method"); }
+  public synchronized int search(@ReadOnly Stack<E> this, @ReadOnly Object a1) { throw new RuntimeException("skeleton method"); }
 }

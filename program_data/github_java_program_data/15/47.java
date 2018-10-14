@@ -1,80 +1,124 @@
-/**
- * Copyright (C) 2001-2018 by RapidMiner and the contributors
- * 
- * Complete list of developers available at our web site:
- * 
- * http://rapidminer.com
- * 
- * This program is free software: you can redistribute it and/or modify it under the terms of the
- * GNU Affero General Public License as published by the Free Software Foundation, either version 3
- * of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Affero General Public License for more details.
- * 
- * You should have received a copy of the GNU Affero General Public License along with this program.
- * If not, see http://www.gnu.org/licenses/.
-*/
-package com.rapidminer.operator.learner.functions.kernel.jmysvm.util;
+package com.hrishikeshmishra.ns.graph;
+
+import com.hrishikeshmishra.ns.stack.LinkedStack;
+import com.hrishikeshmishra.ns.stack.Stack;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
- * Implements a Heap on n doubles and ints
- * 
- * @author Stefan Rueping
+ * Topological Sort
+ *
+ * @author hrishikesh.mishra
+ * @link http://hrishikeshmishra.com/topological-sort/
  */
-public abstract class Heap {
+public class TopologicalSort {
 
-	protected int the_size;
+    public <V> List<V> sortRecursive(Digraph<V> digraph) {
+        List<V> topologicalOrder = new ArrayList<>();
+        VertexInDegreeCounter vertexInDegreeCounter = new VertexInDegreeCounter(digraph);
+        Set<V> zeroInDegreeVertices = getZeroInDegreeVertices(digraph);
+        if (zeroInDegreeVertices.isEmpty()) throw new RuntimeException("Graph has loop.");
+        zeroInDegreeVertices.stream().forEach(vertex -> sortRecursive(topologicalOrder, vertex, digraph, vertexInDegreeCounter));
+        return topologicalOrder;
+    }
 
-	protected int last;
+    private <V> void sortRecursive(List<V> topologicalOrder, V vertex, Digraph<V> digraph, VertexInDegreeCounter vertexInDegreeCounter) {
+        topologicalOrder.add(vertex);
+        for (V outgoingVertex : digraph.getOutboundNeighbors(vertex)) {
+            vertexInDegreeCounter.decreaseInDegreeCountByOne(outgoingVertex);
+            if (!vertexInDegreeCounter.hasMoreInDegree(outgoingVertex))
+                sortRecursive(topologicalOrder, outgoingVertex, digraph, vertexInDegreeCounter);
+        }
+    }
 
-	protected double[] heap;
+    public <V> List<V> sortNonRecursive(Digraph<V> digraph) {
+        List<V> topologicalOrder = new ArrayList<>();
+        Stack<V> stack = new LinkedStack<>();
 
-	protected int[] indizes;
+        getZeroInDegreeVertices(digraph).forEach(stack::push);
+        VertexInDegreeCounter vertexInDegreeCounter = new VertexInDegreeCounter(digraph);
 
-	public Heap() {};
+        if (stack.isEmpty())
+            throw new RuntimeException("Graph has loop.");
 
-	public Heap(int n) {
-		the_size = 0;
-		init(n);
-	};
+        while (!stack.isEmpty()) {
+            V vertex = stack.pop();
+            topologicalOrder.add(vertex);
+            for (V outgoingVertex : digraph.getOutboundNeighbors(vertex)) {
+                vertexInDegreeCounter.decreaseInDegreeCountByOne(outgoingVertex);
+                if (!vertexInDegreeCounter.hasMoreInDegree(outgoingVertex))
+                    stack.push(outgoingVertex);
 
-	public int size() {
-		return last; // last = number of elements
-	};
+            }
+        }
 
-	public void init(int n) {
-		if (the_size != n) {
-			the_size = n;
-			heap = new double[n];
-			indizes = new int[n];
-		}
-		;
-		last = 0;
-	};
+        return topologicalOrder;
+    }
 
-	public void clear() {
-		the_size = 0;
-		last = 0;
-		heap = null;
-		indizes = null;
-	};
+    private <V> Set<V> getZeroInDegreeVertices(Digraph<V> digraph) {
+        return digraph.getVertices().
+                stream().
+                filter(vertex -> digraph.getInboundNeighbors(vertex).size() == 0).
+                collect(Collectors.toCollection(() -> new LinkedHashSet<>()));
+    }
 
-	public int[] get_values() {
-		return indizes;
-	};
+    private static class VertexInDegreeCounter<V> {
+        private final Map<V, Integer> vertexInDegreeCountMap;
 
-	public abstract void add(double value, int index);
+        private VertexInDegreeCounter(Digraph<V> digraph) {
+            vertexInDegreeCountMap = getVertexInDegreeCountMap(digraph);
+        }
 
-	public double top_value() {
-		return heap[0];
-	};
+        public void decreaseInDegreeCountByOne(V vertex) {
+            vertexInDegreeCountMap.put(vertex, vertexInDegreeCountMap.get(vertex) - 1);
+        }
 
-	public boolean empty() {
-		return (last == 0);
-	};
+        public boolean hasMoreInDegree(V vertex) {
+            return (vertexInDegreeCountMap.get(vertex) > 0);
+        }
 
-	protected abstract void heapify(int start, int size);
+        private <V> Map<V, Integer> getVertexInDegreeCountMap(Digraph<V> digraph) {
+            Map<V, Integer> vertexInDegreeCountMap = new HashMap<>();
+            for (V vertex : digraph.getVertices())
+                vertexInDegreeCountMap.put(vertex, digraph.inDegree(vertex));
+            return vertexInDegreeCountMap;
+        }
 
-};
+    }
+}
+
+
+class TopologicalSortTest {
+
+    public static void main(String[] args) {
+        Digraph<Integer> graph = new Digraph<>();
+
+        graph.addVertex(7);
+        graph.addVertex(5);
+        graph.addVertex(3);
+        graph.addVertex(11);
+        graph.addVertex(8);
+        graph.addVertex(2);
+        graph.addVertex(9);
+        graph.addVertex(10);
+
+        graph.addEdge(3, 8);
+        graph.addEdge(3, 10);
+        graph.addEdge(5, 11);
+        graph.addEdge(7, 11);
+        graph.addEdge(7, 8);
+        graph.addEdge(11, 2);
+        graph.addEdge(11, 9);
+        graph.addEdge(11, 10);
+        graph.addEdge(8, 9);
+
+        System.out.println("Graph:\n" + graph);
+
+        TopologicalSort topologicalSort = new TopologicalSort();
+        System.out.println("\n\nNon-Sort: " + topologicalSort.sortNonRecursive(graph));
+        System.out.println("\n\nRecursive Sort: " + topologicalSort.sortRecursive(graph));
+
+
+    }
+}

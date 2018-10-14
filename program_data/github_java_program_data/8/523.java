@@ -1,29 +1,28 @@
-package oracle.threads;
+import java.util.Arrays;
 
-import static java.lang.System.out;
+public class Example {
 
-public class Fibonacci {
-    public static long fibonacci(int n) {
-        if (n <= 1) return n;
-        else return fibonacci(n-1) + fibonacci(n-2);
-    }
+   public static void main(String a[]) {
 
-    public static void blockingComputation() {
-        int n = 1000;
-        for (int i = 1; i <= n; i++) {
-            out.println(i + ": " + fibonacci(i));
-	    if(Thread.interrupted()) {
-		out.println("interrupted");
-	    	return;
-	    }
-	}
-    }
+      int[] arr = {93, 75, 52, 37, 15, 80, 66, 41, 27, 2};
+      System.out.println("Unsorted: " + Arrays.toString(arr));
 
-public static void main(String[] args) throws InterruptedException {
-Thread t = new Thread(Fibonacci::blockingComputation);
-t.start();
-Thread.sleep(5000);//wait for 3 secs
-t.interrupt();//stops computation
+      insertionSort(arr);
+      System.out.println("Sorted  : " + Arrays.toString(arr));
+   }
+
+   public static void insertionSort(int[] arr) {
+
+      for (int i = 1; i < arr.length; i++) {
+         for (int j = i; j > 0; j--) {
+            if (arr[j] < arr[j - 1]) {
+               int temp = arr[j];
+               arr[j] = arr[j - 1];
+               arr[j - 1] = temp;
+            }
+         }
+      }
+   }
 }
 
-}
+

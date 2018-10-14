@@ -1,95 +1,87 @@
-package Queue;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.util.ArrayList;
 
-import java.util.Scanner;
+public class ConvexHullVisualizer extends JPanel implements MouseListener{
 
-public class Main {
+    public static void main(String[] args) {
+        JFrame window = new JFrame();
+        window.setTitle("ConvexHull Visualizer");
+        window.setSize(600,600);
 
-	public static void main(String[] args) {
-		Queue myqueue = new Queue(5);
-		Scanner input = new Scanner(System.in);
-		String command = "";
-		while (!command.equals("quit")) {
-			System.out.println();
-			System.out
-					.println("Do you want to insert, remove, getsize or quit?");
-			command = input.next();
-			if (command.equals("insert")) {
-				System.out.println("Enter name to insert");
-				String name = input.next();
-				myqueue.insert(name);
-				System.out.println(name + " has been inserted into the queue");
-				myqueue.printout();
-			} else if (command.equals("remove")) {
-				System.out.println(myqueue.remove()
-						+ " has been removed from the queue");
-				myqueue.printout();
-			} else if (command.equals("getsize")) {
-				System.out.println("The size of the queue is "
-						+ myqueue.getSize());
-			}
-		}
-	}
-}
+       ConvexHullVisualizer chv = new ConvexHullVisualizer();
 
+        window.add(chv);
+        window.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        window.setVisible(true);
+    }
 
+    public ConvexHullVisualizer(){
+        this.setBackground(Color.BLACK);
+        this.addMouseListener(this);
 
+        JButton solveButton = new JButton("Gift Wrapping");
+        solveButton.setSize(100,30);
+        solveButton.setLocation(10,10);
+        solveButton.addActionListener((ActionEvent e) -> {startSolving();
+        });
 
+        this.setLayout(null);
+        this.add(solveButton);
+    }
 
+    ArrayList<Point> points = new ArrayList<>();
+    ArrayList<Point> hull = null;
 
-package Queue;
+    public void startSolving(){
+        hull = JarvisConvexHull.convexHull(points);
+        repaint();
+    }
 
-public class Queue {
+    @Override
+    public void paint(Graphics g) {
+        super.paint(g);
 
-	private String[] array;
-	private int size;
-	private int front;
-	private int rear;
-	private int nItems;
+        g.setColor(Color.WHITE);
+        for(Point p : points){
+            g.fillOval(p.x-5,p.y-5,10,10);
+        }
 
-	public Queue(int s) {
-		size = s;
-		array = new String[size];
-		front = 0;
-		rear = -1;
-		nItems = 0;
-	}
+        if(hull != null){
+            Polygon hullPoly = new Polygon();
+            for(Point p : hull){
+                hullPoly.addPoint(p.x,p.y);
+            }
+            g.drawPolygon(hullPoly);
+        }
+    }
 
-	public boolean insert(String name) {
-		if (isFull())
-			return false;
-		if (rear == size - 1)
-			rear = -1;
-		rear++;
-		array[rear] = name;
-		nItems++;
-		return true;
-	}
+    @Override
+    public void mouseClicked(MouseEvent e) {
+        points.add(new Point(e.getX(),e.getY()));
+        repaint();
+    }
 
-	public String remove() {
-		if (isEmpty())
-			return null;
-		String temp = array[front];
-		front++;
-		if (front == size)
-			front = 0;
-		return temp;
-	}
+    @Override
+    public void mousePressed(MouseEvent e) {
 
-	public boolean isFull() {
-		return (nItems == size);
-	}
+    }
 
-	public boolean isEmpty() {
-		return (nItems == 0);
-	}
+    @Override
+    public void mouseReleased(MouseEvent e) {
 
-	public int getSize() {
-		return nItems;
-	}
+    }
 
-	public void printout() {
-		for(int i=front;i<nItems;i++){
-			System.out.print(array[i] + " ");
-		}
-	}
+    @Override
+    public void mouseEntered(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+
+    }
 }

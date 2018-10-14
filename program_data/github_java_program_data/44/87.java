@@ -1,108 +1,57 @@
-/*
- * Stack.java July 2006
- *
- * Copyright (C) 2006, Niall Gallagher <niallg@users.sf.net>
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or 
- * implied. See the License for the specific language governing 
- * permissions and limitations under the License.
+/**
+ * Ford Fulkersen
+ * @param s source
+ * @param d destination
+ * @param c capacity
+ * @param f flow, init with 0
+ * @return
  */
-
-package org.simpleframework.xml.stream;
-
-import java.util.ArrayList;
+static int ff(int s, int d, int[][] c, int[][] f) {
+	List<Integer> path = dfs(s, d, c, f, new boolean[c.length]); // find path
+	if (path.size() < 2) {
+		int flow = 0;
+		for (int i = 0; i < f[s].length; i++) { // leaving flow of source
+			flow += f[s][i];
+		}
+		return flow;
+	}
+	int cap = Integer.MAX_VALUE; // capacity of current path
+	for (int i = 0; i < path.size() - 1; i++) {
+		int a = path.get(i), b = path.get(i + 1);
+		cap = Math.min(cap, c[a][b] - f[a][b]);
+	}
+	for (int i = 0; i < path.size() - 1; i++) { //update flow
+		int a = path.get(i), b = path.get(i + 1);
+		f[a][b] += cap;
+		f[b][a] -= cap;
+	}
+	return ff(s, d, c, f); // tail recursion
+}
 
 /**
- * The <code>Stack</code> object is used to provide a lightweight 
- * stack implementation. To ensure top performance this stack is not
- * synchronized and keeps track of elements using an array list. 
- * A null from either a <code>pop</code> or <code>top</code> means
- * that the stack is empty. This allows the stack to be peeked at
- * even if it has not been populated with anything yet.
- *
- * @author Niall Gallagher
- */ 
-class Stack<T> extends ArrayList<T> {
-
-   /**
-    * Constructor for the <code>Stack</code> object. This is used 
-    * to create a stack that can be used to keep track of values
-    * in a first in last out manner. Typically this is used to 
-    * determine if an XML element is in or out of context.
-    * 
-    * @param size this is the initial size of the stack to use
-    */         
-   public Stack(int size) {
-      super(size);
-   }
-
-   /**
-    * This is used to remove the element from the top of this 
-    * stack. If the stack is empty then this will return null, as
-    * such it is not advisable to push null elements on the stack.
-    *
-    * @return this returns the node element the top of the stack
-    */ 
-   public T pop() {
-      int size = size();
-      
-      if(size <= 0) {
-         return null;               
-      }           
-      return remove(size - 1);
-   }
-   
-   /**
-    * This is used to peek at the element from the top of this 
-    * stack. If the stack is empty then this will return null, as
-    * such it is not advisable to push null elements on the stack.
-    *
-    * @return this returns the node element the top of the stack
-    */  
-   public T top() {
-      int size = size();
-      
-      if(size <= 0) {
-         return null;              
-      }           
-      return get(size - 1);
-   }
-   
-   /**
-    * This is used to acquire the node from the bottom of the stack.
-    * If the stack is empty then this will return null, as such it
-    * is not advisable to push null elements on the stack.
-    *
-    * @return this returns the element from the bottom of the stack
-    */ 
-   public T bottom() {
-      int size = size();
-      
-      if(size <= 0) {
-         return null;              
-      }           
-      return get(0);           
-   }
-   
-   /**
-    * This method is used to add an element to the top of the stack. 
-    * Although it is possible to add a null element to the stack it 
-    * is not advisable, as null is returned when the stack is empty.
-    *
-    * @param value this is the element to add to the stack
-    * 
-    * @return this returns the actual node that has just been added
-    */ 
-   public T push(T value) {
-      add(value);
-      return value;
-   }
+ * depth first search in flow network
+ * @param s source
+ * @param d destination
+ * @param c capacity
+ * @param f flow
+ * @param v visited, init with false
+ * @return
+ */
+static List<Integer> dfs(int s, int d, int[][] c, int[][] f, boolean[] v) {
+	v[s] = true;
+	if (s == d) { // destination found
+		LinkedList<Integer> path = new LinkedList<Integer>();
+		path.add(d);
+		return path;
+	}
+	for (int i = 0; i < c[s].length; i++) {
+		if (!v[i] && c[s][i] - f[s][i] > 0) {
+			List<Integer> path = dfs(i, d, c, f, v);
+			if (path.size() > 0) {
+				((LinkedList<Integer>) path).addFirst(s);
+				return path;
+			}
+		}
+	}
+	return ((List<Integer>) Collections.EMPTY_LIST);
 }

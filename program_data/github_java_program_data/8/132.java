@@ -1,45 +1,13 @@
-
-public class fibonacci {
-	
-	public static void main(String[] args){
-	//	fibonacci(4);
-	//	System.out.println(fibonacciRecursive(7));
-		int[] array = {1, 5, 9, 10, 2};
-		System.out.println(whoKnows(array, array.length));
-	}
-	
-	public static int whoKnows(int[] x, int n){
-		if(n==1)
-			return x[n-1];
-		else
-			return Math.min(x[n-1], whoKnows(x, n-1));
-		
-	}
-	
-	public static int fibonacciRecursive(int n){
-		int nthSum = 0;
-		if(n<=2)
-			return 1;
-		else
-			nthSum = fibonacciRecursive(n-1) + fibonacciRecursive(n-2); 
-			return nthSum;
-	}
-	
-	
-	
-	/*public static int fibonacci(int nthTerm){
-		int previousTerm = 1;
-		int beforePreviousTerm = 1;
-		
-		if(nthTerm<=2)
-			return 1;
-		int newTerm = previousTerm + beforePreviousTerm;
-		for(int i = 2; i<nthTerm; i++){
-			newTerm = previousTerm + beforePreviousTerm;
-			beforePreviousTerm = previousTerm;
-			previousTerm = newTerm;
-			System.out.println(newTerm);
-		}
-		return nthTerm;
-	}*/
-}
+public <T extends Comparable<T>> void sort(T[] elems) {
+ 7         int size = elems.length;
+ 8 
+ 9         for (int outerLoopIdx = 1; outerLoopIdx < size; ++outerLoopIdx) {
+10             for (int innerLoopIdx = outerLoopIdx; innerLoopIdx > 0; --innerLoopIdx) {
+11                 if (elems[innerLoopIdx - 1].compareTo(elems[innerLoopIdx]) > 0) {
+12                     T temp = elems[innerLoopIdx - 1];
+13                     elems[innerLoopIdx - 1] = elems[innerLoopIdx];
+14                     elems[innerLoopIdx] = temp;
+15                 }
+16             }
+17         }
+18     }

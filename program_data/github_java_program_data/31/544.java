@@ -1,51 +1,82 @@
-package java_matrix_multiplication;
+package com.jwetherell.algorithms.graph;
 
-public class Java_Matrix_Multiplication {
+import com.jwetherell.algorithms.data_structures.Graph;
 
-    public static void carpim(int[][] a, int[][] b) {
+import java.util.*;
 
-        //Sonuç matrisi yaratılıyor.
-        int[][] c = new int[a.length][b[0].length];
+/**
+ * Kruskal's minimum spanning tree. Only works on undirected graphs. It finds a
+ * subset of the edges that forms a tree that includes every vertex, where the
+ * total weight of all the edges in the tree is minimized.
+ * <p>
+ * @see <a href="https://en.wikipedia.org/wiki/Kruskal%27s_algorithm">Kruskal's Algorithm (Wikipedia)</a>
+ * <br>
+ * @author Bartlomiej Drozd <mail@bartlomiejdrozd.pl>
+ * @author Justin Wetherell <phishman3579@gmail.com>
+ */
+public class Kruskal {
 
-        //Çarpma işlemi yapılıyor.
-        for (int i = 0; i < a.length; i++) {
-            for (int j = 0; j < b[0].length; j++) {
-                for (int k = 0; k < b.length; k++) {
-                    c[i][j] = c[i][j] + a[i][k] * b[k][j];
-                }
+    private Kruskal() { }
+
+    public static Graph.CostPathPair<Integer> getMinimumSpanningTree(Graph<Integer> graph) {
+        if (graph == null)
+            throw (new NullPointerException("Graph must be non-NULL."));
+
+        // Kruskal's algorithm only works on undirected graphs
+        if (graph.getType() == Graph.TYPE.DIRECTED)
+            throw (new IllegalArgumentException("Undirected graphs only."));
+
+        int cost = 0;
+        final List<Graph.Edge<Integer>> path = new ArrayList<Graph.Edge<Integer>>();
+
+        // Prepare data to store information which part of tree given vertex is
+        HashMap<Graph.Vertex<Integer>, HashSet<Graph.Vertex<Integer>>> membershipMap = new HashMap<Graph.Vertex<Integer>, HashSet<Graph.Vertex<Integer>>>();
+        for (Graph.Vertex<Integer> v : graph.getVertices()) {
+            HashSet<Graph.Vertex<Integer>> set = new HashSet<Graph.Vertex<Integer>>();
+            set.add(v);
+            membershipMap.put(v, set);
+        }
+
+        // We make queue of edges to consider all of them, starting with edge with the lowest cost,
+        // it is important that Edge's class comparator is not natural (ex. sorting is from the biggest to the lowest)
+        PriorityQueue<Graph.Edge<Integer>> edgeQueue = new PriorityQueue<Graph.Edge<Integer>>(graph.getEdges());
+
+        while (!edgeQueue.isEmpty()) {
+            Graph.Edge<Integer> edge = edgeQueue.poll();
+
+            // If from vertex and to vertex are from different parts of tree then add this edge to result and union vertices' parts
+            if (!isTheSamePart(edge.getFromVertex(), edge.getToVertex(), membershipMap)) {
+                union(edge.getFromVertex(), edge.getToVertex(), membershipMap);
+                path.add(edge);
+                cost += edge.getCost();
             }
         }
 
-        //Sonuç ekrana yazdırılıyor.
-        for (int i = 0; i < c.length; i++) {
-            for (int j = 0; j < c[0].length; j++) {
-                System.out.print(c[i][j] + " ");
-            }
-            System.out.println();
-        }
 
+        return (new Graph.CostPathPair<Integer>(cost, path));
     }
 
-    public static void printScreen(int[][] c) {
-        for (int i = 0; i < c.length; i++) {
-            for (int j = 0; j < c[0].length; j++) {
-                System.out.print(c[i][j] + " ");
-            }
-            System.out.println();
-        }
+    private static boolean isTheSamePart(Graph.Vertex<Integer> v1, Graph.Vertex<Integer> v2, HashMap<Graph.Vertex<Integer>, HashSet<Graph.Vertex<Integer>>> membershipMap) {
+        return membershipMap.get(v1) == membershipMap.get(v2);
     }
 
-    public static void main(String[] args) {
-        //Örnek olarak iki 3x3 lük iki matris yaratiliyor.
-        Java_Matrix_Multiplication jmm = new Java_Matrix_Multiplication();
-        int[][] a = new int[][]{{1, 2, 3}, {3, 3, 3}, {5, 6, 2}};
-        System.out.println("A matrisi : ");
-        jmm.printScreen(a);
-        int[][] b = new int[][]{{1, 5, 3}, {2, 9, 6}, {7, 8, 5}};
-        System.out.println("B matrisi : ");
-        jmm.printScreen(b);
-        System.out.println("Carpim matrisi : ");
-        jmm.carpim(a, b);
+    private static void union(Graph.Vertex<Integer> v1, Graph.Vertex<Integer> v2, HashMap<Graph.Vertex<Integer>, HashSet<Graph.Vertex<Integer>>> membershipMap) {
+        HashSet<Graph.Vertex<Integer>> firstSet = membershipMap.get(v1); //first set is the bigger set
+        HashSet<Graph.Vertex<Integer>> secondSet = membershipMap.get(v2);
 
+        // we want to include smaller set into bigger, so second set cannot be bigger than first
+        if (secondSet.size() > firstSet.size()) {
+            HashSet<Graph.Vertex<Integer>>  tempSet = firstSet;
+            firstSet = secondSet;
+            secondSet = tempSet;
+        }
+
+        // changing part membership of each vertex from smaller set
+        for (Graph.Vertex<Integer> v : secondSet) {
+            membershipMap.put(v, firstSet);
+        }
+
+        // adding all vertices from smaller set to bigger one
+        firstSet.addAll(secondSet);
     }
 }

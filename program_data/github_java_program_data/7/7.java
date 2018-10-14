@@ -1,28 +1,34 @@
-package org.teachingkidsprogramming.section05recursion.Kata_and_Variation;
 
-public class TowerOfHanoi
-{
-  //fields
-  public static int index;
-  public static void main(String[] args)
-  {
-    //create some constant variables (final means they can't change after initialization)
-    final int MUN_DISCS = 5; // number of disc to move
-    final int FROM_PEG = 1; // initial 'from' peg
-    final int TO_PEG = 3; // initial 'to' peg
-    final int TEMP_PEG = 2; // initial 'temp'peg
-    //play game
-    moveDiscs(MUN_DISCS, FROM_PEG, TO_PEG, TEMP_PEG);
-    System.out.println("\nAll the discs are moved!");
-  }
-  private static void moveDiscs(int num, int fromPeg, int toPeg, int tempPeg)
-  {
-    if (num > 0)
-    {
-      moveDiscs(num - 1, fromPeg, tempPeg, toPeg);
-      index++;
-      System.out.println(index + ".Move a disc from peg " + fromPeg + "to peg" + toPeg);
-      moveDiscs(num - 1, tempPeg, toPeg, fromPeg);
-    }
-  }
+/**
+ * 
+ * 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89 - it is Fibonacci sequence
+ * O, O, E, O, O, E,  O,  O,  E,  O,  O - it is Fibonacci sequence, where even numbers - E,
+ * and odd numbers - O. You can see that every third number - even number, 
+ * for this reason, parity check of all numbers is unnecessary
+ * 
+ * @author Sluva
+ *
+ */ 
+public class Fibonacci {
+	public static void main (String[] args) {
+		// the first three values
+		int first = 1; int second = 1; int third = 2;
+		// the limit calculations
+		int limit = 4_000_000;
+		// the initial value of the sum
+		int sum = 0;
+		// summation until the value is less than limit
+		while (third <= limit) {
+			// addition of even value to the result
+			sum += third;
+			// calculation of the first odd value
+			first = second + third;
+			// calculation of the second odd value
+			second = third + first;
+			// calculation of the even value
+			third = first + second;
+		}
+		// output sum
+		System.out.println(sum);
+	}
 }

@@ -1,34 +1,58 @@
-package wit.lk.algorithm.ch03;
+package stacksAndQueues;
 
-public class BucketSort {
-	private int[] buckets;
-	private int[] array;
-	
-	public BucketSort(int range,int[] array){
-		buckets = new int[range];
-		this.array = array;
-	}
-	
-	/**
-	 * ����
-	 */
-	public void sort(){
-		if(array != null && array.length > 1){
-			for(int i = 0; i < array.length; i++){
-				buckets[array[i]]++;
-			}
-		}
-	}
-	
-	/**
-	 * �Ӵ�С����
-	 */
-	public void print(){
-		//�����������
-		for(int i = buckets.length - 1; i >= 0; i--){
-			for(int j = 0; j < buckets[i]; j++){
-				System.out.println(i);
-			}
-		}
-	}
+import java.util.Iterator;
+
+public class Stack<T> implements Iterable<T> {
+
+    @Override
+    public Iterator<T> iterator() {
+        return null;
+    }
+
+    private class LinkedListIterator implements Iterator<T>{
+        private Node current = null;
+
+        @Override
+        public boolean hasNext() {
+            return current.next != null;
+        }
+
+        @Override
+        public T next() {
+            T item = current.item;
+            current = current.next;
+
+            return item;
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    private class Node{
+        T item;
+        Node next;
+    }
+
+    private Node firstNode = null;
+
+    public boolean IsEmpty(){
+        return firstNode == null;
+    }
+
+    public void Push(T item){
+        Node oldFirstNode = firstNode;
+        Node newNode = new Node();
+        newNode.next = oldFirstNode;
+        newNode.item = item;
+        firstNode = newNode;
+    }
+
+    public T Pop(){
+        T item = firstNode.item;
+        firstNode = firstNode.next;
+        return item;
+    }
 }

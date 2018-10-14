@@ -1,30 +1,76 @@
-package sedgewick_algo.course2.week2_mst;
+package com.pwr.zpi.util;
 
-import edu.princeton.cs.algs4.In;
-import edu.princeton.cs.algs4.StdOut;
+import com.pwr.zpi.language.Formula;
 
-public class MinimumSpanningTree {
-    MinimumSpanningTree(EdgeWeightedGraph graph){
+import java.util.*;
 
-    }
+import static java.util.stream.Collectors.toSet;
 
-    public Iterable<Edge> edges(){
-        return null;
-    }
+/**
+ * Class enables permute certain List.
+ *
+ * Based on code at http://www.programcreek.com.
+ */
+public class Permutation {
 
-    public double weight(){
-        return 0.0;
-    }
+    static public <Formula>void  nextPermutation(ArrayList<Formula> nums, Comparator<Formula> c) {
 
-    public static void main(String args[]){
-        In in = new In(args[0]);
-        EdgeWeightedGraph graph = new EdgeWeightedGraph(in);
-        MinimumSpanningTree mst = new MinimumSpanningTree(graph);
+        if(nums == null || nums.size()<2)
+            return;
 
-        for(Edge e : mst.edges()){
-            StdOut.print(e);
+        int p=0;
+        for(int i=nums.size()-2; i>=0; i--){
+            if(c.compare(nums.get(i), nums.get(i+1))==-1){
+                p=i;
+                break;
+            }
         }
 
-        StdOut.printf("%.2f\n", mst.weight());
+        int q = 0;
+        for(int i=nums.size()-1; i>p; i--){
+            if(c.compare(nums.get(i), nums.get(p)) == 1){
+                q=i;
+                break;
+            }
+        }
+
+        if(p==0 && q==0){
+            reverse(nums, 0, nums.size()-1);
+            return;
+        }
+
+        reverse(nums, p, q);
+
+        if(p<nums.size()-1){
+            reverse(nums, p+1, nums.size()-1);
+        }
+    }
+
+    static private <Formula>void reverse(ArrayList<Formula> nums, int left, int right){
+        Collections.swap(nums, left, right);
+    }
+
+    public static List<ArrayList<Formula>> getAllPossiblePermutations(ArrayList<Formula> elems, Comparator<Formula> comp) {
+        Set<ArrayList<Formula>> t = new HashSet<>();
+        for (int i = 0; i < factorial(elems.size()); i++) {
+            t.add(new ArrayList<Formula>(elems));
+            Permutation.nextPermutation(elems, comp);
+        }
+
+        List<ArrayList<Formula>> res = new ArrayList<>();
+        for (int i = t.iterator().next().size(); i > 1; i--)
+            res.addAll(t = t
+                    .stream()
+                    .map(l -> new ArrayList<>(l.subList(0, l.size() - 1)))
+                    .collect(toSet()));
+
+        return res;
+    }
+
+    private static int factorial(int n) {
+        int fact = 1;
+        for (int i = 1; i <= n; i++)
+            fact *= i;
+        return fact;
     }
 }

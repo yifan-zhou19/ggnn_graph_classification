@@ -1,97 +1,35 @@
-package spml_assignment1;
+package com.ozkuran.algorithms.sorts.shellsort;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.PriorityQueue;
-import java.util.Set;
 
 /**
- *
- * @author Jasper
+ * @version 0.0.1.3
+ * Created by MahmutAli on 11/9/2009.
+ * Last Update by MahmutAli on 1/26/2015.
+ * Returns if given Array in sorted order with Shell Sort
+ * Worst Case Performance O(n.n)
+ * Best Case Performance O(n.logn.logn)
  */
-public class Kruskal {
-    private final boolean verbose;
-
-    public Kruskal(boolean verbose) {
-        this.verbose = verbose;
-    }
-
-    private List<Set<Integer>> generateUnconnectedVertices(int numVertices) {
-        List<Set<Integer>> connectedVertices = new ArrayList<>(numVertices);
-        for (int i = 0; i < numVertices; ++i) {
-            connectedVertices.add(new HashSet<>());
-            connectedVertices.get(i).add(i);
-        }
-
-        return connectedVertices;
-    }
-
-    private void mergeSets(List<Set<Integer>> connectedVertices,
-            int start, int end) {
-        int startIndex = 0;
-        int endIndex = 0;
-        for (int i = 0; i < connectedVertices.size(); ++i) {
-            if (connectedVertices.get(i).contains(start)) {
-                startIndex = i;
-            }
-            if (connectedVertices.get(i).contains(end)) {
-                endIndex = i;
-            }
-        }
-
-        if (startIndex != endIndex) {
-            connectedVertices.get(startIndex).addAll(
-                    connectedVertices.remove(endIndex));
-        }
-    }
-
-    public boolean areVerticesConnected(List<Set<Integer>> connectedVertices,
-            int v1, int v2) {
-        return connectedVertices.stream().anyMatch((connectedSet)
-                -> (connectedSet.contains(v1) && connectedSet.contains(v2)));
-    }
-
-    public Graph run(Graph graph) {
-        Graph mst = new Graph(graph.getNumberOfVertices());
-
-        PriorityQueue<Edge> edges = new PriorityQueue<>();
-        for (int i = 0; i < graph.getNumberOfVertices(); ++i) {
-            for (int j = 0; j < graph.getNumberOfVertices(); ++j) {
-                double cost = graph.getCost(i, j);
-
-                if (cost > 0.0d) {
-                    edges.add(new Edge(i, j, cost));
+public abstract class ShellSort<T extends Comparable<T>> {
+    public static <T extends Comparable<T>> T[] sort(T[] input) {
+        int increment = input.length / 2;
+        while (increment > 0) {
+            for (int i = increment; i < input.length; i++) {
+                int j = i;
+                T temp = input[i];
+                while (j >= increment && input[j - increment].compareTo(temp) > 0) {
+                    input[j] = input[j - increment];
+                    j = j - increment;
                 }
+                input[j] = temp;
+            }
+            if (increment == 2) {
+                increment = 1;
+            } else {
+                increment *= (5.0 / 11);
             }
         }
-
-        List<Set<Integer>> connectedVertices = generateUnconnectedVertices(
-                graph.getNumberOfVertices());
-        Edge edge = edges.poll();
-        mst.setCost(edge.getStart(), edge.getEnd(), edge.getCost());
-        int nEdgesConsidered = 0;
-        while (!edges.isEmpty()
-                && connectedVertices.size() > 1) {
-            nEdgesConsidered++;
-            edge = edges.poll();
-
-            if (!areVerticesConnected(connectedVertices, edge.getStart(),
-                    edge.getEnd())) {
-                mst.setCost(edge.getStart(), edge.getEnd(), edge.getCost());
-                mergeSets(connectedVertices, edge.getStart(), edge.getEnd());
-            }
-        }
-
-        if (connectedVertices.size() > 1) {
-            throw new IllegalArgumentException("Not all edges in the graph "
-                    + "are connected.");
-        }
-
-        if (verbose) {
-            System.out.println(nEdgesConsidered + " edges considered.");
-        }
-
-        return mst;
+        return input;
     }
 }

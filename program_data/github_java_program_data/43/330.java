@@ -1,73 +1,58 @@
-public class RadixSort {
+package stacksAndQueues;
 
-	//Key-indexed counting(a[].key is an int in [0, R))
-	//O(N) time
-	public static void keyIndexCounting(String[] a) {
-		int N = a.length;
-		String[] aux = new String[N];
-		int[] count = new [R + 1];
+import java.util.Iterator;
 
-		//Count the each key's frenquency
-		for(int i = 0; i < N; i++) {
-			count[a[i].key() + 1]++;
-		}
+public class Stack<T> implements Iterable<T> {
 
-		//Transform frequency to indices
-		for(int r = 0; r < R; r++) {
-			count[r + 1] += count[r];
-		}
+    @Override
+    public Iterator<T> iterator() {
+        return null;
+    }
 
-		//Distribute data into aux
-		for(int i = 0; i < N; i++) {
-			aux[count[a[i].key()]++] = a[i];
-		}
+    private class LinkedListIterator implements Iterator<T>{
+        private Node current = null;
 
-		//Copy back
-		for(int i = 0; i < N; i++) {
-			a[i] = aux[i];
-		}
-	}
+        @Override
+        public boolean hasNext() {
+            return current.next != null;
+        }
 
-	
-	//LSD sort for same length strings, sort a[] on leading W characters
-	//LSDstringsortuses~7WN􏰄3WRarrayaccessesand extra space proportional to N􏰄R to sort N items whose keys are W-character strings taken from an R-character alphabet.
-	public static void sortLSD(String[] a, int W) {
-		int N = a.length;
-		int R = 256;
-		String[] aux = new String[N];
+        @Override
+        public T next() {
+            T item = current.item;
+            current = current.next;
 
-		for(int d = W - 1; d >= 0; d--) {
-			int[] count = new int[R + 1];
-			for(int i = 0; i < N; i++) 
-				count[a[i].charAt(d) + 1]++;
+            return item;
+        }
 
-			for(int r = 0; r < R; r++)
-				count[r + 1] += count[r];
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+    }
 
-			for(int i = 0; i < N; i++)
-				aux[count[a[i].charAt(d)]++] = a[i];
+    private class Node{
+        T item;
+        Node next;
+    }
 
-			for(int i = 0; i < N; i++)
-				a[i] = aux[i];
-		}
-	}
+    private Node firstNode = null;
 
-	//LSD for number for positive numbers
-	public static void sort(int[] a) {
-		int N = a.length;
-		int R = 256;
-		int[] aux = new int[N];
-		for(int d = 0; d < 4; d++) {
-			int mask = 255 << (8 * d);
-			int[] count = new int[R + 1];
-			for(int i = 0; i < N; i++) 
-				count[(a[i] & mask) + 1]++;
-			for(int r = 0; r < R; r++)
-				count[r + 1] += count[r];
-			for(int i = 0; i < N; i++) 
-				aux[count[a[i] & mask]++] = a[i];
-			for(int i = 0; i < N; i++)
-				a[i] = aux[i];
-		}
-	}
+    public boolean IsEmpty(){
+        return firstNode == null;
+    }
+
+    public void Push(T item){
+        Node oldFirstNode = firstNode;
+        Node newNode = new Node();
+        newNode.next = oldFirstNode;
+        newNode.item = item;
+        firstNode = newNode;
+    }
+
+    public T Pop(){
+        T item = firstNode.item;
+        firstNode = firstNode.next;
+        return item;
+    }
 }

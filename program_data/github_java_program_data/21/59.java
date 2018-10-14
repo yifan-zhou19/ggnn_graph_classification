@@ -1,15 +1,64 @@
-/*
- Given two words word1 and word2 , find the minimum number of steps required to
-convert word1 to word2 . (each operation is counted as 1 step.)  You have the
-following 3 operations permitted on a word:  a) Insert a character b) Delete a
-character c) Replace a character    Subscribe to see which companies asked this
-question    Show Tags   Dynamic Programming  String     Show Similar Problems
-(M) One Edit Distance
-*/
+import java.util.*;
 
+public class Example {
 
-public class Solution {
-    public int minDistance(String word1, String word2) {
-        
-    }
+   public static void main(String[] args) {
+
+      int[] arr = {99, 77, 55, 33, 11, 88, 66, 44, 22};
+      System.out.println("Unsorted: " + Arrays.toString(arr));
+
+      heapSort(arr);
+      System.out.println("Sorted  : " + Arrays.toString(arr));
+   }
+
+   public static void heapSort(int[] arr) {
+
+      int size = arr.length;
+
+      for (int i = size / 2 - 1; i >= 0; i--) {
+         heapify(i, arr, size);
+      }
+
+      for (int i = arr.length - 1; i >= 0; i--) {
+         swap(arr, 0, i);
+         size = size - 1;
+         heapify(0, arr, size);
+      }
+
+   }
+
+   public static void heapify(int i, int[] arr, int size) {
+      int largestIndex = i;
+
+      int leftIndex = leftChild(i);
+      if (leftIndex < size && arr[leftIndex] > arr[largestIndex]) {
+         largestIndex = leftIndex;
+      }
+
+      int rightIndex = rightChild(i);
+      if (rightIndex < size && arr[rightIndex] > arr[largestIndex]) {
+         largestIndex = rightIndex;
+      }
+
+      if (largestIndex != i) {
+         swap(arr, i, largestIndex);
+         heapify(largestIndex, arr, size);
+      }
+   }
+
+   static int leftChild(int i) {
+      return 2 * i + 1;
+   }
+
+   static int rightChild(int i) {
+      return 2 * i + 2;
+   }
+
+   static void swap(int[] arr, int index1, int index2) {
+      int temp = arr[index1];
+      arr[index1] = arr[index2];
+      arr[index2] = temp;
+   }   
 }
+
+

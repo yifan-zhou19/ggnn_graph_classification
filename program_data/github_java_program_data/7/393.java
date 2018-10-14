@@ -1,20 +1,27 @@
-public class TowerOfHanoi {
-    private static int num = 0;
+package com.wang.domain.fanxing.complexmodel;
 
-    public static void moveDisk(int n, String fromTow, String toTow, String auxTow) {
-        num++;
-        if (n == 1)
-            System.out.println("Move disk " + n + " from " + fromTow + " to " + toTow
-                + ".");
-        else {
-            moveDisk(n - 1, fromTow, auxTow, toTow);
-            System.out.println("Move disk " + n + " from " + fromTow + " to " + toTow
-                + ".");    //表示将n号盘从form 挪到 to。
-            moveDisk(n - 1, auxTow, toTow, fromTow);
+/**
+ * Created by chao.wang2 on 2018/6/14  12:59
+ */
+public class Fibonacci implements Generator<Integer> {
+
+    private int count = 0;
+
+    @Override
+    public Integer next() {
+        return fib(count++);
+    }
+
+    private int fib(int n){
+        if (n<2) return 1;
+        return fib(n-1)+fib(n-2);
+    }
+
+    public static void main(String[] args) {
+        Fibonacci fibonacci = new Fibonacci();
+        for (int i = 0; i < 18; i++) {
+            System.out.print(fibonacci.next()+ " ");
         }
     }
 
-    public static int getNum() {
-        return num;
-    }
 }

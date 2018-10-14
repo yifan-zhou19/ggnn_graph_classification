@@ -1,55 +1,29 @@
-import java.util.Stack;
+package oracle.threads;
 
-public class TowerOfHanoi {
-	private static Stack[] poles;
+import static java.lang.System.out;
 
-	public static void main(String[] args) {
-		poles = new Stack[3];
-		poles[0] = new Stack<Integer>();
-		poles[1] = new Stack<Integer>();
-		poles[2] = new Stack<Integer>();
+public class Fibonacci {
+    public static long fibonacci(int n) {
+        if (n <= 1) return n;
+        else return fibonacci(n-1) + fibonacci(n-2);
+    }
 
-		poles[0].push(5);
-		poles[0].push(4);
-		poles[0].push(3);
-		poles[0].push(2);
-		poles[0].push(1);
-		moveTower(5, 0, 2, 1);
-		printPoles();
+    public static void blockingComputation() {
+        int n = 1000;
+        for (int i = 1; i <= n; i++) {
+            out.println(i + ": " + fibonacci(i));
+	    if(Thread.interrupted()) {
+		out.println("interrupted");
+	    	return;
+	    }
 	}
+    }
 
-	//I can't actually believe the algorithm is this simple
-	private static void moveTower(int height, int fromPole, int toPole, int withPole) {
-		if (height >= 1) {
-			moveTower(height - 1, fromPole, withPole, toPole);
-			moveDisk(fromPole, toPole);
-			moveTower(height - 1, withPole, toPole, fromPole);
-		}
-	}
+public static void main(String[] args) throws InterruptedException {
+Thread t = new Thread(Fibonacci::blockingComputation);
+t.start();
+Thread.sleep(5000);//wait for 3 secs
+t.interrupt();//stops computation
+}
 
-	private static void moveDisk(int fromPole, int toPole) {
-		poles[toPole].push(poles[fromPole].pop());
-	}
-
-	private static void printPoles() {
-		for (int i = 0; i < 3; i++) {
-			System.out.println("POLE " + i);
-			if (poles[i].size() == 0)
-				System.out.println(" ");
-			else 
-				printPole(i);
-		}
-	}
-
-	private static void printPole(int pos) {
-		int size = poles[pos].size();
-		for (int i = 0; i < size; i++) {
-			StringBuilder sb = new StringBuilder();
-			int bound = (Integer)poles[pos].pop();
-			for (int j = 0; j < bound; j++) {
-				sb.append("*");
-			}
-			System.out.println(sb.toString());
-		}
-	}
 }

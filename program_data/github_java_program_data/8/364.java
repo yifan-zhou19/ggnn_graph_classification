@@ -1,25 +1,13 @@
-package generics;// : generics/Fibonacci.java
-
-// Generate a Fibonacci sequence.
-import net.mindview.util.*;
-
-public class Fibonacci implements Generator<Integer> {
-    private int count = 0;
-
-    public Integer next() {
-        return fib(count++);
-    }
-
-    private int fib(int n) {
-        if (n < 2) return 1;
-        return fib(n - 2) + fib(n - 1);
-    }
-
-    public static void main(String[] args) {
-        Fibonacci gen = new Fibonacci();
-        for (int i = 0; i < 18; i++)
-            System.out.print(gen.next() + " ");
-    }
-} /*
-   * Output: 1 1 2 3 5 8 13 21 34 55 89 144 233 377 610 987 1597 2584
-   */// :~
+public <T extends Comparable<T>> void sort(T[] elems) {
+ 7         int size = elems.length;
+ 8 
+ 9         for (int outerLoopIdx = 1; outerLoopIdx < size; ++outerLoopIdx) {
+10             for (int innerLoopIdx = outerLoopIdx; innerLoopIdx > 0; --innerLoopIdx) {
+11                 if (elems[innerLoopIdx - 1].compareTo(elems[innerLoopIdx]) > 0) {
+12                     T temp = elems[innerLoopIdx - 1];
+13                     elems[innerLoopIdx - 1] = elems[innerLoopIdx];
+14                     elems[innerLoopIdx] = temp;
+15                 }
+16             }
+17         }
+18     }

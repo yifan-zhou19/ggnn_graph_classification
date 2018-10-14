@@ -1,44 +1,37 @@
-
-// https://www.slideshare.net/iwiwi/ss-3578491
-
-public class SegmentTree {
-    private int[] data;
-    private int n;
-
-    public SegmentTree(int n) {
-        this.n = n;
-        data = new int[n * 2 - 1];
-
-        for (int i = 0; i < n * 2 - 1; i++) {
-            data[i] = Integer.MAX_VALUE;
-        }
+  /** Auxiliary method used by removeElement. */
+  protected void swap(Position swapPos, Position remPos){
+    T.replaceElement(swapPos, remPos.element());
+  }
+  /** Auxiliary method used by findElement, insertItem, and removeElement. */
+  protected Position findPosition(Object key, Position pos) {
+    if (T.isExternal(pos))
+      return pos; // key not found and external node reached returned
+    else {
+      Object curKey = key(pos);
+      if(C.isLessThan(key, curKey))
+        return findPosition(key, T.leftChild(pos));
+      else if(C.isGreaterThan(key, curKey)) // search in left subtree
+        return findPosition(key, T.rightChild(pos)); // search in right subtree
+      else
+        return pos; // return internal node where key is found
     }
+  }
 
-    public void update(int i, int x) {
-        i += n - 1;
-        data[i] = x;
-
-        while (i > 0) {
-            i = (i - 1) / 2;
-            data[i] = Math.min(data[i * 2 + 1], data[i * 2 + 2]);
-        }
-    }
-
-    public int at(int i) {
-        return data[n - 1 + i];
-    }
-
-    public int minInHalfOpenInterval(int a, int b, int node, int nodeLeftIdx, int nodeRightIdx) {
-        if (a >= nodeRightIdx || b <= nodeLeftIdx) return Integer.MAX_VALUE;
-        if (a <= nodeLeftIdx && b >= nodeRightIdx) return data[node];
-        else {
-            int vl = minInHalfOpenInterval(a, b, node * 2 + 1, nodeLeftIdx, (nodeLeftIdx + nodeRightIdx) / 2);
-            int vr = minInHalfOpenInterval(a, b, node * 2+ 2, (nodeLeftIdx + nodeRightIdx) / 2, nodeLeftIdx);
-            return Math.min(vl, vr);
-        }
-    }
-
-    public static void main(String[] args) {
-        System.out.println("Hello World!");
-    }
-}
+  // methods of the dictionary ADT
+  public int size()  { 
+    return (T.size() - 1) / 2; 
+  }
+  
+  public boolean isEmpty() { 
+    return T.size() == 1;
+  }
+  
+  public Object findElement(Object key) throws InvalidKeyException {
+    checkKey(key); // may throw an InvalidKeyException
+    Position curPos = findPosition(key, T.root());
+    actionPos = curPos; // node where the search ended
+    if (T.isInternal(curPos))
+      return element(curPos);
+    else
+      return NO_SUCH_KEY;
+  }

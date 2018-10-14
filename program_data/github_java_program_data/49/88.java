@@ -1,80 +1,32 @@
-/*
- * Copyright (c) 2015, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
- *
- * WSO2 Inc. licenses this file to you under the Apache License,
- * Version 2.0 (the "License"); you may not use this file except
- * in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- */
+// 2493893
+// 4243395
+import java.util.*;
 
-package org.wso2.carbon.ml.core.spark.algorithms;
+public class Knapsack {
+	long size; int[] vs; int[] ws; Map<Long, Integer> cache = new HashMap<Long, Integer>();
 
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.function.Function;
-import org.apache.spark.mllib.regression.LabeledPoint;
-import org.apache.spark.mllib.regression.LinearRegressionModel;
-import org.apache.spark.mllib.regression.LinearRegressionWithSGD;
-import scala.Tuple2;
+	public Knapsack(int s, int[] vs, int[] ws) { size = s; this.vs = vs; this.ws = ws; }
 
-import java.io.Serializable;
+	long getKey(int i, int w) { return i*(size+1) + w; }
 
-public class LinearRegression implements Serializable {
+	int opt(int i, int w) {
+		if(w == 0) return 0;
+		if(i == 0) return ws[i] > w ? 0 : vs[i];
 
-    private static final long serialVersionUID = -5137378340857656687L;
+		long key = getKey(i, w);
+		if(cache.containsKey(key)) return cache.get(key);
 
-    /**
-     * This method uses stochastic gradient descent (SGD) algorithm to train a linear regression model
-     *
-     * @param trainingDataset       Training dataset as a JavaRDD of LabeledPoints
-     * @param noOfIterations        Number of iterarations
-     * @param initialLearningRate   Initial learning rate (SGD step size)
-     * @param miniBatchFraction     SGD minibatch fraction
-     * @return                      Linear regression model
-     */
-    public LinearRegressionModel train(JavaRDD<LabeledPoint> trainingDataset, int noOfIterations,
-            double initialLearningRate, double miniBatchFraction) {
-        return LinearRegressionWithSGD.train(trainingDataset.rdd(), noOfIterations, initialLearningRate,
-                miniBatchFraction);
-    }
+		int take = 0; if(w >= ws[i]) take = opt(i-1, w-ws[i]) + vs[i];  
+		int drop = opt(i-1, w), max = Math.max(take, drop);
+		cache.put(key, max);
+		return max;
+	}
 
-    /**
-     * Linear regression train - overload method with 1 parameter
-     *
-     * @param trainingDataset   Training dataset as a JavaRDD of LabeledPoints
-     * @param noOfIterations    Number of iterarations
-     * @return                  Linear regression model
-     */
-    public LinearRegressionModel train(JavaRDD<LabeledPoint> trainingDataset, int noOfIterations) {
-        return LinearRegressionWithSGD.train(trainingDataset.rdd(), noOfIterations);
-    }
-
-    /**
-     * This method applies linear regression using a given model and a dataset
-     *
-     * @param linearRegressionModel Linear regression model
-     * @param testingDataset        Testing dataset as a JavaRDD of LabeledPoints
-     * @return                      Tuple2 containing predicted values and labels
-     */
-    public JavaRDD<Tuple2<Double, Double>> test(final LinearRegressionModel linearRegressionModel,
-            JavaRDD<LabeledPoint> testingDataset) {
-        return testingDataset.map(
-                new Function<LabeledPoint, Tuple2<Double, Double>>() {
-                    private static final long serialVersionUID = 2027559237268104710L;
-
-                    public Tuple2<Double, Double> call(LabeledPoint labeledPoint) {
-                        Double predicted = linearRegressionModel.predict(labeledPoint.features());
-                        return new Tuple2<Double, Double>(predicted, labeledPoint.label());
-                    }
-                }
-        );
-    }
+	public static void main(String[] args) {
+		Scanner s = new Scanner(System.in);
+		int size = s.nextInt(); 
+		int[] vs = new int[s.nextInt()], ws = new int[vs.length];
+		for(int i=0; i<vs.length; i++) { vs[i] = s.nextInt(); ws[i] = s.nextInt(); }
+		System.out.println((new Knapsack(size, vs, ws)).opt(vs.length-1, size));
+	}
 }

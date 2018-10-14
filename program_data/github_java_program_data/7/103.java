@@ -1,20 +1,29 @@
-public class TowerOfHanoi {
-    private static int num = 0;
+package oracle.threads;
 
-    public static void moveDisk(int n, String fromTow, String toTow, String auxTow) {
-        num++;
-        if (n == 1)
-            System.out.println("Move disk " + n + " from " + fromTow + " to " + toTow
-                + ".");
-        else {
-            moveDisk(n - 1, fromTow, auxTow, toTow);
-            System.out.println("Move disk " + n + " from " + fromTow + " to " + toTow
-                + ".");    //表示将n号盘从form 挪到 to。
-            moveDisk(n - 1, auxTow, toTow, fromTow);
-        }
+import static java.lang.System.out;
+
+public class Fibonacci {
+    public static long fibonacci(int n) {
+        if (n <= 1) return n;
+        else return fibonacci(n-1) + fibonacci(n-2);
     }
 
-    public static int getNum() {
-        return num;
+    public static void blockingComputation() {
+        int n = 1000;
+        for (int i = 1; i <= n; i++) {
+            out.println(i + ": " + fibonacci(i));
+	    if(Thread.interrupted()) {
+		out.println("interrupted");
+	    	return;
+	    }
+	}
     }
+
+public static void main(String[] args) throws InterruptedException {
+Thread t = new Thread(Fibonacci::blockingComputation);
+t.start();
+Thread.sleep(5000);//wait for 3 secs
+t.interrupt();//stops computation
+}
+
 }

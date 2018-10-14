@@ -1,51 +1,43 @@
+package com.github.chandramohann.wk.palindrome;
 
-public class binarysearch {
-	
-	public static void main(String args[]){
-		
-		int hi , lo , i =0 , j , key = 4 , mid;
-		int a[] = { 2,3,5,23,4,556,64,45};
-		mid = a.length/2;
-		int left[] = new int[mid]; 
-		int right[] = new int[mid];
-		
-		if(key == a[mid]){
-		  System.out.println("element found at " + mid);
-		}else if(key < a[mid]){
+/**
+ * Palindrome class
+ * 
+ * Checks if the given string is a Palindrome or not Input parameter is a string
+ * Return type is boolean based on the input string
+ * 
+ * 3 different implementations of the same methods with different O(n)
+ * notations.
+ *
+ */
 
-			int high = mid;
-			int low = 1;
-			int length = low + (high-low)/2;
-			while(low<=length){
-				if(key == a[length]){
-					System.out.println(" element found at " + length);
-				}else if(key > a[length]){
-					low++;
-				}else{
-					if(key < a[length]){
-						high--;
-					}
-				}
-			}
-		}else if(key > a[mid]){
-			
-			int high = a.length;
-			int low = mid;
-			int length = low + (high-low)/2;
-			while(low<=length){
-				if(key == a[length]){
-					System.out.println(" element found at " + length);
-				}else if(key > a[length]){
-					low++;
-				}else{
-					if(key < a[length]){
-						high--;
-					}
-				}
-			}
+public class Palindrome {
+	/*
+	 * Performs n/2 comparison. 
+	 * This method is used in current implementation of
+	 * palindrome app
+	 */
+	public boolean isPalindrome(String str) {
+		int n = str.length();
+		for (int i = 0; i < n / 2; ++i) {
+			if (str.charAt(i) != str.charAt(n - i - 1))
+				return false;
 		}
-		
-		
+		return true;
 	}
 
+	// naive method
+	public boolean isPalindromeNaive(String str) {
+		int n = str.length();
+		for (int i = 0; i < n; ++i) {
+			if (str.charAt(i) != str.charAt(n - i - 1))
+				return false;
+		}
+		return true;
+	}
+
+	// 2n notation
+	public boolean isPalindrome2n(String str) {
+		return str.equals(new StringBuilder(str).reverse().toString());
+	}
 }

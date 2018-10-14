@@ -1,73 +1,68 @@
-package kuvaldis.algorithm.geometry;
+import java.util.*;
+import java.lang.*;
+import java.io.*;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+class Solution
+{
+	public static void main (String[] args) throws java.lang.Exception
+	{
+		Scanner sc = new Scanner(System.in);
+		int size = sc.nextInt();
+		int a[] = new int[size];
+		for(int i = 0; i < size; i++)
+			a[i] = sc.nextInt();
+		Solution solution = new Solution();
+		solution.quickSort(a, 0, a.length - 1);
+		for(int i = 0 ;i < a.length; i++)
+			System.out.print(a[i] + " ");
+	}
 
-public class JarvisConvexHull {
+	public void quickSort(int a[], int low, int high) {
+		 if(low < high) {
+		 	int p = partition(a, low, high);
+		 	quickSort(a, low, p - 1);
+		 	quickSort(a, p + 1, high);
+		 }
+	}
+	public void swap(int a[], int i, int j) {
+		int temp = a[i];
+		a[i] = a[j];
+		a[j] = temp;
+	}
 
-    private final List<Point> points;
-
-    public JarvisConvexHull(final Point... points) {
-        this.points = Stream.of(points).collect(Collectors.toList());
-    }
-
-    public List<Point> build() {
-        // 0. It's possible to create a convex hull only out of 3 or more points
-        if (points.size() < 3) {
-            return Collections.emptyList();
-        }
-
-        // 1. Pick p0, the point with lowest y coordinate.
-        // If there are two or more points with lowest coordinate, pick one with lowest x coordinate.
-        final Point p0 = points.stream()
-                .min(Comparator.comparingInt(Point::getY)
-                        .thenComparingInt(Point::getX))
-                .orElseThrow(IllegalStateException::new);
-
-        // 2. The idea is to "wrap" points. Thus, we look for a point having smallest polar angle relatively to the current one.
-        // That is, the angle between vectors, both are starting from the current point, but one is directed strictly to the right,
-        // i.e. a horizontal, the other one is to the next point.
-        // If there are several points with the same lowest angle, then we pick farthest.
-        // We do it until we reach a point with highest y value.
-        // Then we do quite the same, but this time we search lowest angle from upside down point of view,
-        // that is, between horizontal vector directed to the left and vector constituted by current point and a potential one.
-
-        final int maxY = points.stream()
-                .mapToInt(Point::getY)
-                .max()
-                .orElse(Integer.MAX_VALUE);
-
-        final LinkedList<Point> result = new LinkedList<>();
-        result.add(p0);
-        Point current = p0;
-        int direction = 1;
-        while (true) {
-            final Vector horizontalVector = new Vector(current, new Point(current.getX() + direction, current.getY()));
-            final Point p1 = current;
-            final int sign = direction;
-            current = points.stream()
-                    .filter(point -> !p1.equals(point))
-                    // take into account only those having y higher or equal to current for right chain
-                    // and lower or equal for left chain
-                    .filter(point -> Integer.compare(point.getY(), p1.getY()) * sign >= 0)
-                    .map(p2 -> new Vector(p1, p2))
-                    .max(Comparator.comparingDouble(horizontalVector::cos)
-                            .thenComparingDouble(Vector::magnitude))
-                    .map(Vector::getTo)
-                    .orElseThrow(IllegalStateException::new);
-            if (current.getY() == maxY) {
-                direction = -1;
-            }
-            if (p0.equals(current)) {
-                break;
-            }
-            result.add(current);
-        }
-
-        return result;
-    }
+	public int partition(int a[], int low, int high) {
+		int pivot = a[high];
+		int i = low - 1;
+		for(int j = low; j <= high - 1; j++) {
+			if(a[j] <= pivot) {
+				i++;
+				swap(a, i, j);
+			}
+		}
+		swap(a, i + 1, high);
+		return (i + 1);
+	}
+	
+	
 }
+
+/***
+
+Running time : O(n log(n)) in Average case, O(n^2) in worst case
+Space complexity of merge sort is O(log(n))
+
+TODO:
+1. There are many different versions of quickSort that pick pivot in different ways.
+
+1. Always pick first element as pivot.
+2. Always pick last element as pivot (implemented above)
+3. Pick a random element as pivot.
+4. Pick median as pivot.
+
+TODO Applications
+
+1. 3-Way QuickSort
+2. QuickSort for Linked List
+3. Iterative quick sort
+
+***/

@@ -1,63 +1,29 @@
-class Celula{
-   Object info;
-   Celula prox;
-}
+import lib.TreeNode;
 
-class CLLSL{
-   Celula pInicio;
-
-   CLLSL(){
-      pInicio = null;
-   }
-
-   Celula incluiInicioLLSL(Object x){
-      Celula pNovo = new Celula();
-      pNovo.info = x;
-      pNovo.prox = pInicio;
-
-      return pNovo;
-   }
-
-   Object excluiInicioLLSL(){
-      if(pInicio == null) return null;
-      Object x = pInicio.info;
-      Celula pAux = pInicio;
-      pInicio = pInicio.prox;
-      pAux = null;
-      return x;
-   }
-
-   Object consultaLLSL(Object x){
-      Celula pAux = pInicio;
-      while(pAux != null && pAux.info != x)
-         pAux = pAux.prox;
-      return pAux;
-   }
-   
-   int tamanhoDaLLSL(){
-      Celula pAux = pInicio;
-      int n = 0;
-      while(pAux != null){
-         pAux = pAux.prox;
-         n++;
-      }
-      return n;
-   }
-
-   void destroiLLSL(){
-      while(pInicio != null){
-         Celula pAux = pInicio.prox;
-         pInicio = null;
-         pInicio = pAux;
-      }
-   }
-
-   public static void main(String[] args){
-      Object infoRetorno;
-      Celula inicio;
-      CLLSL lista = new CLLSL();
-      Celula novaCelula = new Celula();
-      inicio = lista.incluiInicioLLSL(novaCelula);
-      infoRetorno = lista.excluiInicioLLSL();
-   }
+/**
+ * https://leetcode.com/problems/symmetric-tree
+ *
+ * Recursive colution.
+ *
+ * Definition for a binary tree node.
+ * public class TreeNode {
+ *     int val;
+ *     TreeNode left;
+ *     TreeNode right;
+ *     TreeNode(int x) { val = x; }
+ * }
+ */
+public class SymmetricTreeB {
+    public boolean isSymmetric(TreeNode root) {
+        return check(root, root);
+    }
+    
+    private boolean check(TreeNode n1, TreeNode n2) {
+        if (n1 == null && n2 == null)
+            return true;
+        if (n1 == null || n2 == null)
+            return false;
+        
+        return (n1.val == n2.val) && check(n1.left, n2.right) && check(n1.right, n2.left);
+    }
 }

@@ -1,23 +1,29 @@
+package PukyungUniv;
 
-import java.util.*;
-import java.math.BigInteger;
+import static org.junit.Assert.assertEquals;
 
-public class Fibonacci {
-	static Hashtable<Integer, BigInteger> memo = new Hashtable<>();
-	static BigInteger f;
-	public static void main (String [] args){
-		System.out.println("Enter the n: ");
-		System.out.println("Answer: " + calculateNthFibonacci((new Scanner(System.in)).nextInt()));
-	}
+import java.util.Arrays;
 
-	public static BigInteger calculateNthFibonacci(int n){
+import org.junit.Test;
 
-		if(memo.containsKey(n)) return memo.get(n);
+public class Sort_InsertionSort {
 
-		if(n <= 2) f = BigInteger.valueOf(1);
-
-		else f = calculateNthFibonacci(n-1).add(calculateNthFibonacci(n-2));
-		return f;
-	}
-
+    @Test
+    public void test() {
+        int[] data = { 1, 3, 5, 7, 2, 4, 6, 8 };
+        Sort_InsertionSort.sort(data);
+        assertEquals(Arrays.toString(new int[] { 1, 2, 3, 4, 5, 6, 7, 8 }), Arrays.toString(data));
+    }
+    
+    public static void sort(int[] data) {
+        for (int k = 1; k < data.length; k++) {
+            int tmp = data[k];
+            int t = k;
+            while (t > 0 && data[t - 1] > tmp) {
+                data[t] = data[t - 1];
+                t--;
+            }
+            data[t] = tmp;
+        }
+    }
 }

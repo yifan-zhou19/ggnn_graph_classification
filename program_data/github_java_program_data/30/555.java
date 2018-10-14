@@ -1,116 +1,131 @@
-package pacman;
+package com.ikaver.aagarwal.fjavaexamples;
 
-import java.util.PriorityQueue;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import com.ikaver.aagarwal.common.FJavaConf;
+import com.ikaver.aagarwal.common.FastStopwatch;
+import com.ikaver.aagarwal.common.problems.MatrixMultiplication;
+import com.ikaver.aagarwal.fjava.FJavaPool;
+import com.ikaver.aagarwal.fjava.FJavaTask;
 
-class Vertex implements Comparable<Vertex>
-{
-    public final String name;
-    public Edge[] adjacencies;
-    public double minDistance = Double.POSITIVE_INFINITY;
-    public Vertex previous;
-    public Vertex(String argName) { name = argName; }
-    public String toString() { return name; }
-    public int compareTo(Vertex other)
-    {
-        return Double.compare(minDistance, other.minDistance);
+public class FJavaMatrixMultiplication extends FJavaTask implements
+MatrixMultiplication {
+
+  private FastStopwatch watch;
+  private float[][] A;
+  private float[][] B;
+  private float[][] C;
+  private int aRow, aCol, bRow, bCol, cRow, cCol;
+  private int size;
+
+  private FJavaPool pool;
+
+  public FJavaMatrixMultiplication(FJavaPool pool) {
+    this.pool = pool;
+    // No need to initialize watch here.
+  }
+
+  public FJavaMatrixMultiplication(float[][] A, float[][] B, float[][] C,
+      int size, int rowA, int colA, int rowB, int colB, int rowC, int colC) {
+    this.A = A;
+    this.B = B;
+    this.C = C;
+    this.size = size;
+    this.aRow = rowA;
+    this.aCol = colA;
+    this.bRow = rowB;
+    this.bCol = colB;
+    this.cRow = rowC;
+    this.cCol = colC;
+    if (FJavaConf.shouldTrackStats()) {
+      watch = new FastStopwatch();
+    }
+  }
+
+  public void multiply(float[][] a, float[][] b, float[][] result) {
+    this.pool.run(new FJavaMatrixMultiplication(a, b, result, a.length, 0, 0,
+        0, 0, 0, 0));
+  }
+
+  @Override
+  public void compute() {
+    if (FJavaConf.shouldTrackStats()) {
+      watch.start();
+    }
+    if (size <= FJavaConf.getMatrixMultiplicationSequentialThreshold()) {
+      multiplySeq();
+      if (FJavaConf.shouldTrackStats()) {
+        addComputeTime(watch.end());
+      }
+      return;
     }
 
-}
-
-
-class Edge
-{
-    public final Vertex target;
-    public final double weight;
-    public Edge(Vertex argTarget, double argWeight)
-    { target = argTarget; weight = argWeight; }
-}
-
-public class Dijkstra
-{
-	boolean [][] map;
-	public Dijkstra(boolean map [][])
-	{
-		this.map = map;
-	}
-    private void computePaths(Vertex source)
-    {
-        source.minDistance = 0.;
-        PriorityQueue<Vertex> vertexQueue = new PriorityQueue<Vertex>();
-        vertexQueue.add(source);
-
-	    while (!vertexQueue.isEmpty())
-	    {
-	        Vertex u = vertexQueue.poll();
-	
-	        for (Edge e : u.adjacencies)
-	        {
-	        	Vertex v = e.target;
-	        	double weight = e.weight;
-	        	double distanceThroughU = u.minDistance + weight;
-	        	if (distanceThroughU < v.minDistance) 
-	        	{
-	        		vertexQueue.remove(v);
-	        		
-	        		v.minDistance = distanceThroughU ;
-	        		v.previous = u;
-	        		vertexQueue.add(v);
-	        	}
-	        }
-	    }
+    int mid = size / 2;
+    if (FJavaConf.shouldTrackStats()) {
+      addComputeTime(watch.end());
     }
+    FJavaSeq seq1 = new FJavaSeq(new FJavaMatrixMultiplication(A, B, C, mid,
+        aRow, aCol, bRow, bCol, cRow, cCol), new FJavaMatrixMultiplication(A,
+            B, C, mid, aRow, aCol + mid, bRow + mid, bCol, cRow, cCol));
+    FJavaSeq seq2 = new FJavaSeq(new FJavaMatrixMultiplication(A, B, C, mid,
+        aRow, aCol, bRow, bCol + mid, cRow, cCol + mid),
+        new FJavaMatrixMultiplication(A, B, C, mid, aRow, aCol + mid, bRow
+            + mid, bCol + mid, cRow, cCol + mid));
+    FJavaSeq seq3 = new FJavaSeq(new FJavaMatrixMultiplication(A, B, C, mid,
+        aRow + mid, aCol, bRow, bCol, cRow + mid, cCol),
+        new FJavaMatrixMultiplication(A, B, C, mid, aRow + mid, aCol + mid,
+            bRow + mid, bCol, cRow + mid, cCol));
+    FJavaSeq seq4 = new FJavaSeq(new FJavaMatrixMultiplication(A, B, C, mid,
+        aRow + mid, aCol, bRow, bCol + mid, cRow + mid, cCol + mid),
+        new FJavaMatrixMultiplication(A, B, C, mid, aRow + mid, aCol + mid,
+            bRow + mid, bCol + mid, cRow + mid, cCol + mid));
+    seq1.runAsync(this);
+    seq2.runAsync(this);
+    seq3.runAsync(this);
+    seq4.runSync(this);
+    sync();
+  }
 
-    public List<Vertex> getShortestPathTo(Vertex target)
-    {
-        List<Vertex> path = new ArrayList<Vertex>();
-        for (Vertex vertex = target; vertex != null; vertex = vertex.previous)
-            path.add(vertex);
+  @Override
+  public String toString() {
+    return String.format("MMult: %d %d %d %d %d %d (%d)", aRow, aCol, bRow,
+        bCol, cRow, cCol, size);
+  }
 
-        Collections.reverse(path);
-        return path;
+  private void multiplySeq() {
+    for (int j = 0; j < size; j += 2) {
+      if(j % 16 == 0) this.tryLoadBalance();
+      for (int i = 0; i < size; i += 2) {
+
+        float[] a0 = A[aRow + i];
+        float[] a1 = A[aRow + i + 1];
+
+        float s00 = 0.0F;
+        float s01 = 0.0F;
+        float s10 = 0.0F;
+        float s11 = 0.0F;
+
+        for (int k = 0; k < size; k += 2) {
+
+          float[] b0 = B[bRow + k];
+
+          s00 += a0[aCol + k] * b0[bCol + j];
+          s10 += a1[aCol + k] * b0[bCol + j];
+          s01 += a0[aCol + k] * b0[bCol + j + 1];
+          s11 += a1[aCol + k] * b0[bCol + j + 1];
+
+          float[] b1 = B[bRow + k + 1];
+
+          s00 += a0[aCol + k + 1] * b1[bCol + j];
+          s10 += a1[aCol + k + 1] * b1[bCol + j];
+          s01 += a0[aCol + k + 1] * b1[bCol + j + 1];
+          s11 += a1[aCol + k + 1] * b1[bCol + j + 1];
+        }
+
+        C[cRow + i][cCol + j] += s00;
+        C[cRow + i][cCol + j + 1] += s01;
+        C[cRow + i + 1][cCol + j] += s10;
+        C[cRow + i + 1][cCol + j + 1] += s11;
+      }
     }
+  }
 
-    public int getDistance(int y1,int x1,int y2,int x2)
-    {
-    	if(map[x1][y1] || map[x2][y2])
-    		return (int)Double.POSITIVE_INFINITY;
-    	Vertex [][] vertexes = new Vertex[map.length][map[0].length];
-    	for(int i=0;i<map.length;i++)
-    		for(int j=0;j<map[i].length;j++)
-    		{
-    			if(!map[i][j])
-    				vertexes[i][j] = new Vertex(i+" "+j);
-        		else
-        			vertexes[i][j] = null;
-        	}
-        		
-    	for(int i=0;i<map.length;i++)
-    		for(int j=0;j<map[i].length;j++)
-    		{
-    			if(!map[i][j])
-    			{
-    				ArrayList <Edge> edgesForThis = new ArrayList<Edge>();
-    				if(i>=1 && !map[i-1][j])
-    					edgesForThis.add(new Edge(vertexes[i-1][j],1));
-    	      		if(j>=1 && !map[i][j-1])
-    	      			edgesForThis.add(new Edge(vertexes[i][j-1],1));
-    	    		if(i<=map.length-2 && !map[i+1][j])
-    	   				edgesForThis.add(new Edge(vertexes[i+1][j],1));
-    	   			if(j<=map[0].length-2 && !map[i][j+1])
-    	   				edgesForThis.add(new Edge(vertexes[i][j+1],1));
-    	    			
-    	   			Edge[] arrayOfEdge = new Edge[edgesForThis.size()];
-        			for(int k=0;k<edgesForThis.size();k++)
-   	    				arrayOfEdge[k] = edgesForThis.get(k);
-   	    			vertexes[i][j].adjacencies =arrayOfEdge;
-       			}
-       		}
-       			computePaths(vertexes[x1][y1]);
-       			return (int)vertexes[x2][y2].minDistance;
-//            List<Vertex> path = getShortestPathTo(Z);
-//            System.out.println("Path: " + path);
-    }
 }

@@ -1,18 +1,27 @@
-class TowerOfHanoi {
-   static void Hanoi(int size, String source, String destination, String transit) {
-      if (size == 1) {
-         System.out.println("Move from " + source + " to " + destination);
-      } else {
-         Hanoi(size-1, source, transit, destination);
-         System.out.println("Move from " + source + " to " + destination);
-         Hanoi(size-1, transit, destination, source);
-      }
-   }
+package com.wang.domain.fanxing.complexmodel;
 
-   public static void main(String[] args) {
-      if (args.length != 0) {
-         int size = Integer.parseInt(args[0]);
-         Hanoi(size, "source", "destination", "transit");
-      }
-   }
+/**
+ * Created by chao.wang2 on 2018/6/14  12:59
+ */
+public class Fibonacci implements Generator<Integer> {
+
+    private int count = 0;
+
+    @Override
+    public Integer next() {
+        return fib(count++);
+    }
+
+    private int fib(int n){
+        if (n<2) return 1;
+        return fib(n-1)+fib(n-2);
+    }
+
+    public static void main(String[] args) {
+        Fibonacci fibonacci = new Fibonacci();
+        for (int i = 0; i < 18; i++) {
+            System.out.print(fibonacci.next()+ " ");
+        }
+    }
+
 }

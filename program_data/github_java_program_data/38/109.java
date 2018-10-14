@@ -1,163 +1,81 @@
-/***** BEGIN LICENSE BLOCK *****
- * Version: EPL 1.0/GPL 2.0/LGPL 2.1
- *
- * The contents of this file are subject to the Eclipse Public
- * License Version 1.0 (the "License"); you may not use this file
- * except in compliance with the License. You may obtain a copy of
- * the License at http://www.eclipse.org/legal/epl-v10.html
- *
- * Software distributed under the License is distributed on an "AS
- * IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
- * implied. See the License for the specific language governing
- * rights and limitations under the License.
- *
- * Copyright (C) 2006 MenTaLguY <mental@rydia.net>
- * 
- * Alternatively, the contents of this file may be used under the terms of
- * either of the GNU General Public License Version 2 or later (the "GPL"),
- * or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
- * in which case the provisions of the GPL or the LGPL are applicable instead
- * of those above. If you wish to allow use of your version of this file only
- * under the terms of either the GPL or the LGPL, and not to allow others to
- * use your version of this file under the terms of the EPL, indicate your
- * decision by deleting the provisions above and replace them with the notice
- * and other provisions required by the GPL or the LGPL. If you do not delete
- * the provisions above, a recipient may use your version of this file under
- * the terms of any one of the EPL, the GPL or the LGPL.
- ***** END LICENSE BLOCK *****/
-package org.jruby.ext.thread;
+package kuvaldis.algorithm.geometry;
 
-import java.util.LinkedList;
-import org.jruby.Ruby;
-import org.jruby.RubyBoolean;
-import org.jruby.RubyClass;
-import org.jruby.RubyNumeric;
-import org.jruby.RubyObject;
-import org.jruby.anno.JRubyClass;
-import org.jruby.anno.JRubyMethod;
-import org.jruby.exceptions.RaiseException;
-import org.jruby.runtime.Block;
-import org.jruby.runtime.ObjectAllocator;
-import org.jruby.runtime.ThreadContext;
-import org.jruby.runtime.builtin.IRubyObject;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-/**
- * The "Queue" class from the 'thread' library.
- */
-@JRubyClass(name = "Queue")
-public class Queue extends RubyObject {
-    private LinkedList entries;
-    protected volatile int numWaiting = 0;
+public class GrahamConvexHull {
 
-    @JRubyMethod(name = "new", rest = true, meta = true)
-    public static IRubyObject newInstance(ThreadContext context, IRubyObject recv, IRubyObject[] args, Block block) {
-        Queue result = new Queue(context.runtime, (RubyClass) recv);
-        result.callInit(context, args, block);
-        return result;
+    private final List<Point> points;
+
+    public GrahamConvexHull(final Point... points) {
+        this.points = Stream.of(points).collect(Collectors.toList());
     }
 
-    public Queue(Ruby runtime, RubyClass type) {
-        super(runtime, type);
-        entries = new LinkedList();
-    }
-
-    public static void setup(Ruby runtime) {
-        RubyClass cQueue = runtime.defineClass("Queue", runtime.getObject(), new ObjectAllocator() {
-
-            public IRubyObject allocate(Ruby runtime, RubyClass klass) {
-                return new Queue(runtime, klass);
-            }
-        });
-        cQueue.setReifiedClass(Queue.class);
-        cQueue.defineAnnotatedMethods(Queue.class);
-    }
-
-    @JRubyMethod(name = "shutdown!")
-    public synchronized IRubyObject shutdown(ThreadContext context) {
-        entries = null;
-        notifyAll();
-        return context.runtime.getNil();
-    }
-    
-    public synchronized void shutdown() {
-        entries = null;
-        notifyAll();
-    }
-
-    public boolean isShutdown() {
-        return entries == null;
-    }
-
-    public synchronized void checkShutdown(ThreadContext context) {
-        if (entries == null) {
-            throw new RaiseException(context.runtime, context.runtime.getThreadError(), "queue shut down", false);
+    public List<Point> build() {
+        // 0. It's possible to create a convex hull only out of 3 or more points
+        if (points.size() < 3) {
+            return Collections.emptyList();
         }
-    }
 
-    @JRubyMethod
-    public synchronized IRubyObject clear(ThreadContext context) {
-        checkShutdown(context);
-        entries.clear();
-        return context.runtime.getNil();
-    }
+        // 1. Pick p0, the point with lowest y coordinate.
+        // If there are two or more points with lowest coordinate, pick one with lowest x coordinate.
+        final Point p0 = points.stream()
+                .min(Comparator.comparingInt(Point::getY)
+                        .thenComparingInt(Point::getX))
+                .orElseThrow(IllegalStateException::new);
 
-    @JRubyMethod(name = "empty?")
-    public synchronized RubyBoolean empty_p(ThreadContext context) {
-        checkShutdown(context);
-        return context.runtime.newBoolean(entries.size() == 0);
-    }
+        // 2. Sort other points (pi) by angle between horizontal vector starting from p0 and p0pi, lowest first.
+        // Note, that possible angle values are from 0 to 180 degrees, since p0 is lowest point or all points are to the right.
+        // Additionally, cos(0) is 1.0 and cos(180) is -1.0.
+        // Thus, if we sort the points by cos in descendant order, i.e. from highest to lowest values, it would be the same.
 
-    @JRubyMethod(name = {"length", "size"})
-    public synchronized RubyNumeric length(ThreadContext context) {
-        checkShutdown(context);
-        return RubyNumeric.int2fix(context.runtime, entries.size());
-    }
+        // this is our horizontal vector
+        final Vector v0 = new Vector(p0, new Point(p0.getX() + 1, p0.getY()));
+        final LinkedList<Point> sortedPoints = points.stream()
+                .filter(point -> !p0.equals(point))
+                .sorted(Comparator.<Point>comparingDouble(p -> v0.cos(new Vector(p0, p)))
+                        .reversed())
+                .collect(Collectors.toCollection(LinkedList::new));
 
-    protected synchronized long java_length() {
-        return entries.size();
-    }
+        // 3. Put 3 first points, including p0 to the resulting stack
+        // They are base for calculation.
+        // Note, that if we take only these 3 points into account, the stack basically contains the solution,
+        // that is, 3 points out of 3 in total make a convex hull.
+        // Thus, on the first step stack contains correct result for it.
+        final LinkedList<Point> stack = new LinkedList<>();
+        // p0
+        stack.push(p0);
+        // p1
+        stack.push(sortedPoints.pollFirst());
+        // p2
+        stack.push(sortedPoints.pollFirst());
 
-    @JRubyMethod
-    public RubyNumeric num_waiting(ThreadContext context) {
-        return context.runtime.newFixnum(numWaiting);
-    }
+        // 4.
+        for (Point point : sortedPoints) {
+            while (true) {
+                final Point top = stack.pop();
+                final Point nextToTop = stack.peek();
 
-    @JRubyMethod(name = {"pop", "deq", "shift"})
-    public synchronized IRubyObject pop(ThreadContext context) {
-        return pop(context, true);
-    }
-
-    @JRubyMethod(name = {"pop", "deq", "shift"})
-    public synchronized IRubyObject pop(ThreadContext context, IRubyObject arg0) {
-        return pop(context, !arg0.isTrue());
-    }
-
-    @JRubyMethod(name = {"push", "<<", "enq"})
-    public synchronized IRubyObject push(ThreadContext context, IRubyObject value) {
-        checkShutdown(context);
-        entries.addLast(value);
-        notify();
-        return context.runtime.getNil();
-    }
-
-    private synchronized IRubyObject pop(ThreadContext context, boolean should_block) {
-        checkShutdown(context);
-        if (!should_block && entries.size() == 0) {
-            throw new RaiseException(context.runtime, context.runtime.getThreadError(), "queue empty", false);
-        }
-        numWaiting++;
-        try {
-            while (java_length() == 0) {
-                try {
-                    context.getThread().wait_timeout(this, null);
-                } catch (InterruptedException e) {
+                final Vector v1 = new Vector(nextToTop, top);
+                final Vector v2 = new Vector(nextToTop, point);
+                // It means that v2 is located to the right of v1, that is, we are moving to the right.
+                // Thus, with the fact that all points are sorted by angle, the 'point' spans the 'top',
+                // i.e. 'point' puts 'top' inside the convex hull if included into the resulting set.
+                if (v1.multiply(v2) < 0) {
+                    // we already popped top point, so nothing to do here
+                    continue;
                 }
-                checkShutdown(context);
+                // otherwise push top back, since if we are here it means that we 'moved to the left',
+                // that is, both top and point add up to the result for this step.
+                stack.push(top);
+                stack.push(point);
+                break;
             }
-        } finally {
-            numWaiting--;
         }
-        return (IRubyObject) entries.removeFirst();
+
+        Collections.reverse(stack);
+
+        return stack;
     }
-    
 }

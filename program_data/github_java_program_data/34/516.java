@@ -1,168 +1,114 @@
-package CS286;
+import java.util.ListIterator;
+import java.util.NoSuchElementException;
 
-import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.ml.feature.HashingTF;
-import org.apache.spark.ml.feature.IDF;
-import org.apache.spark.ml.feature.IDFModel;
-import org.apache.spark.ml.feature.Tokenizer;
-import org.apache.spark.mllib.classification.NaiveBayes;
-import org.apache.spark.mllib.classification.NaiveBayesModel;
-import org.apache.spark.mllib.linalg.Vector;
-import org.apache.spark.mllib.regression.LabeledPoint;
-import org.apache.spark.sql.DataFrame;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.RowFactory;
-import org.apache.spark.sql.SQLContext;
-import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.Metadata;
-import org.apache.spark.sql.types.StructField;
-import org.apache.spark.sql.types.StructType;
-import scala.Tuple2;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
+public class DoublyLinkedList<Item> implements Iterable<Item> {
+    private int N;        // number of elements on list
+    private Node pre;     // sentinel before first item
+    private Node post;    // sentinel after last item
 
-/**
- * Created by viraj on 5/22/16.
- */
-public class JavaNaiveBayes {
-    static JavaSparkContext context;
-    static SparkConf conf;
-    static SQLContext sqlContext;
-
-
-    public static void build(String hamDir, String spamDir, String modelDir) throws Exception {
-        conf = new SparkConf().setMaster("local").setAppName("SPARK SQL Application");
-        context = new JavaSparkContext(conf);
-        sqlContext = new SQLContext(context);
-        JavaRDD<LabeledPoint> data = getData(hamDir, spamDir);
-        JavaRDD<LabeledPoint>[] splits = data.randomSplit(new double[]{0.8, 0.2});
-        JavaRDD<LabeledPoint> training = splits[0];
-        JavaRDD<LabeledPoint> testData = splits[1];
-        final NaiveBayesModel model = NaiveBayes.train(training.rdd(), 1.0);
-        // Save and load model
-        model.save(context.sc(), modelDir);
-        System.out.println("accuracy=" + predictAccuracy(model,testData) * 100 + " %");
+    public DoublyLinkedList() {
+        pre  = new Node();
+        post = new Node();
+        pre.next = post;
+        post.prev = pre;
     }
 
-
-    public static void predict(String modelDir, String path) throws Exception {
-        final NaiveBayesModel model = NaiveBayesModel.load(context.sc(), modelDir);
-        checkCategory(model,path);
-
+    // linked list node helper data type
+    private class Node {
+        private Item item;
+        private Node next;
+        private Node prev;
     }
 
+    public boolean isEmpty()    { return N == 0; }
+    public int size()           { return N;      }
 
-    public static void checkCategory(NaiveBayesModel model,String path) throws Exception{
-        JavaRDD<LabeledPoint> data=getDataFromFile(path);
-        JavaPairRDD<Double, Double> predictionAndLabel = data.mapToPair(p -> {
-            return new Tuple2<Double, Double>(model.predict(p.features()), p.label());
-        });
-        double hamCount= predictionAndLabel.filter(p -> {
-            return p._1().toString().equals("0.0");
-        }).count();
-
-        double spamCount= predictionAndLabel.filter(p -> {
-            return p._1().toString().equals("1.0");
-        }).count();
-
-        if(hamCount>spamCount)
-            System.out.println("classify=ham");
-        else
-            System.out.println("classify=spam");
+    // add the item to the list
+    public void add(Item item) {
+        Node last = post.prev;
+        Node x = new Node();
+        x.item = item;
+        x.next = post;
+        x.prev = last;
+        post.prev = x;
+        last.next = x;
+        N++;
     }
 
-    public static double predictAccuracy(NaiveBayesModel model,JavaRDD<LabeledPoint> data) {
-        JavaPairRDD<Double, Double> predictionAndLabel = data.mapToPair(p -> {
-            return new Tuple2<Double, Double>(model.predict(p.features()), p.label());
-        });
-        return predictionAndLabel.filter(p -> {
-            return p._1().equals(p._2());
-        }).count() / (double) data.count();
-    }
+    public ListIterator<Item> iterator()  { return new DoublyLinkedListIterator(); }
 
+    // assumes no calls to DoublyLinkedList.add() during iteration
+    private class DoublyLinkedListIterator implements ListIterator<Item> {
+        private Node current      = pre.next;  // the node that is returned by next()
+        private Node lastAccessed = null;      // the last node to be returned by prev() or next()
+                                               // reset to null upon intervening remove() or add()
+        private int index = 0;
 
-    public static JavaRDD<LabeledPoint> getData(String hamPath, String spamPath) throws IOException {
-        List<Row> rows = new ArrayList<>();
-        Files.walk(Paths.get(spamPath)).forEach(filePath -> {
-            try {
-                if (Files.isRegularFile(filePath)) {
-                    JavaRDD<String> dataFrame = context.textFile(filePath.toString());
-                    rows.addAll(dataFrame.filter(p->p.toLowerCase().contains("subject:")).map(p -> RowFactory.create(1.0, p)).collect());
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-        Files.walk(Paths.get(hamPath)).forEach(filePath -> {
-            try {
-                if (Files.isRegularFile(filePath)) {
-                    JavaRDD<String> dataFrame = context.textFile(filePath.toString());
-                    rows.addAll(dataFrame.map(p -> RowFactory.create(0.0, p)).collect());
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-        JavaRDD<Row> rowsRdd = context.parallelize(rows);
-        StructType schema = new StructType(new StructField[]{
-                new StructField("CATEGORY", DataTypes.DoubleType, false, Metadata.empty()),
-                new StructField("sentence", DataTypes.StringType, false, Metadata.empty())
-        });
-        DataFrame sentenceData = sqlContext.createDataFrame(rowsRdd, schema);
-        Tokenizer tokenizer = new Tokenizer().setInputCol("sentence").setOutputCol("words");
-        DataFrame wordsData = tokenizer.transform(sentenceData);
-        int numFeatures = 20;
-        HashingTF hashingTF = new HashingTF()
-                .setInputCol("words")
-                .setOutputCol("rawFeatures");
-        DataFrame featurizedData = hashingTF.transform(wordsData);
-        IDF idf = new IDF().setInputCol("rawFeatures").setOutputCol("features");
-        IDFModel idfModel = idf.fit(featurizedData);
-        DataFrame rescaledData = idfModel.transform(featurizedData);
-        JavaRDD<Row> row = rescaledData.toJavaRDD();
-        JavaRDD<LabeledPoint> parsedData = row.map(r -> {
-            return new LabeledPoint(r.getDouble(0), (Vector) r.get(4));
-        });
-        return parsedData;
-    }
+        public boolean hasNext()      { return index < N; }
+        public boolean hasPrevious()  { return index > 0; }
+        public int previousIndex()    { return index - 1; }
+        public int nextIndex()        { return index;     }
 
-
-    public static JavaRDD<LabeledPoint> getDataFromFile(String filePath) throws IOException {
-        List<Row> rows = new ArrayList<>();
-        try {
-            JavaRDD<String> dataFrame = context.textFile(filePath);
-            rows.addAll(dataFrame.filter(p->p.toLowerCase().contains("subject:")).map(p -> RowFactory.create(0.0, p)).collect());
-        } catch (Exception e) {
-            e.printStackTrace();
+        public Item next() {
+            if (!hasNext()) throw new NoSuchElementException();
+            lastAccessed = current;
+            Item item = current.item;
+            current = current.next; 
+            index++;
+            return item;
         }
-        JavaRDD<Row> rowsRdd = context.parallelize(rows);
-        StructType schema = new StructType(new StructField[]{
-                new StructField("CATEGORY", DataTypes.DoubleType, false, Metadata.empty()),
-                new StructField("sentence", DataTypes.StringType, false, Metadata.empty())
-        });
-        DataFrame sentenceData = sqlContext.createDataFrame(rowsRdd, schema);
-        Tokenizer tokenizer = new Tokenizer().setInputCol("sentence").setOutputCol("words");
-        DataFrame wordsData = tokenizer.transform(sentenceData);
-        int numFeatures = 20;
-        HashingTF hashingTF = new HashingTF()
-                .setInputCol("words")
-                .setOutputCol("rawFeatures");
-        DataFrame featurizedData = hashingTF.transform(wordsData);
-        IDF idf = new IDF().setInputCol("rawFeatures").setOutputCol("features");
-        IDFModel idfModel = idf.fit(featurizedData);
-        DataFrame rescaledData = idfModel.transform(featurizedData);
-        JavaRDD<Row> row = rescaledData.toJavaRDD();
-        JavaRDD<LabeledPoint> parsedData = row.map(r -> {
-            return new LabeledPoint(r.getDouble(0), (Vector) r.get(4));
-        });
-        return parsedData;
+
+        public Item previous() {
+            if (!hasPrevious()) throw new NoSuchElementException();
+            current = current.prev;
+            index--;
+            lastAccessed = current;
+            return current.item;
+        }
+
+        // replace the item of the element that was last accessed by next() or previous()
+        // condition: no calls to remove() or add() after last call to next() or previous()
+        public void set(Item item) {
+            if (lastAccessed == null) throw new IllegalStateException();
+            lastAccessed.item = item;
+        }
+
+        // remove the element that was last accessed by next() or previous()
+        // condition: no calls to remove() or add() after last call to next() or previous()
+        public void remove() { 
+            if (lastAccessed == null) throw new IllegalStateException();
+            Node x = lastAccessed.prev;
+            Node y = lastAccessed.next;
+            x.next = y;
+            y.prev = x;
+            N--;
+            if (current == lastAccessed)
+                current = y;
+            else
+                index--;
+            lastAccessed = null;
+        }
+
+        // add element to list 
+        public void add(Item item) {
+            Node x = current.prev;
+            Node y = new Node();
+            Node z = current;
+            y.item = item;
+            x.next = y;
+            y.next = z;
+            z.prev = y;
+            y.prev = x;
+            N++;
+            index++;
+            lastAccessed = null;
+        }
+
     }
 
-
-}
+    public String toString() {
+        StringBuilder s = new StringBuilder();
+        for (Item item : this)
+            s.append(item + " ");
+        return s.toString();
+    }

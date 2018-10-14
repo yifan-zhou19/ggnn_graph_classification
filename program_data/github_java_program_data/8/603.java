@@ -1,27 +1,25 @@
-package com.wang.domain.fanxing.complexmodel;
+package com.datstruct;
 
-/**
- * Created by chao.wang2 on 2018/6/14  12:59
- */
-public class Fibonacci implements Generator<Integer> {
+public class InsertionSort {
+	public static void main(String[] args) {
+		int[] list = { 1, 8, 4, 6, 0, 3, 5, 2, 7, 9 };
+		int valueToInsert;
+		int holePosition;
+		for (int i = 1; i < list.length; i++) {
+			valueToInsert = list[i];
+			holePosition = i;
 
-    private int count = 0;
-
-    @Override
-    public Integer next() {
-        return fib(count++);
-    }
-
-    private int fib(int n){
-        if (n<2) return 1;
-        return fib(n-1)+fib(n-2);
-    }
-
-    public static void main(String[] args) {
-        Fibonacci fibonacci = new Fibonacci();
-        for (int i = 0; i < 18; i++) {
-            System.out.print(fibonacci.next()+ " ");
-        }
-    }
-
+			while (holePosition > 0 && list[holePosition - 1] > valueToInsert) {
+				list[holePosition] = list[holePosition - 1];
+				holePosition--;
+			}
+			if (i != holePosition) {
+				list[holePosition] = valueToInsert;
+			}
+		}
+		
+		for (int i = 0; i < list.length; i++) {
+			System.out.println(list[i]);
+		}
+	}
 }

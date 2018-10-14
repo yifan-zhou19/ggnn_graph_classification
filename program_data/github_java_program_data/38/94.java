@@ -1,82 +1,87 @@
-package boyer01261512.queue;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.util.ArrayList;
 
-import battlecode.common.GameActionException;
-import boyer01261512.broadcaster.*;
+public class ConvexHullVisualizer extends JPanel implements MouseListener{
 
-public class Queue {
-	
-	private final int countOffset = 0;
-	private final int queueOffset = 1;
-	private final int queueIndex = 2;
+    public static void main(String[] args) {
+        JFrame window = new JFrame();
+        window.setTitle("ConvexHull Visualizer");
+        window.setSize(600,600);
 
-	public Broadcaster broadcaster;
-	public int startingIndex = 10000;
-	
-	public Queue() {
-		
-		
-		
-	}
-	
-	// MARK: Manipulation
-	
-	public void enqueue(int value) throws GameActionException {
-		
-		this.broadcaster.broadcast(this.nextQueueIndex(), value);
-		this.setCount(this.count() + 1);
-		this.incrementQueueOffset();
-		
-	}
-	
-	public int dequeue() throws GameActionException {
-		
-		if (this.count() <= 0) return Integer.MAX_VALUE;
+       ConvexHullVisualizer chv = new ConvexHullVisualizer();
 
-		int value = this.peek();
-		this.setCount(this.count() - 1);
-		return value;
-		
-	}
-	
-	public int peek() throws GameActionException {
+        window.add(chv);
+        window.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        window.setVisible(true);
+    }
 
-		if (this.count() <= 0) return Integer.MAX_VALUE;
-		return this.broadcaster.readBroadcast(this.nextQueueIndex() - this.count());
-		
-	}
-	
-	// MARK: Offsets
-	
-	private void incrementQueueOffset() throws GameActionException {
+    public ConvexHullVisualizer(){
+        this.setBackground(Color.BLACK);
+        this.addMouseListener(this);
 
-		this.broadcaster.broadcast(this.startingIndex + this.queueOffset, this.broadcaster.readBroadcast(this.startingIndex + this.queueOffset) + 1);
-		
-	}
-	
-	private int queueOffset() throws GameActionException {
-		
-		return this.broadcaster.readBroadcast(this.startingIndex + this.queueOffset);
-		
-	}
-	
-	private int nextQueueIndex() throws GameActionException {
+        JButton solveButton = new JButton("Gift Wrapping");
+        solveButton.setSize(100,30);
+        solveButton.setLocation(10,10);
+        solveButton.addActionListener((ActionEvent e) -> {startSolving();
+        });
 
-		return this.startingIndex + this.queueIndex + this.queueOffset();
-		
-	}
-	
-	// MARK: Getters & Setters
-	
-	private void setCount(int count) throws GameActionException {
+        this.setLayout(null);
+        this.add(solveButton);
+    }
 
-		this.broadcaster.broadcast(this.startingIndex + this.countOffset, count);
-		
-	}
-	
-	public int count() throws GameActionException {
-		
-		return this.broadcaster.readBroadcast(this.startingIndex + this.countOffset);
-		
-	}
+    ArrayList<Point> points = new ArrayList<>();
+    ArrayList<Point> hull = null;
 
+    public void startSolving(){
+        hull = JarvisConvexHull.convexHull(points);
+        repaint();
+    }
+
+    @Override
+    public void paint(Graphics g) {
+        super.paint(g);
+
+        g.setColor(Color.WHITE);
+        for(Point p : points){
+            g.fillOval(p.x-5,p.y-5,10,10);
+        }
+
+        if(hull != null){
+            Polygon hullPoly = new Polygon();
+            for(Point p : hull){
+                hullPoly.addPoint(p.x,p.y);
+            }
+            g.drawPolygon(hullPoly);
+        }
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+        points.add(new Point(e.getX(),e.getY()));
+        repaint();
+    }
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+
+    }
 }

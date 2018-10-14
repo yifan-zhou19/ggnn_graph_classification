@@ -1,26 +1,47 @@
-package algorithms.sort;
+package stackSample;
 
-public class BucketSort {
-	public static void bucketSort(int[] array) {
-		bucketSort(array, 99);
+import java.util.Arrays;
+
+
+public class Stack {
+
+	private final static int MSIZE = 3; 
+	private int currPos = 0;
+	private int[] val = new int[MSIZE];
+	private int depth=1;
+
+	public void push(int a) {
+		if (!pushPre()) {
+			throw new RuntimeException("cannot push; full stack");
+		}
+		val[currPos++] = a;
+		System.out.println("## Push:"+currPos+":"+depth);		
+		depth++;
+	}
+
+	public void pop() {
+		if (!popPre()) {
+			throw new RuntimeException("cannot pop; empty stack");
+		}
+		val[--currPos] = 0;
+		System.out.println("## Pop:"+currPos+":"+depth);
+		depth++;
+	}
+
+	public boolean pushPre() {		
+		return currPos >= 0 && currPos < MSIZE;
+	}
+
+	public boolean popPre() {
+		return currPos > 0 && currPos <= MSIZE;
 	}
 	
-	/*
-	 * maxVal - maximum value in the array. For the test case array, the largest value is '99' so maxVal in this case is '99'
-	 * note: the test data consists of only 10 digits, each separated by 11. This results in 100 buckets only which 10 are
-	 *  filled. 
-	 */
-    public static void bucketSort(int[] array, int maxVal) {
-        int[] bucket = new int[maxVal + 1];			// create an array the size of the largest value + 1
+	public String toString() {
+		StringBuffer sb = new StringBuffer();
+		sb.append("currPost="+currPos);
+		sb.append("\\n");
+		sb.append("val="+Arrays.toString(val));
+		return sb.toString();
+	}
 
-        // for every value in array, increment its corresponding bucket
-        for (int i = 0; i < array.length; i++)
-            bucket[array[i]]++;
-
-        int outPos = 0;
-        for (int i = 0; i < bucket.length; i++) { 
-        	if (bucket[i] > 0)
-            	array[outPos++] = i;
-        }
-    }
 }

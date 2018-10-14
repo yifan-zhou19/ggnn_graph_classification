@@ -1,42 +1,35 @@
-package sorting.noncomparison;
+/**
+ * Created by IntelliJ IDEA.
+ * User: student5
+ * Date: 16.03.11
+ * Time: 19:32
+ * To change this template use File | Settings | File Templates.
+ */
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+public class Stack {
+    private LinkedList list = new LinkedList();
 
-public class BucketSort {
+    public void push(Object element) {
+        this.list.addLast(element);
+    } //adds an element at the top¬
 
-    public void sort(Double[] A) {
+    public Object pop() {
+        if(this.list.getSize()==0){
+           return null;
+        }
 
-        int n = A.length;
-        List[] B = new ArrayList[n];
+       //LinkedListElement item = (LinkedListElement) ((LinkedListElement) this.list.getLast()).clone();
 
-        for (int i = 0; i < n; i++)
-            B[i] = new ArrayList<>();
+        this.list.removeLast();
+        return ((LinkedListElement) this.list.getLast()).getObject();
+    } //if Stack is not empty, returns the topmost element of the Stack and removes it from the Stack, otherwise returns null
 
-        for (int i = 0; i < n; i++)
-            B[(int) Math.floor(n * A[i])].add(A[i]);
+    public Object peek() {
+       if(this.list.getSize()==0){
+           return null;
+       }
 
-        for (List b : B)
-            Collections.sort(b);
-
-        int i = 0;
-        for (List b : B)
-            for (Object d : b)
-                A[i++] = (Double) d;
-
-    }
-
-    public static void main(String... args) {
-
-        Double[] numbers = {0.15, 0.84, 0.36, 0.99, 0.13, 0.34, 0.91, 0.51};
-        BucketSort bucketSort = new BucketSort();
-        bucketSort.sort(numbers);
-
-        Arrays.asList(numbers).stream().forEach(System.out::println);
-
-    }
-
+       return ((LinkedListElement)this.list.getLast()).getObject();
+    } //if Stack is not empty, returns the topmost element of the Stack, otherwise returns null
 
 }

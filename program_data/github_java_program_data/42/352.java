@@ -1,41 +1,26 @@
-import java.util.*;
-import java.lang.*;
-import java.io.*;
+package Algorithm;
 
-class Solution
-{
-	public static void main (String[] args) throws java.lang.Exception
-	{
-		Scanner sc = new Scanner(System.in);
-		int size = sc.nextInt();
-		int a[] = new int[size];
-		for(int i = 0; i < size; i++)
-			a[i] = sc.nextInt();
-		Solution solution = new Solution();
-		solution.selectionSort(a);
-		for(int i = 0 ;i < a.length; i++)
-		System.out.print(a[i] + " ");
-	}
-	
-	public void selectionSort(int a[]){ //simple but inefficient 
-		int min, temp;
-		for(int i = 0; i< a.length - 1; i++){
-			min = i;	
-			for(int j = i+1; j<a.length; j++){
-				if(a[j] < a[min]){
-					min = j;
-				}	
-			}
-			temp = a[i];
-			a[i] = a[min];
-			a[min] = temp;
-		}
-	}
+/**
+ * Created by tonytan on 12/1/2017.
+ *
+ * Bucket sort: cost most memory
+ */
+public class BucketSort {
+
+    static int[] data = {1,2,7,4,6,3,9};//assume all data < 10
+    static int[] bucket = new int[10];
+
+    public static void bucketSort(int[] data){
+        for (int i=0; i<data.length; i++){
+            bucket[data[i]] = data[i];
+        }
+    }
+
+    public static void main(String[] args){
+        bucketSort(data);
+        for (int i:bucket) {
+            if (i==0) continue;
+            System.out.print(i);
+        }
+    }
 }
-
-/***
-
-Running time is O(n^2)
-O(1) space complexity.
-
-***/

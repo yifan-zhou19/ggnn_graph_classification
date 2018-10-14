@@ -1,72 +1,55 @@
+import org.apache.spark.ml.classification.LogisticRegression;
+import org.apache.spark.ml.classification.LogisticRegressionModel;
+import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
 
+public class JavaLogisticRegression {
 
-public class Sort_MergeSort {
+  public static void main(String[] args) {
+    SparkSession spark = SparkSession
+        .builder()
+        .appName("LogisticRegression")
+        // .config("spark.some.config.option", "some-value")
+        .getOrCreate();
 
-    static int[] arr;
+    runLogisticRegression(spark);
+  }
 
-    public static void main(String[] args){
+  private static void runLogisticRegression(SparkSession spark) {
+    Dataset<Row> data = spark.read().format("libsvm")
+        .load("src/main/resources/iris_libsvm.txt");
 
-        arr = new int[6];
-        for(int i=0; i<6; i++){
-            arr[i] = (int)(Math.random()*100);
-        }
+//    data.show();
+//    data.printSchema();
 
-        for(int x: arr){
-            System.out.print(x+" ");
-        }
-        System.out.println();
+    Dataset<Row>[] splits = data.randomSplit(new double[] {0.6, 0.4}, 11L);
+    Dataset<Row> training = splits[0];
+    Dataset<Row> test = splits[1];
 
-        MergeSort(0, arr.length-1);
+    LogisticRegression lr = new LogisticRegression()
+        .setMaxIter(100)
+        .setRegParam(0.3)
+        .setElasticNetParam(0.8);
 
-        for(int y: arr){
-            System.out.print(y+" ");
-        }
-        System.out.println();
+    LogisticRegressionModel lrModel = lr.fit(training);
+    System.out.println("** Coefficients: "
+        + lrModel.coefficients() + " \n** Intercept: " + lrModel.intercept()
+        + "\n** Threshold: " + lrModel.getThreshold());
 
-    }
+//    System.out.println("predicted = " + lrModel.predict(Vectors.dense(5.1, 3.5, 1.4, 0.2)));
+//    System.out.println("predicted = " + lrModel.predict(Vectors.dense(5.7, 2.8, 4.1, 1.3)));
 
-    public static void MergeSort(int left, int right){
+    Dataset<Row> predictions = lrModel.transform(test);
+//    predictions.select("prediction", "label", "features").show(10);
 
-        if(left==right){
-            return;
-        }
+    MulticlassClassificationEvaluator evaluator = new MulticlassClassificationEvaluator()
+        .setLabelCol("label")
+        .setPredictionCol("prediction")
+        .setMetricName("accuracy");
+    double accuracy = evaluator.evaluate(predictions);
+    System.out.println("Accuracy = " + accuracy);
 
-        int mid = (left+right)/2;
-
-        MergeSort(left, mid);
-        MergeSort(mid+1, right);
-
-        Merge(left, mid, right);
-
-    }
-
-    public static void Merge(int left, int mid, int right){
-
-        int[] after = new int[right-left+1];
-        int lb = left;
-        int rb = mid+1;
-        int count = 0;
-
-        while(lb<=mid && rb<=right){
-            if(arr[lb]<=arr[rb]){
-                after[count++] = arr[lb++];
-            }else{
-                after[count++] = arr[rb++];
-            }
-        }
-
-        while(lb<=mid){
-            after[count++] = arr[lb++];
-        }
-
-        while(rb<=right){
-            after[count++] = arr[rb++];
-        }
-
-        for(int i=0; i<after.length; i++){
-            arr[left++] = after[i];
-        }
-
-    }
-
+  }
 }

@@ -1,83 +1,34 @@
-[start,end]跟mid相比，可能：
-全在mid左
-全在mid右
-包含了mid： 这里要特别break into 2 query method
+//use Binary Search method in the array
+//output the index of K..
 
-按定义：
-mid = (root.start + root.end)/2
-```
-/*
-For an integer array (index from 0 to n-1, where n is the size of this array), in the corresponding SegmentTree, each node stores an extra attribute max to denote the maximum number in the interval of the array (index from start to end).
+public class Search_BinarySearch {
 
-Design a query method with three parameters root, start and end, find the maximum number in the interval [start, end] by the given root of segment tree.
+	public static int [] search (int k, int[] a) {
+		int ret = -1;
+		int l=0;
+		int r=a.length;
 
-Example
-For array [1, 4, 2, 3], the corresponding Segment Tree is:
+		while (l != r){
+			int m = (l+r)/2;
+			if (a[m]==k){
+				ret = m;
+				break;
+			} else
+			if (a[m]>k){
+				r = m-1;
+			} else {
+				l = m+1;
+			}
+		}
 
-                  [0, 3, max=4]
-                 /             \
-          [0,1,max=4]        [2,3,max=3]
-          /         \        /         \
-   [0,0,max=1] [1,1,max=4] [2,2,max=2], [3,3,max=3]
-query(root, 1, 1), return 4
+		if (a[l] ==k)
+			ret =l;
 
-query(root, 1, 2), return 4
+		return ret;
+	}
 
-query(root, 2, 3), return 3
-
-query(root, 0, 2), return 4
-
-Note
-It is much easier to understand this problem if you finished Segment Tree Build first.
-
-Tags Expand 
-LintCode Copyright Binary Tree Segment Tree
-*/
-
-/*
-	Thoughts:
-	Search the segment tree, and find the node that matches the interval (start, end)
-	if (start == root.start && right == root.end) return max;
-	if end <= (root.left + root.right) / 2 : go left;
-	if start> (root.left + root.right): go right
-	However if start <= mid < end, break it into 2 segments and meger afterwards.
-*/
-/**
- * Definition of SegmentTreeNode:
- * public class SegmentTreeNode {
- *     public int start, end, max;
- *     public SegmentTreeNode left, right;
- *     public SegmentTreeNode(int start, int end, int max) {
- *         this.start = start;
- *         this.end = end;
- *         this.max = max
- *         this.left = this.right = null;
- *     }
- * }
- */
-public class Solution {
-    /**
-     *@param root, start, end: The root of segment tree and 
-     *                         an segment / interval
-     *@return: The maximum number in the interval [start, end]
-     */
-    public int query(SegmentTreeNode root, int start, int end) {
-    	if (start == root.start && end == root.end) {
-    		return root.max;
-    	}
-    	int mid = (root.start + root.end)/2;
-    	if (end <= mid) {
-    		return query(root.left, start, end);
-    	}
-    	if (start > mid) {
-    		return query(root.right, start, end);
-    	}
-    	//start <= mid && end > mid
-    	int maxLeft = query(root.left, start, root.left.end);
-    	int maxRight = query(root.right, root.right.start, end);
-
-    	return Math.max(maxLeft, maxRight);
-    }
+	public static void main(String [] args){
+		int [] a = {1,3,4,5,8,11,12,16,18,21,22,23,28,38,45,46,100};
+		System.out.println(search (45,a));
+		}
 }
-
-```

@@ -1,56 +1,55 @@
-/**
- * Copyright (c) 2017, Kyle Fricilone <kfricilone@gmail.com>
- * All rights reserved.
- * <p>
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- * <p>
- * 1. Redistributions of source code must retain the above copyright notice, this
- * list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- * <p>
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-package com.friz.algorithms;
+//*************************************************************************************
+//*********************************************************************************** *
+//author Aritra Dhar 																* *
+//Research Engineer																  	* *
+//Xerox Research Center India													    * *
+//Bangalore, India																    * *
+//--------------------------------------------------------------------------------- * * 
+///////////////////////////////////////////////// 									* *
+//The program will do the following:::: // 											* *
+///////////////////////////////////////////////// 									* *
+//version 1.0 																		* *
+//*********************************************************************************** *
+//*************************************************************************************
 
-import com.friz.graphs.Vertex;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+package com.xrci.locationAdv.suffixTree;
 
-/**
- * Created by Kyle Fricilone on Feb 13, 2018.
- */
-public class TopologicalSort<V extends Object>
+import com.infomatiq.jsi.Point;
+import com.xrci.locationAdv.entry.Customer;
+
+public class SuffixTree 
 {
-
-	private final List<Vertex> order;
-
-	public TopologicalSort(DepthFirstSearch<V> dfs)
+	Node ROOT;
+	
+	public SuffixTree()
 	{
-		this.order = new ArrayList<>();
-
-		List<Vertex> postOrder = dfs.getPostOrder();
-		for (int i = postOrder.size() - 1; i >= 0; i--)
+		this.ROOT = new Node();
+	}
+	
+	/**
+	 * Add or update
+	 * @param customer {@code Customer} object
+	 */
+	public void add(Customer customer)
+	{
+		String customer_id = customer.id;
+		
+		Node temp_parent = this.ROOT;
+		for(int i = 0; i < customer_id.length(); i++)
 		{
-			order.add(postOrder.get(i));
+			if(i == customer_id.length() - 1)
+			{
+				new LeafNode(customer_id.charAt(i), temp_parent, customer);
+			}
+			Node Node = new Node(customer_id.charAt(i), temp_parent);
+			temp_parent = Node;
 		}
 	}
-
-	public List<Vertex> getOrder()
+	
+	public static void main(String[] args) 
 	{
-		return Collections.unmodifiableList(order);
+		SuffixTree st = new SuffixTree();
+		st.add(new Customer(new Point(1.5f, 1.0f)));
 	}
 }

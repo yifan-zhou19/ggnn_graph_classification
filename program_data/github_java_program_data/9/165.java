@@ -1,38 +1,50 @@
-package sort;
+package org.interviewelements.graph.search;
+
+import org.interviewelements.graph.Graph;
+
+import java.util.Deque;
+import java.util.LinkedList;
 
 /**
- * 插入排序  f(N)=O(N*N) s(N)=O(1)  稳定  大部分已经排好序是较好
- * 数据量小时使用。并且大部分已经被排序。
+ * Depth first search.
  */
-public class Sort_03_InsertionSort {
+public class DFS extends Search {
 
-    public static int[] insertionSort(int[] arr) {
-        for (int i = 1; i < arr.length; i++) {
-            for (int j = i; j != 0; j--) {
-                if (arr[j-1] > arr[j]) {
-                    swap(arr, j-1, j);
-                } else {
-                    break;
-                }
-            }
-        }
-        return arr;
+    private Deque<Integer> queue = new LinkedList<Integer>();
+
+    public DFS(Graph graph) {
+        super(graph);
     }
 
-    public static void swap(int[] arr, int index1, int index2) {
-        int temp = arr[index1];
-        arr[index1] = arr[index2];
-        arr[index2] = temp;
+    @Override
+    protected void put(int x) {
+        queue.push(x);
     }
 
-    public static void printArray(int[] arr) {
-        for (int i = 0; i < arr.length; i++) {
-            System.out.print(arr[i] + " ");
-        }
+    @Override
+    protected int get() {
+        return queue.pop();
+    }
+
+    @Override
+    protected boolean empty() {
+        return queue.isEmpty();
     }
 
     public static void main(String[] args) {
-        int[] arr = {1, 5, 4, 8, 2, 3, 0, 9, 7, 4, 5};
-        printArray(insertionSort(arr));
+        Graph graph = new Graph(6);
+        graph.add(new Graph.Edge(0, 2));
+        graph.add(new Graph.Edge(2, 1));
+        graph.add(new Graph.Edge(2, 3));
+        graph.add(new Graph.Edge(1, 4));
+        graph.add(new Graph.Edge(1, 5));
+        graph.add(new Graph.Edge(4, 5));
+
+        DFS dfs = new DFS(graph);
+        dfs.setVisitor(x -> System.out.println(x));
+
+        boolean hasPath = dfs.search(0, 5);
+
+        System.out.println(hasPath);
     }
 }

@@ -1,137 +1,65 @@
-package com.interview.graph;
+按定义：
+左孩子：（A.left, (A.left+A.rigth)/2）
+右孩子：（(A.left+A.rigth)/2＋1， A.right）
+```
+/*
+The structure of Segment Tree is a binary tree which each node has two attributes start and end denote an segment / interval.
 
-import java.util.*;
+start and end are both integers, they should be assigned in following rules:
 
-/**
- * Date 04/14/2014
- * @author Tushar Roy
- *
- * Ford fulkerson method Edmonds Karp algorithm for finding max flow
- *
- * Capacity - Capacity of an edge to carry units from source to destination vertex
- * Flow - Actual flow of units from source to destination vertex of an edge
- * Residual capacity - Remaining capacity on this edge i.e capacity - flow
- * AugmentedPath - Path from source to sink which has residual capacity greater than 0
- *
- * Time complexity is O(VE^2)
- *
- * References:
- * http://www.geeksforgeeks.org/ford-fulkerson-algorithm-for-maximum-flow-problem/
- * https://en.wikipedia.org/wiki/Edmonds%E2%80%93Karp_algorithm
- */
-public class FordFulkerson {
+The root's start and end is given by build method.
+The left child of node A has start=A.left, end=(A.left + A.right) / 2.
+The right child of node A has start=(A.left + A.right) / 2 + 1, end=A.right.
+if start equals to end, there will be no children for this node.
+Implement a build method with two parameters start and end, so that we can create a corresponding segment tree with every node has the correct start and end value, return the root of this segment tree.
 
-    public int maxFlow(int capacity[][], int source, int sink){
+Example
+Given start=0, end=3. The segment tree will be:
 
-        //declare and initialize residual capacity as total avaiable capacity initially.
-        int residualCapacity[][] = new int[capacity.length][capacity[0].length];
-        for (int i = 0; i < capacity.length; i++) {
-            for (int j = 0; j < capacity[0].length; j++) {
-                residualCapacity[i][j] = capacity[i][j];
-            }
-        }
+               [0,  3]
+             /        \
+      [0,  1]           [2, 3]
+      /     \           /     \
+   [0, 0]  [1, 1]     [2, 2]  [3, 3]
 
-        //this is parent map for storing BFS parent
-        Map<Integer,Integer> parent = new HashMap<>();
+Given start=1, end=6. The segment tree will be:
 
-        //stores all the augmented paths
-        List<List<Integer>> augmentedPaths = new ArrayList<>();
+               [1,  6]
+             /        \
+      [1,  3]           [4,  6]
+      /     \           /     \
+   [1, 2]  [3,3]     [4, 5]   [6,6]
+   /    \           /     \
+[1,1]   [2,2]     [4,4]   [5,5]
 
-        //max flow we can get in this network
-        int maxFlow = 0;
+Clarification
+Segment Tree (a.k.a Interval Tree) is an advanced data structure which can support queries like:
 
-        //see if augmented path can be found from source to sink.
-        while(BFS(residualCapacity, parent, source, sink)){
-            List<Integer> augmentedPath = new ArrayList<>();
-            int flow = Integer.MAX_VALUE;
-            //find minimum residual capacity in augmented path
-            //also add vertices to augmented path list
-            int v = sink;
-            while(v != source){
-                augmentedPath.add(v);
-                int u = parent.get(v);
-                if (flow > residualCapacity[u][v]) {
-                    flow = residualCapacity[u][v];
-                }
-                v = u;
-            }
-            augmentedPath.add(source);
-            Collections.reverse(augmentedPath);
-            augmentedPaths.add(augmentedPath);
+which of these intervals contain a given point
+which of these points are in a given interval
+See wiki:
+Segment Tree
+Interval Tree
 
-            //add min capacity to max flow
-            maxFlow += flow;
+Tags Expand 
+LintCode Copyright Binary Tree Segment Tree
+*/
 
-            //decrease residual capacity by min capacity from u to v in augmented path
-            // and increase residual capacity by min capacity from v to u
-            v = sink;
-            while(v != source){
-                int u = parent.get(v);
-                residualCapacity[u][v] -= flow;
-                residualCapacity[v][u] += flow;
-                v = u;
-            }
-        }
-        printAugmentedPaths(augmentedPaths);
-        return maxFlow;
-    }
-
+public class Solution {
     /**
-     * Prints all the augmented path which contribute to max flow
+     *@param start, end: Denote an segment / interval
+     *@return: The root of Segment Tree
      */
-    private void printAugmentedPaths(List<List<Integer>> augmentedPaths) {
-        System.out.println("Augmented paths");
-        augmentedPaths.forEach(path -> {
-            path.forEach(i -> System.out.print(i + " "));
-            System.out.println();
-        });
-    }
-
-    /**
-     * Breadth first search to find augmented path
-     */
-    private boolean BFS(int[][] residualCapacity, Map<Integer,Integer> parent,
-            int source, int sink){
-        Set<Integer> visited = new HashSet<>();
-        Queue<Integer> queue = new LinkedList<>();
-        queue.add(source);
-        visited.add(source);
-        boolean foundAugmentedPath = false;
-        //see if we can find augmented path from source to sink
-        while(!queue.isEmpty()){
-            int u = queue.poll();
-            for(int v = 0; v < residualCapacity.length; v++){
-                //explore the vertex only if it is not visited and its residual capacity is
-                //greater than 0
-                if(!visited.contains(v) &&  residualCapacity[u][v] > 0){
-                    //add in parent map saying v got explored by u
-                    parent.put(v, u);
-                    //add v to visited
-                    visited.add(v);
-                    //add v to queue for BFS
-                    queue.add(v);
-                    //if sink is found then augmented path is found
-                    if ( v == sink) {
-                        foundAugmentedPath = true;
-                        break;
-                    }
-                }
-            }
-        }
-        //returns if augmented path is found from source to sink or not
-        return foundAugmentedPath;
-    }
-    
-    public static void main(String args[]){
-        FordFulkerson ff = new FordFulkerson();
-        int[][] capacity = {{0, 3, 0, 3, 0, 0, 0},
-                            {0, 0, 4, 0, 0, 0, 0},
-                            {3, 0, 0, 1, 2, 0, 0},
-                            {0, 0, 0, 0, 2, 6, 0},
-                            {0, 1, 0, 0, 0, 0, 1},
-                            {0, 0, 0, 0, 0, 0, 9},
-                            {0, 0, 0, 0, 0, 0, 0}};
-
-        System.out.println("\nMaximum capacity " + ff.maxFlow(capacity, 0, 6));
+    public SegmentTreeNode build(int start, int end) {
+    	if (start > end) {
+    		return null;
+    	} else if (start == end) {
+    		return new SegmentTreeNode(start, end);
+    	}
+    	SegmentTreeNode node = new SegmentTreeNode(start, end);
+    	node.left = build(start, (start + end)/2);
+    	node.right  = build((start + end)/2 + 1, end);
+    	return node;
     }
 }
+```

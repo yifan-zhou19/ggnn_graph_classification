@@ -1,86 +1,196 @@
-package EvacSim.jme3tools.navmesh;
+/*
+ * The FML Forge Mod Loader suite.
+ * Copyright (C) 2012 cpw
+ *
+ * This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ */
+package cpw.mods.fml.common.toposort;
 
-import EvacSim.jme3tools.navmesh.util.MinHeap;
-import com.jme3.math.Vector3f;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
- * A NavigationHeap is a priority-ordered list facilitated by the STL heap
- * functions. This class is also used to hold the current path finding session
- * ID and the desired goal point for NavigationCells to query. Thanks to Amit J.
- * Patel for detailing the use of STL heaps in this way. It's much faster than a
- * linked list or multimap approach.
- * 
- * Portions Copyright (C) Greg Snook, 2000
- * 
- * @author TR
- * 
+ * Topological sort for mod loading
+ *
+ * Based on a variety of sources, including http://keithschwarz.com/interesting/code/?dir=topological-sort
+ * @author cpw
+ *
  */
-class Heap implements java.io.Serializable {
+public class TopologicalSort
+{
+    public static class DirectedGraph<T> implements Iterable<T>
+    {
+        private final Map<T, SortedSet<T>> graph = new HashMap<T, SortedSet<T>>();
+        private List<T> orderedNodes = new ArrayList<T>();
+        
+        public boolean addNode(T node)
+        {
+            // Ignore nodes already added
+            if (graph.containsKey(node))
+            {
+                return false;
+            }
 
-    private MinHeap nodes = new MinHeap();
-    private int sessionID;
-    private Vector3f goal;
+            orderedNodes.add(node);
+            graph.put(node, new TreeSet<T>(new Comparator<T>()
+            {
+                public int compare(T o1, T o2) {
+                    return orderedNodes.indexOf(o1)-orderedNodes.indexOf(o2);
+                }
+            }));
+            return true;
+        }
 
-    int getSessionID() {
-        return sessionID;
-    }
+        public void addEdge(T from, T to)
+        {
+            if (!(graph.containsKey(from) && graph.containsKey(to)))
+            {
+                throw new NoSuchElementException("Missing nodes from graph");
+            }
 
-    Vector3f getGoal() {
-        return goal;
-    }
+            graph.get(from).add(to);
+        }
 
-    void initialize(int sessionID, Vector3f goal) {
-        this.goal = goal;
-        this.sessionID = sessionID;
-        nodes.clear();
-    }
+        public void removeEdge(T from, T to)
+        {
+            if (!(graph.containsKey(from) && graph.containsKey(to)))
+            {
+                throw new NoSuchElementException("Missing nodes from graph");
+            }
 
-    void addCell(Cell pCell) {
-        Node newNode = new Node(pCell, pCell.getTotalCost());
-        nodes.add(newNode);
-    }
+            graph.get(from).remove(to);
+        }
 
-    /**
-     * Adjust a cell in the heap to reflect it's updated cost value. NOTE: Cells
-     * may only sort up in the heap.
-     */
-    void adjustCell(Cell pCell) {
-        Node n = findNodeIterator(pCell);
+        public boolean edgeExists(T from, T to)
+        {
+            if (!(graph.containsKey(from) && graph.containsKey(to)))
+            {
+                throw new NoSuchElementException("Missing nodes from graph");
+            }
 
-        if (n != nodes.lastElement()) {
-            // update the node data
-            n.cell = pCell;
-            n.cost = pCell.getTotalCost();
+            return graph.get(from).contains(to);
+        }
 
-            nodes.sort();
+        public Set<T> edgesFrom(T from)
+        {
+            if (!graph.containsKey(from))
+            {
+                throw new NoSuchElementException("Missing node from graph");
+            }
+
+            return Collections.unmodifiableSortedSet(graph.get(from));
+        }
+        @Override
+        public Iterator<T> iterator()
+        {
+            return orderedNodes.iterator();
+        }
+
+        public int size()
+        {
+            return graph.size();
+        }
+
+        public boolean isEmpty()
+        {
+            return graph.isEmpty();
+        }
+
+        @Override
+        public String toString()
+        {
+            return graph.toString();
         }
     }
 
     /**
-     * @return true if the heap is not empty
+     * Sort the input graph into a topologically sorted list
+     *
+     * Uses the reverse depth first search as outlined in ...
+     * @param graph
+     * @return
      */
-    boolean isNotEmpty() {
-        return !nodes.isEmpty();
+    public static <T> List<T> topologicalSort(DirectedGraph<T> graph)
+    {
+        DirectedGraph<T> rGraph = reverse(graph);
+        List<T> sortedResult = new ArrayList<T>();
+        Set<T> visitedNodes = new HashSet<T>();
+        // A list of "fully explored" nodes. Leftovers in here indicate cycles in the graph
+        Set<T> expandedNodes = new HashSet<T>();
+
+        for (T node : rGraph)
+        {
+            explore(node, rGraph, sortedResult, visitedNodes, expandedNodes);
+        }
+
+        return sortedResult;
     }
 
-    /**
-     * Pop the top off the heap and remove the best value for processing.
-     */
-    Node getTop() {
-        return (Node) nodes.deleteMin();
-    }
+    public static <T> DirectedGraph<T> reverse(DirectedGraph<T> graph)
+    {
+        DirectedGraph<T> result = new DirectedGraph<T>();
 
-    /**
-     * Search the container for a given cell. May be slow, so don't do this
-     * unless nessesary.
-     */
-    Node findNodeIterator(Cell pCell) {
-        for (Object n : nodes) {
+        for (T node : graph)
+        {
+            result.addNode(node);
+        }
 
-            if (((Node) n).cell.equals(pCell)) {
-                return ((Node) n);
+        for (T from : graph)
+        {
+            for (T to : graph.edgesFrom(from))
+            {
+                result.addEdge(to, from);
             }
         }
-        return (Node) nodes.lastElement();
+
+        return result;
+    }
+
+    public static <T> void explore(T node, DirectedGraph<T> graph, List<T> sortedResult, Set<T> visitedNodes, Set<T> expandedNodes)
+    {
+        // Have we been here before?
+        if (visitedNodes.contains(node))
+        {
+            // And have completed this node before
+            if (expandedNodes.contains(node))
+            {
+                // Then we're fine
+                return;
+            }
+
+            System.out.printf("%s: %s\n%s\n%s\n", node, sortedResult, visitedNodes, expandedNodes);
+            throw new IllegalArgumentException("There was a cycle detected in the input graph, sorting is not possible");
+        }
+
+        // Visit this node
+        visitedNodes.add(node);
+
+        // Recursively explore inbound edges
+        for (T inbound : graph.edgesFrom(node))
+        {
+            explore(inbound, graph, sortedResult, visitedNodes, expandedNodes);
+        }
+
+        // Add ourselves now
+        sortedResult.add(node);
+        // And mark ourselves as explored
+        expandedNodes.add(node);
     }
 }

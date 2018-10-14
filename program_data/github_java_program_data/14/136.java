@@ -1,286 +1,376 @@
+/**
+ * \file Heap.java
+ *
+ * \brief Definicao da classe da lista de prioridade.
+ *
+ * \author Petrucio Ricardo Tavares de Medeiros
+ * Raul Lucena e Silva
+ *
+ * \version 1.0
+ */
 
-//
-// This file is auto-generated. Please don't modify it!
-//
-package org.opencv.ml;
+import java.util.Vector; // Vector para a heap
+import java.io.*; // leitura de arquivo
 
-import org.opencv.core.Mat;
-import org.opencv.core.TermCriteria;
+/**
+ * \class Heap
+ *
+ * \brief A classe da lista de prioridade.
+ */
+public class Heap {
+	
+	// Entrada
+	static FileReader arqIn;
+	static BufferedReader lerArq;
+	
+	// Saída
+	static FileWriter arqOut;
+	static PrintWriter gravarArq;
+    
+    public static void main(String[] args){
+    	Heap heap = new Heap();
+        
+        heap.heap.add(null); // 1ª posição nula
+        
+        try {
+        	
+        	// Entrada
+        	arqIn = new FileReader("testes/filaprioridade1.in");
+        	lerArq = new BufferedReader(arqIn);
+        	
+        	// Saída
+        	arqOut = new FileWriter("testes/saida.txt");
+            gravarArq = new PrintWriter(arqOut);
+            
+  
+        	String linha = lerArq.readLine(); // lê a primeira linha
+			  
+        	if(linha.contains("MAX")){
+        		min_max = 1;
+        		gravarArq.println("-");
+        	} else if (linha.contains("MIN")) {
+        		min_max = -1;
+        		gravarArq.println("-");
+        	}
+          
+        	while (linha != null) { // a variável "linha" recebe o valor "null" quando o processo de repetição atingir o final do arquivo texto
+	    
+	        	  linha = lerArq.readLine(); // lê da segunda até a última linha
+	        	  String params[] = linha.split(" ");
+	        	  
+	        	  if (params[0].contains("insert")){
+	        		  heap.insert(Integer.parseInt(params[1]) , Integer.parseInt(params[2]));
+	        	  }
+	        	  else if (params[0].contains("decrease")){
+	        		  heap.decrease(Integer.parseInt(params[1]) , Integer.parseInt(params[2]));
+	        	  }
+	        	  else if (params[0].contains("increase")){
+	        		  heap.increase(Integer.parseInt(params[1]) , Integer.parseInt(params[2]));
+	        	  }
+	        	  else if (params[0].contains("extract")) {
+	        		  heap.extract();
+	        	  }
+        	}
+          
+        	lerArq.close();
+            gravarArq.close();
+          
+        } catch (IOException e) {
+            System.err.printf("Erro na abertura do arquivo: %s.\n", e.getMessage());
+        }
+        
+        //min_max = 1;
+        
+        
+    }
+    
+    //--------------------------------------------------------------------
+    //                       Atributos Privado
+    //--------------------------------------------------------------------
+    static byte min_max = 0; // 0 = ainda não definido, 1 p/ max e -1 para min;
+    private Vector<No> heap = new Vector<No>();
+    
+    
+    /**
+     * \class No
+     *
+     * \brief A classe do tipo do Array.
+     */
+    private class No{
+        //--------------------------------------------------------------------
+        //                       Atributos Privado
+        //--------------------------------------------------------------------
+        private int id, chave;
+        //--------------------------------------------------------------------
+        //                       Metodos privados
+        //--------------------------------------------------------------------
+        /**
+         * \fn private No(int id, int chave)
+         *
+         * \brief Metodo construtor da classe No.
+         *
+         * \param id - atribui id ao objeto
+         * chave - atribui chave ao objeto
+         */
+        private No(int id, int chave){
+            this.id = id;
+            this.chave = chave;
+        }
+        /**
+         * \fn private int getId()
+         *
+         * \brief Metodo que retorna o valor da ID.
+         */
+        private int getId(){return this.id;}
+        /**
+         * \fn private int getChave()
+         *
+         * \brief Metodo que retorna o valor da Chave.
+         */
+        private int getChave(){return this.chave;}
+    }
+    
+    //--------------------------------------------------------------------
+    //                       Metodos privados
+    //--------------------------------------------------------------------
+    /**
+     * \fn public void insert(int id, int chave)
+     *
+     * \brief Metodo que insere elemento da heap.
+     *
+     * \param id - posição a inserir Array
+     * chave - valor guardado na posição
+     */
+    public void insert(int id, int chave){
 
-// C++: class LogisticRegression
-//javadoc: LogisticRegression
-public class LogisticRegression extends StatModel {
-
-    protected LogisticRegression(long addr) {
-        super(addr);
+        if (verificarId(id) > 0){
+            gravarArq.println("notinserted");
+            return;
+        }
+        No no = new No(id, chave);
+        heap.add(no);
+        System.out.println("add: " + id + " " + chave);
+        int ultimaPosicao = heap.size() - 1;
+        heapify(ultimaPosicao);
+        gravarArq.println("-");
+    }
+    
+    /**
+     * \fn private void heapify(int posicao)
+     *
+     * \brief Metodo que ordena as prioridades da heap.
+     *
+     * \param posicao - posição a ordenar
+     */
+    private void heapify(int posicao){
+            
+        int pai = posicao/2;
+        if (pai > 0){ // Pai existe
+            if (min_max == 1){ // maxHeapify
+                if (heap.get(pai).getChave() < heap.get(posicao).getChave()){
+                    trocarNo(posicao, pai);
+                    
+                    heapify(pai);
+                }
+            }
+            else if(min_max == -1){ // minHeapify
+                if (heap.get(pai).getChave() > heap.get(posicao).getChave()) {
+                    trocarNo(posicao, pai);
+                    
+                    heapify(pai);
+                }
+            }
+        }
+        for (int i=1; i < heap.size() ; i++ ) {
+            System.out.printf(heap.get(i).chave + " ");
+        }System.out.println();
     }
 
+    /**
+     * \fn public void extract()
+     *
+     * \brief Metodo que extrai a prioridade.
+     */
+    public void extract(){
+    	
+        int ultimaPosicao = heap.size() - 1;
+        
+        if (ultimaPosicao < 1){
+        	gravarArq.println("empty");
+        	return;
+        }
+        System.out.println("rm: " + heap.get(1).id + " " + heap.get(1).chave);
 
-    public static final int
-            REG_DISABLE = -1,
-            REG_L1 = 0,
-            REG_L2 = 1,
-            BATCH = 0,
-            MINI_BATCH = 1;
+        gravarArq.println(heap.get(1).id + " " + heap.get(1).chave);
+       
+        No aux = heap.get(ultimaPosicao);
+        trocarNo(1, ultimaPosicao);
+        heap.remove(ultimaPosicao);
 
-
-    //
-    // C++:  Mat get_learnt_thetas()
-    //
-
-    //javadoc: LogisticRegression::get_learnt_thetas()
-    public Mat get_learnt_thetas() {
-
-        Mat retVal = new Mat(get_learnt_thetas_0(nativeObj));
-
-        return retVal;
+        for (int i=1; i < heap.size() ; i++ ) {
+            System.out.printf(heap.get(i).chave + " ");
+        }
+        System.out.println();
+        if (heap.size() >= 2){
+            heap.set(1, aux);
+            
+            descer(1);
+        }
+        
+    }
+    
+    /**
+     * \fn private void descer(int posicao)
+     *
+     * \brief Metodo que desce o no da raiz para reaustá-lo à prioridade.
+     * 
+     * \param posicao - informa a posição do no a descer. Função recursiva.
+     */
+    private void descer(int posicao){
+        int filhoE = -1;
+        if ((posicao * 2) < heap.size()-1) {
+        	filhoE = posicao * 2;
+        }
+        int filhoD = -1;
+        if ( (filhoE + 1) < heap.size()) {
+        	filhoD = filhoE + 1;
+        }
+        
+        if ( /*(filhoE > 0) &&*/ (filhoD > 0) ){
+            if (min_max == 1){ // maxHeapify
+                if (heap.get(filhoE).getChave() > heap.get(filhoD).getChave()){
+                    if (heap.get(posicao).getChave() < heap.get(filhoE).getChave()){
+                        trocarNo(posicao, filhoE);
+                        descer(filhoE);
+                    }
+                }
+                else{
+                    if (heap.get(posicao).getChave() < heap.get(filhoD).getChave()){
+                        trocarNo(posicao, filhoD);
+                        descer(filhoD);
+                    }
+                }
+            }
+            else if (min_max == -1){ // minHeapify
+                if (heap.get(filhoE).getChave() < heap.get(filhoD).getChave()){
+                    if (heap.get(posicao).getChave() > heap.get(filhoE).getChave()){
+                        trocarNo(posicao, filhoE);
+                        descer(filhoE);
+                    }
+                }
+                else{
+                    if (heap.get(posicao).getChave() > heap.get(filhoD).getChave()){
+                        trocarNo(posicao, filhoD);
+                        descer(filhoD);
+                    }
+                }
+            }
+        }
+        else if (filhoE > 0){
+            if(min_max == 1){ // MAX
+            	if (heap.get(posicao).getChave() < heap.get(filhoE).getChave()){
+                    trocarNo(posicao, filhoE);
+                    descer(filhoE);
+                }
+            }else { // MIN
+                if (heap.get(posicao).getChave() > heap.get(filhoE).getChave()){
+                    trocarNo(posicao, filhoE);
+                    descer(filhoE);
+                }
+            }
+        }
+    }
+    
+    /**
+     * \fn private void trocarNo(int no1, int no2)
+     *
+     * \brief Metodo que troca a posição de dois nós no Array.
+     * 
+     * \param no1 - index do 1º nó a ser trocado.
+     * no2 - index do 2º nó a ser trocado.
+     */
+    private void trocarNo(int no1, int no2){
+        No aux = heap.get(no1);
+        heap.set(no1, heap.get(no2));
+        heap.set(no2, aux);
+    }
+    
+    /**
+     * \fn private boolean verificarId(int id)
+     *
+     * \brief Metodo que verifica se algum nó da heap possui o id passado e retorna a posição.
+     * 
+     * \param id - id a verificar.
+     */
+    private int verificarId(int id){
+        for(int i = 1 ; i < heap.size() ; i++ ){
+            if( heap.get(i).getId() == id ) {
+                return i;
+            }
+        }
+        return 0;
     }
 
+    /**
+     * \fn public decrease(int id, int chave)
+     *
+     * \brief Metodo que altera elemento da heap mínima.
+     *
+     * \param id - posição a mudar na heap
+     * chave - novo valor a inserir na posição do id
+     */
+    public void decrease(int id, int chave){
 
-    //
-    // C++: static Ptr_LogisticRegression create()
-    //
+        if(min_max != -1){ // para decrease() a heap tem que ser mínima 
+        	gravarArq.println("notupdated");
+            return;
+        }
 
-    //javadoc: LogisticRegression::create()
-    public static LogisticRegression create() {
+        int posicao = verificarId(id);
 
-        LogisticRegression retVal = new LogisticRegression(create_0());
+        if (posicao > 0){
+            if(heap.get(posicao).getChave() > chave){
+                No no = new No(id, chave);
 
-        return retVal;
+                heap.set(posicao, no);
+                gravarArq.println(id + "  " + chave);
+                heapify(posicao);
+            }
+            else{
+            	gravarArq.println("notupdated");
+            }
+        }
     }
 
+    /**
+     * \fn public increase(int id, int chave)
+     *
+     * \brief Metodo que altera elemento da heap máxima.
+     *
+     * \param id - posição a mudar na heap
+     * chave - novo valor a inserir na posição do id
+     */
+    public void increase(int id, int chave){
 
-    //
-    // C++:  TermCriteria getTermCriteria()
-    //
+        if(min_max != 1){ // para increase() a heap tem que ser máxima 
+        	gravarArq.println("notupdated");
+            return;
+        }
 
-    //javadoc: LogisticRegression::getTermCriteria()
-    public TermCriteria getTermCriteria() {
+        int posicao = verificarId(id);
 
-        TermCriteria retVal = new TermCriteria(getTermCriteria_0(nativeObj));
+        if (posicao > 0){
+            if(heap.get(posicao).getChave() < chave){
+                No no = new No(id, chave);
 
-        return retVal;
+                heap.set(posicao, no);
+                
+                gravarArq.println(id + "  " + chave);
+                heapify(posicao);
+            }
+            else{
+            	gravarArq.println("notupdated");
+            }
+        }
     }
-
-
-    //
-    // C++:  double getLearningRate()
-    //
-
-    //javadoc: LogisticRegression::getLearningRate()
-    public double getLearningRate() {
-
-        double retVal = getLearningRate_0(nativeObj);
-
-        return retVal;
-    }
-
-
-    //
-    // C++:  float predict(Mat samples, Mat& results = Mat(), int flags = 0)
-    //
-
-    //javadoc: LogisticRegression::predict(samples, results, flags)
-    public float predict(Mat samples, Mat results, int flags) {
-
-        float retVal = predict_0(nativeObj, samples.nativeObj, results.nativeObj, flags);
-
-        return retVal;
-    }
-
-    //javadoc: LogisticRegression::predict(samples)
-    public float predict(Mat samples) {
-
-        float retVal = predict_1(nativeObj, samples.nativeObj);
-
-        return retVal;
-    }
-
-
-    //
-    // C++:  int getIterations()
-    //
-
-    //javadoc: LogisticRegression::getIterations()
-    public int getIterations() {
-
-        int retVal = getIterations_0(nativeObj);
-
-        return retVal;
-    }
-
-
-    //
-    // C++:  int getMiniBatchSize()
-    //
-
-    //javadoc: LogisticRegression::getMiniBatchSize()
-    public int getMiniBatchSize() {
-
-        int retVal = getMiniBatchSize_0(nativeObj);
-
-        return retVal;
-    }
-
-
-    //
-    // C++:  int getRegularization()
-    //
-
-    //javadoc: LogisticRegression::getRegularization()
-    public int getRegularization() {
-
-        int retVal = getRegularization_0(nativeObj);
-
-        return retVal;
-    }
-
-
-    //
-    // C++:  int getTrainMethod()
-    //
-
-    //javadoc: LogisticRegression::getTrainMethod()
-    public int getTrainMethod() {
-
-        int retVal = getTrainMethod_0(nativeObj);
-
-        return retVal;
-    }
-
-
-    //
-    // C++:  void setIterations(int val)
-    //
-
-    //javadoc: LogisticRegression::setIterations(val)
-    public void setIterations(int val) {
-
-        setIterations_0(nativeObj, val);
-
-        return;
-    }
-
-
-    //
-    // C++:  void setLearningRate(double val)
-    //
-
-    //javadoc: LogisticRegression::setLearningRate(val)
-    public void setLearningRate(double val) {
-
-        setLearningRate_0(nativeObj, val);
-
-        return;
-    }
-
-
-    //
-    // C++:  void setMiniBatchSize(int val)
-    //
-
-    //javadoc: LogisticRegression::setMiniBatchSize(val)
-    public void setMiniBatchSize(int val) {
-
-        setMiniBatchSize_0(nativeObj, val);
-
-        return;
-    }
-
-
-    //
-    // C++:  void setRegularization(int val)
-    //
-
-    //javadoc: LogisticRegression::setRegularization(val)
-    public void setRegularization(int val) {
-
-        setRegularization_0(nativeObj, val);
-
-        return;
-    }
-
-
-    //
-    // C++:  void setTermCriteria(TermCriteria val)
-    //
-
-    //javadoc: LogisticRegression::setTermCriteria(val)
-    public void setTermCriteria(TermCriteria val) {
-
-        setTermCriteria_0(nativeObj, val.type, val.maxCount, val.epsilon);
-
-        return;
-    }
-
-
-    //
-    // C++:  void setTrainMethod(int val)
-    //
-
-    //javadoc: LogisticRegression::setTrainMethod(val)
-    public void setTrainMethod(int val) {
-
-        setTrainMethod_0(nativeObj, val);
-
-        return;
-    }
-
-
-    @Override
-    protected void finalize() throws Throwable {
-        delete(nativeObj);
-    }
-
-
-    // C++:  Mat get_learnt_thetas()
-    private static native long get_learnt_thetas_0(long nativeObj);
-
-    // C++: static Ptr_LogisticRegression create()
-    private static native long create_0();
-
-    // C++:  TermCriteria getTermCriteria()
-    private static native double[] getTermCriteria_0(long nativeObj);
-
-    // C++:  double getLearningRate()
-    private static native double getLearningRate_0(long nativeObj);
-
-    // C++:  float predict(Mat samples, Mat& results = Mat(), int flags = 0)
-    private static native float predict_0(long nativeObj, long samples_nativeObj, long results_nativeObj, int flags);
-
-    private static native float predict_1(long nativeObj, long samples_nativeObj);
-
-    // C++:  int getIterations()
-    private static native int getIterations_0(long nativeObj);
-
-    // C++:  int getMiniBatchSize()
-    private static native int getMiniBatchSize_0(long nativeObj);
-
-    // C++:  int getRegularization()
-    private static native int getRegularization_0(long nativeObj);
-
-    // C++:  int getTrainMethod()
-    private static native int getTrainMethod_0(long nativeObj);
-
-    // C++:  void setIterations(int val)
-    private static native void setIterations_0(long nativeObj, int val);
-
-    // C++:  void setLearningRate(double val)
-    private static native void setLearningRate_0(long nativeObj, double val);
-
-    // C++:  void setMiniBatchSize(int val)
-    private static native void setMiniBatchSize_0(long nativeObj, int val);
-
-    // C++:  void setRegularization(int val)
-    private static native void setRegularization_0(long nativeObj, int val);
-
-    // C++:  void setTermCriteria(TermCriteria val)
-    private static native void setTermCriteria_0(long nativeObj, int val_type, int val_maxCount, double val_epsilon);
-
-    // C++:  void setTrainMethod(int val)
-    private static native void setTrainMethod_0(long nativeObj, int val);
-
-    // native support for java finalize()
-    private static native void delete(long nativeObj);
-
 }

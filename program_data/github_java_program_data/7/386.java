@@ -1,19 +1,23 @@
-package DSA.TowerOfHanoi;
-import java.util.Scanner;
-public class TowerOfHanoi {
-    public static void MoveTower(int i, String source, String Spare, String destination){
-        if(i > 0){
-            MoveTower(i-1, source, destination, Spare);
-            System.out.println("Move disk " + i + " from " + source + " to " + destination);
-            MoveTower(i-1, Spare, source, destination);
-        }
-    }
-    public static void main(String[] args) {
-        String s1 = "Peg 1";
-        String s2 = "Peg 2";
-        String s3 = "Peg 3";
-        Scanner kb = new Scanner(System.in);
-        int num = kb.nextInt();
-        MoveTower(num, s1, s2, s3);
-    }
+
+import java.util.*;
+import java.math.BigInteger;
+
+public class Fibonacci {
+	static Hashtable<Integer, BigInteger> memo = new Hashtable<>();
+	static BigInteger f;
+	public static void main (String [] args){
+		System.out.println("Enter the n: ");
+		System.out.println("Answer: " + calculateNthFibonacci((new Scanner(System.in)).nextInt()));
+	}
+
+	public static BigInteger calculateNthFibonacci(int n){
+
+		if(memo.containsKey(n)) return memo.get(n);
+
+		if(n <= 2) f = BigInteger.valueOf(1);
+
+		else f = calculateNthFibonacci(n-1).add(calculateNthFibonacci(n-2));
+		return f;
+	}
+
 }

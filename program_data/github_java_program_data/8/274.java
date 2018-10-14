@@ -1,25 +1,34 @@
-package generics;// : generics/Fibonacci.java
+package com.algo.sorting;
 
-// Generate a Fibonacci sequence.
-import net.mindview.util.*;
+public class InsertionSortJava {
 
-public class Fibonacci implements Generator<Integer> {
-    private int count = 0;
+	public static void print(int numbers[]) {
+		for (int i = 0; i < numbers.length - 1; i++) {
+			System.out.print(numbers[i] + " ");
+		}
+	}
 
-    public Integer next() {
-        return fib(count++);
-    }
+	public static int[] swap(int numbers[], int i, int j) {
+		int temp = numbers[i];
+		numbers[i] = numbers[j];
+		numbers[j] = temp;
+		return numbers;
+	}
 
-    private int fib(int n) {
-        if (n < 2) return 1;
-        return fib(n - 2) + fib(n - 1);
-    }
+	public static int[] sort(int array[]) {
+		for (int index = 1; index < array.length; index++) {
+			for (int indexj = 0; indexj < index-1; indexj++)
+				if (array[indexj] > array[index]) {
+					array = swap(array, indexj, index);
+				}
+		}
+		return array;
+	}
 
-    public static void main(String[] args) {
-        Fibonacci gen = new Fibonacci();
-        for (int i = 0; i < 18; i++)
-            System.out.print(gen.next() + " ");
-    }
-} /*
-   * Output: 1 1 2 3 5 8 13 21 34 55 89 144 233 377 610 987 1597 2584
-   */// :~
+	public static void main(String[] args) {
+		int numbers[] = new int[] { 24, 67, 89, 24, 5, 7, 456, 789, 34, 98, -1 };
+		int num[] = sort(numbers);
+		print(num);
+	}
+
+}

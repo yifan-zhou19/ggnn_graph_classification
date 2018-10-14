@@ -1,48 +1,30 @@
-package cuiods.list.skiplist;
+package sedgewick_algo.course2.week2_mst;
 
-/**
- * 跳转表节点
- * @author cuiods
- */
-public class SkipListNode<T extends Comparable<? super T>> {
-    private T data;
-    /**
-     * 用数组保存其他节点的引用
-     */
-    private SkipListNode[] next;
+import edu.princeton.cs.algs4.In;
+import edu.princeton.cs.algs4.StdOut;
 
-    /**
-     * @param data
-     *      节点保存的数据
-     * @param maxLevel
-     *      若跳转表最多保存n个数据，则最多的层次为[log2(n)]
-     */
-    public SkipListNode(T data, int maxLevel) {
-        this.data = data;
-        next = new SkipListNode[maxLevel];
+public class MinimumSpanningTree {
+    MinimumSpanningTree(EdgeWeightedGraph graph){
+
     }
 
-    public T getData() {
-        return data;
+    public Iterable<Edge> edges(){
+        return null;
     }
 
-    public void setData(T data) {
-        this.data = data;
+    public double weight(){
+        return 0.0;
     }
 
-    public SkipListNode[] getNext() {
-        return next;
-    }
+    public static void main(String args[]){
+        In in = new In(args[0]);
+        EdgeWeightedGraph graph = new EdgeWeightedGraph(in);
+        MinimumSpanningTree mst = new MinimumSpanningTree(graph);
 
-    public SkipListNode getNext(int index) {
-        return next[index];
-    }
+        for(Edge e : mst.edges()){
+            StdOut.print(e);
+        }
 
-    public void setNext(SkipListNode[] next) {
-        this.next = next;
-    }
-
-    public void setNext(SkipListNode next, int i) {
-        this.next[i] = next;
+        StdOut.printf("%.2f\n", mst.weight());
     }
 }

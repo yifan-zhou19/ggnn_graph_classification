@@ -1,105 +1,137 @@
-package com.brweber2.run;
+package com.interview.graph;
 
-import com.brweber2.type.CheckedType;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
- * @author brweber2
- *         Copyright: 2012
+ * Date 04/14/2014
+ * @author Tushar Roy
+ *
+ * Ford fulkerson method Edmonds Karp algorithm for finding max flow
+ *
+ * Capacity - Capacity of an edge to carry units from source to destination vertex
+ * Flow - Actual flow of units from source to destination vertex of an edge
+ * Residual capacity - Remaining capacity on this edge i.e capacity - flow
+ * AugmentedPath - Path from source to sink which has residual capacity greater than 0
+ *
+ * Time complexity is O(VE^2)
+ *
+ * References:
+ * http://www.geeksforgeeks.org/ford-fulkerson-algorithm-for-maximum-flow-problem/
+ * https://en.wikipedia.org/wiki/Edmonds%E2%80%93Karp_algorithm
  */
-public class Stack {
-    
-    private List<TypeObject> objects = new ArrayList<TypeObject>();
-    
-    public static class TypeObject
-    {
-        public final CheckedType type;
-        public final Object object;
+public class FordFulkerson {
 
-        private TypeObject(CheckedType type, Object object) {
-            this.type = type;
-            this.object = object;
+    public int maxFlow(int capacity[][], int source, int sink){
+
+        //declare and initialize residual capacity as total avaiable capacity initially.
+        int residualCapacity[][] = new int[capacity.length][capacity[0].length];
+        for (int i = 0; i < capacity.length; i++) {
+            for (int j = 0; j < capacity[0].length; j++) {
+                residualCapacity[i][j] = capacity[i][j];
+            }
         }
 
-        @Override
-        public String toString() {
-            return "TypeObject{" +
-                    "type=" + type +
-                    ", object=" + object +
-                    '}';
+        //this is parent map for storing BFS parent
+        Map<Integer,Integer> parent = new HashMap<>();
+
+        //stores all the augmented paths
+        List<List<Integer>> augmentedPaths = new ArrayList<>();
+
+        //max flow we can get in this network
+        int maxFlow = 0;
+
+        //see if augmented path can be found from source to sink.
+        while(BFS(residualCapacity, parent, source, sink)){
+            List<Integer> augmentedPath = new ArrayList<>();
+            int flow = Integer.MAX_VALUE;
+            //find minimum residual capacity in augmented path
+            //also add vertices to augmented path list
+            int v = sink;
+            while(v != source){
+                augmentedPath.add(v);
+                int u = parent.get(v);
+                if (flow > residualCapacity[u][v]) {
+                    flow = residualCapacity[u][v];
+                }
+                v = u;
+            }
+            augmentedPath.add(source);
+            Collections.reverse(augmentedPath);
+            augmentedPaths.add(augmentedPath);
+
+            //add min capacity to max flow
+            maxFlow += flow;
+
+            //decrease residual capacity by min capacity from u to v in augmented path
+            // and increase residual capacity by min capacity from v to u
+            v = sink;
+            while(v != source){
+                int u = parent.get(v);
+                residualCapacity[u][v] -= flow;
+                residualCapacity[v][u] += flow;
+                v = u;
+            }
         }
+        printAugmentedPaths(augmentedPaths);
+        return maxFlow;
     }
 
-
-    private Map<String,TypeObject> namedObjects = new HashMap<String, TypeObject>();
-    
-    public TypeObject get( String name )
-    {
-        return namedObjects.get( name );
-    }
-    
-    public void set( String name, TypeObject object )
-    {
-        namedObjects.put( name, object );
-    }
-    
-    public void push( CheckedType type, Object object )
-    {
-        objects.add(new TypeObject(type,object));
-    }
-    
-    public List<TypeObject> peekAll()
-    {
-        return objects;
-    }
-    
-    public List popAll()
-    {
-        List<Object> result = new ArrayList<Object>();
-        for (TypeObject object : objects) {
-            result.add( object.object );
-        }
-        return result;
-    }
-    
-    public TypeObject pop()
-    {
-        return objects.remove(objects.size()-1);
-    }
-    
-    public int size()
-    {
-        return objects.size();
+    /**
+     * Prints all the augmented path which contribute to max flow
+     */
+    private void printAugmentedPaths(List<List<Integer>> augmentedPaths) {
+        System.out.println("Augmented paths");
+        augmentedPaths.forEach(path -> {
+            path.forEach(i -> System.out.print(i + " "));
+            System.out.println();
+        });
     }
 
-    @Override
-    public String toString() {
-        StringBuilder str = new StringBuilder();
-        str.append("Stack{");
-        str.append("objects=" );
-        for (TypeObject object : objects) {
-            str.append("\n");
-            str.append("  ");
-            str.append(object);
+    /**
+     * Breadth first search to find augmented path
+     */
+    private boolean BFS(int[][] residualCapacity, Map<Integer,Integer> parent,
+            int source, int sink){
+        Set<Integer> visited = new HashSet<>();
+        Queue<Integer> queue = new LinkedList<>();
+        queue.add(source);
+        visited.add(source);
+        boolean foundAugmentedPath = false;
+        //see if we can find augmented path from source to sink
+        while(!queue.isEmpty()){
+            int u = queue.poll();
+            for(int v = 0; v < residualCapacity.length; v++){
+                //explore the vertex only if it is not visited and its residual capacity is
+                //greater than 0
+                if(!visited.contains(v) &&  residualCapacity[u][v] > 0){
+                    //add in parent map saying v got explored by u
+                    parent.put(v, u);
+                    //add v to visited
+                    visited.add(v);
+                    //add v to queue for BFS
+                    queue.add(v);
+                    //if sink is found then augmented path is found
+                    if ( v == sink) {
+                        foundAugmentedPath = true;
+                        break;
+                    }
+                }
+            }
         }
-        str.append("\n, namedObjects=");
-        for (String key : namedObjects.keySet()) {
-            str.append("\n");
-            str.append("  ");
-            str.append(key);
-            str.append(": ");
-            str.append(namedObjects.get(key));
-        }
-        str.append("\n}");
-        return str.toString();
+        //returns if augmented path is found from source to sink or not
+        return foundAugmentedPath;
     }
+    
+    public static void main(String args[]){
+        FordFulkerson ff = new FordFulkerson();
+        int[][] capacity = {{0, 3, 0, 3, 0, 0, 0},
+                            {0, 0, 4, 0, 0, 0, 0},
+                            {3, 0, 0, 1, 2, 0, 0},
+                            {0, 0, 0, 0, 2, 6, 0},
+                            {0, 1, 0, 0, 0, 0, 1},
+                            {0, 0, 0, 0, 0, 0, 9},
+                            {0, 0, 0, 0, 0, 0, 0}};
 
-    public void clear() {
-        objects.clear();
-        namedObjects.clear();
+        System.out.println("\nMaximum capacity " + ff.maxFlow(capacity, 0, 6));
     }
 }

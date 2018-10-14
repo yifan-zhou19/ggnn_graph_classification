@@ -1,25 +1,18 @@
 /*
- Design and implement a data structure for Least Recently Used (LRU) cache. It
-should support the following operations: get and set .   get(key) - Get the
-value (will always be positive) of the key if the key exists in the cache,
-otherwise return -1.  set(key, value) - Set or insert the value if the key is
-not already present. When the cache reached its capacity, it should invalidate
-the least recently used item before inserting a new item.   Subscribe to see
-which companies asked this question    Show Tags   Design
-*/
+ * Copyright (c) 2016, Ivan Sokolov. All rights reserved.
+ * This code is licensed under FreeBSD license (see LICENSE for details)
+ */
 
+package com.github.sirikid.cf.impl;
 
-public class LRUCache {
-    
-    public LRUCache(int capacity) {
-        
-    }
-    
-    public int get(int key) {
-        
-    }
-    
-    public void set(int key, int value) {
-        
-    }
+public final class HashTableConstants {
+	private HashTableConstants() {}
+
+	public static final int MIN_HASH_TABLE_SIZE = 1 << 4;
+	public static final int MAX_HASH_TABLE_SIZE = Integer.MAX_VALUE;
+	public static final int MAX_ELEMENTS_COUNT = MAX_HASH_TABLE_SIZE - 1;
+
+	public static final float DEFAULT_LOAD_FACTOR = 0.75f;
+	public static final float MIN_LOAD_FACTOR = 0.1f;
+	public static final float MAX_LOAD_FACTOR = 0.95f;
 }
