@@ -1,168 +1,192 @@
-/*
- *   CrissCross
- *   A multi-purpose cross-platform library.
- *
- *   A product of IO.IN Research.
- *
- *   (c) 2006-2008 Steven Noonan.
- *   Licensed under the New BSD License.
- *
- */
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <string>
+#include <utility>
+#include <algorithm>
 
-#include "header.h"
-#include "splaytree.h"
-#include "testutils.h"
+using std::cin;
+using std::cout;
+using std::endl;
+using std::vector;
+using std::string;
+using std::ifstream;
+using std::istringstream;
+using std::pair;
+using std::make_pair;
 
-#include <crisscross/splaytree.h>
+void solveByPairOfVW (const vector<int> &v, 
+		      const vector<int> &w, 
+		      const int maxWeight, 
+		      vector<int> &s);
 
-using namespace CrissCross::Data;
+void solveByTraditionalDP(const vector<int> &v, const vector<int> &w, const int, vector<int> &s);
 
-int TestSplayTree_CString()
+//0-1 knapsack
+// n items, value {v1,v2,...vn}, weight {w1, w2, ... wn}
+// s1 indicate if item1 is selected or not, {0, 1}
+// maxV= sum of Sn*Vn, constraint sum of Sn*Wn <= W
+int main()
 {
-	SplayTree<const char *, const char *> *splaytree = new SplayTree<const char *, const char *>();
-	char                                  *tmp;
 
-	TEST_ASSERT(splaytree->size() == 0);
+  vector<int> v;
+  vector<int> w;
+  vector<int> s;
+  int maxWeight;
+  int maxValue;
+  ifstream inputFile;
+  string line;
+  int number;
 
-	/* If the tree is properly encapsulated, this won't cause an error on test #1. */
-	tmp = cc_strdup("first");
-	splaytree->insert(tmp, "one");
-	free(tmp); tmp = NULL;
+  inputFile.open("data.txt");
+  if (!inputFile)
+    {
+      cout<<"No Input File"<<endl;
+    }
+  
+  getline(inputFile, line);
+  istringstream stream(line);
+  while (stream >> number)
+    v.push_back(number);
+  getline(inputFile, line);
+  istringstream stream2(line);
+  while (stream2 >> number)
+    w.push_back(number);
 
-	TEST_ASSERT(splaytree->size() == 1);
+  getline(inputFile, line);
+  istringstream stream3(line);
+  stream3 >> maxWeight;
+  
+  inputFile.close();
+  int i = 1;
+  for(vector<int>::const_iterator p = v.begin(); p != v.end(); p++, i++)
+    cout<<"V["<<i<<"]="<<*p<<" ";
+  cout<<endl;
+  i = 1;
+  for(vector<int>::const_iterator p = w.begin(); p != w.end(); p++, i++)
+      cout<<"W["<<i<<"]="<<*p<<" ";
+  cout<<endl<<"MaxWeight:"<<maxWeight<<endl;
 
-	splaytree->insert("second", "two");
-	splaytree->insert("third", "three");
-	splaytree->insert("fourth", "four");
+  // method 1:from Chinese: Fundenmentals of computer algorithm
+  solveByPairOfVW(v, w, maxWeight, s);
 
-	TEST_ASSERT(splaytree->size() == 4);
-
-	const char *res = NULL;
-	TEST_ASSERT(splaytree->find("first", res));
-
-	const char *tmp1 = "one";
-	TEST_ASSERT(Compare(res, tmp1) == 0);
-
-	TEST_ASSERT(!splaytree->exists("fifth"));
-
-	TEST_ASSERT(splaytree->exists("second"));
-	TEST_ASSERT(splaytree->find("second", res));
-
-	tmp1 = "two";
-	TEST_ASSERT(Compare(res, tmp1) == 0);
-
-	TEST_ASSERT(!splaytree->erase("fifth"));
-	TEST_ASSERT(splaytree->size() == 4);
-
-	TEST_ASSERT(splaytree->exists("first"));
-	TEST_ASSERT(splaytree->erase("first"));
-	TEST_ASSERT(splaytree->size() == 3);
-
-	TEST_ASSERT(splaytree->exists("second"));
-	TEST_ASSERT(splaytree->erase("second"));
-	TEST_ASSERT(splaytree->size() == 2);
-
-	TEST_ASSERT(splaytree->exists("third"));
-	TEST_ASSERT(splaytree->erase("third"));
-	TEST_ASSERT(splaytree->size() == 1);
-
-	TEST_ASSERT(splaytree->exists("fourth"));
-	TEST_ASSERT(splaytree->erase("fourth"));
-	TEST_ASSERT(splaytree->size() == 0);
-
-	delete splaytree;
-	return 0;
+  // method 2:using Normal DP
+  solveByTraditionalDP(v, w, maxWeight, s);
+  
+  return 0;
 }
 
-int TestSplayTree_String()
+void solveByPairOfVW (const vector<int> &v, 
+		      const vector<int> &w, 
+		      const int maxWeight, 
+		      vector<int> &s)
 {
-	SplayTree<std::string, std::string> *splaytree = new SplayTree<std::string, std::string>();
+  vector< pair<int, int> > pwPair;
+  pair<int, int> tempPair(0, 0);
+  vector<int> endPoint;
+  int i;
 
-	TEST_ASSERT(splaytree->size() == 0);
+  pwPair.push_back(tempPair);  
+  endPoint.push_back(0);
 
-	splaytree->insert("first", "one");
-	splaytree->insert("second", "two");
-	splaytree->insert("third", "three");
-	splaytree->insert("fourth", "four");
+  
+  int start, end;
+  
+  int k ,r;
 
-	std::string                          res;
+  int next = 1;
+  for (i = 1; i <= v.size(); i++)
+    {
+      k =  i>1?(endPoint[i-2]+1):0;
+      end = endPoint[i-1];
+      start = k;
+      for (r = start; r <= end && pwPair[r].second + w[i-1] <= maxWeight; r++)
+	{
+	  tempPair = make_pair(pwPair[r].first+v[i-1], pwPair[r].second+w[i-1]);
+	  while (k <= end && pwPair[k].second < tempPair.second)
+	    {
+	      pwPair.push_back(pwPair[k]);
+	      next++;
+	      k++;
+	    }
+	  if (k <= end && pwPair[k].second == tempPair.second)
+	    {
+	      tempPair.first = tempPair.first > pwPair[k].first ? tempPair.first: pwPair[k].first;
+	      k++;
+	    }
 
-	TEST_ASSERT(splaytree->size() == 4);
-
-	TEST_ASSERT(splaytree->find("first", res));
-	TEST_ASSERT(res == "one");
-
-	TEST_ASSERT(!splaytree->exists("fifth"));
-
-	TEST_ASSERT(splaytree->exists("second"));
-	TEST_ASSERT(splaytree->find("second", res));
-
-	TEST_ASSERT(res == "two");
-
-	TEST_ASSERT(!splaytree->erase("fifth"));
-	TEST_ASSERT(splaytree->size() == 4);
-
-	TEST_ASSERT(splaytree->exists("first"));
-	TEST_ASSERT(splaytree->erase("first"));
-	TEST_ASSERT(splaytree->size() == 3);
-
-	TEST_ASSERT(splaytree->exists("second"));
-	TEST_ASSERT(splaytree->erase("second"));
-	TEST_ASSERT(splaytree->size() == 2);
-
-	TEST_ASSERT(splaytree->exists("third"));
-	TEST_ASSERT(splaytree->erase("third"));
-	TEST_ASSERT(splaytree->size() == 1);
-
-	TEST_ASSERT(splaytree->exists("fourth"));
-	TEST_ASSERT(splaytree->erase("fourth"));
-	TEST_ASSERT(splaytree->size() == 0);
-
-	delete splaytree;
-	return 0;
+	  if (tempPair.first > pwPair[next-1].first)
+	    {
+	      pwPair.push_back(tempPair);
+	      next++;
+	    }
+	      
+	  // Discard some pair
+	  while (k <= end && pwPair[k].first <= tempPair.first)
+	    k++;
+	}
+      // Copy left S{i-1} -> S{i}
+      while (k <= end)
+	{
+	  pwPair.push_back(pwPair[k]);
+	  next++;
+	  k++;
+	}
+      endPoint.push_back(next-1);
+    }
+  
+  cout<<endl;
+  for (vector< pair<int,int> >::const_iterator p = pwPair.begin(); 
+       p != pwPair.end(); 
+       p++)
+    {
+      cout<<" ["<<p->first<<","<<p->second<<"]";
+    }  
+   cout<<endl;
+  i = 0;
+  for (vector<int>::const_iterator p = endPoint.begin(); 
+       p!=endPoint.end(); 
+       p++)
+    cout<<"["<<i++<<":"<<*p<<"]";
+  cout<<endl;
 }
-
-int TestSplayTree_Int()
+void solveByTraditionalDP (const vector<int> &v, 
+			   const vector<int> &w, 
+			   const int maxWeight, 
+			   vector<int> &s)
 {
-	SplayTree<int, int> *splaytree = new SplayTree<int, int>();
+  int i, j;
+  vector< vector<int> > maxValue;
+  for (j = 0; j <= v.size(); j++)
+    {
+      maxValue.push_back(vector<int>(maxWeight+1, 0));
+    }
 
-	TEST_ASSERT(splaytree->size() == 0);
-
-	splaytree->insert(1, 1);
-	splaytree->insert(2, 2);
-	splaytree->insert(3, 3);
-	splaytree->insert(4, 4);
-
-	int                  res;
-	TEST_ASSERT(splaytree->size() == 4);
-
-	TEST_ASSERT(splaytree->find(1, res));
-	TEST_ASSERT(res == 1);
-
-	TEST_ASSERT(!splaytree->exists(5));
-
-	TEST_ASSERT(splaytree->find(2, res));
-	TEST_ASSERT(res == 2);
-
-	TEST_ASSERT(!splaytree->erase(5));
-	TEST_ASSERT(splaytree->size() == 4);
-
-	TEST_ASSERT(splaytree->exists(1));
-	TEST_ASSERT(splaytree->erase(1));
-	TEST_ASSERT(splaytree->size() == 3);
-
-	TEST_ASSERT(splaytree->exists(2));
-	TEST_ASSERT(splaytree->erase(2));
-	TEST_ASSERT(splaytree->size() == 2);
-
-	TEST_ASSERT(splaytree->exists(3));
-	TEST_ASSERT(splaytree->erase(3));
-	TEST_ASSERT(splaytree->size() == 1);
-
-	TEST_ASSERT(splaytree->exists(4));
-	TEST_ASSERT(splaytree->erase(4));
-	TEST_ASSERT(splaytree->size() == 0);
-
-	delete splaytree;
-	return 0;
+    for (i = 1; i <= v.size(); i++)
+    {
+      for (j = 1; j <= maxWeight; j++)
+	{
+	  if (j>=w[i-1] 
+	      && v[i-1]+maxValue[i-1][j-w[i-1]] > maxValue[i-1][j])
+	    maxValue[i][j] = v[i-1]+maxValue[i-1][j-w[i-1]];
+	  else
+	    maxValue[i][j] = maxValue[i-1][j];
+	}
+    }
+    cout<<endl<<"MaxValue we can achieved is :"<<maxValue[v.size()][maxWeight]<<endl;
+    
+    int weight = maxWeight;
+    for (i = v.size(); i > 0; i--)
+      {
+	if (maxValue[i][weight] == maxValue[i-1][weight])
+	  {
+	    cout<<" V["<<i<<"]"<<0;
+	  }
+	else
+	  {
+	    cout<<" V["<<i<<"]"<<1;
+	    weight -= w[i-1];
+	  }
+      }
 }
