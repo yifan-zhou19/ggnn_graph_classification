@@ -1,5 +1,5 @@
 FROM yijun/fast:built
-RUN apt install -y python3-pip
+RUN apt-get install -y python3-pip
 RUN pip3 install flatbuffers
 RUN pip3 install tqdm
 ADD ggnn.py /opt/bin/ggnn

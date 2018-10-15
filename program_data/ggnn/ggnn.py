@@ -46,7 +46,7 @@ parser.add_argument('--noedgetype', type=bool, default=False, help='ignore edge 
 ## Add label to the encoding of nodes
 parser.add_argument('--label', type=bool, default=False, help='use the <nodetype, nodelabel> representation of nodes')
 ## Generate bidirectional edges
-parser.add_argument('--bidirect', type=bool, default=False, help='make edges bidirectional')
+parser.add_argument('--bidirect', type=bool, default=True, help='make edges bidirectional')
 ## Add extra semantic edges as if they are syntactical
 parser.add_argument('--mixing', type=bool, default=False, help='make semantic edges syntactical to allow for propagation')
 parser.add_argument('argv', nargs="+", help='filenames')
@@ -420,7 +420,10 @@ def ggnn2txt(graph, train, test, map_folder='.'):
                     if (s2 == '1' or s2 == '2') or not opt.syntaxonly:
                        add_edge(opt, out, uniq_edges, s1, edgetype, s3)
                        if opt.bidirect:
-                          add_edge(opt, out, uniq_edges, s3, edgetype, s1)
+                          if s1=='1' or s2=='2':
+                             add_edge(opt, out, uniq_edges, s3, edgetype, s1)
+                          else:
+                             add_edge(opt, out, uniq_edges, s3, edgetype+7, s1)
                        if opt.mixing:
                           add_edge(opt, out, uniq_edges, s1, 1, s3)
         if opt.lastuse:

@@ -1,7 +1,7 @@
 in=${1:-cpp_protobuf_format}
 input=${2:-CppProgramData}
 mkdir -p $in
-chmod -R a+w $in
+chmod -R o+w $in
 for f in $input/*; do
     i=$(basename $f)
     echo $i
