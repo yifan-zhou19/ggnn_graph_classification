@@ -1,27 +1,18 @@
-package com.wang.domain.fanxing.complexmodel;
-
-/**
- * Created by chao.wang2 on 2018/6/14  12:59
+/*
+ * Copyright (c) 2016, Ivan Sokolov. All rights reserved.
+ * This code is licensed under FreeBSD license (see LICENSE for details)
  */
-public class Fibonacci implements Generator<Integer> {
 
-    private int count = 0;
+package com.github.sirikid.cf.impl;
 
-    @Override
-    public Integer next() {
-        return fib(count++);
-    }
+public final class HashTableConstants {
+	private HashTableConstants() {}
 
-    private int fib(int n){
-        if (n<2) return 1;
-        return fib(n-1)+fib(n-2);
-    }
+	public static final int MIN_HASH_TABLE_SIZE = 1 << 4;
+	public static final int MAX_HASH_TABLE_SIZE = Integer.MAX_VALUE;
+	public static final int MAX_ELEMENTS_COUNT = MAX_HASH_TABLE_SIZE - 1;
 
-    public static void main(String[] args) {
-        Fibonacci fibonacci = new Fibonacci();
-        for (int i = 0; i < 18; i++) {
-            System.out.print(fibonacci.next()+ " ");
-        }
-    }
-
+	public static final float DEFAULT_LOAD_FACTOR = 0.75f;
+	public static final float MIN_LOAD_FACTOR = 0.1f;
+	public static final float MAX_LOAD_FACTOR = 0.95f;
 }

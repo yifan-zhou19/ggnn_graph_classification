@@ -1,42 +1,38 @@
-class Bubblesort {
-
-	int arr[];
-	int elem;
-	
-	Bubblesort(int e)
-	{
-		int i = 0;
-		arr = new int[e];
-		elem = e;
-		for(i = 0; i < e; i++) {
-			arr[i] = int.random;
-		}
-	}
-	
-	sort() :Void
-	{
-  		int top = elem - 1;
-  		while(top > 0) {
-    		int i = 0;
-			while(i < top) {
-	  			if(arr[i] > arr[i + 1]) {
-					int t = arr[i];
-	      			arr[i] = arr[i + 1];
-		  			arr[i + 1] = t;
-				}
-	  			i = i + 1;
-			}
-			top = top - 1;
-  		}
-	}
-
-  public static void main(String argv[])
-  {
-    int i, loops = (new Integer(argv[0])).intValue();
-
-    for(; loops > 0; loops--) {
-      Bubblesort bs = new Bubblesort(1000);
-	  bs.sort();
+public class mergesort {	
+	public static void Sort(int[] array,int num) 
+    { 
+        int[] workArray = new int[array.length]; 
+        Sort(array, workArray, 0, num); 
+    } 
+    private static void Sort(int[] array, int[] workArray, int start, int count)
+    { 
+        if (count < 2) 
+            return; 
+      
+        Sort(array, workArray, start, count / 2); 
+        Sort(array, workArray, start + count / 2, count - count / 2); 
+        Merge(array, workArray, start, count / 2, start + count / 2, count - count / 2); 
+    } 
+      
+    private static void Merge(int[] array, int[] workArray, int leftStart, int leftCount, int rightStart, int rightCount) 
+    { 
+        int i = leftStart, j = rightStart, leftBound = leftStart + leftCount, rightBound = rightStart + rightCount, index = leftStart; 
+        while (i < leftBound || j < rightBound) 
+        { 
+            if (i < leftBound && j < rightBound) 
+            { 
+                if (array[j] < array[i]) 
+                    workArray[index] = array[j++]; 
+                else
+                    workArray[index] = array[i++]; 
+            } 
+            else if (i < leftBound) 
+                workArray[index] = array[i++]; 
+            else
+                workArray[index] = array[j++]; 
+            ++index; 
+        } 
+        for (i = leftStart; i < index; ++i) 
+            array[i] = workArray[i]; 
     }
-  }
 }

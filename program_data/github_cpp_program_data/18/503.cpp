@@ -1,49 +1,31 @@
-/*
- * The MIT License (MIT)
- *
- * Copyright (c) 2015 Huw David Pritchard
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
+#include<iostream>
+#include<string>
+#include<fstream>
+#include<vector>
 
-#include "dijkstra.h"
+using namespace std;
 
-namespace pathfinder
-{
-    Dijkstra::Dijkstra() : Pathfinder()
-    {
+void swap( char &a, char &b){
+    char aux = a;
+    a = b;
+    b = aux;
+}
+
+char * reverseString(char* s){
+    int nValidChars = 0;
+    int i=0;
+    while ( s[i] != '\0'){
+        nValidChars++;
+        i++;
     }
-
-    Dijkstra::~Dijkstra()
-    {
-
+    for(int i=0; i <nValidChars/2; i++){
+        swap(s[i], s[nValidChars-i-1]);
     }
+    return s;
+}
 
-    float Dijkstra::heuristic(INode *, INode *)
-    {
-        return 0.0f;
-    }
-
-    float Dijkstra::distance(INode *node, INode *next)
-    {
-        float dx = fabs(node->getX() - next->getX());
-        float dy = fabs(node->getY() - next->getY());
-        return sqrt(dx * dx + dy * dy);
-    }
+int main(){
+    char s[9]  = "Testando";
+    cout << reverseString(s) << endl;
+    return 0;
 }

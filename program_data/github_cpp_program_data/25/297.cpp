@@ -1,51 +1,56 @@
-#include<cstdio>
-#include<iostream>
-#include<vector>
+#include <iostream>
+#include <string.h>
 using namespace std;
 
-int main(){
-	vector<int> v;
-	int no;
-	int j,k,i;
-	int ele;
-	int temp;
-	cout<<"enter the size of the array"<<endl;
-	cin>>no;
+void DoPermute(char in[], char out[], int used[], int length, int recursLev)
+{
+    //base case
+    if(recursLev == length) {
+        printf("%s\n", out);
+        return;
+    }
 
-	cout<<"enter the array"<<endl;
+    //Recursive Case
+    for(int i = 0; i < length; i++) {
+        if(used[i])  //If used, skip to next letter
+            continue;
 
-	for(int i=0;i<no;i++){
-		cin>>ele;
-		v.push_back(ele);
-	}
-	
-	cout<<"sorted array using insertion sort is"<<endl;
+        out[recursLev] = in[i];  //Put current letter in output
+        used[i] = 1;              //Mark this letter as used
+        DoPermute(in, out, used, length, recursLev + 1);
+        used[i] = 0;             //Unmark this letter
+    }
+}
+int Permute(char inString[])
+{
+    int length, *used;
+    char *out;
+    length = strlen(inString);
+    out = (char *)malloc(length + 1);
 
-	j=1;
-	i=0;
-	while(i<no-1){
-		if(v[i]<=v[j]);
-		else 
-		{
-			k=j;
-			temp=v[j];
-			k--;
-			while(i<=k){
-				v[k+1]=v[k];
-				k--;
-			}
-			v[i]=temp;
-		}
-		j++;
-		if(j==no){
-			i++;
-			j=i+1;
-		}
-	}
-	for(int i=0;i<no;i++){
-		cout<<v[i]<<" ";
-	}
-	cout<<endl;
+    if(!out)
+        return 0; //Failed
 
-	return 0;
+    //so printf doesn't run past the end of the buffer
+    out[length] = '\0';
+    used = (int *)malloc(sizeof(int) * length);
+
+    if(!used)
+        return 0; //Failed
+
+    //Start with no letters used, so zero array
+    for(int i = 0; i < length; i++)
+        used[i] = 0;
+
+    DoPermute(inString, out, used, length, 0);
+    free(out);
+    free(used);
+    return 1; //Success
+}
+
+
+int main()
+{
+    Permute("abcdefghijklmnopqrstuvwxyz");
+    return 0;
 }

@@ -1,59 +1,64 @@
+package algoritms.graph;
 
-/*
-Implementation of Knuth–Morris–Pratt algorithm
-Usage: 
-final String T = "AAAAABAAABA";
-final String P = "AAAA";
-KMPmatcher(T, P);
-*/
-public class KMP {
+import algoritms.utilityclasses.Graph;
 
-    // find the starting index in string T[] that matches the search word P[]
-    public void KMPmatcher(final String T, final String P) {
-        final int m = T.length();
-        final int n = P.length();
-        final int[] pi = computePrefixFunction(P);
-        int q = 0;
-        for (int i = 0; i < m; i++) {
-            while (q > 0 && T.charAt(i) != P.charAt(q)) {
-                q = pi[q - 1]; 
-            }
+import java.util.Stack;
 
-            if (T.charAt(i) == P.charAt(q)) {
-                q++;
-            }
+/**
+ * Created by Sigora on 27.10.2015.
+ */
+public class DFS {
+    public static void main(String[] args) {
+        Graph<Integer> g = new Graph<>(4);
 
-            if (q == n) {
-                System.out.println("Pattern starts: " + (i + 1 - n));
-                q = pi[q - 1];  
-            }
-        }
+        g.addEdge(0, 1);
+        g.addEdge(0, 2);
+        g.addEdge(1, 2);
+        g.addEdge(2, 0);
+        g.addEdge(2, 3);
+        g.addEdge(3, 3);
+
+        DFS dfs = new DFS();
+        System.out.println("Recursive");
+        dfs.DFSRecursive(2, g);
+        System.out.println("Iterative");
+        dfs.DFSIterative(2, g);
 
     }
 
-    // return the prefix function 
-    private int[] computePrefixFunction(final String P) {
-        final int n = P.length();
-        final int[] pi = new int[n];
-        pi[0] = 0;
-        int q = 0;
-        for (int i = 1; i < n; i++) {
-            while (q > 0 && P.charAt(q) != P.charAt(i)) {
-                q = pi[q - 1];
-            }
+    private void DFSRecursive(int v, Graph<Integer> g){
+        boolean [] visited = new boolean[g.getVertexNumber()];
 
-            if (P.charAt(q) == P.charAt(i)) {
-                q++;
-            }
-
-            pi[i] = q;
-
-        }
-
-        return pi;
-        
-        //End of code
-        
-        
+        DFSRecursive(v, visited, g);
     }
+
+    private void DFSRecursive(int v, boolean [] visited, Graph<Integer> g){
+        visited[v] = true;
+        System.out.println("Visited vertex " + v);
+
+        g.getAdjList(v).stream().filter(adj -> !visited[adj]).forEach(adj -> {
+            DFSRecursive(adj, visited, g);
+        });
+    }
+
+    private void DFSIterative(int v, Graph<Integer> g){
+        boolean [] visited = new boolean[g.getVertexNumber()];
+
+        visited[v] = true;
+        Stack<Integer> stack = new Stack<>();
+        stack.push(v);
+
+        while (!stack.isEmpty()){
+            v = stack.pop();
+            System.out.println("Visited vertex " + v);
+            for(int adj : g.getAdjList(v)){
+                if(!visited[adj]){
+                    visited[adj] = true;
+                    stack.push(adj);
+                }
+            }
+        }
+    }
+
+
 }

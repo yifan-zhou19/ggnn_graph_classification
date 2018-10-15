@@ -1,137 +1,245 @@
-//===--- examples/Fibonacci/fibonacci.cpp - An example use of the JIT -----===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-// This small program provides an example of how to build quickly a small module
-// with function Fibonacci and execute it with the JIT.
-//
-// The goal of this snippet is to create in the memory the LLVM module
-// consisting of one function as follow:
-//
-//   int fib(int x) {
-//     if(x<=2) return 1;
-//     return fib(x-1)+fib(x-2);
-//   }
-//
-// Once we have this, we compile the module via JIT, then execute the `fib'
-// function and return result to a driver, i.e. to a "host program".
-//
-//===----------------------------------------------------------------------===//
+/////////////////////////////////////////////////////////
+// THIS FILE DEFINES ALL THE METHODS TO BE IMPLEMENTED //
+// PLEASE GET RID OF ALL THE IMPLEMENT_ME() FUNCTIONS  //
+/////////////////////////////////////////////////////////
 
-#include "llvm/LLVMContext.h"
-#include "llvm/Module.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Constants.h"
-#include "llvm/Instructions.h"
-#include "llvm/Analysis/Verifier.h"
-#include "llvm/ExecutionEngine/JIT.h"
-#include "llvm/ExecutionEngine/Interpreter.h"
-#include "llvm/ExecutionEngine/GenericValue.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/TargetSelect.h"
-using namespace llvm;
+#include "util.hpp"
+#include "hash-table.hpp"
+#include <string>
 
-static Function *CreateFibFunction(Module *M, LLVMContext &Context) {
-  // Create the fib function and insert it into module M.  This function is said
-  // to return an int and take an int parameter.
-  Function *FibF =
-    cast<Function>(M->getOrInsertFunction("fib", Type::getInt32Ty(Context), 
-                                          Type::getInt32Ty(Context),
-                                          (Type *)0));
+using namespace std;
 
-  // Add a basic block to the function.
-  BasicBlock *BB = BasicBlock::Create(Context, "EntryBlock", FibF);
+HashTable::HashTable(int size){
+  //cout << "creating a store with size " << size << endl;
+  this->size = size;
+  numElements = 0;
+  hashTable = new DoublyLinkedList*[size];
 
-  // Get pointers to the constants.
-  Value *One = ConstantInt::get(Type::getInt32Ty(Context), 1);
-  Value *Two = ConstantInt::get(Type::getInt32Ty(Context), 2);
+  for (int i = 0; i < size; i++) {
+    hashTable[i] = new DoublyLinkedList();
+  }
+}
 
-  // Get pointer to the integer argument of the add1 function...
-  Argument *ArgX = FibF->arg_begin();   // Get the arg.
-  ArgX->setName("AnArg");            // Give it a nice symbolic name for fun.
+int HashTable::hash(string value){
+  //std::cout << "hashing." << std::endl;
+  int asciiCount = 0;
+  char singleChar = '\0';
+  int asciiRep = 0;
+  int hashPlacement = 0;
 
-  // Create the true_block.
-  BasicBlock *RetBB = BasicBlock::Create(Context, "return", FibF);
-  // Create an exit block.
-  BasicBlock* RecurseBB = BasicBlock::Create(Context, "recurse", FibF);
+  for (int i = 0; i < (signed)value.size(); i++) {
+    singleChar = value.at(i);
+    asciiRep = (int) singleChar;
+    asciiCount += asciiRep;
+  }
 
-  // Create the "if (arg <= 2) goto exitbb"
-  Value *CondInst = new ICmpInst(*BB, ICmpInst::ICMP_SLE, ArgX, Two, "cond");
-  BranchInst::Create(RetBB, RecurseBB, CondInst, BB);
+  //this is my error for some reason
+  hashPlacement = asciiCount % size;
+  //hashPlacement = asciiCount % 10;
 
-  // Create: ret int 1
-  ReturnInst::Create(Context, One, RetBB);
+  //for testing
+  //hashPlacement = 10;
 
-  // create fib(x-1)
-  Value *Sub = BinaryOperator::CreateSub(ArgX, One, "arg", RecurseBB);
-  CallInst *CallFibX1 = CallInst::Create(FibF, Sub, "fibx1", RecurseBB);
-  CallFibX1->setTailCall();
+  return hashPlacement;
+}
 
-  // create fib(x-2)
-  Sub = BinaryOperator::CreateSub(ArgX, Two, "arg", RecurseBB);
-  CallInst *CallFibX2 = CallInst::Create(FibF, Sub, "fibx2", RecurseBB);
-  CallFibX2->setTailCall();
+void HashTable::resize() {
+  //std::cout << "Resizing hash table." << std::endl;
 
+  int s = size;
+  int n = numElements;
 
-  // fib(x-1)+fib(x-2)
-  Value *Sum = BinaryOperator::CreateAdd(CallFibX1, CallFibX2,
-                                         "addresult", RecurseBB);
+  /**********************************************************
+    This portion of code is for pulling all the old
+    elements of the hash table out so that they can
+    be deleted and rehashed
 
-  // Create the return instruction and add it to the basic block
-  ReturnInst::Create(Context, Sum, RecurseBB);
+    TODO: move this to a seperate private function of its own
+  **********************************************************/
+  std::string *oldValues = new std::string[numElements];
+  int oldValueIndex = 0;
+  int hashIndex = 0;
 
-  return FibF;
+  while (hashIndex < s) {
+    if (hashTable[hashIndex]->getFront() != nullptr) {
+      Node* temp = hashTable[hashIndex]->getFront();
+      while (temp != nullptr) {
+        //std::cout << hashIndex << ": " << temp->getValue() << " being put in index " << oldValueIndex << std::endl;
+        oldValues[oldValueIndex] = temp->getValue();
+        temp = temp->getNext();
+
+        oldValueIndex++;
+      }
+    }
+
+    hashIndex++;
+  }
+
+  //deleteAllElements();
+  /***********************************************************
+                              END
+  ***********************************************************/
+
+  size = getNextPrime((size * 2));
+  delete[] hashTable;
+  hashTable = new DoublyLinkedList*[size];
+
+  for (int i = 0; i < size; i++) {
+    hashTable[i] = new DoublyLinkedList();
+    //std::cout << "Node at " << i << std::endl;
+  }
+
+  //rehash old elements according to the new size of the hash table
+  for (int i = 0; i < n; i++) {
+    numElements--;    //gets iterated in putValue() method. This is so elements dont get counted twice
+    putValue(oldValues[i]);
+  }
+
+delete[] oldValues;
+}
+
+int HashTable::getNextPrime(int n) {
+  while (1) {
+    n++;
+
+    if (isPrime(n)) {
+      //std::cout << "New size is:" << n << std::endl;
+      return n;
+    }
+  }
+
+  return n;
 }
 
 
-int main(int argc, char **argv) {
-  int n = argc > 1 ? atol(argv[1]) : 24;
-
-  InitializeNativeTarget();
-  LLVMContext Context;
-  
-  // Create some module to put our function into it.
-  OwningPtr<Module> M(new Module("test", Context));
-
-  // We are about to create the "fib" function:
-  Function *FibF = CreateFibFunction(M.get(), Context);
-
-  // Now we going to create JIT
-  std::string errStr;
-  ExecutionEngine *EE =
-    EngineBuilder(M.get())
-    .setErrorStr(&errStr)
-    .setEngineKind(EngineKind::JIT)
-    .create();
-
-  if (!EE) {
-    errs() << argv[0] << ": Failed to construct ExecutionEngine: " << errStr
-           << "\n";
-    return 1;
+/*******************************************************************************************************
+ * NOTE: I did not write this code myself!
+ * Taken and Adapted from https://stackoverflow.com/questions/30052316/find-next-prime-number-algorithm
+ * Original author: Zoran Horvat, May 2015
+ *******************************************************************************************************
+*/
+bool HashTable::isPrime(int number) {
+  if (number == 2 || number == 3) {
+    return true;
   }
 
-  errs() << "verifying... ";
-  if (verifyModule(*M)) {
-    errs() << argv[0] << ": Error constructing function!\n";
-    return 1;
+  if (number % 2 == 0 || number % 3 == 0) {
+    return false;
   }
 
-  errs() << "OK\n";
-  errs() << "We just constructed this LLVM module:\n\n---------\n" << *M;
-  errs() << "---------\nstarting fibonacci(" << n << ") with JIT...\n";
+  int divisor = 6;
 
-  // Call the Fibonacci function with argument n:
-  std::vector<GenericValue> Args(1);
-  Args[0].IntVal = APInt(32, n);
-  GenericValue GV = EE->runFunction(FibF, Args);
+  while (divisor * divisor - 2 * divisor + 1 <= number) {
+    if (number % (divisor - 1) == 0) {
+      return false;
+    }
 
-  // import result of execution
-  outs() << "Result: " << GV.IntVal << "\n";
-  
-  return 0;
+    if (number % (divisor + 1) == 0) {
+      return false;
+    }
+
+    divisor += 6;
+    }
+
+    return true;
+}
+
+/*
+void HashTable::deleteAllElements() {
+  for (int i = 0; i < size; i++) {
+    if (hashTable[i]->getFront() != nullptr) {
+      delete hashTable[i];
+      hashTable[i] = new DoublyLinkedList();
+    }
+  }
+}
+*/
+
+void HashTable::putValue(string elem){
+  if (numElements > (size / 2)) {
+    resize();
+  }
+
+  //cout << "adding value " << elem << endl;
+  int pos = hash(elem);
+
+  if (hashTable[pos]->getFront() == nullptr) {
+    //std::cout << "\nFRONT\n" << std::endl;
+    hashTable[pos]->add(elem, 0);
+  } else {
+    //std::cout << "collision" << std::endl;
+    hashTable[pos]->add(elem, 0);
+  }
+
+  numElements++;
+}
+
+bool HashTable::searchValue(string elem){
+  //cout << "seraching for value " << elem << endl;
+  int pos = hash(elem);
+
+  if (hashTable[pos]->getFront() == nullptr) {
+    return false;
+  } else {
+    Node* temp = hashTable[pos]->getFront();
+    while (temp != nullptr) {
+      if (temp->getValue() == elem) {
+        return true;
+      }
+      temp = temp->getNext();
+    }
+  }
+  return false;
+}
+
+void HashTable::deleteValue(string elem){
+  if (searchValue(elem)) {
+    int pos = hash(elem);
+
+    //never will be a nullptr, because I already have used searchValue(), but not bad to double check
+    if (hashTable[pos]->getFront() != nullptr) {
+      Node* temp = hashTable[pos]->getFront();
+      Node* prev = nullptr;
+      Node* next = nullptr;
+
+      while (temp != nullptr) {
+        if (elem == temp->getValue()) {
+          //DELETE IT
+          prev = temp->getPrev();
+          next = temp->getNext();
+
+          //if first index of linked list
+          if (temp == hashTable[pos]->getFront()) {
+            hashTable[pos]->setFront(temp->getNext());
+            //hashTable[pos]->getFront()->setPrev(nullptr);   //already set to nullptr
+            delete temp;
+            hashTable[pos]->decrementSize();
+          } else {
+            if (prev != nullptr) {
+              prev->setNext(next);
+            }
+
+            if (next != nullptr) {
+              next->setPrev(prev);
+            }
+
+            delete temp;
+            temp = prev;
+            hashTable[pos]->decrementSize();
+          }
+        }
+
+        temp = temp->getNext();
+      }
+    }
+  }
+}
+
+void HashTable::print(){
+  for (int i = 0; i < size; i++) {
+    std::cout << i << " ->";
+
+    hashTable[i]->print();
+
+  }
 }

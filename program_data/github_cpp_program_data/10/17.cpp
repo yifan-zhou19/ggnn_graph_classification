@@ -1,61 +1,53 @@
-#include <vector>
-#include <iostream>
+#include "dfs.h"
+#include <list>
 
-void prefix_function(const std::string& s, std::vector<int>& p) {
-  p.clear();
-  p.resize(s.size());
-  p[0] = 0;
-  for (int i = 1; i < s.size(); ++i) {
-    int j = p[i - 1];
-    while (j > 0 && s[i] != s[j]) {
-      j = p[j - 1];
-    }
-    if (s[i] == s[j]) {
-      ++j;
-    }
-    p[i] = j;
-  }
+Graph::Graph (int v)
+{
+	//copy the vertices enetered by the user into the private data memeber
+	this->vertices = v;
+
+	//initialize v number of list
+	adj = new std::list<int>[v];
 }
 
-std::vector<int> substring(const std::string& text,  const std::string& s) {
-  std::vector<int> pi, ret;
-  prefix_function(s + "@@@" + text, pi);
-  for (int i = 0; i < pi.size(); ++i) {
-    if (pi[i] == s.size()) {
-      ret.push_back(i - 2*(int)s.size());
-    }
-  }
-  return ret;
+void Graph::addEdge (int v, int w)
+{
+	//push element w at the back of list v
+	adj[v].push_back (w);
 }
 
-std::vector<int> substring_count(const std::string& text) {
-  std::vector<int> pi;
-  prefix_function(text, pi);
-  std::vector<int> ans(pi.size() + 1, 0);
-  for (int i = 0; i < pi.size(); ++i) {
-    ++ans[pi[i]];
-  }
-  for (int i = (int)pi.size() - 1; i > 0 ; --i) {
-    ans[pi[i-1]] += ans[i];
-  }
-  return ans;
+//utility function for DFS traversal
+void Graph::DFSUtil (int v, bool visited[])
+{
+	//mark the current node as visited, and print it
+	visited[v] = true;
+	std::cout << v << " ";
+
+	std::list<int>::iterator i;
+
+	for (i = adj[v].begin(); i != adj[v].end(); i++)
+	{
+		if (!visited[*i])
+			DFSUtil (*i, visited);
+	}
 }
 
-int main() {
-  std::string s = "aabaabc";
-  std::vector<int> v(s.length());
-  prefix_function(s, v);
-  for (int i = 0; i < s.length(); ++i) {
-    std::cout << v[i] << " ";
-  }
-  std::cout << std::endl << "------------" << std::endl;
-  auto res = substring("test string", "str");
-  for (int i = 0; i < res.size(); ++i) {
-    std::cout << "substring starts: " << res[i] << std::endl;
-  }
-  std::cout << std::endl << "------------" << std::endl;
-  res = substring_count("test string te");
-  for (int i = 0; i < res.size(); ++i) {
-    std::cout << "substring count: " << res[i] << std::endl;
-  }
+void Graph::DFS (int v)
+{
+	//mark all nodes as not visited
+	bool *visited = new bool[vertices];
+	for (int i = 0; i < vertices; i++)
+		visited[i] = false;
+
+	//call the utility function
+
+	//if the all nodes are not connected, call all vertices like below
+	/*for (int i = 0; i < vertices; i++)
+	{
+		if (visited[i] ==false)
+			DFSUtil (i, visited);
+	}*/
+
+	//if all nodes are connected, just call the utility function
+		DFSUtil (v, visited);
 }

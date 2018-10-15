@@ -1,31 +1,30 @@
-package recursive;
+package interviewQuestion;
 
-import java.util.Scanner;
+import java.util.Hashtable;
 
-
-public class Fibonacci {
-
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-		Scanner scan=new Scanner(System.in);
-		System.out.println("enter an Integer");
-		int num=scan.nextInt();
-		int op=fib(num);
-		System.out.println(op);
-		scan.close();
-	}
-
-	private static int fib(int num) {
-		// TODO Auto-generated method stub
-		if(num==0||num==1){
-			return num;
+public class SimpleHashTable {
+	
+	int [] a = new int[5];
+	
+	String [] arrNames = new String[]{"Sumit","Jain","Raghav","Garg","Gaurav","Rishi"};
+	
+	
+	Hashtable<Integer, String> ht = new Hashtable<Integer, String>();
+	
+	public void insertValues(){
+		for(int i=0;i<arrNames.length;i++ ){
+			ht.put(i+1,arrNames[i]);
 		}
-		//System.out.println("fib(" + new Integer(num) + ") calling fib("+ new Integer(num-1) + ") and fib("+ new Integer(num-2)+")");
-		int res=fib(num-1)+fib(num-2);
-		//System.out.println("result came: fib(" + new Integer(num) + ") calling fib("+ new Integer(num-1) + ") and fib("+ new Integer(num-2)+")");
-
-		return res;
-		
 	}
-
+	
+	public String getValue(int key){
+		return ht.get(key);
+	}
+	public static void main (String [] args){
+		SimpleHashTable sht = new SimpleHashTable();
+		sht.insertValues();
+		System.out.println("All values inserted");
+		System.out.println("Employee with ID 1 is "+ sht.getValue(1));
+		System.out.println("Employee with ID 3 is "+ sht.getValue(6));
+	}
 }

@@ -1,41 +1,113 @@
-// Copyright 2017 Yahoo Holdings. Licensed under the terms of the Apache 2.0 license. See LICENSE in the project root.
+#include<iostream>
+#include<map>
+#include<time.h>
 
-#include "bloomfilter.h"
-#include <cstdlib>
-#include <cstring>
+using namespace std;
 
-BloomFilter::BloomFilter(int size, int hashes, uint32_t *buf)
-    : _size(size),
-      _hashes(hashes),
-      _buf(buf),
-      _mine(false)
-{
-    if (!_buf) {
-        _buf = new uint32_t[(_size / 32) + 1];
-        memset(_buf, 0, ((_size / 32) + 1) * sizeof(uint32_t));
-        _mine = true;
-    }
+struct V{
+    int val;
+    long long seq;
+};
+
+class LRUCache{
+    private:
+	int capacity;
+	map<int,V> cache;
+	map<long long,int> seq2key;
+	long long index;
+
+    public:   
+	LRUCache(int _capacity) {
+	    capacity = _capacity;
+	    index = 0;
+	}
+
+	int get(int key) {
+	    map<int,V>::iterator it;
+	    it = cache.find(key);
+
+	    if(it == cache.end()){
+		return -1;
+	    }else{
+		seq2key.erase(it->second.seq);
+
+		it->second.seq = index++;
+		seq2key[it->second.seq] = key;
+
+		return it->second.val;
+	    }
+	}
+
+	void set(int key, int value) {
+	    //first check if the key already exists
+	    //get will automatically update access sequence
+	    if(get(key) == -1){
+		struct V v;
+		v.seq = index++;
+		v.val = value;
+
+		seq2key[v.seq] = key;
+
+		//check whether need to lru
+		if(full()){
+		    //lru
+		    map<long long,int>::iterator it = seq2key.begin();
+		    //erase
+		    seq2key.erase(it->first);
+		    cache.erase(it->second);
+		}
+		cache[key] = v;
+	    }else{
+		cache[key].val = value;
+	    }
+	    
+	}
+
+	bool full(){
+	    return cache.size() == capacity;
+	}
+
+	void display(){
+	    cout<<"*****display("<<cache.size()<<")*******"<<endl;
+
+	    map<long long,int>::iterator it;
+	    for(it = seq2key.begin();it!=seq2key.end();it++){
+		cout<<cache[it->second].val<<endl;
+	    }
+	}
+
+	void clear(){
+	    cache.clear();
+	    seq2key.clear();
+	    index = 0;
+	}
+};
+
+int main(){
+    LRUCache lru(2);
+    lru.display();
+
+    lru.set(1,1);
+    lru.set(2,2);
+    lru.set(3,3);
+    lru.get(2);
+    lru.display();
+
+    lru.set(4,4);
+    lru.display();
+    lru.set(5,5);
+    lru.display();
+    lru.set(1,100);
+    lru.display();
+
+    lru.clear();
+    cout<<lru.get(2)<<endl;
+    lru.set(2,6);
+    cout<<lru.get(1)<<endl;
+    lru.set(1,5);
+    lru.set(1,2);
+    cout<<lru.get(1)<<endl;
+    cout<<lru.get(2)<<endl;
+
+    return 0;
 }
-
-BloomFilter::~BloomFilter()
-{
-    if (_mine) {
-        delete [] _buf;
-    }
-}
-
-/*
-int main(int argc, char **argv)
-{
-    int size = atoi(argv[1]);
-    int hashes = atoi(argv[2]);
-    char buf[1000];
-    BloomFilter bloom(size, hashes);
-
-    while (fgets(buf, sizeof(buf), stdin)) {
-        if (bloom.check(buf, true)) {
-            printf("matched %s\n", buf);
-        }
-    }
-}
-*/

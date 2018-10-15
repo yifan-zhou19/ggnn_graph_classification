@@ -1,117 +1,82 @@
-package com.michaelaerni.fhnw.dist.bloomfilter;
+public class LRUCache {
+    private class DLNode { // doubly linked node
+        int key, value;
+        DLNode pre, next;
+    }
+    
+    private void add(DLNode n) {
+        n.pre = head;
+        n.next = head.next;
+        head.next.pre = n;
+        head.next = n;
+    }
+    
+    private void remove(DLNode n) {
+        DLNode pre = n.pre;
+        DLNode next = n.next;
+        pre.next = next;
+        next.pre = pre;
+    }
+    
+    private void moveToHead(DLNode n) {
+        remove(n);
+        add(n);
+    }
+    
+    private DLNode popTail() {
+        DLNode last = tail.pre;
+        remove(last);
+        return last;
+    } 
+    
+    private int count, capacity;
+    private DLNode head, tail;
+    private HashMap<Integer, DLNode> cache;// key -> DLNode
 
-import com.google.common.hash.HashFunction;
-import com.google.common.hash.Hashing;
-
-import java.nio.charset.Charset;
-import java.util.BitSet;
-import java.util.Random;
-import java.util.function.Consumer;
-import java.util.stream.Stream;
-
-public class Bloomfilter {
-    private final HashFunction[] hashes;
-    private final BitSet bitArray;
-
-    private final int m;
-    private final int k;
-
-    /**
-     * Creates a bloomfilter that expects n words in the set and should have a false positive rate of p.
-     * The words must be added with separate functions.
-     *
-     * The false-positive rate is only achievable if there are less than n words in the set.
-     *
-     * @param n
-     * @param p
-     */
-    public Bloomfilter(int n, double p) {
-        Random rand = new Random();
-        final double ln2 = Math.log(2);
-
-        // calculates m and k according to the formula on wikipedia
-        // https://en.wikipedia.org/wiki/Bloom_filter#Optimal_number_of_hash_functions
-        m = (int) Math.ceil(- ((n * Math.log(p))/(ln2 * ln2)));
-        k = (int) Math.ceil((m/(double)n) * ln2);
-
-        // get k different hash-function
-        hashes = new HashFunction[k];
-        for (int i = 0; i < k; i++)
-        {
-            hashes[i] = getHashFunction(rand.nextInt());
+    public LRUCache(int capacity) {
+        this.cache = new HashMap<>();
+        this.count = 0;
+        this.capacity = capacity;
+        head = new DLNode();
+        head.pre = null;
+        tail = new DLNode();
+        tail.next = null;
+        head.next = tail;
+        tail.pre = head;
+    }
+    
+    public int get(int key) {
+        DLNode n = cache.get(key); 
+        if (n == null) {
+            return -1;
         }
-
-        // get an empty bit-array
-        bitArray = new BitSet(m);
-
-
-        System.out.println("n: " + n);
-        System.out.println("m: " + m);
-        System.out.println("k: " + k);
-        System.out.println("p: " + p);
+        moveToHead(n);
+        return n.value;
     }
-
-    /**
-     * Adds a single word to the current set.
-     *
-     * @param word
-     */
-    public void addWord(String word)
-    {
-        // for each Hash-Function: Calculate an index and set it's bit to one
-        for (int i = 0; i < k; i++)
-        {
-            bitArray.set(getIndex(word, i), true);
+    
+    public void put(int key, int value) {
+        DLNode n = cache.get(key);
+        if (n != null) {
+            n.value = value;
+            moveToHead(n);
+        } else {
+            n = new DLNode();
+            n.key = key;
+            n.value = value;
+            add(n);
+            cache.put(key, n);
+            if (++count > capacity) {
+                DLNode last = popTail();
+                cache.remove(last.key);
+                count--;
+            }
         }
-    }
-
-    /**
-     * Tests if a given word can be in the set.
-     *
-     * A word can be in the set only if all bits at position calculated form the
-     *
-     * @param word
-     *  The word to test
-     * @return
-     */
-    public boolean isProbablyInSet(String word)
-    {
-        boolean result = true;
-        for (int i = 0; i < k; i++)
-        {
-            result &= bitArray.get(getIndex(word, i));
-        }
-
-        return result;
-    }
-
-    /**
-     * Calculates the index for a given word for the Hash-function i
-     *
-     * The index is calculated by calculating (Hash MOD m)
-     *
-     * @param word
-     * @param i
-     * @return
-     */
-    private int getIndex(String word, int i) {
-        int index = (hashes[i].hashString(word, Charset.defaultCharset()).asInt() % m);
-        return (index >= 0)
-                ? index
-                : -index;
-    }
-
-    private static HashFunction getHashFunction(int seed) {
-        return Hashing.murmur3_128(seed);
-    }
-
-    /**
-     * Adds all words to the current set.
-     *
-     * @param words
-     */
-    public void fillInitialValues(Stream<String> words) {
-        bitArray.clear();
-        words.forEach(s -> addWord(s));
     }
 }
+
+/**
+ * Your LRUCache object will be instantiated and called as such:
+ * LRUCache obj = new LRUCache(capacity);
+ * int param_1 = obj.get(key);
+ * obj.put(key,value);
+ */

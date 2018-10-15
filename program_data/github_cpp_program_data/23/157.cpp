@@ -1,146 +1,130 @@
+#include <cstdio>
+#include <cstdlib>
 
-
-#include <iostream>
+#define NIL 0
+#define LAYER_COUNT 20
+#define NODE_COUNT 100000
 
 using namespace std;
 
-// Forehead declaration.
-void TestQueue();
+struct node
+{
+	int id, value;
+	node *next, *lower;
+	node();
+};
+
+node::node() : next(NIL) { }
+
+node *head[LAYER_COUNT];
+
+void init()
+{
+	head[0] = new node;
+	for (int i = 1; i < LAYER_COUNT; i++)
+	{
+		head[i] = new node;
+		head[i]->lower = head[i - 1];
+	}
+}
+
+void insert(int id, int value)
+{
+	int k = 0;
+	while ((rand() & 1) == 0)
+	{
+		k++;
+	}
+	node *prev = head[k], *cur = head[k], *upper = NIL;
+	for (; k >= 0; k--)
+	{
+		while (cur != NIL && cur->id < id)
+		{
+			prev = cur;
+			cur = cur->next;
+		}
+		node *o = new node;
+		o->next = cur;
+		o->id = id;
+		o->value = value;
+		prev->next = o;
+		prev = prev->lower;
+		cur = prev;
+		if (upper != NIL)
+		{
+			upper->lower = o;
+		}
+		upper = o;
+	}
+}
+
+int find(int id)
+{
+	node *prev, *cur = head[LAYER_COUNT - 1];
+	for (int k = LAYER_COUNT - 1; k >= 0; k--)
+	{
+		while (cur != NIL && cur->id < id)
+		{
+			prev = cur;
+			cur = cur->next;
+		}
+		if (cur != NIL && cur->id == id)
+		{
+			return cur->value;
+		}
+		else
+		{
+			prev = prev->lower;
+			cur = prev;
+		}
+	}
+	return -1;
+}
+
+void debug()
+{
+	for (int i = 5; i >= 0; i--)
+	{
+		node *cur = head[i];
+		printf("head[%d]", i);
+		while (cur != NIL)
+		{
+			printf(" -> (%d, %d)", cur->id, cur->value);
+			cur = cur->next;
+		}
+		printf("\n");
+	}
+}
 
 int main()
 {
-    TestQueue();
-    return 0;
-}
-
-template<class _tT>
-class _cQueue
-{
-    typedef _tT ElementType;
-    typedef size_t SizeType;
-public:
-    _cQueue(SizeType nCreateSize);
-    bool empty();
-    bool full();
-    void dispose();
-    void makeEmpty();
-    void enqueue(ElementType ele);
-    void dequeue();
-    ElementType front();
-    template<class _tT>
-    friend ostream& operator<< (ostream&, const _cQueue<_tT>&);
-
-private:
-    ElementType* index_;
-    SizeType nCapacity_;
-    SizeType nSize_;
-    SizeType nFront_;
-    SizeType nRear_;
-};
-
-void TestQueue()
-{
-    _cQueue<int> q(10);
-    q.enqueue(5);
-    q.enqueue(6);
-    q.enqueue(9);
-    q.enqueue(10);
-    cout << q << endl;
-    q.dequeue();
-    q.dequeue();
-    q.dequeue();
-    cout << q << endl;
-}
-
-template<class _tT>
-_cQueue<_tT>::_cQueue(SizeType nCreateSize):
-    index_(new typename _cQueue<_tT>::ElementType[nCreateSize]),
-    nCapacity_(nCreateSize),
-    nSize_(0),
-    nFront_(0),
-    nRear_(0)
-{
-
-}
-
-template<class _tT>
-bool _cQueue<_tT>::empty()
-{
-    return nSize_ == 0;
-}
-
-template<class _tT>
-void _cQueue<_tT>::dispose()
-{
-    // Simply implement the dispose().
-    // Doesn't think about the memory manager.
-
-    nSize_(0);
-    nFront_(0);
-    nRear_(0);
-}
-
-template<class _tT>
-void _cQueue<_tT>::makeEmpty()
-{
-    nSize_(0);
-    nFront_(0);
-    nRear_(0);
-}
-
-template<class _tT>
-bool _cQueue<_tT>::full()
-{
-    return nSize_ != 0 && nFront_ == nRear_;
-}
-
-template<class _tT>
-void _cQueue<_tT>::enqueue(typename _cQueue<_tT>::ElementType ele)
-{
-    if(!full())
-    {
-        index_[nFront_ ++ ] = ele;
-        if(nFront_ == nCapacity_)
-        {
-            nFront_ = 0;
-        }
-        ++ nSize_;
-    }
-}
-
-template<class _tT>
-void _cQueue<_tT>::dequeue()
-{
-    if(!empty())
-    {
-        if(nRear_ == nCapacity_ - 1)
-        {
-            nRear_ = 0;
-        }
-        else
-        {
-            ++ nRear_;
-        }
-        -- nSize_;
-    }
-}
-
-template<class _tT>
-typename _cQueue<_tT>::ElementType _cQueue<_tT>::front()
-{
-    return index_[nFront_];
-}
-
-template<class _tT>
-ostream& operator<< (ostream& os, const _cQueue<_tT>& q)
-{
-    for(typename _cQueue<_tT>::SizeType i = q.nRear_; i != q.nFront_;)
-    {
-        os << q.index_[i ++ ] << "   ";
-        if(i == q.nCapacity_)
-        {
-            i = 0;
-        }
-    }
-    return os << endl;
+	int in, id, value;
+	init();
+	while (true)
+	{
+		scanf("%d", &in);
+		if (in == 1)
+		{
+			scanf("%d%d", &id, &value);
+			insert(id, value);
+		}
+		else if (in == 2)
+		{
+			scanf("%d", &id);
+			printf("%d\n", find(id));
+		}
+		else if (in == 4)
+		{
+			debug();
+		}
+		else if (in == 0)
+		{
+			return 0;
+		}
+		else
+		{
+			printf("No such command!\n");
+		}
+	}
+	return 0;
 }

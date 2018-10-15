@@ -1,111 +1,115 @@
-#include "Skiplist.h"
-#include "interface.h"
+#include <iostream>
+#include <queue>
+#include <map>
+#include <climits> // for CHAR_BIT
+#include <iterator>
+#include <algorithm>
 
-std::shared_ptr<Baselist> Baselist::make_Skiplist() {
-	return std::shared_ptr<Baselist>(new Skiplist());
-	//return std::make_shared<Baselist>(new Skiplist());
+const int UniqueSymbols = 1 << CHAR_BIT;
+const char* SampleString = "this is an example for huffman encoding";
+
+typedef std::vector<bool> HuffCode;
+typedef std::map<char, HuffCode> HuffCodeMap;
+
+class INode
+{
+public:
+    const int f;
+
+    virtual ~INode() {}
+
+protected:
+    INode(int f) : f(f) {}
+};
+
+class InternalNode : public INode
+{
+public:
+    INode *const left;
+    INode *const right;
+
+    InternalNode(INode* c0, INode* c1) : INode(c0->f + c1->f), left(c0), right(c1) {}
+    ~InternalNode()
+    {
+        delete left;
+        delete right;
+    }
+};
+
+class LeafNode : public INode
+{
+public:
+    const char c;
+
+    LeafNode(int f, char c) : INode(f), c(c) {}
+};
+
+struct NodeCmp
+{
+    bool operator()(const INode* lhs, const INode* rhs) const { return lhs->f > rhs->f; }
+};
+
+INode* BuildTree(const int (&frequencies)[UniqueSymbols])
+{
+    std::priority_queue<INode*, std::vector<INode*>, NodeCmp> trees;
+
+    for (int i = 0; i < UniqueSymbols; ++i)
+    {
+        if(frequencies[i] != 0)
+            trees.push(new LeafNode(frequencies[i], (char)i));
+    }
+    while (trees.size() > 1)
+    {
+        INode* childR = trees.top();
+        trees.pop();
+
+        INode* childL = trees.top();
+        trees.pop();
+
+        INode* parent = new InternalNode(childR, childL);
+        trees.push(parent);
+    }
+    return trees.top();
 }
 
-Skiplist::Node::Node(int d, int l)
-:data(d), array(l) {
+void GenerateCodes(const INode* node, const HuffCode& prefix, HuffCodeMap& outCodes)
+{
+    if (const LeafNode* lf = dynamic_cast<const LeafNode*>(node))
+    {
+        outCodes[lf->c] = prefix;
+    }
+    else if (const InternalNode* in = dynamic_cast<const InternalNode*>(node))
+    {
+        HuffCode leftPrefix = prefix;
+        leftPrefix.push_back(false);
+        GenerateCodes(in->left, leftPrefix, outCodes);
+
+        HuffCode rightPrefix = prefix;
+        rightPrefix.push_back(true);
+        GenerateCodes(in->right, rightPrefix, outCodes);
+    }
 }
 
-Skiplist::Node::~Node() {
-}
+int main()
+{
+    // Build frequency table
+    int frequencies[UniqueSymbols] = {0};
+    const char* ptr = SampleString;
+    while (*ptr != '\0')
+        ++frequencies[*ptr++];
 
-Skiplist::Skiplist():root(new Node(-MAX)), end(new Node(MAX)) {
-	root->array[0] = end;
-}
+    INode* root = BuildTree(frequencies);
 
-Skiplist::~Skiplist() {
-}
+    HuffCodeMap codes;
+    GenerateCodes(root, HuffCode(), codes);
+    delete root;
 
-bool Skiplist::del(int k) {
-	if (!find(k)) return false;
-	int level = root->array.size() - 1;
-	std::shared_ptr<Node> p = root;
-	while (true) {
-		if (p->array[level]->data > k) {
-			/* If (in level) the data of right element of p larger than k,
-			from which we could know that the k is in the interval.
-			So we decrease level */
-			level--;
-		} else if (p->array[level]->data == k) {
-			/* If (in level) the data of right element of p equal to k,
-			then we should move p down to discard all connect to p->array[level],
-			and delete it in the end.
-			*/
-			while (level >= 0) {
-				p->array[level] = p->array[level]->array[level];
-				level--;
-			}
-			return true;
-		} else {
-			/* If (in level) the data of right element of p smaller than k,
-			which means that the interval is small, 
-			then we could move p to its right to include k.
-			*/
-			p = p->array[level];
-		}
-	}
-}
-
-bool Skiplist::insert(int k) {
-	if (find(k)) return false;
-	std::shared_ptr<Node> new_node(new Node(k, get_level()));
-	// If cnt is large to root->level then root should increase its level.
-	if (new_node->array.size() > root->array.size())
-		increase_root_level();
-	int level = new_node->array.size() - 1;
-	std::shared_ptr<Node> p(root);
-	while (true) {
-		if (p->array[level]->data > k) {
-			/* If (in level) the data of right element of p larger than k,
-			from which we could know that the k is in the interval.
-			So we insert k into the interval */
-			new_node->array[level] = p->array[level];
-			p->array[level] = new_node;
-			if (--level < 0) return true;//TODO
-		} else {
-			/* If (in level) the data of right element of p smaller than k,
-			which means that the interval is small, 
-			then we could move p to its right to include k.
-			*/
-			p = p->array[level];
-		}
-	}
-}
-
-std::shared_ptr<Skiplist::Node> Skiplist::find_pos(int k) const{
-	int level = root->array.size() - 1;
-	std::shared_ptr<Node> p(root);
-	while (true) {
-		if (p->data == k) {
-			return p;
-		} else if (p->array[level]->data > k) {
-			/* If (in level) the data of right element of p larger than k,
-			from which we could know that the interval is too much large. 
-			So we decrease level to reduce it. */
-			if (--level < 0) return p;
-		} else {
-			/* If (in level) the data of right element of p smaller than k,
-			which means that the interval is small, then we could move p
-			to its right to include k.
-			*/
-			p = p->array[level];
-		}
-	}
-}
-
-void Skiplist::increase_root_level() {
-	root->array.push_back(end);
-}
-
-// Return the level of inserted elements. 
-int Skiplist::get_level() const {
-	int cnt = 1;
-	/* The max level of elements shouldn't larger
-	 than root->level + 1 before updating it */
-	while (rand() % 2 && cnt != root->array.size() + 1) cnt++;
-	return cnt;
+    for (HuffCodeMap::const_iterator it = codes.begin(); it != codes.end(); ++it)
+    {
+        std::cout << it->first << " ";
+        std::copy(it->second.begin(), it->second.end(),
+                  std::ostream_iterator<bool>(std::cout));
+        std::cout << std::endl;
+    }
+    return 0;
 }

@@ -1,587 +1,137 @@
-// Quadtree.cpp
+//===--- examples/Fibonacci/fibonacci.cpp - An example use of the JIT -----===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This small program provides an example of how to build quickly a small module
+// with function Fibonacci and execute it with the JIT.
+//
+// The goal of this snippet is to create in the memory the LLVM module
+// consisting of one function as follow:
+//
+//   int fib(int x) {
+//     if(x<=2) return 1;
+//     return fib(x-1)+fib(x-2);
+//   }
+//
+// Once we have this, we compile the module via JIT, then execute the `fib'
+// function and return result to a driver, i.e. to a "host program".
+//
+//===----------------------------------------------------------------------===//
 
-#include "stdafx.h"
+#include "llvm/IR/Verifier.h"
+#include "llvm/ExecutionEngine/GenericValue.h"
+#include "llvm/ExecutionEngine/Interpreter.h"
+#include "llvm/ExecutionEngine/JIT.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
+#include "llvm/Support/TargetSelect.h"
+#include "llvm/Support/raw_ostream.h"
+using namespace llvm;
 
-#include "Quadtree.h"
-#include "PartitionObject.h"
+static Function *CreateFibFunction(Module *M, LLVMContext &Context) {
+  // Create the fib function and insert it into module M. This function is said
+  // to return an int and take an int parameter.
+  Function *FibF =
+    cast<Function>(M->getOrInsertFunction("fib", Type::getInt32Ty(Context),
+                                          Type::getInt32Ty(Context),
+                                          (Type *)0));
 
-using namespace std;
-#include <math.h>
+  // Add a basic block to the function.
+  BasicBlock *BB = BasicBlock::Create(Context, "EntryBlock", FibF);
 
-//-------------------------------------------------------------------------------
+  // Get pointers to the constants.
+  Value *One = ConstantInt::get(Type::getInt32Ty(Context), 1);
+  Value *Two = ConstantInt::get(Type::getInt32Ty(Context), 2);
 
-Quadtree::Quadtree() : 
-	x1		( 0 ),
-	y1		( 0 ),
-	x2		( 0 ),
-	y2		( 0 ),
-	level	( UninitializedLevel ),
-	maxLevel( UninitializedLevel ),
-	objects(),
-	NW		( NULL ),
-	NE		( NULL ),
-	SW		( NULL ),
-	SE		( NULL )
-{
+  // Get pointer to the integer argument of the add1 function...
+  Argument *ArgX = FibF->arg_begin();   // Get the arg.
+  ArgX->setName("AnArg");            // Give it a nice symbolic name for fun.
+
+  // Create the true_block.
+  BasicBlock *RetBB = BasicBlock::Create(Context, "return", FibF);
+  // Create an exit block.
+  BasicBlock* RecurseBB = BasicBlock::Create(Context, "recurse", FibF);
+
+  // Create the "if (arg <= 2) goto exitbb"
+  Value *CondInst = new ICmpInst(*BB, ICmpInst::ICMP_SLE, ArgX, Two, "cond");
+  BranchInst::Create(RetBB, RecurseBB, CondInst, BB);
+
+  // Create: ret int 1
+  ReturnInst::Create(Context, One, RetBB);
+
+  // create fib(x-1)
+  Value *Sub = BinaryOperator::CreateSub(ArgX, One, "arg", RecurseBB);
+  CallInst *CallFibX1 = CallInst::Create(FibF, Sub, "fibx1", RecurseBB);
+  CallFibX1->setTailCall();
+
+  // create fib(x-2)
+  Sub = BinaryOperator::CreateSub(ArgX, Two, "arg", RecurseBB);
+  CallInst *CallFibX2 = CallInst::Create(FibF, Sub, "fibx2", RecurseBB);
+  CallFibX2->setTailCall();
+
+
+  // fib(x-1)+fib(x-2)
+  Value *Sum = BinaryOperator::CreateAdd(CallFibX1, CallFibX2,
+                                         "addresult", RecurseBB);
+
+  // Create the return instruction and add it to the basic block
+  ReturnInst::Create(Context, Sum, RecurseBB);
+
+  return FibF;
 }
 
-//-------------------------------------------------------------------------------
 
-void Quadtree::Init( float _x1, float _y1, float _x2, float _y2, int _level, int _maxLevel )
-{
-	if( _x2< _x1 )
-		SWAP( _x2, _x1 );
-	if( _y2 < _y1 )
-		SWAP( _y2, _y1 );
-	x1		= _x1,
-	y1		= _y1,
-	x2		= _x2,
-	y2		= _y2,
-	level	= _level,
-	maxLevel=_maxLevel;
+int main(int argc, char **argv) {
+  int n = argc > 1 ? atol(argv[1]) : 24;
 
-	objects.clear();
+  InitializeNativeTarget();
+  LLVMContext Context;
 
-	if ( level == maxLevel ) 
-	{
-		return;
-	}
+  // Create some module to put our function into it.
+  std::unique_ptr<Module> M(new Module("test", Context));
 
-	float halfX = ( x2+x1 ) * 0.5f;
-	float halfY = ( y2+y1 ) * 0.5f;
-	NW = new Quadtree();
-	NE = new Quadtree();
-	SW = new Quadtree();
-	SE = new Quadtree();
-	NW->Init( x1, y1, halfX, halfY, level+1, maxLevel );
-	NE->Init( halfX, y1, x2, halfY, level+1, maxLevel );
-	SW->Init( x1, halfY, halfX, y2, level+1, maxLevel );
-	SE->Init( halfX, halfY, x2, y2, level+1, maxLevel );
+  // We are about to create the "fib" function:
+  Function *FibF = CreateFibFunction(M.get(), Context);
+
+  // Now we going to create JIT
+  std::string errStr;
+  ExecutionEngine *EE =
+    EngineBuilder(M.get())
+    .setErrorStr(&errStr)
+    .setEngineKind(EngineKind::JIT)
+    .create();
+
+  if (!EE) {
+    errs() << argv[0] << ": Failed to construct ExecutionEngine: " << errStr
+           << "\n";
+    return 1;
+  }
+
+  errs() << "verifying... ";
+  if (verifyModule(*M)) {
+    errs() << argv[0] << ": Error constructing function!\n";
+    return 1;
+  }
+
+  errs() << "OK\n";
+  errs() << "We just constructed this LLVM module:\n\n---------\n" << *M;
+  errs() << "---------\nstarting fibonacci(" << n << ") with JIT...\n";
+
+  // Call the Fibonacci function with argument n:
+  std::vector<GenericValue> Args(1);
+  Args[0].IntVal = APInt(32, n);
+  GenericValue GV = EE->runFunction(FibF, Args);
+
+  // import result of execution
+  outs() << "Result: " << GV.IntVal << "\n";
+
+  return 0;
 }
-
-//-------------------------------------------------------------------------------
-
-float	 Quadtree::GetMinimumPartitionX() const 
-{ 
-	return ( x1 + x2 ) / pow( 2.0f, maxLevel ) ; 
-}
-
-//-------------------------------------------------------------------------------
-
-float	 Quadtree::GetMinimumPartitionY() const
-{ 
-	return ( y1 + y2 ) / pow( 2.0f, maxLevel ) ; 
-}
-
-//-------------------------------------------------------------------------------
-
-void Quadtree::AddPartitionObject( PartitionObject *object ) 
-{
-	if( object == NULL )
-		return;
-
-	if ( level == maxLevel ) 
-	{
-		objects.push_back( object );
-		return;
-	}
-	if ( Contains( NW, object ) ) 
-	{
-		NW->AddPartitionObject( object ); 
-		return;
-	} 
-	else if ( Contains( NE, object ) ) 
-	{
-		NE->AddPartitionObject( object ); 
-		return;
-	} 
-	else if ( Contains( SW, object ) ) 
-	{
-		SW->AddPartitionObject( object ); 
-		return;
-	} 
-	else if ( Contains( SE, object ) ) 
-	{
-		SE->AddPartitionObject( object ); 
-		return;
-	}
-	if ( Contains( this, object ) ) 
-	{
-		objects.push_back( object );
-	}
-}
-
-//-------------------------------------------------------------------------------
-
-list<PartitionObject*>  FilterList( list<PartitionObject*>& listOfObjects, U32 collisionFlags )
-{
-	if( collisionFlags == 0 )
-		return listOfObjects;
-
-	list<PartitionObject*> temp;
-	list<PartitionObject*>::iterator it = listOfObjects.begin();
-	while( it != listOfObjects.end() )
-	{
-		if( ( (*it)->collisionFlag & collisionFlags ) != CollisionFlags_None )
-		{
-			temp.push_back( *it );
-		}
-
-		++it;
-	}
-
-	return temp;
-}
-
-//-------------------------------------------------------------------------------
-
-void CopyFilterList( list<PartitionObject*>& sourceObjects, list<PartitionObject*>& destList, U32 collisionFlags )
-{
-	if( collisionFlags == 0 )
-	{
-		destList.insert( destList.end(), sourceObjects.begin(), sourceObjects.end() );
-		return;
-	}
-
-	list<PartitionObject*>::iterator it = sourceObjects.begin();
-	while( it != sourceObjects.end() )
-	{
-		if( ( (*it)->collisionFlag & collisionFlags ) != CollisionFlags_None )
-		{
-			destList.push_back( *it );
-		}
-
-		++it;
-	}
-}
-
-//-------------------------------------------------------------------------------
-
-void CopyFilterList( list<PartitionObject*>& sourceObjects, list<PartitionObject*>& destList, float x, float y, float dist, U32 collisionFlags )
-{
-	if( collisionFlags == 0 )
-	{
-		dist = dist * dist;
-		list<PartitionObject*>::iterator it = sourceObjects.begin();
-		while( it != sourceObjects.end() )
-		{
-			PartitionObject* po = *it;
-			if( DIST_SQUARED( po->cx(), po->cy(), x, y ) <= dist )// this is slightly poblematic since it only considers the center.
-			{
-				destList.push_back( *it );
-			}
-			++it;
-		}
-		return;
-	}
-
-	list<PartitionObject*>::iterator it = sourceObjects.begin();
-	while( it != sourceObjects.end() )
-	{
-		PartitionObject* po = *it;
-		if( ( po->collisionFlag & collisionFlags ) != CollisionFlags_None )
-		{
-			if( DIST_SQUARED( po->cx(), po->cy(), x, y ) <= dist )// this is slightly poblematic since it only considers the center.
-			{
-				destList.push_back( *it );
-			}
-		}
-
-		++it;
-	}
-}
-
-//-------------------------------------------------------------------------------
-
-list<PartitionObject*>  Quadtree::GetObjectsAt( float x1, float y1, float x2, float y2, U32 collisionFlags )
-{
-	list<PartitionObject*> temp;
-
-	GetObjectsAt( temp, x1, y1, collisionFlags );
-	GetObjectsAt( temp, x2, y1, collisionFlags );
-	GetObjectsAt( temp, x1, y2, collisionFlags );
-	GetObjectsAt( temp, x2, y2, collisionFlags );
-
-	return temp;
-}
-
-//-------------------------------------------------------------------------------
-
-bool Quadtree::GetObjectsAt( list<PartitionObject*>& listOfStuff, float _x, float _y, U32 collisionFlags )
-{
-	if ( level == maxLevel ) 
-	{
-		CopyFilterList( objects, listOfStuff, collisionFlags );
-		return true;
-	}
-
-	list<PartitionObject*> returnObjects;
-	if ( !objects.empty() ) 
-	{
-		CopyFilterList( objects, returnObjects, collisionFlags );
-	}
-	float halfX = ( x2+x1 ) * 0.5f;
-	float halfY = ( y2+y1 ) * 0.5f;
-
-	if ( _x > halfX && _x < x2 ) 
-	{
-		if ( _y > halfY && _y < y2 ) 
-		{
-			CopyFilterList( SE->GetObjectsAt( _x, _y, collisionFlags ), returnObjects, collisionFlags );
-			return true;
-		} 
-		else if ( _y > y1 && _y <= halfY ) 
-		{
-			CopyFilterList( NE->GetObjectsAt( _x, _y, collisionFlags ), returnObjects, collisionFlags );
-			return true;
-		}
-	} 
-	else if ( _x > x1 && _x <= halfX ) 
-	{
-		if ( _y > halfY && _y < y2 ) 
-		{
-			CopyFilterList( SW->GetObjectsAt( _x, _y, collisionFlags ), returnObjects, collisionFlags );
-			return true;
-		} 
-		else if ( _y > y1 && _y <= halfY ) 
-		{
-			CopyFilterList( NW->GetObjectsAt( _x, _y, collisionFlags ), returnObjects, collisionFlags );
-			return true;
-		}
-	}
-	return false;
-}
-
-//-------------------------------------------------------------------------------
-
-
-bool Quadtree::GetObjectsAtMin( list<PartitionObject*>& listOfStuff, float _x, float _y, U32 collisionFlags )
-{
-	if ( level == maxLevel ) 
-	{
-		CopyFilterList( objects, listOfStuff, collisionFlags );
-		return true;
-	}
-
-	float halfX = ( x2+x1 ) * 0.5f;
-	float halfY = ( y2+y1 ) * 0.5f;
-
-	Quadtree* childToCopy = NULL;
-	if ( _x > halfX && _x < x2 ) 
-	{
-		if ( _y > halfY && _y < y2 ) 
-		{
-			childToCopy = SE;
-		} 
-		else if ( _y > y1 && _y <= halfY ) 
-		{
-			childToCopy = NE;
-		}
-	} 
-	else if ( _x > x1 && _x <= halfX ) 
-	{
-		if ( _y > halfY && _y < y2 ) 
-		{
-			childToCopy = SW;
-		} 
-		else if ( _y > y1 && _y <= halfY ) 
-		{
-			childToCopy = NW;
-		}
-	}
-
-	if( childToCopy )
-	{
-		return childToCopy->GetObjectsAtMin( listOfStuff, _x, _y, collisionFlags );
-	}
-	return false;
-}
-
-//-------------------------------------------------------------------------------
-/*
-bool Quadtree::GetObjectsAtMin( list<PartitionObject*>& listOfStuff, float _x, float _y, U32 collisionFlags )
-{
-	if ( level == maxLevel ) 
-	{
-		CopyFilterList( objects, listOfStuff, collisionFlags );
-		return true;
-	}
-
-	float halfX = ( x2+x1 ) * 0.5f;
-	float halfY = ( y2+y1 ) * 0.5f;
-
-	Quadtree* childToCopy = NULL;
-	if ( _x > halfX && _x < x2 ) 
-	{
-		if ( _y > halfY && _y < y2 ) 
-		{
-			childToCopy = SE;
-		} 
-		else if ( _y > y1 && _y <= halfY ) 
-		{
-			childToCopy = NE;
-		}
-	} 
-	else if ( _x > x1 && _x <= halfX ) 
-	{
-		if ( _y > halfY && _y < y2 ) 
-		{
-			childToCopy = SW;
-		} 
-		else if ( _y > y1 && _y <= halfY ) 
-		{
-			childToCopy = NW;
-		}
-	}
-
-	if( childToCopy )
-	{
-		list<PartitionObject*>& listOfChldObjects = childToCopy->GetObjectsAtMin( _x, _y, collisionFlags );
-		if( listOfChldObjects.size() == 0 )
-		{
-			CopyFilterList( objects, listOfChldObjects, collisionFlags );
-		}
-		CopyFilterList( listOfChldObjects, listOfStuff, collisionFlags );
-		return true;
-	}
-	else// no too sure about this else case.
-	{
-		CopyFilterList( objects, listOfStuff, collisionFlags );
-	}
-	return false;
-}*/
-
-//-------------------------------------------------------------------------------
-
-bool  Quadtree::GetObjectsAt( list<PartitionObject*>& listOfChldObjects, float _x, float _y, float dist, U32 collisionFlags )
-{
-	if ( level == maxLevel ) 
-	{
-		CopyFilterList( objects, listOfChldObjects, collisionFlags );
-		return true;
-	}
-
-	float halfX = ( x2+x1 ) * 0.5f;
-	float halfY = ( y2+y1 ) * 0.5f;
-
-	Quadtree* childToCopy = NULL;
-	if ( _x > halfX && _x < x2 ) 
-	{
-		if ( _y > halfY && _y < y2 ) 
-		{
-			childToCopy = SE;
-		} 
-		else if ( _y > y1 && _y <= halfY ) 
-		{
-			childToCopy = NE;
-		}
-	} 
-	else if ( _x > x1 && _x <= halfX ) 
-	{
-		if ( _y > halfY && _y < y2 ) 
-		{
-			childToCopy = SW;
-		} 
-		else if ( _y > y1 && _y <= halfY ) 
-		{
-			childToCopy = NW;
-		}
-	}
-
-	if( childToCopy )
-	{
-		childToCopy->GetObjectsAt( listOfChldObjects, _x, _y, dist, collisionFlags );
-		if( listOfChldObjects.size() == 0 )
-		CopyFilterList( objects, listOfChldObjects, _x, _y, dist, collisionFlags );
-		return true;
-	}
-	else// no too sure about this else case.
-	{
-		CopyFilterList( objects, listOfChldObjects,  _x, _y, dist, collisionFlags );
-	}
-	return false;
-}
-
-//-------------------------------------------------------------------------------
-/*
-list<PartitionObject*> Quadtree::GetObjectsAtMin( float _x, float _y, U32 collisionFlags ) 
-{
-	if ( level == maxLevel ) 
-	{
-		return FilterList( objects, collisionFlags );
-	}
-	
-	list<PartitionObject*> returnObjects, childReturnObjects;
-
-	float halfX = ( x2+x1 ) * 0.5f;
-	float halfY = ( y2+y1 ) * 0.5f;
-
-	Quadtree* childToCopy = NULL;
-	if ( _x > halfX && _x < x2 ) 
-	{
-		if ( _y > halfY && _y < y2 ) 
-		{
-			childToCopy = SE;
-		} 
-		else if ( _y > y1 && _y <= halfY ) 
-		{
-			childToCopy = NE;
-		}
-	} 
-	else if ( _x > x1 && _x <= halfX ) 
-	{
-		if ( _y > halfY && _y < y2 ) 
-		{
-			childToCopy = SW;
-		} 
-		else if ( _y > y1 && _y <= halfY ) 
-		{
-			childToCopy = NW;
-		}
-	}
-
-	if( childToCopy )
-	{
-		list<PartitionObject*>& listOfChldObjects = childToCopy->GetObjectsAtMin( _x, _y, collisionFlags );
-		if( listOfChldObjects.size() == 0 )
-		{
-			CopyFilterList( objects, listOfChldObjects, collisionFlags );
-		}
-		CopyFilterList( listOfChldObjects, returnObjects, collisionFlags );
-	}
-	return returnObjects;
-}
-*/
-//-------------------------------------------------------------------------------
-
-list<PartitionObject*> Quadtree::GetObjectsAt( float _x, float _y, U32 collisionFlags ) 
-{
-	if ( level == maxLevel ) 
-	{
-		return FilterList( objects, collisionFlags );
-	}
-	
-	list<PartitionObject*> returnObjects, childReturnObjects;
-	if ( !objects.empty() ) 
-	{
-		returnObjects = FilterList( objects, collisionFlags );
-	}
-	float halfX = ( x2+x1 ) * 0.5f;
-	float halfY = ( y2+y1 ) * 0.5f;
-
-	if ( _x > halfX && _x < x2 ) 
-	{
-		if ( _y > halfY && _y < y2 ) 
-		{
-			childReturnObjects = SE->GetObjectsAt( _x, _y, collisionFlags );
-			returnObjects.insert( returnObjects.end(), childReturnObjects.begin(), childReturnObjects.end() );
-			return returnObjects;
-		} 
-		else if ( _y > y1 && _y <= halfY ) 
-		{
-			childReturnObjects = NE->GetObjectsAt( _x, _y, collisionFlags );
-			returnObjects.insert( returnObjects.end(), childReturnObjects.begin(), childReturnObjects.end() );
-			return returnObjects;
-		}
-	} 
-	else if ( _x > x1 && _x <= halfX ) 
-	{
-		if ( _y > halfY && _y < y2 ) 
-		{
-			childReturnObjects = SW->GetObjectsAt( _x, _y, collisionFlags );
-			returnObjects.insert( returnObjects.end(), childReturnObjects.begin(), childReturnObjects.end() );
-			return returnObjects;
-		} 
-		else if ( _y > y1 && _y <= halfY ) 
-		{
-			childReturnObjects = NW->GetObjectsAt( _x, _y, collisionFlags );
-			returnObjects.insert( returnObjects.end(), childReturnObjects.begin(), childReturnObjects.end() );
-			return returnObjects;
-		}
-	}
-	return returnObjects;
-}
-
-//-------------------------------------------------------------------------------
-
-void Quadtree::Clear() 
-{
-	if ( level == maxLevel ) 
-	{
-		objects.clear();
-		return;
-	} 
-	else 
-	{
-		NW->Clear();
-		NE->Clear();
-		SW->Clear();
-		SE->Clear();
-	}
-	if ( !objects.empty() ) 
-	{
-		objects.clear();
-	}
-}
-
-//-------------------------------------------------------------------------------
-
-bool Quadtree::Contains( Quadtree *child, PartitionObject *object ) 
-{
-	return	 !( object->x1 < child->x1 ||
-				object->y1 < child->y1 ||
-				object->x1 > child->x2 ||
-				object->y1 > child->y2 ||
-				object->x2 < child->x1 ||
-				object->y2 < child->y1 ||
-				object->x2 > child->x2 ||
-				object->y2 > child->y2 );
-}
-
-//-------------------------------------------------------------------------------
-
-void Quadtree::Remove( PartitionObject *object )
-{
-	if( object == NULL )
-		return;
-
-	if ( level == maxLevel ) 
-	{
-		objects.remove( object );
-		return;
-	}
-	if ( Contains( NW, object ) ) 
-	{
-		NW->Remove( object ); 
-		return;
-	} 
-	else if ( Contains( NE, object ) ) 
-	{
-		NE->Remove( object ); 
-		return;
-	} 
-	else if ( Contains( SW, object ) ) 
-	{
-		SW->Remove( object ); 
-		return;
-	} 
-	else if ( Contains( SE, object ) ) 
-	{
-		SE->Remove( object ); 
-		return;
-	}
-	if ( Contains( this, object ) ) 
-	{
-		objects.remove( object );
-	}
-}
-
-//-------------------------------------------------------------------------------
-
-void Quadtree::UpdateObject( PartitionObject *object )
-{
-	Remove( object );
-	AddPartitionObject( object );
-}
-
-//-------------------------------------------------------------------------------

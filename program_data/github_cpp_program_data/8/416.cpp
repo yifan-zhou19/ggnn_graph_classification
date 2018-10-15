@@ -1,202 +1,137 @@
-#include "Quadtree.h"
-#include <iostream>
+//===--- examples/Fibonacci/fibonacci.cpp - An example use of the JIT -----===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This small program provides an example of how to build quickly a small module
+// with function Fibonacci and execute it with the JIT.
+//
+// The goal of this snippet is to create in the memory the LLVM module
+// consisting of one function as follow:
+//
+//   int fib(int x) {
+//     if(x<=2) return 1;
+//     return fib(x-1)+fib(x-2);
+//   }
+//
+// Once we have this, we compile the module via JIT, then execute the `fib'
+// function and return result to a driver, i.e. to a "host program".
+//
+//===----------------------------------------------------------------------===//
 
-Quadtree quadtree(0, Rect(Vec2(0, 0), Vec2(screen_width, screen_height)));
+#include "llvm/IR/Verifier.h"
+#include "llvm/ExecutionEngine/GenericValue.h"
+#include "llvm/ExecutionEngine/Interpreter.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
+#include "llvm/Support/TargetSelect.h"
+#include "llvm/Support/raw_ostream.h"
+using namespace llvm;
 
-Quadtree::Quadtree(const int m_level, const Rect &m_rect)
-    : m_level(m_level),
-      m_rect(m_rect),
-      m_subnode{nullptr, nullptr, nullptr, nullptr} {
-  m_index.reserve(NODE_CAPACITY);
+static Function *CreateFibFunction(Module *M, LLVMContext &Context) {
+  // Create the fib function and insert it into module M. This function is said
+  // to return an int and take an int parameter.
+  Function *FibF =
+    cast<Function>(M->getOrInsertFunction("fib", Type::getInt32Ty(Context),
+                                          Type::getInt32Ty(Context),
+                                          (Type *)0));
+
+  // Add a basic block to the function.
+  BasicBlock *BB = BasicBlock::Create(Context, "EntryBlock", FibF);
+
+  // Get pointers to the constants.
+  Value *One = ConstantInt::get(Type::getInt32Ty(Context), 1);
+  Value *Two = ConstantInt::get(Type::getInt32Ty(Context), 2);
+
+  // Get pointer to the integer argument of the add1 function...
+  Argument *ArgX = FibF->arg_begin();   // Get the arg.
+  ArgX->setName("AnArg");            // Give it a nice symbolic name for fun.
+
+  // Create the true_block.
+  BasicBlock *RetBB = BasicBlock::Create(Context, "return", FibF);
+  // Create an exit block.
+  BasicBlock* RecurseBB = BasicBlock::Create(Context, "recurse", FibF);
+
+  // Create the "if (arg <= 2) goto exitbb"
+  Value *CondInst = new ICmpInst(*BB, ICmpInst::ICMP_SLE, ArgX, Two, "cond");
+  BranchInst::Create(RetBB, RecurseBB, CondInst, BB);
+
+  // Create: ret int 1
+  ReturnInst::Create(Context, One, RetBB);
+
+  // create fib(x-1)
+  Value *Sub = BinaryOperator::CreateSub(ArgX, One, "arg", RecurseBB);
+  CallInst *CallFibX1 = CallInst::Create(FibF, Sub, "fibx1", RecurseBB);
+  CallFibX1->setTailCall();
+
+  // create fib(x-2)
+  Sub = BinaryOperator::CreateSub(ArgX, Two, "arg", RecurseBB);
+  CallInst *CallFibX2 = CallInst::Create(FibF, Sub, "fibx2", RecurseBB);
+  CallFibX2->setTailCall();
+
+
+  // fib(x-1)+fib(x-2)
+  Value *Sum = BinaryOperator::CreateAdd(CallFibX1, CallFibX2,
+                                         "addresult", RecurseBB);
+
+  // Create the return instruction and add it to the basic block
+  ReturnInst::Create(Context, Sum, RecurseBB);
+
+  return FibF;
 }
 
-void Quadtree::update() {
-  //----------------------------------------------------------------
-  // Clear the quadtree and insert it with objects.
-  //----------------------------------------------------------------
 
-  m_index.clear();
-  m_index.shrink_to_fit();
+int main(int argc, char **argv) {
+  int n = argc > 1 ? atol(argv[1]) : 24;
 
-  m_subnode[0] = nullptr;
-  m_subnode[1] = nullptr;
-  m_subnode[2] = nullptr;
-  m_subnode[3] = nullptr;
+  InitializeNativeTarget();
+  LLVMContext Context;
 
-  for (const auto &object : object_vec) {
-    insert(object->get_index());
-  }
-}
+  // Create some module to put our function into it.
+  std::unique_ptr<Module> Owner(new Module("test", Context));
+  Module *M = Owner.get();
 
-void Quadtree::split() {
-  //----------------------------------------------------------------
-  // Create subnodes and gives each its own quadrant.
-  //----------------------------------------------------------------
+  // We are about to create the "fib" function:
+  Function *FibF = CreateFibFunction(M, Context);
 
-  Vec2 min = m_rect.get_min();
-  Vec2 max = m_rect.get_max();
+  // Now we going to create JIT
+  std::string errStr;
+  ExecutionEngine *EE =
+    EngineBuilder(std::move(Owner))
+    .setErrorStr(&errStr)
+    .setEngineKind(EngineKind::JIT)
+    .create();
 
-  int x = min.x;
-  int y = min.y;
-  int width = max.x - min.x;
-  int height = max.y - min.y;
-
-  int w = width * 0.5;
-  int h = height * 0.5;
-
-  Rect SW(Vec2(x, y), Vec2(x + w, y + h));
-  Rect SE(Vec2(x + w, y), Vec2(x + width, y + h));
-  Rect NW(Vec2(x, y + h), Vec2(x + w, y + height));
-  Rect NE(Vec2(x + w, y + h), Vec2(x + width, y + height));
-
-  m_subnode[0] = std::make_unique<Quadtree>(m_level + 1, SW);
-  m_subnode[1] = std::make_unique<Quadtree>(m_level + 1, SE);
-  m_subnode[2] = std::make_unique<Quadtree>(m_level + 1, NW);
-  m_subnode[3] = std::make_unique<Quadtree>(m_level + 1, NE);
-}
-
-void Quadtree::insert(const int id) {
-  //----------------------------------------------------------------
-  // [1] Insert object into subnodes.
-  // [2] If split, insert THIS nodes objects into the subnodes.
-  // [3] Add object to this node.
-  //----------------------------------------------------------------
-
-  // If this subnode has split..
-  if (m_subnode[0] != nullptr) {
-    // Find the subnodes that contain it and insert it there.
-    if (m_subnode[0]->contain(id)) m_subnode[0]->insert(id);
-    if (m_subnode[1]->contain(id)) m_subnode[1]->insert(id);
-    if (m_subnode[2]->contain(id)) m_subnode[2]->insert(id);
-    if (m_subnode[3]->contain(id)) m_subnode[3]->insert(id);
-
-    return;
-  }
-
-  // Add object to this node
-  m_index.emplace_back(id);  // [3]
-
-  // If it has NOT split..and NODE_CAPACITY is reached and we are not at MAX
-  // LEVEL..
-  if (m_index.size() > NODE_CAPACITY && m_level < NODE_MAX_DEPTH) {
-    // Split into subnodes.
-    split();
-
-    // Go through all this nodes objects..
-    for (const auto &index : m_index)  // [2]
-    {
-      // Go through all newly created subnodes..
-      for (const auto &subnode : m_subnode) {
-        // If they contain the objects..
-        if (subnode->contain(index)) {
-          // Insert the object into the subnode
-          subnode->insert(index);
-        }
-      }
-    }
-
-    // Remove all indexes from THIS node
-    m_index.clear();
-    m_index.shrink_to_fit();
-  }
-}
-
-void Quadtree::get(vec<vec<int>> &cont) const {
-  //----------------------------------------------------------------
-  // [1] Find the deepest level node.
-  // [2] If there are indexes, add to container.
-  //----------------------------------------------------------------
-
-  // If this subnode has split..
-  if (m_subnode[0] != nullptr)  // [1]
-  {
-    // Continue down the tree
-    m_subnode[0]->get(cont);
-    m_subnode[1]->get(cont);
-    m_subnode[2]->get(cont);
-    m_subnode[3]->get(cont);
-
-    return;
+  if (!EE) {
+    errs() << argv[0] << ": Failed to construct ExecutionEngine: " << errStr
+           << "\n";
+    return 1;
   }
 
-  // Insert indexes into our container
-  if (m_index.size() != 0) cont.emplace_back(m_index);  // [2]
-}
-
-void Quadtree::retrieve(vec<int> &cont, const Rect &rect) const {
-  //----------------------------------------------------------------
-  // [1] Find the deepest level node.
-  // [2] If there are indexes, add to container.
-  //----------------------------------------------------------------
-
-  // If this subnode has split..
-  if (m_subnode[0] != nullptr)  // [1]
-  {
-    // Continue down the tree
-    if (m_subnode[0]->contain_rect(rect)) m_subnode[0]->retrieve(cont, rect);
-    if (m_subnode[1]->contain_rect(rect)) m_subnode[1]->retrieve(cont, rect);
-    if (m_subnode[2]->contain_rect(rect)) m_subnode[2]->retrieve(cont, rect);
-    if (m_subnode[3]->contain_rect(rect)) m_subnode[3]->retrieve(cont, rect);
-
-    return;
+  errs() << "verifying... ";
+  if (verifyModule(*M)) {
+    errs() << argv[0] << ": Error constructing function!\n";
+    return 1;
   }
 
-  // Add all indexes to our container
-  for (const auto &index : m_index) cont.emplace_back(index);
+  errs() << "OK\n";
+  errs() << "We just constructed this LLVM module:\n\n---------\n" << *M;
+  errs() << "---------\nstarting fibonacci(" << n << ") with JIT...\n";
+
+  // Call the Fibonacci function with argument n:
+  std::vector<GenericValue> Args(1);
+  Args[0].IntVal = APInt(32, n);
+  GenericValue GV = EE->runFunction(FibF, Args);
+
+  // import result of execution
+  outs() << "Result: " << GV.IntVal << "\n";
+
+  return 0;
 }
-
-void Quadtree::reset() {
-  //----------------------------------------------------------------
-  // Sets bounds to the screens bounds and clears the quadtrees.
-  //----------------------------------------------------------------
-
-  m_rect = Rect(Vec2(0, 0), Vec2(screen_width, screen_height));
-  m_index.clear();
-  m_index.shrink_to_fit();
-
-  m_subnode[0] = nullptr;
-  m_subnode[1] = nullptr;
-  m_subnode[2] = nullptr;
-  m_subnode[3] = nullptr;
-}
-
-void Quadtree::draw() const {
-  //----------------------------------------------------------------
-  // [1] Draw this nodes boundaries.
-  // [2] Draw subnodes boundaries.
-  //----------------------------------------------------------------
-
-  if (m_subnode[0] != nullptr)  // [2]
-  {
-    // Set color of each subnode
-    m_subnode[0]->set_color(pastel_red);
-    m_subnode[1]->set_color(pastel_gray);
-    m_subnode[2]->set_color(pastel_orange);
-    m_subnode[3]->set_color(pastel_pink);
-
-    // Continue down the tree
-    m_subnode[0]->draw();
-    m_subnode[1]->draw();
-    m_subnode[2]->draw();
-    m_subnode[3]->draw();
-
-    return;
-  }
-
-  // Color the balls in the same color as the boundaries
-  for (const auto &id : m_index) {
-    object_vec[id]->set_temp_color(m_rect.get_color());
-  }
-
-  // Only draw the nodes with objects in them.
-  if (m_index.size() != 0) m_rect.draw();  // [1]
-                                           // m_rect.draw(); // draw them all '
-}
-
-bool Quadtree::contain(const int id) const { return m_rect.contain(id); }
-
-bool Quadtree::contain_rect(const Rect &rect) const {
-  return m_rect.contain_rect(rect);
-}
-
-void Quadtree::set_color(const Color &c) { m_rect.set_color(c); }

@@ -1,255 +1,149 @@
-#include <iostream>
-#include <sstream>
+//===--- examples/Fibonacci/fibonacci.cpp - An example use of the JIT -----===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This small program provides an example of how to build quickly a small module
+// with function Fibonacci and execute it with the JIT.
+//
+// The goal of this snippet is to create in the memory the LLVM module
+// consisting of one function as follow:
+//
+//   int fib(int x) {
+//     if(x<=2) return 1;
+//     return fib(x-1)+fib(x-2);
+//   }
+//
+// Once we have this, we compile the module via JIT, then execute the `fib'
+// function and return result to a driver, i.e. to a "host program".
+//
+//===----------------------------------------------------------------------===//
 
-#include "Quadtree.h"
-#include "Utils.h"
+#include "llvm/ADT/APInt.h"
+#include "llvm/IR/Verifier.h"
+#include "llvm/ExecutionEngine/ExecutionEngine.h"
+#include "llvm/ExecutionEngine/GenericValue.h"
+#include "llvm/ExecutionEngine/MCJIT.h"
+#include "llvm/IR/Argument.h"
+#include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/InstrTypes.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/Type.h"
+#include "llvm/Support/Casting.h"
+#include "llvm/Support/TargetSelect.h"
+#include "llvm/Support/raw_ostream.h"
+#include <algorithm>
+#include <cstdlib>
+#include <memory>
+#include <string>
+#include <vector>
 
-using namespace std;
-using namespace vs;
+using namespace llvm;
 
-/// <summary>
-/// Constructor
-/// </summary>
-/// <param name="x">Position on the x axis</param>
-/// <param name="y">Position on the y axis</param>
-/// <param name="width">Width of the tree</param>
-/// <param name="height">Height of the tree</param>
-/// <param name="level">Level of the tree</param>
-/// <param name="maxLevel">Maximum level of the tree</param>
-quadtree::quadtree(float x, float y, float width, float height, int level, int maxLevel, quadtree* parent) :
-	_x			(x),
-	_y			(y),
-	_width		(width),
-	_height		(height),
-	_level		(level),
-	_max_level	(maxLevel),
-	_parent		(parent)
-{
-	if (level == maxLevel) {
-		return;
-	}
+static Function *CreateFibFunction(Module *M, LLVMContext &Context) {
+  // Create the fib function and insert it into module M. This function is said
+  // to return an int and take an int parameter.
+  Function *FibF =
+    cast<Function>(M->getOrInsertFunction("fib", Type::getInt32Ty(Context),
+                                          Type::getInt32Ty(Context),
+                                          nullptr));
 
-	_nw = new quadtree(x, y, width / 2.0f, height / 2.0f, level+1, maxLevel, this);
-	_ne = new quadtree(x + width / 2.0f, y, width / 2.0f, height / 2.0f, level+1, maxLevel, this);
-	_sw = new quadtree(x, y + height / 2.0f, width / 2.0f, height / 2.0f, level+1, maxLevel, this);
-	_se = new quadtree(x + width / 2.0f, y + height / 2.0f, width / 2.0f, height / 2.0f, level+1, maxLevel, this);
+  // Add a basic block to the function.
+  BasicBlock *BB = BasicBlock::Create(Context, "EntryBlock", FibF);
+
+  // Get pointers to the constants.
+  Value *One = ConstantInt::get(Type::getInt32Ty(Context), 1);
+  Value *Two = ConstantInt::get(Type::getInt32Ty(Context), 2);
+
+  // Get pointer to the integer argument of the add1 function...
+  Argument *ArgX = &*FibF->arg_begin(); // Get the arg.
+  ArgX->setName("AnArg");            // Give it a nice symbolic name for fun.
+
+  // Create the true_block.
+  BasicBlock *RetBB = BasicBlock::Create(Context, "return", FibF);
+  // Create an exit block.
+  BasicBlock* RecurseBB = BasicBlock::Create(Context, "recurse", FibF);
+
+  // Create the "if (arg <= 2) goto exitbb"
+  Value *CondInst = new ICmpInst(*BB, ICmpInst::ICMP_SLE, ArgX, Two, "cond");
+  BranchInst::Create(RetBB, RecurseBB, CondInst, BB);
+
+  // Create: ret int 1
+  ReturnInst::Create(Context, One, RetBB);
+
+  // create fib(x-1)
+  Value *Sub = BinaryOperator::CreateSub(ArgX, One, "arg", RecurseBB);
+  CallInst *CallFibX1 = CallInst::Create(FibF, Sub, "fibx1", RecurseBB);
+  CallFibX1->setTailCall();
+
+  // create fib(x-2)
+  Sub = BinaryOperator::CreateSub(ArgX, Two, "arg", RecurseBB);
+  CallInst *CallFibX2 = CallInst::Create(FibF, Sub, "fibx2", RecurseBB);
+  CallFibX2->setTailCall();
+
+  // fib(x-1)+fib(x-2)
+  Value *Sum = BinaryOperator::CreateAdd(CallFibX1, CallFibX2,
+                                         "addresult", RecurseBB);
+
+  // Create the return instruction and add it to the basic block
+  ReturnInst::Create(Context, Sum, RecurseBB);
+
+  return FibF;
 }
 
-/// <summary>
-/// Destructor
-/// </summary>
-quadtree::~quadtree() {
-	if (_level == _max_level)
-		return;
+int main(int argc, char **argv) {
+  int n = argc > 1 ? atol(argv[1]) : 24;
 
-	delete _nw;
-	delete _ne;
-	delete _sw;
-	delete _se;
-}
+  InitializeNativeTarget();
+  InitializeNativeTargetAsmPrinter();
+  LLVMContext Context;
 
-/// <summary>
-/// Adds a new object to the tree
-/// </summary>
-/// <param name="object">Object to add</param>
-void quadtree::add_object(game_object* object) {
-	if (_level == _max_level) {
-		_objects.push_back(object);
-		return;
-	}
-	if (contains(_nw, object)) {
-		_nw->add_object(object); return;
-	} else if (contains(_ne, object)) {
-		_ne->add_object(object); return;
-	} else if (contains(_sw, object)) {
-		_sw->add_object(object); return;
-	} else if (contains(_se, object)) {
-		_se->add_object(object); return;
-	}
-	if (contains(this, object)) {
-		_objects.push_back(object);
-	}
-}
+  // Create some module to put our function into it.
+  std::unique_ptr<Module> Owner(new Module("test", Context));
+  Module *M = Owner.get();
 
-/// <summary>
-/// Returns the objects in the quadtree that are inside the area with the given point
-/// </summary>
-/// <param name="x">Position on the x axis</param>
-/// <param name="y">Position on the y axis</param>
-/// <param name="layer">Accepted layers of the object</param>
-/// <returns>List of collision objects</returns>
-vector<game_object*> quadtree::get_objects_at(float x, float y, int layer) const {
-	if (_level == _max_level) {
-		if(layer == 0) {
-			return _objects;
-		}
-		return get_objects_at_layer(layer);
-	}
+  // We are about to create the "fib" function:
+  Function *FibF = CreateFibFunction(M, Context);
 
-	vector<game_object*> return_objects, child_return_objects;
-	if (!_objects.empty()) {
-		if(layer == 0) {
-			return_objects = _objects;
-		} else {
-			return_objects = get_objects_at_layer(layer);
-		}
-	}
+  // Now we going to create JIT
+  std::string errStr;
+  ExecutionEngine *EE =
+    EngineBuilder(std::move(Owner))
+    .setErrorStr(&errStr)
+    .create();
 
-	//Check each subtree and add results
-	if (x > _x + _width / 2.0f && x < _x + _width) {
-		if (y > _y + _height / 2.0f && y < _y + _height) {
-			child_return_objects = _se->get_objects_at(x, y);
-			return_objects.insert(return_objects.end(), child_return_objects.begin(), child_return_objects.end());
-			return return_objects;
-		}
-		if (y > _y && y <= _y + _height / 2.0f) {
-			child_return_objects = _ne->get_objects_at(x, y);
-			return_objects.insert(return_objects.end(), child_return_objects.begin(), child_return_objects.end());
-			return return_objects;
-		}
-	} else if (x > _x && x <= _x + _width / 2.0f) {
-		if (y > _y + _height / 2.0f && y < _y + _height) {
-			child_return_objects = _sw->get_objects_at(x, y);
-			return_objects.insert(return_objects.end(), child_return_objects.begin(), child_return_objects.end());
-			return return_objects;
-		}
-		if (y > _y && y <= _y + _height / 2.0f) {
-			child_return_objects = _nw->get_objects_at(x, y);
-			return_objects.insert(return_objects.end(), child_return_objects.begin(), child_return_objects.end());
-			return return_objects;
-		}
-	}
-	return return_objects;
-}
+  if (!EE) {
+    errs() << argv[0] << ": Failed to construct ExecutionEngine: " << errStr
+           << "\n";
+    return 1;
+  }
 
-/// <summary>
-/// Returns all the objects in the tree
-/// </summary>
-/// <returns></returns>
-vector<game_object*> quadtree::get_all_objects() const {
-	if (_level == _max_level) {
-		return _objects;
-	}
+  errs() << "verifying... ";
+  if (verifyModule(*M)) {
+    errs() << argv[0] << ": Error constructing function!\n";
+    return 1;
+  }
 
-	vector<game_object*> return_objects;
-	if (!_objects.empty()) {
-		return_objects = _objects;
-	}
+  errs() << "OK\n";
+  errs() << "We just constructed this LLVM module:\n\n---------\n" << *M;
+  errs() << "---------\nstarting fibonacci(" << n << ") with JIT...\n";
 
-	auto child_return_objects = _se->get_all_objects();
-	return_objects.insert(return_objects.end(), child_return_objects.begin(), child_return_objects.end());
-	
-	child_return_objects = _ne->get_all_objects();
-	return_objects.insert(return_objects.end(), child_return_objects.begin(), child_return_objects.end());
-	
-	child_return_objects = _sw->get_all_objects();
-	return_objects.insert(return_objects.end(), child_return_objects.begin(), child_return_objects.end());
+  // Call the Fibonacci function with argument n:
+  std::vector<GenericValue> Args(1);
+  Args[0].IntVal = APInt(32, n);
+  GenericValue GV = EE->runFunction(FibF, Args);
 
-	child_return_objects = _nw->get_all_objects();
-	return_objects.insert(return_objects.end(), child_return_objects.begin(), child_return_objects.end());
+  // import result of execution
+  outs() << "Result: " << GV.IntVal << "\n";
 
-	return return_objects;
-}
-
-/// <summary>
-/// Clears the tree
-/// </summary>
-void quadtree::clear() {
-	if (_level == _max_level) {
-		_objects.clear();
-		return;
-	}
-	_nw->clear();
-	_ne->clear();
-	_sw->clear();
-	_se->clear();
-
-	if (!_objects.empty()) {
-		_objects.clear();
-	}
-}
-
-/// <summary>
-/// Updates the quadtree, so that moved objects are sorted correctly
-/// </summary>
-void quadtree::update(const std::vector<game_object*>& objects) {
-	//Only allow calling on the root
-	if (_parent != nullptr) return;
-	
-	//Rebuild the tree
-	clear();
-	for (auto* object : objects) {
-		add_object(object);
-	}
-}
-
-/// <summary>
-/// Renders the quadtree
-/// </summary>
-/// <param name="render_target">Target to render to</param>
-void quadtree::render(ID2D1HwndRenderTarget* render_target, ID2D1SolidColorBrush* brush) {
-	if (render_target == nullptr) return;
-	if(brush == nullptr) {
-		render_target->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::AntiqueWhite), &brush);
-	}
-	if(_level == _max_level) {
-		render_target->DrawRectangle(D2D1::RectF(_x, _y, _x + _width, _y + _height), brush);
-		return;
-	}
-	_se->render(render_target, brush);
-	_ne->render(render_target, brush);
-	_nw->render(render_target, brush);
-	_sw->render(render_target, brush);
-
-	if (_parent == nullptr) {
-		utils::safe_release(&brush);
-	}
-}
-
-/// <summary>
-/// Returns true if the tree contains the given object, false if not
-/// </summary>
-/// <param name="child">Tree to check</param>
-/// <param name="object">Object to check</param>
-/// <returns></returns>
-bool quadtree::contains(quadtree *child, game_object *object) {
-	if (child == nullptr || object == nullptr) return false;
-	//Classic aabb collision check
-	return	 !(object->get_x() < child->_x ||
-				object->get_y() < child->_y ||
-				object->get_x() > child->_x + child->_width  ||
-				object->get_y() > child->_y + child->_height ||
-				object->get_x() + object->get_width() < child->_x ||
-				object->get_y() + object->get_height() < child->_y ||
-				object->get_x() + object->get_width() > child->_x + child->_width ||
-				object->get_y() + object->get_height() > child->_y + child->_height);
-}
-
-/// <summary>
-/// Returns true if the object has a layer contained in the given layer
-/// </summary>
-/// <param name="object">Object to test layer of</param>
-/// <param name="layer">Layers to check</param>
-/// <returns></returns>
-bool quadtree::has_any_layer(game_object* object, int layer) const {
-	if (object == nullptr) return false;
-	const auto obj_layer = object->get_layer();
-
-	//Test if bit is set
-	return ((obj_layer & layer) == obj_layer);
-}
-
-/// <summary>
-/// Returns a vector of all the objects that match the given layers
-/// </summary>
-/// <param name="layer">Layers to check for</param>
-/// <returns></returns>
-std::vector<game_object*> quadtree::get_objects_at_layer(int layer) const {
-	vector<game_object*> return_objects;
-	for (auto object : _objects) {
-		if (has_any_layer(object, layer)) {
-			return_objects.push_back(object);
-		}
-	}
-	return return_objects;
+  return 0;
 }

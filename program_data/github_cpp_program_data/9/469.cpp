@@ -1,65 +1,68 @@
-#include "Heap.h"
+/*
+*
+* Tag: Sort
+* Time: O(nlgn)
+* Space: O(lgn)
+*/
+#include <cmath>
+#include <cstdio>
+#include <vector>
 #include <iostream>
-
+#include <algorithm>
 using namespace std;
 
-void Heap::enqueue(PrintJob* current) {
-	if (numItems < MAX_HEAP_SIZE) {
-		if (!numItems) {
-			arr[numItems ] = current;
-			++numItems;
-		}
-		else {
-		   int x = numItems;
-		   while (x > 0 && (arr[(x-1)/2]->getPriority() < current->getPriority())) {
-            arr[x] = arr[(x-1)/2];
-            x = (x-1)/2;
-         }
-         arr[x] = current;
-         ++numItems;
-		}
-	}
-}
-
-void Heap::dequeue() {
-	if ((numItems > 2 && arr[1]->getPriority() < arr[numItems - 1]->getPriority()) && (arr[2]->getPriority() < arr[numItems - 1]->getPriority())) {
-		arr[0] = arr[numItems-1]; //if item can be placed in hole without violation of the heap property, then done
-		--numItems;
-	}
-	else { //trickle down if heap property is violated
-		trickleDown(0);
-		--numItems;
-	}
-}
-
-PrintJob* Heap::highest() {
-	if (!numItems) {
-		return 0;
-	}
-	return arr[0]; //highest at index 0 bc max heap
-}
-
-void Heap::print() {
-	cout << "Priority: " << arr[0]->getPriority()
-		 << ", Job Number: " << arr[0]->getJobNumber() 
-		 << ", Number of Pages: " << arr[0]->getPages() 
-		 << endl; 
-}
-
-void Heap::trickleDown(int i) {   
-    if (((2 * i + 1) < numItems) && ((2 * i + 2) < numItems)) { //if both children exist  
-        if (arr[2 * i + 1]->getPriority() > arr[2 * i + 2]->getPriority()) {//if left > right, assign passed in index to left and trickle
-            arr[i] = arr[2 * i + 1];
-            trickleDown(2 * i + 1);
-        }
-        else { //if right > left, assign passed in index to right and trickle
-            arr[i] = arr[2 * i + 2];
-            trickleDown(2 * i + 2);
+void mergeSort(vector<int> &rec, long long &_ans) {
+    if(rec.size() <= 1) return ;
+    vector<int> _left_rec, _right_rec;
+    for(int i = 0; i < rec.size(); i ++) {
+        if(i < rec.size()/2)
+            _left_rec.push_back(rec[i]);
+        else
+            _right_rec.push_back(rec[i]);
+    }
+    mergeSort(_left_rec,_ans);
+    mergeSort(_right_rec,_ans);
+    int ind = 0, _left_ind = 0, _right_ind = 0;
+    while(_left_ind < _left_rec.size() && _right_ind < _right_rec.size()) {
+        if(_left_rec[_left_ind] > _right_rec[_right_ind]) {
+            _ans += (_left_rec.size() - _left_ind);
+            rec[ind ++] = _right_rec[_right_ind];
+            _right_ind ++;
+        } else {
+            rec[ind ++] = _left_rec[_left_ind];
+            _left_ind ++;
         }
     }
-    else if (((2 * i + 1) < numItems)) { //if ONLY left exists
-        arr[i] = arr[2 * i + 1];
+    while(_left_ind < _left_rec.size()){
+        rec[ind ++] = _left_rec[_left_ind];
+        _left_ind ++;
     }
+    while(_right_ind < _right_rec.size()){
+        rec[ind ++] = _right_rec[_right_ind];
+        _right_ind ++;
+    }
+}
 
-    return;
+int main() {
+    /* Enter your code here. Read input from STDIN. Print output to STDOUT */
+    int T;
+    cin>>T;
+    while(T--) {
+        int n;
+        long long _ans = 0;
+        vector<int> rec;
+        cin>>n;
+        for(int i = 0; i < n; i ++){
+            int tmp;
+            cin>>tmp;
+            rec.push_back(tmp);
+        }
+        mergeSort(rec,_ans);
+  /*      for(int i = 0; i < rec.size(); i ++)
+            cout<<rec[i]<<" ";
+        cout<<endl;
+        cout<<"--------------------------"<<endl; */
+        cout<<_ans<<endl;
+    }
+    return 0;
 }

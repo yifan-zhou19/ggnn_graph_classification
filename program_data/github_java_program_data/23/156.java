@@ -1,41 +1,48 @@
-/* Queue.java */
+package cuiods.list.skiplist;
 
-package list;
+/**
+ * 跳转表节点
+ * @author cuiods
+ */
+public class SkipListNode<T extends Comparable<? super T>> {
+    private T data;
+    /**
+     * 用数组保存其他节点的引用
+     */
+    private SkipListNode[] next;
 
-public interface Queue {
+    /**
+     * @param data
+     *      节点保存的数据
+     * @param maxLevel
+     *      若跳转表最多保存n个数据，则最多的层次为[log2(n)]
+     */
+    public SkipListNode(T data, int maxLevel) {
+        this.data = data;
+        next = new SkipListNode[maxLevel];
+    }
 
-  /** 
-   *  size() returns the size of this Queue.
-   *  @return the size of this Queue.
-   *  Performance:  runs in O(1) time.
-   **/
-  public int size();
+    public T getData() {
+        return data;
+    }
 
-  /**
-   *  isEmpty() returns true if this Queue is empty, false otherwise.
-   *  @return true if this Queue is empty, false otherwise. 
-   *  Performance:  runs in O(1) time.
-   **/
-  public boolean isEmpty();
+    public void setData(T data) {
+        this.data = data;
+    }
 
-  /**
-   *  enqueue() inserts an object at the end of the Queue.
-   *  @param item the item to be enqueued.
-   **/
-  public void enqueue(Object item);
+    public SkipListNode[] getNext() {
+        return next;
+    }
 
-  /**
-   *  dequeue() removes and returns the object at the front of the Queue.
-   *  @return the item dequeued.
-   *  @throws a QueueEmptyException if the Queue is empty.
-   **/
-  public Object dequeue() throws QueueEmptyException;
+    public SkipListNode getNext(int index) {
+        return next[index];
+    }
 
-  /**
-   *  front() returns the object at the front of the Queue.
-   *  @return the item at the front of the Queue.
-   *  @throws a QueueEmptyException if the Queue is empty.
-   **/
-  public Object front() throws QueueEmptyException;
+    public void setNext(SkipListNode[] next) {
+        this.next = next;
+    }
 
+    public void setNext(SkipListNode next, int i) {
+        this.next[i] = next;
+    }
 }

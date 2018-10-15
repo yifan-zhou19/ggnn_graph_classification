@@ -1,148 +1,101 @@
-//===--- examples/Fibonacci/fibonacci.cpp - An example use of the JIT -----===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-// This small program provides an example of how to build quickly a small module
-// with function Fibonacci and execute it with the JIT.
-//
-// The goal of this snippet is to create in the memory the LLVM module
-// consisting of one function as follow:
-//
-//   int fib(int x) {
-//     if(x<=2) return 1;
-//     return fib(x-1)+fib(x-2);
-//   }
-//
-// Once we have this, we compile the module via JIT, then execute the `fib'
-// function and return result to a driver, i.e. to a "host program".
-//
-//===----------------------------------------------------------------------===//
-
-#include "llvm/ADT/APInt.h"
-#include "llvm/IR/Verifier.h"
-#include "llvm/ExecutionEngine/ExecutionEngine.h"
-#include "llvm/ExecutionEngine/GenericValue.h"
-#include "llvm/ExecutionEngine/MCJIT.h"
-#include "llvm/IR/Argument.h"
-#include "llvm/IR/BasicBlock.h"
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/DerivedTypes.h"
-#include "llvm/IR/Function.h"
-#include "llvm/IR/InstrTypes.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/Module.h"
-#include "llvm/IR/Type.h"
-#include "llvm/Support/Casting.h"
-#include "llvm/Support/TargetSelect.h"
-#include "llvm/Support/raw_ostream.h"
-#include <algorithm>
-#include <cstdlib>
-#include <memory>
-#include <string>
+#include <iostream>
 #include <vector>
 
-using namespace llvm;
+using namespace std;
 
-static Function *CreateFibFunction(Module *M, LLVMContext &Context) {
-  // Create the fib function and insert it into module M. This function is said
-  // to return an int and take an int parameter.
-  Function *FibF =
-    cast<Function>(M->getOrInsertFunction("fib", Type::getInt32Ty(Context),
-                                          Type::getInt32Ty(Context)));
+struct DataItem {
+    int key;
+    int data;
+    DataItem(int key, int data) : key(key), data(data) {}
+};
 
-  // Add a basic block to the function.
-  BasicBlock *BB = BasicBlock::Create(Context, "EntryBlock", FibF);
 
-  // Get pointers to the constants.
-  Value *One = ConstantInt::get(Type::getInt32Ty(Context), 1);
-  Value *Two = ConstantInt::get(Type::getInt32Ty(Context), 2);
+class hashTable {
+    vector<DataItem*> hashArray;
+    DataItem* dummyItem;
+    int SIZE = 101;
 
-  // Get pointer to the integer argument of the add1 function...
-  Argument *ArgX = &*FibF->arg_begin(); // Get the arg.
-  ArgX->setName("AnArg");            // Give it a nice symbolic name for fun.
+public:
+    hashTable() : hashArray(SIZE, nullptr), dummyItem(new DataItem(-1, -1)) {};
+    int hashCode(int key) {
+        return key % SIZE;
+    }
 
-  // Create the true_block.
-  BasicBlock *RetBB = BasicBlock::Create(Context, "return", FibF);
-  // Create an exit block.
-  BasicBlock* RecurseBB = BasicBlock::Create(Context, "recurse", FibF);
+    // Search
+    // Use linear probing to get the element ahead if the element is not found
+    // at the computed hash code.
+    DataItem* search(int key) {
+        //get the hash
+        int hashIndex = hashCode(key);
 
-  // Create the "if (arg <= 2) goto exitbb"
-  Value *CondInst = new ICmpInst(*BB, ICmpInst::ICMP_SLE, ArgX, Two, "cond");
-  BranchInst::Create(RetBB, RecurseBB, CondInst, BB);
+        //move in array until an empty
+        while(hashArray[hashIndex] != nullptr) {
 
-  // Create: ret int 1
-  ReturnInst::Create(Context, One, RetBB);
+            if(hashArray[hashIndex]->key == key)
+                return hashArray[hashIndex];
 
-  // create fib(x-1)
-  Value *Sub = BinaryOperator::CreateSub(ArgX, One, "arg", RecurseBB);
-  CallInst *CallFibX1 = CallInst::Create(FibF, Sub, "fibx1", RecurseBB);
-  CallFibX1->setTailCall();
+            //go to next cell
+            ++hashIndex;
 
-  // create fib(x-2)
-  Sub = BinaryOperator::CreateSub(ArgX, Two, "arg", RecurseBB);
-  CallInst *CallFibX2 = CallInst::Create(FibF, Sub, "fibx2", RecurseBB);
-  CallFibX2->setTailCall();
+            //wrap around the table
+            hashIndex %= SIZE;
+        }
 
-  // fib(x-1)+fib(x-2)
-  Value *Sum = BinaryOperator::CreateAdd(CallFibX1, CallFibX2,
-                                         "addresult", RecurseBB);
+        return nullptr;
+    }
 
-  // Create the return instruction and add it to the basic block
-  ReturnInst::Create(Context, Sum, RecurseBB);
 
-  return FibF;
-}
+    // Insert
+    // Use linear probing for empty location, if an element is found at the
+    // computed hash code.
+    void insert(int key,int data) {
+        auto item = new DataItem(key, data);
 
-int main(int argc, char **argv) {
-  int n = argc > 1 ? atol(argv[1]) : 24;
+        //get the hash
+        int hashIndex = hashCode(key);
 
-  InitializeNativeTarget();
-  InitializeNativeTargetAsmPrinter();
-  LLVMContext Context;
+        //move in array until an empty or deleted cell
+        while(hashArray[hashIndex] != nullptr && hashArray[hashIndex]->key != -1) {
+            //go to next cell
+            ++hashIndex;
 
-  // Create some module to put our function into it.
-  std::unique_ptr<Module> Owner(new Module("test", Context));
-  Module *M = Owner.get();
+            //wrap around the table
+            hashIndex %= SIZE;
+        }
 
-  // We are about to create the "fib" function:
-  Function *FibF = CreateFibFunction(M, Context);
+        hashArray[hashIndex] = item;
+    }
 
-  // Now we going to create JIT
-  std::string errStr;
-  ExecutionEngine *EE =
-    EngineBuilder(std::move(Owner))
-    .setErrorStr(&errStr)
-    .create();
 
-  if (!EE) {
-    errs() << argv[0] << ": Failed to construct ExecutionEngine: " << errStr
-           << "\n";
-    return 1;
-  }
+    // Delete
+    // Use linear probing to get the element ahead if an element is not found
+    // at the computed hash code.
+    // When found, store a dummy item there to keep the performance of the
+    // hash table intact.
+    DataItem* remove(DataItem* item) {
+        int key = item->key;
 
-  errs() << "verifying... ";
-  if (verifyModule(*M)) {
-    errs() << argv[0] << ": Error constructing function!\n";
-    return 1;
-  }
+        //get the hash
+        int hashIndex = hashCode(key);
 
-  errs() << "OK\n";
-  errs() << "We just constructed this LLVM module:\n\n---------\n" << *M;
-  errs() << "---------\nstarting fibonacci(" << n << ") with JIT...\n";
+        //move in array until an empty
+        while(hashArray[hashIndex] != nullptr) {
 
-  // Call the Fibonacci function with argument n:
-  std::vector<GenericValue> Args(1);
-  Args[0].IntVal = APInt(32, n);
-  GenericValue GV = EE->runFunction(FibF, Args);
+            if(hashArray[hashIndex]->key == key) {
+                struct DataItem* temp = hashArray[hashIndex];
 
-  // import result of execution
-  outs() << "Result: " << GV.IntVal << "\n";
+                //assign a dummy item at deleted position
+                hashArray[hashIndex] = dummyItem;
+                return temp;
+            }
 
-  return 0;
-}
+            //go to next cell
+            ++hashIndex;
+
+            //wrap around the table
+            hashIndex %= SIZE;
+        }
+
+        return nullptr;
+    }
+};

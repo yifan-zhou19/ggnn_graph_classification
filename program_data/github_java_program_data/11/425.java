@@ -1,204 +1,223 @@
-/*************************************************************************
- *  Compilation:  javac BTree.java
- *  Execution:    java BTree
- *
- *  B-tree.
- *
- *  Limitations
- *  -----------
- *   -  Assumes M is even and M >= 4
- *   -  should b be an array of children or list (it would help with
- *      casting to make it a list)
- *
- *************************************************************************/
+package net.groupproject.quadtree;
+
+import net.groupproject.util.Place;
+import net.groupproject.util.Vector2d;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * @author Ansraer on 16.05.2018
+ * @author Jakob Lang
+ * @project TeamaufgabeProjekt
+ */
+public class QuadTreeQuad<T> {
+
+    private Vector2d pos;
+    private double size;
+
+    private QuadTreeNode<T> content;
+
+    private QuadTreeQuad leftUp;
+    private QuadTreeQuad leftDown;
+    private QuadTreeQuad rightUp;
+    private QuadTreeQuad rightDown;
 
 
-public class BTree<Key extends Comparable<Key>, Value>  {
-    private static final int M = 4;    // max children per B-tree node = M-1
-
-    private Node root;             // root of the B-tree
-    private int HT;                // height of the B-tree
-    private int N;                 // number of key-value pairs in the B-tree
-
-    // helper B-tree node data type
-    private static final class Node {
-        private int m;                             // number of children
-        private Entry[] children = new Entry[M];   // the array of children
-        private Node(int k) { m = k; }             // create a node with k children
+    public QuadTreeQuad(Vector2d center, double size) {
+        this.pos = center;
+        this.size = size;
+        content = null;
+        leftUp = null;
+        leftDown = null;
+        rightUp = null;
+        rightDown = null;
     }
 
-    // internal nodes: only use key and next
-    // external nodes: only use key and value
-    private static class Entry {
-        private Comparable key;
-        private Object value;
-        private Node next;     // helper field to iterate over array entries
-        public Entry(Comparable key, Object value, Node next) {
-            this.key   = key;
-            this.value = value;
-            this.next  = next;
+    public QuadTreeQuad(double centerX, double centerY, double size) {
+        this(new Vector2d(centerX, centerY), size);
+    }
+
+    //calculates the distance between the two Positions p1,p2
+    
+
+    public void insert(QuadTreeNode<T> node) {
+
+        if(node==null)
+            return;
+
+        //if this is en empty quad just put the node inside, no need to divide it
+        if (this.content == null && (leftUp == null && leftDown == null && rightUp == null && rightDown == null)) {
+            this.content = node;
+
+            return;
         }
-    }
 
-    // constructor
-    public BTree() { root = new Node(0); }
- 
-    // return number of key-value pairs in the B-tree
-    public int size() { return N; }
-
-    // return height of B-tree
-    public int height() { return HT; }
-
-
-    // search for given key, return associated value; return null if no such key
-    public Value get(Key key) { return search(root, key, HT); }
-    private Value search(Node x, Key key, int ht) {
-        Entry[] children = x.children;
-
-        // external node
-        if (ht == 0) {
-            for (int j = 0; j < x.m; j++) {
-                if (eq(key, children[j].key)) return (Value) children[j].value;
+        //= in case something is exactly at the center
+        if (node.getPos().getX() >= this.pos.getX()) {
+            //right side
+            if (node.getPos().getY() >= this.pos.getY()) {
+                //up
+                if (this.rightUp == null) {
+                    this.rightUp = new QuadTreeQuad<T>(this.pos.getX() + this.size / 4, this.pos.getY() + this.size / 4, this.size / 2);
+                }
+                this.rightUp.insert(node);
+            } else {
+                //down
+                if (this.rightDown == null) {
+                    this.rightDown = new QuadTreeQuad<T>(this.pos.getX() + this.size / 4, this.pos.getY() - this.size / 4, this.size / 2);
+                }
+                this.rightDown.insert(node);
+            }
+        } else {
+            //left side
+            if (node.getPos().getY() >= this.pos.getY()) {
+                //up
+                if (this.leftUp == null) {
+                    this.leftUp = new QuadTreeQuad<T>(this.pos.getX() - this.size / 4, this.pos.getY() + this.size / 4, this.size / 2);
+                }
+                this.leftUp.insert(node);
+            } else {
+                //down
+                if (this.leftDown == null) {
+                    this.leftDown = new QuadTreeQuad<T>(this.pos.getX() - this.size / 4, this.pos.getY() - this.size / 4, this.size / 2);
+                }
+                this.leftDown.insert(node);
             }
         }
 
-        // internal node
-        else {
-            for (int j = 0; j < x.m; j++) {
-                if (j+1 == x.m || less(key, children[j+1].key))
-                    return search(children[j].next, key, ht-1);
-            }
-        }
-        return null;
+        //After splitting this quad into more quads insert the content into the right sub-quad and remove it from this quad.
+        QuadTreeNode<T> n= this.content;
+        this.content=null;
+        this.insert(n);
+
+        return;
+
     }
 
 
-    // insert key-value pair
-    // add code to check for duplicate keys
-    public void put(Key key, Value value) {
-        Node u = insert(root, key, value, HT); 
-        N++;
-        if (u == null) return;
+    public QuadTreeNode<T> find(Vector2d pos) {
 
-        // need to split root
-        Node t = new Node(2);
-        t.children[0] = new Entry(root.children[0].key, null, root);
-        t.children[1] = new Entry(u.children[0].key, null, u);
-        root = t;
-        HT++;
-    }
+        if (this.content != null && this.content.getPos().equals(pos))
+            return this.content;
 
-
-    private Node insert(Node h, Key key, Value value, int ht) {
-        int j;
-        Entry t = new Entry(key, value, null);
-
-        // external node
-        if (ht == 0) {
-            for (j = 0; j < h.m; j++) {
-                if (less(key, h.children[j].key)) break;
+        //= in case something is exactly at the center
+        if (pos.getX() >= this.pos.getX()) {
+            //right side
+            if (pos.getY() >= this.pos.getY()) {
+                //up
+                if (this.rightUp != null) {
+                    return this.rightUp.find(pos);
+                } else {
+                    return null;
+                }
+            } else {
+                //down
+                if (this.rightDown != null) {
+                    return this.rightDown.find(pos);
+                } else {
+                    return null;
+                }
             }
-        }
-
-        // internal node
-        else {
-            for (j = 0; j < h.m; j++) {
-                if ((j+1 == h.m) || less(key, h.children[j+1].key)) {
-                    Node u = insert(h.children[j++].next, key, value, ht-1);
-                    if (u == null) return null;
-                    t.key = u.children[0].key;
-                    t.next = u;
-                    break;
+        } else {
+            //left side
+            if (pos.getY() >= this.pos.getY()) {
+                //up
+                if (this.leftUp != null) {
+                    return this.leftUp.find(pos);
+                } else {
+                    return null;
+                }
+            } else {
+                //down
+                if (this.leftDown != null) {
+                    return this.leftDown.find(pos);
+                } else {
+                    return null;
                 }
             }
         }
 
-        for (int i = h.m; i > j; i--) h.children[i] = h.children[i-1];
-        h.children[j] = t;
-        h.m++;
-        if (h.m < M) return null;
-        else         return split(h);
     }
 
-    // split node in half
-    private Node split(Node h) {
-        Node t = new Node(M/2);
-        h.m = M/2;
-        for (int j = 0; j < M/2; j++)
-            t.children[j] = h.children[M/2+j]; 
-        return t;    
-    }
 
-    // for debugging
-    public String toString() {
-        return toString(root, HT, "") + "\n";
-    }
-    private String toString(Node h, int ht, String indent) {
-        String s = "";
-        Entry[] children = h.children;
 
-        if (ht == 0) {
-            for (int j = 0; j < h.m; j++) {
-                s += indent + children[j].key + " " + children[j].value + "\n";
+    //finds every Place within a radius r of Position pos.
+    //Returns an int[] Array, where Array[0] is the number of Trainstations and Array[1] is the number of Airports
+    public List<QuadTreeNode<T>> getContentInRadius(Vector2d pos, double r) {
+        Vector2d boundBoxTl = new Vector2d(pos.getX() - r, pos.getY() + r);
+        Vector2d boundBoxBr = new Vector2d(pos.getX() + r, pos.getY() - r);
+
+        //this list will be filled with all content in the specified radius and is then returned to the user.
+        List<QuadTreeNode<T>> contents = new ArrayList<QuadTreeNode<T>>();
+
+        if (this.content != null) {
+            if (insideBoundBox(this.content.getPos(),boundBoxTl,boundBoxBr)) {
+            //if (insideBoundBox(boundBox,this.content.getPos())) {
+                if (pos.distance(this.content.getPos()) <= r) {
+                    contents.add(this.content);
+                }
+            }
+        } else {
+            if (this.leftUp != null && isOverlapping(boundBoxTl,boundBoxBr, this.leftUp.getTopLeftCorner(), this.leftUp.getBottomRightCorner())) {
+                contents.addAll(this.leftUp.getContentInRadius(pos, r));
+            }
+            if (this.rightUp != null && isOverlapping(boundBoxTl,boundBoxBr, this.rightUp.getTopLeftCorner(), this.rightUp.getBottomRightCorner())) {
+                contents.addAll(this.rightUp.getContentInRadius(pos, r));
+
+            }
+            if (this.leftDown != null && isOverlapping(boundBoxTl,boundBoxBr, this.leftDown.getTopLeftCorner(), this.leftDown.getBottomRightCorner())) {
+                contents.addAll(this.leftDown.getContentInRadius(pos, r));
+            }
+            if (this.rightDown != null && isOverlapping(boundBoxTl,boundBoxBr, this.rightDown.getTopLeftCorner(), this.rightDown.getBottomRightCorner())) {
+                contents.addAll(this.rightDown.getContentInRadius(pos, r));
             }
         }
-        else {
-            for (int j = 0; j < h.m; j++) {
-                if (j > 0) s += indent + "(" + children[j].key + ")\n";
-                s += toString(children[j].next, ht-1, indent + "     ");
-            }
+
+
+        return contents;
+    }
+
+
+
+    public boolean isOverlapping(Vector2d Rect1TopLeft, Vector2d Rect1BottomRight,Vector2d Rect2TopLeft, Vector2d Rect2BottomRight) {
+        if (Rect1TopLeft.getX() > Rect2BottomRight.getX() // R1 is right to R2
+            || Rect1BottomRight.getX() < Rect2TopLeft.getX()// R1 is left to R2
+            || Rect1TopLeft.getY() < Rect2BottomRight.getY() // R1 is below R2
+            || Rect1BottomRight.getY() > Rect2TopLeft.getY()) { // R1 is above R1
+            return false;
         }
-        return s;
+        return true;
     }
 
 
-    // comparison functions - make Comparable instead of Key to avoid casts
-    private boolean less(Comparable k1, Comparable k2) {
-        return k1.compareTo(k2) < 0;
+    //checks, whether a Position is inside a boundingbox defined by the two vertices TopLeft and BottomRight
+    private boolean insideBoundBox(Vector2d p, Vector2d bbTl, Vector2d bbBr) {
+        return (p.getX() >= bbTl.getX() &&
+                p.getX() <= bbBr.getX() &&
+                p.getY() <= bbTl.getY() &&
+                p.getY() >= bbBr.getY());
+
     }
 
-    private boolean eq(Comparable k1, Comparable k2) {
-        return k1.compareTo(k2) == 0;
+    public Vector2d getTopLeftCorner(){
+        return new Vector2d(this.pos.getX()-this.size/2, this.pos.getY()+this.size/2);
+    }
+
+    public Vector2d getBottomRightCorner(){
+        return new Vector2d(this.pos.getX()+this.size/2, this.pos.getY()-this.size/2);
     }
 
 
-   /*************************************************************************
-    *  test client
-    *************************************************************************/
-    public static void main(String[] args) {
-        BTree<String, String> st = new BTree<String, String>();
-
-//      st.put("www.cs.princeton.edu", "128.112.136.12");
-        st.put("www.cs.princeton.edu", "128.112.136.11");
-        st.put("www.princeton.edu",    "128.112.128.15");
-        st.put("www.yale.edu",         "130.132.143.21");
-        st.put("www.simpsons.com",     "209.052.165.60");
-        st.put("www.apple.com",        "17.112.152.32");
-        st.put("www.amazon.com",       "207.171.182.16");
-        st.put("www.ebay.com",         "66.135.192.87");
-        st.put("www.cnn.com",          "64.236.16.20");
-        st.put("www.google.com",       "216.239.41.99");
-        st.put("www.nytimes.com",      "199.239.136.200");
-        st.put("www.microsoft.com",    "207.126.99.140");
-        st.put("www.dell.com",         "143.166.224.230");
-        st.put("www.slashdot.org",     "66.35.250.151");
-        st.put("www.espn.com",         "199.181.135.201");
-        st.put("www.weather.com",      "63.111.66.11");
-        st.put("www.yahoo.com",        "216.109.118.65");
-
-
-        StdOut.println("cs.princeton.edu:  " + st.get("www.cs.princeton.edu"));
-        StdOut.println("hardvardsucks.com: " + st.get("www.harvardsucks.com"));
-        StdOut.println("simpsons.com:      " + st.get("www.simpsons.com"));
-        StdOut.println("apple.com:         " + st.get("www.apple.com"));
-        StdOut.println("ebay.com:          " + st.get("www.ebay.com"));
-        StdOut.println("dell.com:          " + st.get("www.dell.com"));
-        StdOut.println();
-
-        StdOut.println("size:    " + st.size());
-        StdOut.println("height:  " + st.height());
-        StdOut.println(st);
-        StdOut.println();
+    public Vector2d getPos() {
+        return pos;
     }
+
+    public double getSize() {
+        return size;
+    }
+
+
+
 
 }

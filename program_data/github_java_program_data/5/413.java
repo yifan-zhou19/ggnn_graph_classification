@@ -1,44 +1,92 @@
-import java.io.*;
-import java.util.*;
+package AVLTree;
 
-class DFS{
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-    static Stack<Integer> stack = new Stack<>();
-    static Map<Integer,Stack<Integer>> map = new HashMap<Integer,Stack<Integer>>();
+public class AvlTreePrinter {
 
-    static class Graph{
-        public void addEdge(int node1,int node2){
-            map.putIfAbsent(node1,new Stack<>());
-            map.get(node1).add(node2);
-        }
-        public void printEdges(){
-            map.forEach((id, val) -> System.out.println(val));
-        }
+    public static <T extends Comparable<T>> void printNode(Node<T> root) {
+        int maxLevel = AvlTreePrinter.maxLevel(root);
+
+        printNodeInternal(Collections.singletonList(root), 1, maxLevel);
     }
 
-    static void iterateGraph(int startNode){
-        stack.add(startNode);
-        System.out.println(startNode);
-        while(stack.size() > 0){
-            int n = stack.peek();
-            if(map.get(n) == null && map.get(n).size() > 0){
-                int num = map.get(n).pop();
-                System.out.println(num);
-                stack.push(num);
-            }else{
-                stack.pop();
+    private static <T extends Comparable<?>> void printNodeInternal(List<Node<T>> nodes, int level, int maxLevel) {
+        if (nodes.isEmpty() || AvlTreePrinter.isAllElementsNull(nodes))
+            return;
+
+        int floor = maxLevel - level;
+        int endgeLines = (int) Math.pow(2, (Math.max(floor - 1, 0)));
+        int firstSpaces = (int) Math.pow(2, (floor)) - 1;
+        int betweenSpaces = (int) Math.pow(2, (floor + 1)) - 1;
+
+        AvlTreePrinter.printWhitespaces(firstSpaces);
+
+        List<Node<T>> newNodes = new ArrayList<Node<T>>();
+        for (Node<T> node : nodes) {
+            if (node != null) {
+                System.out.print(node.getData()); //+" " +node.getColor().toString());
+                newNodes.add(node.getLeftChild());
+                newNodes.add(node.getRightChild());
+            } else {
+                newNodes.add(null);
+                newNodes.add(null);
+                System.out.print(" ");
             }
+
+            AvlTreePrinter.printWhitespaces(betweenSpaces);
         }
+        System.out.println("");
+
+        for (int i = 1; i <= endgeLines; i++) {
+            for (int j = 0; j < nodes.size(); j++) {
+                AvlTreePrinter.printWhitespaces(firstSpaces - i);
+                if (nodes.get(j) == null) {
+                    AvlTreePrinter.printWhitespaces(endgeLines + endgeLines + i + 1);
+                    continue;
+                }
+
+                if (nodes.get(j).getLeftChild() != null)
+                    System.out.print("/");
+                else
+                    AvlTreePrinter.printWhitespaces(1);
+
+                AvlTreePrinter.printWhitespaces(i + i - 1);
+
+                if (nodes.get(j).getRightChild() != null)
+                    System.out.print("\\");
+                else
+                    AvlTreePrinter.printWhitespaces(1);
+
+                AvlTreePrinter.printWhitespaces(endgeLines + endgeLines - i);
+            }
+
+            System.out.println("");
+        }
+
+        printNodeInternal(newNodes, level + 1, maxLevel);
     }
 
-    public static void main(String[] args){
-        Graph graph = new Graph();
-        graph.addEdge(2,1);
-        graph.addEdge(1,3);
-        graph.addEdge(2,4);
-        graph.addEdge(2,5);
-        graph.addEdge(2,6);
-        iterateGraph(2);
+    private static void printWhitespaces(int count) {
+        for (int i = 0; i < count; i++)
+            System.out.print(" ");
+    }
+
+    private static <T extends Comparable<?>> int maxLevel(Node<T> node) {
+        if (node == null)
+            return 0;
+
+        return Math.max(AvlTreePrinter.maxLevel(node.getLeftChild()), AvlTreePrinter.maxLevel(node.getRightChild())) + 1;
+    }
+
+    private static <T> boolean isAllElementsNull(List<T> list) {
+        for (Object object : list) {
+            if (object != null)
+                return false;
+        }
+
+        return true;
     }
 
 }

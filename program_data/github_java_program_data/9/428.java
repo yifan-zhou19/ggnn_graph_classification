@@ -1,80 +1,74 @@
-package edu.stanford.nlp.util;
-
-import java.util.Iterator;
+/**
+ * Sorting algorithms
+ */
+package com.anuragkapur.sorting;
 
 /**
- * Heap interface.
- * These heaps implement a decreaseKey operation, which requires
- * a separate Object to Index map, and for objects to be unique in the Heap.
- * <p/>
- * An interface cannot specify constructors, but it is nevertheless
- * expected that an implementation of this interface has a constructor
- * that takes a Comparator, which is used for ordering ("scoring")
- * objects:
- * <code>public Heap(Comparator cmp) {}</code>
- *
- * @author Dan Klein
- * @version 12/14/00
+ * Insertion Sort
+ * 
+ * @author anurag.kapur
  */
-public interface Heap<E> {
+public class InsertionSort {
 
-  /**
-   * Returns the minimum object, then removes that object from the heap.
-   *
-   * @return the minimum object
-   */
-  public E extractMin();
+    public void sort(int a[]) {
 
-  /**
-   * Returns the minimum Object in this heap. The heap is not modified.
-   *
-   * @return the minimum object
-   */
-  public E min();
+        if(a == null || a.length <= 1) {
+            return;
+        }
 
-  /**
-   * Adds the object to the heap.  If the object is in the heap, this
-   * should act as a decrease-key (if the new version has better
-   * priority) or a no-op (otherwise).
-   *
-   * @param o a new element
-   * @return true, always
-   */
-  public boolean add(E o);
+        insertNumberAtIndexInSortedArray(a, 1);
+    }
 
-  /**
-   * The number of elements currently in the heap.
-   *
-   * @return the heap's size
-   */
-  public int size();
+    private void insertNumberAtIndexInSortedArray(int a[], int index) {
 
-  /**
-   * Returns true iff the heap is empty.
-   *
-   * @return a <code>boolean</code> value
-   */
-  public boolean isEmpty();
+        if (index == a.length) {
+            return;
+        }
 
-  /**
-   * Raises the priority of an object in the heap.  This works in a
-   * somewhat unusual way -- the object <code>o</code> should have
-   * changed with respect to the comparator passed in to the heap on
-   * construction.  However, it should NOT have changed with respect
-   * to its equals() method.  This is unlike the Java SortedSet where
-   * the comparator should be consistent with equals(); here they
-   * should not match.
-   *
-   * @param o an <code>Object</code> value which has changed wrt the heap's ordering
-   * @return the cost of the decrease-key operation, for analysis
-   */
-  public int decreaseKey(E o); // should be void; int for analysis
+        int number = a[index];
+        int i;
+        for (i=index-1; i >= 0; i--) {
+            if (number < a[i]) {
+                a[i+1] = a[i];
+            } else {
+                break;
+            }
+        }
 
-  /**
-   * Returns an iterator over its elements, in order.
-   *
-   * @return an <code>Iterator</code> value
-   */
-  public Iterator<E> iterator();
+        a[i+1] = number;
+
+        insertNumberAtIndexInSortedArray(a, index+1);
+    }
+
+	/**
+	 * Iterative version of insertion sort.
+     *
+     * Running time:
+     *  Best case: O(n)
+     *  Worst Case: O(n^2)
+     *
+	 * @param args
+	 */
+	public static void main(String[] args) {
+		
+		// Array of numbers to sort
+		int a[] = {5,1,4,3,8,6,9,10,7,2};
+
+        // Insertion sort algo
+		for (int i = 1; i < a.length; i++) {
+			int key = a[i];
+			int j = i - 1;
+			while(j >= 0 && a[j] > key) {
+				a[j + 1] = a[j];
+				j --;
+			}
+			a[j + 1] = key;
+		}
+		
+		// Output the sorted array
+		for (int i = 0; i < a.length; i++) {
+			System.out.println(a[i]);
+		}
+	}
 
 }

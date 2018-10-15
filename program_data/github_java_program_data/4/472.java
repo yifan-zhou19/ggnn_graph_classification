@@ -1,40 +1,30 @@
-package usingswing;
+package interviewQuestion;
 
-import java.math.BigInteger;
-import javax.swing.JEditorPane;
-import javax.swing.JFrame;
-import javax.swing.JScrollPane;
-import javax.swing.WindowConstants;
+import java.util.Hashtable;
 
-public class Fibonacci {
-
-	public static void main(String[] args) {
-
-		StringBuilder result = new StringBuilder(
-				"<html><body><h1>Fibonacci Numbers</h1><ol>");
-
-		BigInteger fib1 = BigInteger.valueOf(0);
-		BigInteger fib2 = BigInteger.valueOf(1);
-
-		for (int i = 0; i < 1000; i++) {
-
-			result.append("<li>");
-			result.append(fib1);
-			BigInteger fib3 = new BigInteger(fib2.toByteArray());
-			fib2 = fib2.add(fib1);
-			fib1 = fib3;
+public class SimpleHashTable {
+	
+	int [] a = new int[5];
+	
+	String [] arrNames = new String[]{"Sumit","Jain","Raghav","Garg","Gaurav","Rishi"};
+	
+	
+	Hashtable<Integer, String> ht = new Hashtable<Integer, String>();
+	
+	public void insertValues(){
+		for(int i=0;i<arrNames.length;i++ ){
+			ht.put(i+1,arrNames[i]);
 		}
-
-		result.append("</ol></body></html>");
-
-		JEditorPane jep = new JEditorPane("text/html", result.toString());
-		jep.setEditable(false);
-
-		JScrollPane scrollPane = new JScrollPane(jep);
-		JFrame f = new JFrame("Fibonacci Numbers");
-		f.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-		f.getContentPane().add(scrollPane);
-		f.setSize(512, 342);
-		f.setVisible(true);
+	}
+	
+	public String getValue(int key){
+		return ht.get(key);
+	}
+	public static void main (String [] args){
+		SimpleHashTable sht = new SimpleHashTable();
+		sht.insertValues();
+		System.out.println("All values inserted");
+		System.out.println("Employee with ID 1 is "+ sht.getValue(1));
+		System.out.println("Employee with ID 3 is "+ sht.getValue(6));
 	}
 }

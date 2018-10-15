@@ -1,37 +1,30 @@
-package stringsearch.suffixtree;
+void go(List<Edge> edges, int nvertices) {
+	//(MAXINT/2)-1 to avoid overflow when we sum two non-existing edges
+	int MAXINT = (Integer.MAX_VALUE/2)-1 ;
 
-import java.util.ArrayList;
-import java.util.List;
+	//initialize matrix
+	int[][] adjency_matrix = new int[nvertices+1][nvertices+1] ;	
+	for(int i=0 ; i<adjency_matrix.length ; i++) 
+		Arrays.fill(adjency_matrix[i], MAXINT) ; 
+	
+	//fill matrix
+	for(Edge e : edges)
+		adjency_matrix[e.src][e.dst] = e.weight ;
+	
+	floydWarshall(adjency_matrix, nvertices) ;
+	
+	//...do something with the resulting matrix
+}
 
-/**
- * Created by dfingerman on 10/31/17.
- */
-public class SuffixTree {
 
-    private Node root;
-
-    public SuffixTree(String text){
-
-        root.setText(text);
-
-        root = new Node(-1);
-        Node node1 = new Node(0);
-        Edge edge1 = new Edge(0, text.length(), node1);
-        root.addEdge(edge1);
-    }
-
-    public int addSuffix(int position){
-        return root.addSuffix(position, position);
-    }
-
-    public List<Integer> search(String text, List<String> patterns){
-
-        List<Integer> outputList = new ArrayList<>();
-
-        for (String pattern : patterns.subList(1, patterns.size())) {
-            outputList.add(root.search(pattern));
-        }
-
-        return outputList;
-    }
+void floydWarshall(int[][] adjency_matrix, int nvertices) {
+	//k -> middle path between i and j
+	for(int k=1 ; k<=nvertices ; k++)
+		for(int i=1 ; i<=nvertices ; i++)
+			for(int j=1 ; j<=nvertices ; j++) {
+				int dist_through_k = adjency_matrix[i][k]+adjency_matrix[k][j] ;
+				//if path through k is lower than previous direct path, update
+				if(dist_through_k < adjency_matrix[i][j]) 
+					adjency_matrix[i][j] = dist_through_k ;
+			}
 }

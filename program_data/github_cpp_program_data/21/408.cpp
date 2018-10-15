@@ -1,376 +1,215 @@
-//
-// Created by 11570 on 2018/4/18.
-//
+/*
+ * Copyright Opera Wang <wangvisual AT sohu DOT com>
+ * Copyright 2011 kubtek <kubtek@mail.com>
+ *
+ * This file is part of StarDict.
+ *
+ * StarDict is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * StarDict is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with StarDict.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
-//
-// Created by 11570 on 2018/4/11.
-//
-#include <iostream>
-#include "avltree.h"
+/*
+http://www.merriampark.com/ld.htm
+What is Levenshtein Distance?
 
-//Node constructor and definition of NIL
-Node nil(0,0);
-Node * NIL=&nil;
-Node::Node(int k)
-:key(k),h(1),p(NIL),left(NIL),right(NIL)
-{}
-Node::Node(int k,int height)
-:key(k),h(height),p(NIL),left(NIL),right(NIL)
-{}
+Levenshtein distance (LD) is a measure of the similarity between two strings, 
+which we will refer to as the source string (s) and the target string (t). 
+The distance is the number of deletions, insertions, or substitutions required
+ to transform s into t. For example,
+
+    * If s is "test" and t is "test", then LD(s,t) = 0, because no transformations are needed. 
+    The strings are already identical.
+    * If s is "test" and t is "tent", then LD(s,t) = 1, because one substitution
+     (change "s" to "n") is sufficient to transform s into t.
+
+The greater the Levenshtein distance, the more different the strings are.
+
+Levenshtein distance is named after the Russian scientist Vladimir Levenshtein,
+ who devised the algorithm in 1965. If you can't spell or pronounce Levenshtein,
+ the metric is also sometimes called edit distance.
+
+The Levenshtein distance algorithm has been used in:
+
+    * Spell checking
+    * Speech recognition
+    * DNA analysis
+    * Plagiarism detection 
+*/
 
 
-void TransPlant (Node * n1,Node * n2)//take n2 to replace the place of n1
-{
-    if(n2== NIL)
-    {
-        if(n1==n1->p->right)
-            n1->p->right=n2;
-        else if(n1==n1->p->left)
-            n1->p->left=n2;
-        return ;
-    }
-    if(n1->p== NIL)
-        n1=n2;
-    if(n1==n1->p->right)
-        n1->p->right=n2;
-    else if(n1==n1->p->left)
-        n1->p->left=n2;
-    n2->p=n1->p;
-}
-Node * AVLTree::Search (int k)
-{
-    Node * cur=root;
-    while(cur->key!=k&&cur!= NIL)
-    {
-        if(cur->key<k)
-            cur=cur->right;
-        else cur=cur->left;
-    }
-    if(cur->key==k)
-        return cur;
-    else return NIL;
-}
-void AVLTree::InorderTreeWalk(Node * n)
-{
-    if(n== NIL)
-        return ;
-    InorderTreeWalk(n->left);
-    std::cout<<n->key<<'('<<n->h<<')'<<' ';
-    InorderTreeWalk(n->right);
-}
-Node * AVLTree::Minimum()
-{
-    if(root->left== NIL)
-        return root;
-    Node * cur=root;
-    while(cur->left!= NIL)
-        cur=cur->left;
-    return cur;
-}
-Node * AVLTree::Maximum()
-{
-    if(root->right== NIL)
-        return root;
-    Node * cur=root;
-    while(cur->right!= NIL)
-        cur=cur->right;
-    return cur;
-}
-Node * AVLTree::Predecessor(Node * n)
-{
-    if(n->left!= NIL)
-    {
-        return AVLTree(n->left).Maximum();
-    }
-    else if(n->p!= NIL)
-        return n->p;
-    else return NIL;
-}
-Node * AVLTree::Successor(Node *n)
-{
-    if(n->right!= NIL)
-    {
-        return AVLTree(n->right).Minimum();
-    }
-    else if(n->p!= NIL)
-        return n->p;
-    else return NIL;
-}
-Node * AVLTree::Insert(int k)
-{
-    Node * cur=root;
-    Node * prev= NIL;
-    while(cur!= NIL)
-    {
-        prev=cur;
-        if(k<cur->key)
-            cur=cur->left;
-        else if(k>cur->key)
-            cur=cur->right;
-        else
-        {
-            std::cerr<<k<<" already in tree.\n";
-            return NIL;
-        }
-    }
-    Node * toInsert=new Node(k);
-    toInsert->p=prev;
-    if(k<prev->key)
-        prev->left=toInsert;
-    else
-        prev->right=toInsert;
-    InsertHeightFixup(toInsert);
-    if(!IsAVL(root))
-        Balance(toInsert);
-}
-bool AVLTree::Delete(int k)
-{
-    Node * toDelete=Search(k);
-    if(toDelete== NIL)
-    {
-        std::cerr<<"Delete failed.\n";
-        return false;
-    }
-    if(toDelete->left== NIL)
-    {
-        Node * fix_point=toDelete->p;//Where you should fix the height
-        TransPlant(toDelete,toDelete->right);
-        if(fix_point->right!=NIL)
-        {
-            InsertHeightFixup(fix_point->right);
-            Balance(fix_point->right);
-        }
-        else if(fix_point->left!=NIL)
-        {
-            InsertHeightFixup(fix_point->left);
-            Balance(fix_point->left);
-        }
-        else
-        {
-            fix_point->h=1;
-            Balance(fix_point);
-        }
+#include <stdlib.h>
+#include <string.h>
 
-    }
-    else if(toDelete->right==NIL)
+#include "edit-distance.h"
+
+#define OPTIMIZE_ED
+/*
+Cover transposition, in addition to deletion,
+insertion and substitution. This step is taken from:
+Berghel, Hal ; Roach, David : "An Extension of Ukkonen's 
+Enhanced Dynamic Programming ASM Algorithm"
+(http://www.acm.org/~hlb/publications/asm/asm.html)
+*/
+#define COVER_TRANSPOSITION
+
+/****************************************/
+/*Implementation of Levenshtein distance*/
+/****************************************/
+
+EditDistance::EditDistance()
+{
+    currentelements = 2500; // It's enough for most conditions :-)
+    d = (int*)malloc(sizeof(int)*currentelements);
+}
+
+EditDistance::~EditDistance()
+{
+//    g_print("size:%d\n",currentelements);
+    if (d) free(d);
+}
+
+#ifdef OPTIMIZE_ED
+int EditDistance::CalEditDistance(const gunichar *s,const gunichar *t,const int limit)
+/*Compute levenshtein distance between s and t, this is using QUICK algorithm*/
+{
+    int n=0,m=0,iLenDif,k,i,j,cost;
+    // Remove leftmost matching portion of strings
+    while ( *s && (*s==*t) )
     {
-        Node * fix_point=toDelete->p;
-        TransPlant(toDelete,toDelete->left);
-        if(fix_point->right!=NIL)
+        s++;
+		t++;
+    }
+
+	while (s[n])
+	{
+		n++;
+	}
+	while (t[m])
+	{
+		m++;
+	}
+	
+    // Remove rightmost matching portion of strings by decrement n and m.
+    while ( n && m && (*(s+n-1)==*(t+m-1)) )
+    {
+        n--;m--;
+    }
+    if ( m==0 || n==0 || d==(int*)0 )
+        return (m+n);
+    if ( m < n )
+    {
+        const gunichar * temp = s;
+        int itemp = n;
+        s = t;
+        t = temp;
+        n = m;
+        m = itemp;
+    }
+    iLenDif = m - n;
+    if ( iLenDif >= limit )
+        return iLenDif;
+    // step 1
+    n++;m++;
+//    d=(int*)malloc(sizeof(int)*m*n);
+    if ( m*n > currentelements )
+    {
+        currentelements = m*n*2;    // double the request
+        d = (int*)realloc(d,sizeof(int)*currentelements);
+        if ( (int*)0 == d )
+            return (m+n);
+    }
+    // step 2, init matrix
+    for (k=0;k<n;k++)
+        d[k] = k;
+    for (k=1;k<m;k++)
+        d[k*n] = k;
+    // step 3
+    for (i=1;i<n;i++)
+    {
+        // first calculate column, d(i,j)
+        for ( j=1;j<iLenDif+i;j++ )
         {
-            InsertHeightFixup(fix_point->right);
-            Balance(fix_point->right);
+            cost = s[i-1]==t[j-1]?0:1;
+            d[j*n+i] = minimum(d[(j-1)*n+i]+1,d[j*n+i-1]+1,d[(j-1)*n+i-1]+cost);
+#ifdef COVER_TRANSPOSITION
+            if ( i>=2 && j>=2 && (d[j*n+i]-d[(j-2)*n+i-2]==2)
+                 && (s[i-2]==t[j-1]) && (s[i-1]==t[j-2]) )
+                d[j*n+i]--;
+#endif
         }
-        else if(fix_point->left!=NIL)
+        // second calculate row, d(k,j)
+        // now j==iLenDif+i;
+        for ( k=1;k<=i;k++ )
         {
-            InsertHeightFixup(fix_point->left);
-            Balance(fix_point->right);
+            cost = s[k-1]==t[j-1]?0:1;
+            d[j*n+k] = minimum(d[(j-1)*n+k]+1,d[j*n+k-1]+1,d[(j-1)*n+k-1]+cost);
+#ifdef COVER_TRANSPOSITION
+            if ( k>=2 && j>=2 && (d[j*n+k]-d[(j-2)*n+k-2]==2)
+                 && (s[k-2]==t[j-1]) && (s[k-1]==t[j-2]) )
+                d[j*n+k]--;
+#endif
         }
-        else
+        // test if d(i,j) limit gets equal or exceed
+        if ( d[j*n+i] >= limit )
         {
-            InsertHeightFixup(fix_point->left);
-            Balance(fix_point);
+            return d[j*n+i];
         }
     }
-    else
+    // d(n-1,m-1)
+    return d[n*m-1];
+}
+#else
+int EditDistance::CalEditDistance(const char *s,const char *t,const int limit)
+{
+    //Step 1
+    int k,i,j,n,m,cost;
+    n=strlen(s); 
+    m=strlen(t);
+    if( n!=0 && m!=0 && d!=(int*)0 )
     {
-        Node * toReplace=AVLTree(toDelete->right).Maximum();
-        if(toReplace==toDelete->right)
+        m++;n++;
+        if ( m*n > currentelements )
         {
-            toReplace->left=toDelete->left;
-            toDelete->left->p=toReplace;
-            TransPlant(toDelete,toReplace);
-            InsertHeightFixup(toReplace->right);
-            Balance(toReplace->right);
+            currentelements = m*n*2;
+            d = (int*)realloc(d,sizeof(int)*currentelements);
+            if ( (int*)0 == d )
+                return (m+n);
         }
-        else
-        {
-            Node * fix_point1=toReplace->p;
-            Node * fix_point2=toDelete->p;
-            TransPlant(toReplace,toReplace->right);
-            TransPlant(toDelete,toReplace);
-            toReplace->left=toDelete->left;
-            toReplace->right=toDelete->right;
-            toDelete->right->p=toReplace;
-            toDelete->left->p=toReplace;
-            if(fix_point1->right!=NIL)
+        //Step 2	
+        for(k=0;k<n;k++)
+            d[k]=k;
+        for(k=0;k<m;k++)
+            d[k*n]=k;
+        //Step 3 and 4	
+        for(i=1;i<n;i++)
+            for(j=1;j<m;j++)
             {
-                InsertHeightFixup(fix_point1->right);
-                Balance(fix_point1->right);
+                //Step 5
+                if(s[i-1]==t[j-1])
+                    cost=0;
+                else
+                    cost=1;
+                //Step 6			 
+                d[j*n+i]=minimum(d[(j-1)*n+i]+1,d[j*n+i-1]+1,d[(j-1)*n+i-1]+cost);
+#ifdef COVER_TRANSPOSITION
+                if ( i>=2 && j>=2 && (d[j*n+i]-d[(j-2)*n+i-2]==2)
+                     && (s[i-2]==t[j-1]) && (s[i-1]==t[j-2]) )
+                    d[j*n+i]--;
+#endif        
             }
-            else if(fix_point1->left!=NIL)
-            {
-                InsertHeightFixup(fix_point1->left);
-                Balance(fix_point1->right);
-            }
-            else {
-                fix_point1->h=1;
-                Balance(fix_point1);
-            }
-            if(fix_point2->right!=NIL)
-                InsertHeightFixup(fix_point2->right);
-            else if(fix_point2->left!=NIL)
-                InsertHeightFixup(fix_point2->left);
-            else fix_point2->h=1;
-        }
+        return d[n*m-1];
     }
-
-
+    else 
+        return (n+m);
 }
-//private method
-void AVLTree::LeftRotate(Node * n)
-{
-    if(n==root)
-        root=n->right;
-    Node * y=n->right;
-    n->right=y->left;
-    y->left->p=n;
-    y->p=n->p;
-    y->left=n;
-    if(n==n->p->right)
-        n->p->right=y;
-    else
-        n->p->left=y;
-    n->p=y;
-    if(y->left->left!=NIL)
-        InsertHeightFixup(y->left->left);
-    else if(y->left->right!=NIL)
-        InsertHeightFixup(y->left->right);
-    else{
-        y->left->h=1;
-        InsertHeightFixup(y->left);
-    }
-
-
-
-}
-void AVLTree::RightRotate(Node * n)
-{
-    if(n==root)
-        root=n->left;
-    Node * y=n->left;
-    n->left=y->right;
-    y->right->p=n;
-    y->p=n->p;
-    y->right=n;
-    if(n==n->p->right)
-        n->p->right=y;
-    else
-        n->p->left=y;
-    n->p=y;
-    if(y->right->left!=NIL)
-        InsertHeightFixup(y->right->left);
-    else if(y->right->right!=NIL)
-        InsertHeightFixup(y->right->right);
-    else{
-        y->right->h=1;
-        InsertHeightFixup(y->right);
-    }
-
-}
-
-void AVLTree::Balance(Node * n)
-{
-    if(n->p==NIL)
-        return;
-    n=n->p;
-    while(n->left->h-n->right->h<2&&n->left->h-n->right->h>-2&&n!=NIL)
-        n=n->p;
-    if(n==NIL)
-        return;
-    if(n->left->h-n->right->h==2)
-    {
-        Node * top=n->p;
-        n=n->left;
-        while((n->left->h-n->right->h)*(n->p->left->h-n->p->right->h)<0)
-        {
-            if(n->left->h>n->right->h)
-                n=n->left;
-            else n=n->right;
-        }
-        if(n->left==NIL&&n->right==NIL)
-        {
-            if(n->p==n->p->right)
-            {
-                n->p->right=n;
-                n->p->left=NIL;
-
-            }
-            else
-            {
-                n->p->left=n;
-                n->p->right=NIL;
-            }
-        }
-        while(n!=top->left&&n!=top->right)
-        {
-            if(n==root)
-                break;
-            if(n->right->h>n->left->h)
-                LeftRotate(n->p);
-            else
-                RightRotate(n->p);
-        }
-    }
-    else if(n->right->h-n->left->h==2)
-    {
-        Node * top=n->p;
-        n=n->right;
-        while((n->left->h-n->right->h)*(n->p->left->h-n->p->right->h)<0)
-        {
-            if(n->left->h>n->right->h)
-                n=n->left;
-            else
-                n=n->right;
-        }
-        while(n!=top->left&&n!=top->right)
-        {
-            if(n==root)
-                break;
-            if(n->right->h>=n->left->h)
-                LeftRotate(n->p);
-            else
-                RightRotate(n->p);
-
-        }
-    }
-}
-/*void AVLTree::HeightPlus(Node * n)
-{
-    if(n==NIL)
-        return;
-    HeightPlus(n->left);
-    n->h++;
-    HeightPlus(n->right);
-
-}
-void AVLTree::HeightMinus(Node * n)
-{
-    if(n==NIL)
-        return;
-    HeightMinus(n->left);
-    n->h--;
-    HeightMinus(n->right);
-}*/
-void AVLTree::InsertHeightFixup(Node * n)//muti-functional!
-{
-    Node * up=n->p;
-
-    while(up->left->h!=up->right->h&&up!=NIL)
-    {
-        if(up->left->h>up->right->h)
-            up->h=up->left->h+1;
-        else
-            up->h=up->right->h+1;
-        up=up->p;
-    }
-    if(up!=NIL)
-        up->h=up->left->h+1;
-}
-bool AVLTree::IsAVL(Node * n)
-{
-    if(n==NIL)
-        return true;
-    return (IsAVL(n->left)&&IsAVL(n->right))&&((n->left->h-n->right->h<=1)&&(n->right->h-n->left->h<=1));
-}
-
+#endif

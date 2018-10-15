@@ -1,115 +1,105 @@
-#include <vector>
-#include <iostream>
-
-typedef std::size_t (*hash_function)( char const * );
-
-std::size_t hash1( char const * );
-std::size_t hash2( char const * );
-std::size_t hash3( char const * );
-
-hash_function hash[] = { hash1, hash2, hash3 };
-std::size_t const k = sizeof( hash ) / sizeof( hash[0] );
-std::size_t const m = 32;
-std::vector<bool> bit_vector( m, false );
-
-std::size_t hash1( char const * w )
-{
-	std::size_t h = 0;
-	for ( ; *w; ++w )
-	{
-		h = 5 * h + *w;
-	}
-	return h % m;
-}
-
-std::size_t hash2( char const * w )
-{
-	std::size_t h = 0;
-	for ( ; *w; ++w )
-	{
-		h += *w;
-	}
-	return h % m;
-}
-
-std::size_t hash3( char const * w )
-{
-	std::size_t h = 0;
-	for ( ; *w; ++w )
-	{
-		h ^= static_cast<std::size_t>( *w ) << 3;
-	}
-	return h % m;
-}
-
-void add_word( char const * const w )
-{
-	for ( std::size_t i = 0; i < k; ++i )
-	{
-		bit_vector[ hash[i]( w ) ] = true;
-	}
-}
-
-bool is_containe( char const * const w )
-{
-	for ( std::size_t i = 0; i < k; ++i )
-	{
-		if ( !bit_vector[ hash[i]( w ) ] )
-		{
-			return false;
-		}
-	}
-
-	return true;
-}
-
-
-int main( int argc, char * argv[] )
-{
-	if ( argc < 2 )
-	{
-		std::cerr << "Usage: " << argv[0] << " word" << std::endl;
-		return 1;
-	}
-
-	char const * const input[] =
-	{
-		"foo",
-		"bar",
-		"baz",
-		"quux",
-/*
-		"boo",
-		"hoge",
-		"fuga",
-		"piyo",
-		"hero",
-		"foobar",
-		"hogehoge",
+/**
+    LRU Cache
+    Rasul Kerimov (CoderINusE) 
 */
-	};
-	std::size_t const n = sizeof( input ) / sizeof( input[0] );
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <unordered_map>
+using namespace std;
 
-	for ( std::size_t i = 0; i < n; ++i )
-	{
-		add_word( input[i] );
-	}
+class node {
+public:
+  int value;
+  int key;
+  node *next;
+  node *pre;
+  node() {}
+  node(int key, int value) : value(value), key(key), next(NULL), pre(NULL) {}
+};
 
-	if ( is_containe( argv[1] ) )
-	{
-		std::cout << "maybe" << std::endl;
-	}
-	else
-	{
-		std::cout << "no" << std::endl;
-	}
+class LRUCache {
+  int capacity;
+  unordered_map <int, node*> map_elems;
+  node *head;
+  node *tail;
+public:
+  LRUCache(int capacity) : capacity(capacity) {}
+  int get(int key) {
+    if(map_elems[key]) {
+      node * curr = map_elems[key];
+      node * newnode = new node(key, curr->value);
+      int ret = curr->value;
+      add_to_tail(newnode);
+      remove(curr);
+      map_elems[key] = newnode;
+      return ret;
+    }
+    return -1;
+  }
 
-	//
-	// m/n = 8, k = 2 なので表(*)から擬陽性率は 0.0489
-	//
-	// 擬陽性: 存在しないのにあると判定されること
-	// (*) false_positive_rate.xml
-	//
+  void add_to_tail(node * n) {
+    if(tail == NULL) {
+      head = tail = n;
+    }
+    else {
+      n->pre = tail;
+      tail->next = n;
+      tail = tail->next;  
+    }
+  }
 
-	return 0;
+  void remove(node *n) {
+    if(n->pre != NULL) {
+      n->pre->next = n->next;
+    }
+    else head = n->next;
+
+    if(n->next != NULL) {
+      n->next->pre = n->pre;
+    }
+    else tail = n->pre;
+    delete n;
+
+  }
+
+  void set(int key, int value) {
+    if(map_elems[key]) {
+      node * curr = map_elems[key];
+      node * newnode = new node(key, value); 
+      add_to_tail(newnode);
+      remove(curr);
+      map_elems[key] = newnode;
+    }
+    else {
+      node * newnode = new node(key, value); 
+      if((int)map_elems.size() > capacity) {
+        map_elems.erase(head->key);
+        remove(head);
+        add_to_tail(newnode);
+      }
+      else {
+        add_to_tail(newnode);
+      }
+      map_elems[key] = newnode;
+    }
+  }
+
+  void print(node *n) {
+    while(n != NULL) {
+      cout << n->value << " ";
+      n = n->next;
+    } 
+    cout << endl;
+  }
+
+};
+
+int main() {
+  LRUCache * cache = new LRUCache(1);
+  cache->set(2, 1);
+  cout << cache->get(2) << endl;
+  cache->set(3, 2);
+  cout << cache->get(2) << endl;
+  cout << cache->get(3) << endl;
 }

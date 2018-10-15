@@ -1,47 +1,54 @@
-package stackSample;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+import java.util.Scanner;
 
-import java.util.Arrays;
+public class RadixSort {
 
+    public static void main(String[] args) {
+        Scanner s = new Scanner(System.in);
+        System.out.print("Enter number of elements : ");
+        int n = s.nextInt();
+        int arr[] = new int[n];
+        System.out.println("Enter Arra to be sorted : ");
+        for (int i = 0; i < n; i++)
+            arr[i] = s.nextInt();
+        radixSort(arr, arr.length - 1);
+        for (int i : arr)
+            System.out.print(i + " ");
+    }
 
-public class Stack {
+    private static void radixSort(int[] arr, int length) {
+        int max = getMax(arr, length);
 
-	private final static int MSIZE = 3; 
-	private int currPos = 0;
-	private int[] val = new int[MSIZE];
-	private int depth=1;
+        for (int exp = 1; max / exp > 0; exp *= 10)
+            sort(arr, length, exp);
+    }
 
-	public void push(int a) {
-		if (!pushPre()) {
-			throw new RuntimeException("cannot push; full stack");
-		}
-		val[currPos++] = a;
-		System.out.println("## Push:"+currPos+":"+depth);		
-		depth++;
-	}
+    private static void sort(int[] arr, int length, int exp) {
+        List<Queue<Integer>> q = new ArrayList<Queue<Integer>>();
+        for (int i = 0; i < 10; i++)
+            q.add(i, new LinkedList<>());
 
-	public void pop() {
-		if (!popPre()) {
-			throw new RuntimeException("cannot pop; empty stack");
-		}
-		val[--currPos] = 0;
-		System.out.println("## Pop:"+currPos+":"+depth);
-		depth++;
-	}
+        for (int i = 0; i <= length; i++) {
+            q.get((arr[i] / exp) % 10).add(arr[i]);
+        }
 
-	public boolean pushPre() {		
-		return currPos >= 0 && currPos < MSIZE;
-	}
+        int i = 0, k = 0;
+        while (i < 10) {
+            while (!q.get(i).isEmpty()) {
+                arr[k++] = q.get(i).remove();
+            }
+            i++;
+        }
+    }
 
-	public boolean popPre() {
-		return currPos > 0 && currPos <= MSIZE;
-	}
-	
-	public String toString() {
-		StringBuffer sb = new StringBuffer();
-		sb.append("currPost="+currPos);
-		sb.append("\\n");
-		sb.append("val="+Arrays.toString(val));
-		return sb.toString();
-	}
-
+    private static int getMax(int[] arr, int length) {
+        int mx = arr[0];
+        for (int i = 1; i < length; i++)
+            if (arr[i] > mx)
+                mx = arr[i];
+        return mx;
+    }
 }

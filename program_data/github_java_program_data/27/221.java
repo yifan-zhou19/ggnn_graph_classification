@@ -1,58 +1,72 @@
-package stacksAndQueues;
+package sort;
 
-import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
-public class Stack<T> implements Iterable<T> {
+public class RadixSort {
 
-    @Override
-    public Iterator<T> iterator() {
-        return null;
-    }
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		int N = 1000;
+		int list [] = new int [N];
+		for(int i = 0; i < N; i++){
+			list[i] =(int)( Math.random() * 10000);
+		}
+		printList(list);
+		list = my_radix(list);
+		System.out.println("done");
+	}
+	
+	public static int[] my_radix(int [] list){
+		LinkedList tmp [] = new LinkedList [list.length];
+		for(int i = 0; i < tmp.length; i++){
+			tmp[i] = new LinkedList();
+		}
+		int keySize = 0;
+		for(int i = 0; i < list.length; i ++){
+			if(String.valueOf(list[i]).length() > keySize){
+				keySize = String.valueOf(list[i]).length();
+			}
+		}
+		int i = 0;
+		int [] tmp_list= new int [list.length];
+		do{
+			tmp_list= new int [list.length];
 
-    private class LinkedListIterator implements Iterator<T>{
-        private Node current = null;
 
-        @Override
-        public boolean hasNext() {
-            return current.next != null;
-        }
+			for(int j = 0; j < list.length; j++){
+				int digit = (int) (list[j] / Math.pow(10, i) % 10);
+				tmp[digit].add(list[j]);
+			}
+			int counter = 0;
+			for(int m = 0; m < 10; m++){
+				while(!tmp[m].isEmpty()){
+					tmp_list[counter] = (int) tmp[m].getFirst();
+					tmp[m].removeFirst();
+					counter++;
+				}
+			}
+			list = tmp_list;
+			i ++;
 
-        @Override
-        public T next() {
-            T item = current.item;
-            current = current.next;
+		}while(i <= keySize);
+		
+		printList(list);
+		
+		return list;
+	}
+	
 
-            return item;
-        }
+	public static void printList(int list[]){		//printList function is used for debugging. No need for now since we are storing the results in a CSV file
+		for(int i = 0; i < list.length; i++){
+			if(i % 10 == 0){						//Print 10 numbers then skip a line
+				System.out.println("");
+			}
+			System.out.print(list[i] + "  ");
+		}
+	}
+	
 
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException();
-        }
-    }
-
-    private class Node{
-        T item;
-        Node next;
-    }
-
-    private Node firstNode = null;
-
-    public boolean IsEmpty(){
-        return firstNode == null;
-    }
-
-    public void Push(T item){
-        Node oldFirstNode = firstNode;
-        Node newNode = new Node();
-        newNode.next = oldFirstNode;
-        newNode.item = item;
-        firstNode = newNode;
-    }
-
-    public T Pop(){
-        T item = firstNode.item;
-        firstNode = firstNode.next;
-        return item;
-    }
+	
 }

@@ -1,69 +1,198 @@
-//
-// Copyright 2012 Francisco Jerez
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the "Software"),
-// to deal in the Software without restriction, including without limitation
-// the rights to use, copy, modify, merge, publish, distribute, sublicense,
-// and/or sell copies of the Software, and to permit persons to whom the
-// Software is furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
-// THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
-// OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-//
+#include<iostream>
+#include<cstdlib>
+#include<ctime>
+#include<bits/stdc++.h>
 
-#include <algorithm>
+using namespace std;
 
-#include "core/queue.hpp"
-#include "core/event.hpp"
-#include "pipe/p_screen.h"
-#include "pipe/p_context.h"
 
-using namespace clover;
+class Node {
+   public:
+     int val;
+     Node **next;//array of next pointers
+     Node(int v, int level);
+     ~Node();
+};
 
-_cl_command_queue::_cl_command_queue(context &ctx, device &dev,
-                                     cl_command_queue_properties props) :
-   ctx(ctx), dev(dev), __props(props) {
-   pipe = dev.pipe->context_create(dev.pipe, NULL);
-   if (!pipe)
-      throw error(CL_INVALID_DEVICE);
+Node::~Node()
+{
+  delete[] next;
 }
 
-_cl_command_queue::~_cl_command_queue() {
-   pipe->destroy(pipe);
+Node::Node(int v, int level)
+{
+    val = v;
+    next = new Node*[level+1];
+    memset(next, 0, sizeof(Node*)*(level+1));
 }
 
-void
-_cl_command_queue::flush() {
-   pipe_screen *screen = dev.pipe;
-   pipe_fence_handle *fence = NULL;
+class SkipList{
+     public:
+      int max_level;//max number of levels
+      int cur_level; //current level
+      float p;//fraction of nodes that have a val
+      Node *head;
+      SkipList(int max_num_levels, float fraction);
+      void insertElement(int value);
+      void displaySkipList();
+      void deleteElement(int value);
+      bool findElement(int value);
+      int randomLevel();
+      ~SkipList();
+};
 
-   if (!queued_events.empty()) {
-      // Find out which events have already been signalled.
-      auto first = queued_events.begin();
-      auto last = std::find_if(queued_events.begin(), queued_events.end(),
-                               [](event_ptr &ev) { return !ev->signalled(); });
-
-      // Flush and fence them.
-      pipe->flush(pipe, &fence);
-      std::for_each(first, last, [&](event_ptr &ev) { ev->fence(fence); });
-      screen->fence_reference(screen, &fence, NULL);
-      queued_events.erase(first, last);
-   }
+SkipList::~SkipList()
+{
+  Node *temp = head, *prev =NULL;
+  while(temp){
+   prev = temp;
+   temp = temp->next[0]; 
+   delete prev;
+  }
 }
 
-void
-_cl_command_queue::sequence(clover::hard_event *ev) {
-   if (!queued_events.empty())
-      queued_events.back()->chain(ev);
+SkipList::SkipList(int max_num_levels, float fraction)
+{
+   max_level = max_num_levels;
+   cur_level = 0;
+   p = fraction;
+   head = new Node(-1, max_level);
+}
 
-   queued_events.push_back(ev);
+int SkipList::randomLevel()
+{
+  int level = 0;
+  float fraction = (float)rand () / RAND_MAX;
+  while (fraction < p && level < max_level)
+    {
+      level++;
+      fraction = (float)rand () / RAND_MAX;
+    }
+  return level;
+}
+
+bool SkipList::findElement(int val)
+{
+  for (int i = cur_level; i >= 0; i--)
+    {
+      Node *temp = head->next[i];
+      while (temp)
+	{
+	  if (temp->val == val)
+	    {
+	      return true;
+	    }
+	  else if (temp->val < val)
+	    {
+	      temp = temp->next[i];
+	    }
+	  else
+	    {
+	      break;
+	    }
+	}
+    }
+  return false;
+}
+
+void SkipList::insertElement(int value)
+{
+  int rlevel = randomLevel ();
+  Node *nnode = new Node (value, rlevel);
+  if(cur_level < rlevel)
+    cur_level = rlevel;
+
+  for (int i = 0; i < rlevel + 1; i++)
+    {
+      Node *temp = head;
+      while (temp->next[i] != NULL && temp->next[i]->val < value)
+	{
+	  temp = temp->next[i];
+	}
+      if (temp->next[i] == NULL)
+	{
+	  temp->next[i] = nnode;
+	}
+      else
+	{
+	  nnode->next[i] = temp->next[i];
+	  temp->next[i] = nnode;
+	}
+    }
+}
+
+void SkipList::displaySkipList()
+{
+  for (int i = cur_level; i >= 0; i--)
+    {
+      Node *temp = head->next[i];
+      cout<<i<<") ";
+      while (temp)
+	{
+          cout<<temp->val;
+          if(temp->next[i])
+             cout<<"->";          
+             temp = temp->next[i];
+	}
+        cout<<endl;
+    }
+}
+
+void SkipList::deleteElement(int value)
+{
+  Node *element = NULL;
+  for (int i = cur_level; i >= 0; i--)
+    {
+      Node *temp = head;
+      while (temp->next[i] != NULL && temp->next[i]->val < value)
+	{
+	  temp = temp->next[i];
+	}
+      if (temp->next[i] && temp->next[i]->val == value)
+	{
+	  if (element == NULL){
+	    element = temp->next[i];
+            if(head->next[i] == element && 
+               head->next[i]->next[i]==NULL &&
+               i == cur_level)
+                 cur_level--;
+          }
+	  temp->next[i] = temp->next[i]->next[i];
+	}
+    }
+  delete element;
+}
+
+int main(int argc, char *argv[])
+{
+  srand(time(0));
+
+  SkipList *sp = new SkipList(5,0.5);
+#if 0
+  int n = 0;
+  cout<<"Enter number of values < 1000:";
+  cin >> n;
+  while(n){
+   sp->insertElement(rand()%1000);
+   n--;
+  }
+#endif
+  sp->insertElement(26);
+  sp->insertElement(21);
+  sp->insertElement(19);
+  sp->insertElement(17);
+  sp->insertElement(12);
+  sp->insertElement(9);
+  sp->insertElement(7);
+  sp->insertElement(6);
+  sp->insertElement(3);
+  sp->insertElement(25);
+  sp->displaySkipList();
+
+  cout<<"Find 24:"<<(sp->findElement(24)?"true":"false")<<endl;
+  cout<<"Find 21:"<<(sp->findElement(21)?"true":"false")<<endl;
+  sp->deleteElement(21);
+  sp->displaySkipList();
+  delete sp;
+  return 0;
 }

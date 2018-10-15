@@ -1,148 +1,117 @@
-/*++
-Copyright (c) 2007 Microsoft Corporation
+//============================================================================
+// Name        : radix-sort.cpp
+// Author      : 
+// Date        :
+// Copyright   : 
+// Description : Implementation of radix sort in C++
+//============================================================================
 
-Module Name:
+#include "sort.h"
+#include <iostream>
+#include <tgmath.h>
+#include <deque>
+//#include <fstream>
 
-    stack.cpp
+using namespace std;
+//ofstream out;
 
-Abstract:
-    Low level stack (aka stack-based allocator).
-
-Author:
-
-    Leonardo (leonardo) 2011-02-27
-
-Notes:
-
---*/
-#include"stack.h"
-#include"page.h"
-#include"tptr.h"
-
-inline void stack::store_mark(size_t m) {
-    reinterpret_cast<size_t*>(m_curr_ptr)[0] = m;
-    m_curr_ptr += sizeof(size_t);
+const int base = 10; 
+int digit(int k, int num)
+{
+	int r; 
+	r = num/(int)pow(base, k);
+	return r % base;
 }
 
-inline size_t stack::top_mark() const {
-    return reinterpret_cast<size_t*>(m_curr_ptr)[-1];
-}
-
-inline size_t ptr2mark(void * ptr, bool external) {
-    return reinterpret_cast<size_t>(ptr) | static_cast<size_t>(external);
-}
-
-#define MASK (static_cast<size_t>(-1) - 1)
-
-inline char * mark2ptr(size_t m) {
-    return reinterpret_cast<char *>(m & MASK);
-}
-
-inline bool external_ptr(size_t m) {
-    return static_cast<bool>(m & 1);
-}
-
-inline void stack::allocate_page(size_t m) {
-    m_curr_page     = allocate_default_page(m_curr_page, m_free_pages);
-    m_curr_ptr      = m_curr_page;
-    m_curr_end_ptr  = end_of_default_page(m_curr_page);
-    store_mark(m);
-}
-
-inline void stack::store_mark(void * ptr, bool external) {
-    SASSERT(m_curr_ptr < m_curr_end_ptr || m_curr_ptr == m_curr_end_ptr); // mem is aligned
-    if (m_curr_ptr + sizeof(size_t) > m_curr_end_ptr) {
-        SASSERT(m_curr_ptr == m_curr_end_ptr);
-        // doesn't fit in the current page
-        allocate_page(ptr2mark(ptr, external));
-    }
-    else {
-        store_mark(ptr2mark(ptr, external));
-    }
-}
-
-stack::stack() {
-    m_curr_page    = 0;
-    m_curr_ptr     = 0;
-    m_curr_end_ptr = 0;
-    m_free_pages   = 0;
-    allocate_page(0);
-    SASSERT(empty());
-}
-
-stack::~stack() {
-    reset();
-    del_pages(m_curr_page);
-    del_pages(m_free_pages);
-}
-
-void stack::reset() {
-    while(!empty())
-        deallocate();
-}
-
-void * stack::top() const {
-    SASSERT(!empty());
-    size_t m = top_mark();
-    void * r = mark2ptr(m);
-    if (external_ptr(m)) 
-        r = reinterpret_cast<void**>(r)[0];
-    return r;
-}
-
-void * stack::allocate_small(size_t size, bool external) {
-    SASSERT(size < DEFAULT_PAGE_SIZE);
-    char * new_curr_ptr = m_curr_ptr + size;
-    char * result;
-    if (new_curr_ptr < m_curr_end_ptr) {
-        result = m_curr_ptr;
-        m_curr_ptr = ALIGN(char *, new_curr_ptr);
-    }
-    else {
-        allocate_page(top_mark()); 
-        result = m_curr_ptr;
-        m_curr_ptr += size;
-        m_curr_ptr = ALIGN(char *, m_curr_ptr);
-    }
-    store_mark(result, external);
-    SASSERT(m_curr_ptr > m_curr_page);
-    SASSERT(m_curr_ptr <= m_curr_end_ptr);
-    return result;
-}
-
-void * stack::allocate_big(size_t size) {
-    char * r   = alloc_svect(char, size);
-    void * mem = allocate_small(sizeof(char*), true);
-    reinterpret_cast<char**>(mem)[0] = r;
-    SASSERT(m_curr_ptr > m_curr_page);
-    SASSERT(m_curr_ptr <= m_curr_end_ptr);
-    return r;
-}
+//deque <int>::reverse_iterator riter;
+deque<int> mergeArr(deque<int> A,deque<int> B){
+    deque <int> AB;
     
-void stack::deallocate() {
-    SASSERT(m_curr_ptr > m_curr_page);
-    SASSERT(m_curr_ptr <= m_curr_end_ptr);
-    size_t m = top_mark();
-    SASSERT(m != 0);
-    if (m_curr_ptr == m_curr_page + sizeof(size_t)) {
-        // mark is in the beginning of the page
-        char * prev = prev_page(m_curr_page);
-        recycle_page(m_curr_page, m_free_pages);
-        m_curr_page    = prev;
-        m_curr_ptr     = mark2ptr(m);
-        m_curr_end_ptr = end_of_default_page(m_curr_page);
-        SASSERT(m_curr_ptr >  m_curr_page);
-        SASSERT(m_curr_ptr <= m_curr_end_ptr);
+    
+    for (int i=0; i<B.size(); i++){
+        AB.push_back(B[i]);
     }
-    else {
-        // mark is in the middle of the page
-        m_curr_ptr = mark2ptr(m);
-        SASSERT(m_curr_ptr < m_curr_end_ptr);
+    
+    for (int i= 0; i<A.size(); i++){
+        AB.push_front(A[i]);
     }
-    if (external_ptr(m)) {
-        dealloc_svect(reinterpret_cast<char**>(m_curr_ptr)[0]);
-    }
-    SASSERT(m_curr_ptr > m_curr_page);
+	//for generating sorted output in reverse order for future testing
+	/*
+	out.open("1000_dec_output.txt");
+	out<<"1000\n";
+    for(riter=AB.rbegin(); riter!=AB.rend(); ++riter) {
+        out << *riter << endl; // generate output in decreasing order
+	}
+	out.close();   */
+    return AB;
 }
+
+void radixsort(deque<int>& A, int size){
+    int d = 5; //radix sort can sort up to 2^15-1 = 32767
+    int i, j, m;
+    int *C = new int[base];
+    int *B = new int[size];
+    for(m = 0; m < d; m++){
+        for(i = 0; i < base; i++) C[i] = 0;
+        for(j = 0; j < size; j++) C[digit(m, A[j])]++;
+        for(i = 1; i < base; i++) C[i] += C[i-1];
+        for(j = size-1; j >= 0; j--){
+            i = C[digit(m, A[j])]--;
+            i--;
+            B[i] = A[j];
+        }
+        for (j=0; j<size; j++) A[j] = B[j];
+    }
+    delete[] B; delete[] C;
+    
+}
+
+
+void
+RadixSort::sort(int A[], int size)
+{
+    try{
+        deque<int> positive;
+        deque<int> negative;
+        
+        for (int e=0; e<size; e++){
+            if(A[e]<-32768 || A[e]>32767) throw ("Invalid input, Radix sort can only take numbers -2^15 to 2^15-1");
+            if (A[e]<0) {
+                negative.push_back(A[e]);
+            } else {
+                positive.push_back(A[e]);
+            }
+        }
+        if (positive.size()>1){
+            radixsort(positive,positive.size());
+        }
+        //sorting negative, make it positive and insert inversely
+        if (negative.size()>1){
+            for (int i=0; i<negative.size();i++){
+                negative[i]*=-1;
+            }
+            radixsort(negative,negative.size());
+            
+            for (int i=0; i<negative.size();i++){
+                negative[i]*=-1;
+            }
+        }
+        
+        deque<int> result(size);
+        result=mergeArr(negative,positive);
+        
+        positive.clear(); positive.shrink_to_fit();
+        negative.clear(); negative.shrink_to_fit();
+        
+        copy(result.begin(), result.end(),A);
+        
+    } catch(char const* msg){
+        cout<<"Error: "<<msg<<endl;
+        exit(EXIT_FAILURE);
+    }
+    
+}
+
+
 
 

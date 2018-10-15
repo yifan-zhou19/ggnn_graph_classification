@@ -1,199 +1,215 @@
-#include "avltree.h"
-#include <QDebug>
-//template<class T>
+/*
+ * Copyright Opera Wang <wangvisual AT sohu DOT com>
+ * Copyright 2011 kubtek <kubtek@mail.com>
+ *
+ * This file is part of StarDict.
+ *
+ * StarDict is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * StarDict is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with StarDict.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
-AVLtree::AVLtree()
+/*
+http://www.merriampark.com/ld.htm
+What is Levenshtein Distance?
+
+Levenshtein distance (LD) is a measure of the similarity between two strings, 
+which we will refer to as the source string (s) and the target string (t). 
+The distance is the number of deletions, insertions, or substitutions required
+ to transform s into t. For example,
+
+    * If s is "test" and t is "test", then LD(s,t) = 0, because no transformations are needed. 
+    The strings are already identical.
+    * If s is "test" and t is "tent", then LD(s,t) = 1, because one substitution
+     (change "s" to "n") is sufficient to transform s into t.
+
+The greater the Levenshtein distance, the more different the strings are.
+
+Levenshtein distance is named after the Russian scientist Vladimir Levenshtein,
+ who devised the algorithm in 1965. If you can't spell or pronounce Levenshtein,
+ the metric is also sometimes called edit distance.
+
+The Levenshtein distance algorithm has been used in:
+
+    * Spell checking
+    * Speech recognition
+    * DNA analysis
+    * Plagiarism detection 
+*/
+
+
+#include <stdlib.h>
+#include <string.h>
+
+#include "edit-distance.h"
+
+#define OPTIMIZE_ED
+/*
+Cover transposition, in addition to deletion,
+insertion and substitution. This step is taken from:
+Berghel, Hal ; Roach, David : "An Extension of Ukkonen's 
+Enhanced Dynamic Programming ASM Algorithm"
+(http://www.acm.org/~hlb/publications/asm/asm.html)
+*/
+#define COVER_TRANSPOSITION
+
+/****************************************/
+/*Implementation of Levenshtein distance*/
+/****************************************/
+
+EditDistance::EditDistance()
 {
-    root = nullptr;
+    currentelements = 2500; // It's enough for most conditions :-)
+    d = (int*)malloc(sizeof(int)*currentelements);
 }
 
-int AVLtree::height(TreeNode* node)
+EditDistance::~EditDistance()
 {
-    if(node!=nullptr)
-        return node->hgt;
-    return -1;
+//    g_print("size:%d\n",currentelements);
+    if (d) free(d);
 }
 
-//Máximo
-int AVLtree::Max(int cmpa,int cmpb)
+#ifdef OPTIMIZE_ED
+int EditDistance::CalEditDistance(const gunichar *s,const gunichar *t,const int limit)
+/*Compute levenshtein distance between s and t, this is using QUICK algorithm*/
 {
-    return cmpa>cmpb?cmpa:cmpb;
-}
-
-//Rotacion izquierda
-void AVLtree::SingRotateLeft(TreeNode* &k2)
-{
-    TreeNode* k1;
-    k1=k2->lson;
-    k2->lson=k1->rson;
-    k1->rson=k2;
-
-    k2->hgt=Max(height(k2->lson),height(k2->rson))+1;
-    k1->hgt=Max(height(k1->lson),k2->hgt)+1;
-}
-
-//En el caso de la rotación de la derecha
-void AVLtree::SingRotateRight(TreeNode* &k2)
-{
-    TreeNode* k1;
-    k1=k2->rson;
-    k2->rson=k1->lson;
-    k1->lson=k2;
-
-    k2->hgt=Max(height(k2->lson),height(k2->rson))+1;
-    k1->hgt=Max(height(k1->rson),k2->hgt)+1;
-}
-
-//Rotacion doble izquierda-derecha.
-void AVLtree::DoubleRotateLR(TreeNode* &k3)
-{
-    SingRotateRight(k3->lson);
-    SingRotateLeft(k3);
-}
-
-//La rotación de la izquierda a la derecha
-void AVLtree::DoubleRotateRL(TreeNode* &k3)
-{
-    SingRotateLeft(k3->rson);
-    SingRotateRight(k3);
-}
-
-void AVLtree::insertpri(TreeNode* &node,Persona *x)
-{
-    if(node == nullptr)//Si los nodos vacío, con la información de este nodo X
+    int n=0,m=0,iLenDif,k,i,j,cost;
+    // Remove leftmost matching portion of strings
+    while ( *s && (*s==*t) )
     {
-        node = new TreeNode();
-        node->ptHumano = x;
-        return;
-    }
-    if(node->ptHumano->id>x->id)//Si X es inferior al valor del nodo, sigue en el árbol de la izquierda inserción de nodo X
-    {
-        insertpri(node->lson,x);
-        if(2==(height(node->lson)-height(node->rson))){
-            if(x->id<node->lson->ptHumano->id)
-                SingRotateLeft(node);
-            else
-                DoubleRotateLR(node);
-        }
-    }
-    else if(node->ptHumano->id<x->id)//Si X es mayor que el valor del nodo, sigue en la inserción de nodo X subárbol
-    {
-        insertpri(node->rson,x);
-        if(2==(height(node->rson)-height(node->lson))){//Si la altura de la diferencia es de 2 palabras, perdió el equilibrio y la necesidad de rotación
-            if(x->id>node->rson->ptHumano->id)
-                SingRotateRight(node);
-            else
-                DoubleRotateRL(node);
-        }
-    }
-    else ++(node->freq);//Si son iguales, con frecuencia 1
-    node->hgt=Max(height(node->lson),height(node->rson));
-}
-
-//La inserción de la interfaz
-void AVLtree::insert(Persona *x)
-{
-    insertpri(root,x);
-    listaPersonas.append(x);
-}
-
-
-//Buscar
-TreeNode* AVLtree::findpri(TreeNode* node, Persona *x)
-{
-    if(node==nullptr)//Si los nodos vacío que no encontrar, devuelve null
-    {
-        return nullptr;
-    }
-    if(node->ptHumano->id>x->id)//Si X es inferior al valor del nodo, continuar la búsqueda de X en el árbol de la izquierda del nodo
-    {
-        return findpri(node->lson,x);
-    }
-    else if(node->ptHumano->id<x->id)//Si X es mayor que el valor del nodo, continuar la búsqueda de X en el árbol de la izquierda del nodo
-    {
-        return findpri(node->rson,x);
-    }
-    else return node;//Si son iguales, de encontrar este nodo
-}
-
-//Interfaz de búsqueda
-TreeNode* AVLtree::find(Persona *x)
-{
-    return findpri(root,x);
-}
-
-//Borrar
-void AVLtree::Deletepri(TreeNode* &node,Persona *x)
-{
-    if(node==nullptr) return ;//No es encontrar el valor X de los nodos
-    if(x->id <node->ptHumano->id)
-    {
-         Deletepri(node->lson,x);//Si X es inferior al valor del nodo, sigue en el árbol de la izquierda elimina el nodo X
-         if(2==height(node->rson)-height(node->lson))
-            if(node->rson->lson!=nullptr && (height(node->rson->lson)>height(node->rson->rson)) )
-                DoubleRotateRL(node);
-            else
-                SingRotateRight(node);
+        s++;
+		t++;
     }
 
-    else if(x->id > node->ptHumano->id)
+	while (s[n])
+	{
+		n++;
+	}
+	while (t[m])
+	{
+		m++;
+	}
+	
+    // Remove rightmost matching portion of strings by decrement n and m.
+    while ( n && m && (*(s+n-1)==*(t+m-1)) )
     {
-         Deletepri(node->rson,x);//Si X es mayor que el valor del nodo, sigue en el nodo eliminar X subárbol
-         if(2==height(node->lson)-height(node->rson))
-            if(node->lson->rson!=nullptr && (height(node->lson->rson)>height(node->lson->lson) ))
-                DoubleRotateLR(node);
-            else
-                SingRotateLeft(node);
+        n--;m--;
     }
-
-    else//Si son iguales, el nodo es eliminar nodo
+    if ( m==0 || n==0 || d==(int*)0 )
+        return (m+n);
+    if ( m < n )
     {
-        if(node->lson&&node->rson)//El nodo tiene dos hijos
+        const gunichar * temp = s;
+        int itemp = n;
+        s = t;
+        t = temp;
+        n = m;
+        m = itemp;
+    }
+    iLenDif = m - n;
+    if ( iLenDif >= limit )
+        return iLenDif;
+    // step 1
+    n++;m++;
+//    d=(int*)malloc(sizeof(int)*m*n);
+    if ( m*n > currentelements )
+    {
+        currentelements = m*n*2;    // double the request
+        d = (int*)realloc(d,sizeof(int)*currentelements);
+        if ( (int*)0 == d )
+            return (m+n);
+    }
+    // step 2, init matrix
+    for (k=0;k<n;k++)
+        d[k] = k;
+    for (k=1;k<m;k++)
+        d[k*n] = k;
+    // step 3
+    for (i=1;i<n;i++)
+    {
+        // first calculate column, d(i,j)
+        for ( j=1;j<iLenDif+i;j++ )
         {
-            TreeNode* temp=node->rson;//Nodos hijo temp hacia la derecha
-            while(temp->lson != nullptr) temp=temp->lson;//Encontrar un mínimo de nodos subárbol mediana
-            //A la derecha en el valor mínimo de nodos subárbol de asignar a este nodo
-            node->ptHumano->id=temp->ptHumano->id;
-            node->freq=temp->freq;
-            Deletepri(node->rson,temp->ptHumano);//Eliminar nodos en el valor mínimo de la derecha subárbol
-            if(2==height(node->lson)-height(node->rson))
+            cost = s[i-1]==t[j-1]?0:1;
+            d[j*n+i] = minimum(d[(j-1)*n+i]+1,d[j*n+i-1]+1,d[(j-1)*n+i-1]+cost);
+#ifdef COVER_TRANSPOSITION
+            if ( i>=2 && j>=2 && (d[j*n+i]-d[(j-2)*n+i-2]==2)
+                 && (s[i-2]==t[j-1]) && (s[i-1]==t[j-2]) )
+                d[j*n+i]--;
+#endif
+        }
+        // second calculate row, d(k,j)
+        // now j==iLenDif+i;
+        for ( k=1;k<=i;k++ )
+        {
+            cost = s[k-1]==t[j-1]?0:1;
+            d[j*n+k] = minimum(d[(j-1)*n+k]+1,d[j*n+k-1]+1,d[(j-1)*n+k-1]+cost);
+#ifdef COVER_TRANSPOSITION
+            if ( k>=2 && j>=2 && (d[j*n+k]-d[(j-2)*n+k-2]==2)
+                 && (s[k-2]==t[j-1]) && (s[k-1]==t[j-2]) )
+                d[j*n+k]--;
+#endif
+        }
+        // test if d(i,j) limit gets equal or exceed
+        if ( d[j*n+i] >= limit )
+        {
+            return d[j*n+i];
+        }
+    }
+    // d(n-1,m-1)
+    return d[n*m-1];
+}
+#else
+int EditDistance::CalEditDistance(const char *s,const char *t,const int limit)
+{
+    //Step 1
+    int k,i,j,n,m,cost;
+    n=strlen(s); 
+    m=strlen(t);
+    if( n!=0 && m!=0 && d!=(int*)0 )
+    {
+        m++;n++;
+        if ( m*n > currentelements )
+        {
+            currentelements = m*n*2;
+            d = (int*)realloc(d,sizeof(int)*currentelements);
+            if ( (int*)0 == d )
+                return (m+n);
+        }
+        //Step 2	
+        for(k=0;k<n;k++)
+            d[k]=k;
+        for(k=0;k<m;k++)
+            d[k*n]=k;
+        //Step 3 and 4	
+        for(i=1;i<n;i++)
+            for(j=1;j<m;j++)
             {
-                if(node->lson->rson != nullptr && (height(node->lson->rson)>height(node->lson->lson) ))
-                    DoubleRotateLR(node);
+                //Step 5
+                if(s[i-1]==t[j-1])
+                    cost=0;
                 else
-                    SingRotateLeft(node);
+                    cost=1;
+                //Step 6			 
+                d[j*n+i]=minimum(d[(j-1)*n+i]+1,d[j*n+i-1]+1,d[(j-1)*n+i-1]+cost);
+#ifdef COVER_TRANSPOSITION
+                if ( i>=2 && j>=2 && (d[j*n+i]-d[(j-2)*n+i-2]==2)
+                     && (s[i-2]==t[j-1]) && (s[i-1]==t[j-2]) )
+                    d[j*n+i]--;
+#endif        
             }
-        }
-        else//El nodo tiene un hijo o 1 0
-        {
-            TreeNode* temp=node;
-            if(node->lson == nullptr)//Hijo o no, el hijo de la derecha
-            node=node->rson;
-            else if(node->rson == nullptr)//A la izquierda, hijo
-            node=node->lson;
-            delete(temp);
-            temp = nullptr;
-        }
+        return d[n*m-1];
     }
-    if(node==nullptr) return;
-    node->hgt=Max(height(node->lson),height(node->rson))+1;
-    return;
+    else 
+        return (n+m);
 }
-
-//Agrega
-void AVLtree::agregar(QVector<Persona*>* l, string pais){
-    agregar(root, l, pais);
-}
-
-//Agrega_2.0
-bool AVLtree::agregar(TreeNode *r,QVector<Persona*>* l,string pais){
-    if(r == nullptr){
-        return true;
-    }else if(!r->isSon && pais == r->ptHumano->pais){
-        l->append(r->ptHumano);
-        r->isSon = true;
-        return false;
-    }
-    return agregar(r->lson, l, pais) && agregar(r->rson, l, pais);
-}
-
+#endif

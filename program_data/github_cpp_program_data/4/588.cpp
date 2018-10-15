@@ -1,66 +1,84 @@
-// RUN: %clang_cc1 -fsyntax-only %s
+#include <salgo/hash-table.hpp>
+#include <gtest/gtest.h>
 
-template<unsigned I>
-struct FibonacciEval;
 
-template<unsigned I>
-struct Fibonacci {
-  enum { value = FibonacciEval<I-1>::value + FibonacciEval<I-2>::value };
-};
+using namespace salgo;
 
-template<unsigned I>
-struct FibonacciEval {
-  enum { value = Fibonacci<I>::value };
-};
+TEST(Hash_Table, iterate) {
+	Hash_Table<int> ht;
+	ht.emplace(3);
+	ht.emplace(30);
+	ht.emplace(300);
+	ht.emplace(3000);
+	ht.emplace(30000);
+	ht.emplace(300000);
 
-template<> struct Fibonacci<0> {
-  enum { value = 0 };
-};
+	int sum = 0;
+	for(auto& e : ht) {
+		sum += e;
+	}
+	EXPECT_EQ(333333, sum);
+}
 
-template<> struct Fibonacci<1> {
-  enum { value = 1 };
-};
+TEST(Hash_Table, iterate_empty) {
+	Hash_Table<int> ht;
+	int sum = 0;
+	for(auto& e : ht) sum += e;
+	EXPECT_EQ(0, sum);
+}
 
-int array5[Fibonacci<5>::value == 5? 1 : -1];
-int array10[Fibonacci<10>::value == 55? 1 : -1];
+TEST(Hash_Table, iterate_empty_2) {
+	Hash_Table<int> ht;
+	ht.emplace(123);
 
-template<unsigned I>
-struct FibonacciEval2;
+	if(!ht(12).exists()) ht(123).erase();
 
-template<unsigned I>
-struct Fibonacci2 {
-  static const unsigned value 
-    = FibonacciEval2<I-1>::value + FibonacciEval2<I-2>::value;
-};
+	int sum = 0;
+	for(auto& e : ht) sum += e;
+	EXPECT_EQ(0, sum);
+}
 
-template<unsigned I>
-struct FibonacciEval2 {
-  static const unsigned value = Fibonacci2<I>::value;
-};
+TEST(Hash_Table, erase) {
+	Hash_Table<int> ht;
+	ht.emplace(3);
+	ht.emplace(30);
+	ht.emplace(300);
+	ht.emplace(3000);
+	ht.emplace(30000);
+	ht.emplace(300000);
 
-template<> struct Fibonacci2<0> {
-  static const unsigned value = 0;
-};
+	ht(30).erase();
+	ht(3000).erase();
+	ht(300000).erase();
 
-template<> struct Fibonacci2<1> {
-  static const unsigned value = 1;
-};
+	int sum = 0;
+	for(auto& e : ht) {
+		sum += e;
+	}
 
-int array5_2[Fibonacci2<5>::value == 5? 1 : -1];
-int array10_2[Fibonacci2<10>::value == 55? 1 : -1];
+	EXPECT_EQ(30303, sum);
+}
 
-template<unsigned I>
-struct Fibonacci3 {
-  static const unsigned value = Fibonacci3<I-1>::value + Fibonacci3<I-2>::value;
-};
 
-template<> struct Fibonacci3<0> {
-  static const unsigned value = 0;
-};
+TEST(Hash_Table, initializer_list) {
+	Hash_Table<int> ht = {1, 10, 10000, 1000, 100};
+	int sum = 0;
+	for(auto& e : ht) sum += e;
+	EXPECT_EQ(11111, sum);
+}
 
-template<> struct Fibonacci3<1> {
-  static const unsigned value = 1;
-};
 
-int array5_3[Fibonacci3<5>::value == 5? 1 : -1];
-int array10_3[Fibonacci3<10>::value == 55? 1 : -1];
+TEST(Hash_Table, key_val) {
+	Hash_Table<int, std::string> m = {{12,"twelve"}, {6,"six"}, {3,"three"}, {20,"twenty"}};
+	std::map<int,std::string> test;
+	for(auto& e : m) {
+		test.emplace(std::pair(e.key(), e.val()));
+	}
+	EXPECT_EQ(4, (int)test.size());
+	EXPECT_EQ("twelve", test[12]);
+	EXPECT_EQ("six", test[6]);
+	EXPECT_EQ("three", test[3]);
+	EXPECT_EQ("twenty", test[20]);
+
+}
+

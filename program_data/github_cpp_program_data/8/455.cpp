@@ -1,139 +1,148 @@
-#include "../gameobject.h"
-#include "quadtree.h"
+//===--- examples/Fibonacci/fibonacci.cpp - An example use of the JIT -----===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This small program provides an example of how to build quickly a small module
+// with function Fibonacci and execute it with the JIT.
+//
+// The goal of this snippet is to create in the memory the LLVM module
+// consisting of one function as follow:
+//
+//   int fib(int x) {
+//     if(x<=2) return 1;
+//     return fib(x-1)+fib(x-2);
+//   }
+//
+// Once we have this, we compile the module via JIT, then execute the `fib'
+// function and return result to a driver, i.e. to a "host program".
+//
+//===----------------------------------------------------------------------===//
 
-Quadtree::Quadtree()
-{
-	for(int i = 0; i < 4; i++)
-		_node[i] = nullptr;
+#include "llvm/ADT/APInt.h"
+#include "llvm/IR/Verifier.h"
+#include "llvm/ExecutionEngine/ExecutionEngine.h"
+#include "llvm/ExecutionEngine/GenericValue.h"
+#include "llvm/ExecutionEngine/MCJIT.h"
+#include "llvm/IR/Argument.h"
+#include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/InstrTypes.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/Type.h"
+#include "llvm/Support/Casting.h"
+#include "llvm/Support/TargetSelect.h"
+#include "llvm/Support/raw_ostream.h"
+#include <algorithm>
+#include <cstdlib>
+#include <memory>
+#include <string>
+#include <vector>
+
+using namespace llvm;
+
+static Function *CreateFibFunction(Module *M, LLVMContext &Context) {
+  // Create the fib function and insert it into module M. This function is said
+  // to return an int and take an int parameter.
+  Function *FibF =
+    cast<Function>(M->getOrInsertFunction("fib", Type::getInt32Ty(Context),
+                                          Type::getInt32Ty(Context)));
+
+  // Add a basic block to the function.
+  BasicBlock *BB = BasicBlock::Create(Context, "EntryBlock", FibF);
+
+  // Get pointers to the constants.
+  Value *One = ConstantInt::get(Type::getInt32Ty(Context), 1);
+  Value *Two = ConstantInt::get(Type::getInt32Ty(Context), 2);
+
+  // Get pointer to the integer argument of the add1 function...
+  Argument *ArgX = &*FibF->arg_begin(); // Get the arg.
+  ArgX->setName("AnArg");            // Give it a nice symbolic name for fun.
+
+  // Create the true_block.
+  BasicBlock *RetBB = BasicBlock::Create(Context, "return", FibF);
+  // Create an exit block.
+  BasicBlock* RecurseBB = BasicBlock::Create(Context, "recurse", FibF);
+
+  // Create the "if (arg <= 2) goto exitbb"
+  Value *CondInst = new ICmpInst(*BB, ICmpInst::ICMP_SLE, ArgX, Two, "cond");
+  BranchInst::Create(RetBB, RecurseBB, CondInst, BB);
+
+  // Create: ret int 1
+  ReturnInst::Create(Context, One, RetBB);
+
+  // create fib(x-1)
+  Value *Sub = BinaryOperator::CreateSub(ArgX, One, "arg", RecurseBB);
+  CallInst *CallFibX1 = CallInst::Create(FibF, Sub, "fibx1", RecurseBB);
+  CallFibX1->setTailCall();
+
+  // create fib(x-2)
+  Sub = BinaryOperator::CreateSub(ArgX, Two, "arg", RecurseBB);
+  CallInst *CallFibX2 = CallInst::Create(FibF, Sub, "fibx2", RecurseBB);
+  CallFibX2->setTailCall();
+
+  // fib(x-1)+fib(x-2)
+  Value *Sum = BinaryOperator::CreateAdd(CallFibX1, CallFibX2,
+                                         "addresult", RecurseBB);
+
+  // Create the return instruction and add it to the basic block
+  ReturnInst::Create(Context, Sum, RecurseBB);
+
+  return FibF;
 }
 
-Quadtree::Quadtree(int level, Rect bounds)
-{
-	_level = level;
-	_bounds = bounds;
+int main(int argc, char **argv) {
+  int n = argc > 1 ? atol(argv[1]) : 24;
 
-	for(int i = 0; i < 4; i++)
-		_node[i] = nullptr;
-}
+  InitializeNativeTarget();
+  InitializeNativeTargetAsmPrinter();
+  LLVMContext Context;
 
-Quadtree::~Quadtree()
-{
-	for(int i = 0; i < 4; i++)
-	{
-		if(_node[i])
-			delete _node[i];
-	}
-}
+  // Create some module to put our function into it.
+  std::unique_ptr<Module> Owner(new Module("test", Context));
+  Module *M = Owner.get();
 
-void Quadtree::clear()
-{
-	_gameObjects.clear();
+  // We are about to create the "fib" function:
+  Function *FibF = CreateFibFunction(M, Context);
 
-	for(int i = 0; i < 4; i++)
-	{
-		if(_node[i])
-			_node[i]->clear();
-	}
-}
+  // Now we going to create JIT
+  std::string errStr;
+  ExecutionEngine *EE =
+    EngineBuilder(std::move(Owner))
+    .setErrorStr(&errStr)
+    .create();
 
-void Quadtree::insert(GameObject* gameObject)
-{
-	if(_node[0])
-	{
-		int index = getIndex(gameObject->physics()->hitbox());
+  if (!EE) {
+    errs() << argv[0] << ": Failed to construct ExecutionEngine: " << errStr
+           << "\n";
+    return 1;
+  }
 
-		// Recursively insert into subnode.
-		if(index != -1)
-		{
-			_node[index]->insert(gameObject);
-			return;
-		}
-	}
+  errs() << "verifying... ";
+  if (verifyModule(*M)) {
+    errs() << argv[0] << ": Error constructing function!\n";
+    return 1;
+  }
 
-	// GameObject now inserted into correct subnode.
-	_gameObjects.add(gameObject);
+  errs() << "OK\n";
+  errs() << "We just constructed this LLVM module:\n\n---------\n" << *M;
+  errs() << "---------\nstarting fibonacci(" << n << ") with JIT...\n";
 
-	// Handle more GameObjects than this node should have.
-	if(_gameObjects.size() > MAX_OBJECTS && _level < MAX_LEVELS)
-	{
-		// Node needs to be split.
-		if(!_node[0])
-			split();
+  // Call the Fibonacci function with argument n:
+  std::vector<GenericValue> Args(1);
+  Args[0].IntVal = APInt(32, n);
+  GenericValue GV = EE->runFunction(FibF, Args);
 
-		int i = 0;
-		while(i < _gameObjects.size())
-		{
-			int index = getIndex(_gameObjects[i]->physics()->hitbox());
+  // import result of execution
+  outs() << "Result: " << GV.IntVal << "\n";
 
-			if(index != -1)
-			{
-				// Move GameObject to it's new node.
-				_node[index]->insert(_gameObjects[i]);
-				_gameObjects.remove(i);
-			}
-			else
-			{
-				i++;
-			}
-		}
-	}
-}
-
-GOList* Quadtree::retrieve(GOList* gameObjects, GameObject* subject)
-{
-	int index = getIndex(subject->physics()->hitbox());
-
-	// Recursively find the correct node.
-	if(index != -1 && _node[0])
-		_node[index]->retrieve(gameObjects, subject);
-	// Return all GameObjects from node.
-	else
-		*gameObjects = _gameObjects;
-
-	return gameObjects;
-}
-
-void Quadtree::split()
-{
-	int w = _bounds.w / 2;
-	int h = _bounds.h / 2;
-	int x = _bounds.x;
-	int y = _bounds.y;
-
-	_node[0] = new Quadtree(_level + 1, Rect{x + w, y, w, h});
-	_node[1] = new Quadtree(_level + 1, Rect{x, y, w, h});
-	_node[2] = new Quadtree(_level + 1, Rect{x, y + h, w, h});
-	_node[3] = new Quadtree(_level + 1, Rect{x + w, y + h, w, h});
-}
-
-int Quadtree::getIndex(Hitbox hitbox)
-{
-	int index = -1;
-	float vertMid = (float)(_bounds.x + (_bounds.w / 2));
-	float horizMid = (float)(_bounds.y + (_bounds.h / 2));
-
-	// The Hitbox can fit into the top half.
-	bool top = hitbox.y < horizMid && hitbox.y + hitbox.h < horizMid;
-
-	// The Hitbox can fit into the bottom half.
-	bool bottom = hitbox.y > horizMid;
-
-	// The hitbox can fit into the left half.
-	if(hitbox.x < vertMid && hitbox.x + hitbox.w < vertMid)
-	{
-		if(top)
-			index = 1; // Top left quadrant.
-		else if(bottom)
-			index = 2; // Bottom left quadrant.
-	}
-	// The hitbox can fit into the right half.
-	else if(hitbox.x > vertMid)
-	{
-		if(top)
-			index = 0; // Top right quadrant.
-		else if(bottom)
-			index = 3; // Bottom right quadrant.
-	}
-
-	return index;
+  return 0;
 }

@@ -1,47 +1,30 @@
+
+//          Copyright Oliver Kowalke 2014.
+// Distributed under the Boost Software License, Version 1.0.
+//    (See accompanying file LICENSE_1_0.txt or copy at
+//          http://www.boost.org/LICENSE_1_0.txt)
+
+#include <cstdlib>
 #include <iostream>
-#include <vector>
-#include <algorithm> // std::max, std::min, std::sort, std::swap
-#include <string> // std::string, std::stoi
-#include <queue> // std::queue
-#include <deque> // std::deque
-#include <list> // std::list
-#include <set>
 
-#include <map>
-#include <utility> // std::pair
+#include <boost/coroutine2/all.hpp>
 
-#include <cstdio>
-#include <cstring> // memset
-#include <cmath> // std::abs
-
-using namespace std;
-
-#define MAX(x, y) ((x) > (y) ? (x) : (y))
-#define MIN(x, y) ((x) < (y) ? (x) : (y))
-
-typedef long long ll;
-
-/*
-
-*/
-string solve(string::iterator& it){
-    char c = *(it); it++;
-    if(c == 'w' || c == 'b')
-        return string(1, c);
-    string upper_left = solve(it);
-    string upper_right = solve(it);
-    string lower_left = solve(it);
-    string lower_right = solve(it);
-    return string("x") + lower_left + lower_right + upper_left + upper_right;
-}
-
-int main(){
-    freopen("QUADTREE.txt", "r", stdin);
-    int TC; scanf("%d", &TC);
-    while(TC--){
-        string s;
-        cin >> s;
-        string::iterator it = s.begin();
-        cout << solve(it) << endl;
+int main() {
+    boost::coroutines2::coroutine< int >::pull_type source(
+        []( boost::coroutines2::coroutine< int >::push_type & sink) {
+            int first = 1, second = 1;
+            sink( first);
+            sink( second);
+            for ( int i = 0; i < 8; ++i) {
+                int third = first + second;
+                first = second;
+                second = third;
+                sink( third);
+            }
+        });
+    for ( auto i : source) {
+        std::cout << i <<  " ";
     }
+    std::cout << "\nDone" << std::endl;
+    return EXIT_SUCCESS;
 }

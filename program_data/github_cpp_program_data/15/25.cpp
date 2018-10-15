@@ -1,395 +1,193 @@
-#ifdef _REDBLACKTREE_H_
-#include<stdexcept>
-
+#include <fstream>
 #include <iostream>
-#include <math.h>
-//W
-//private
+#include <string>
 
-// recursive helper function for deep copy
-// creates a new node "thisnode" based on sourcenode's contents, links back to parentnode,
-//   and recurses to create left and right children
-template <class T>
-Node<T>* RedBlackTree<T>::CopyTree(Node<T>* thisnode, Node<T>* sourcenode, Node<T>* parentnode)
-{
-	if(sourcenode != NULL)
-	{
-		if(thisnode == NULL)
-		{
-			thisnode = new Node<T>();
-		}
-		thisnode->data = sourcenode->data; //creates a new node
-		thisnode->is_black = sourcenode->is_black; //sets node's color
+#include "Heap.h"
 
-		thisnode = parentnode;
+namespace Mrowka {
 
-		if(sourcenode->left != NULL)
-		{
-			CopyTree( new Node<T>(),sourcenode->left,thisnode);
-		}
-		if(sourcenode->right != NULL)
-		{
-			CopyTree( new Node<T>(),sourcenode->right,thisnode);
-		}
-	}
-}
-
-
-// recursive helper function for tree deletion
-// deallocates nodes in post-order
-template <class T>
-void RedBlackTree<T>::RemoveAll(Node<T>* node)
-{
-	//Postorder traversal
-	if(node != NULL)
-	{
-		RemoveAll(node->left);
-		RemoveAll(node->right);	
-		delete node;
-		size--;
-	}
-}
-// hard!
-// Tree fix, performed after removal of a black node
-// Note that the parameter x may be NULL
-template <class T>
-void RedBlackTree<T>::RBDeleteFixUp(Node<T>* x, Node<T>* xparent, bool xisleftchild)
-{
-	bool isBlack = false; //go into while loop with x = NULL
-	Node<T>* w = NULL;
-	if (x == NULL || x->is_black) //null = black node
-	{
-		isBlack = true;
+	Heap::Heap() {
+		this->_size = 0;
+		this->_heap = nullptr;
 	}
 
-	while (x != root && isBlack)
-	{
-		if (xisleftchild)//x is leftchild
-		{
-			w = xparent->right; //w = x's sibling
-			if (!w->is_black)
+	Heap::Heap(std::string path) {
+		std::fstream file;
+		int j, father, x;
+		file.open(path, std::ios::in);
+		
+		if (file.good()) {
+			std::cout << "Udalo sie otworzyc plik.\n";
+			file >> _size;
+			this->_heap = new int[_size];
+
+			for (int i = 0; i < _size; ++i) {
+				file >> _heap[i];
+			}
+
+			for (int i = 1; i < _size; ++i) {
+				father = ((i + 1) / 2) - 1;
+				j = i;
+				x = _heap[i];
+
+				while (x > _heap[father] && father >= 0) {
+					_heap[j] = _heap[father];
+					_heap[father] = x;
+					j = father;
+					father = ((father + 1) / 2) - 1;
+				}
+			}
+		}
+		else {
+			std::cout << "Nie udalo sie otworzyc pliku.\n";
+		}
+
+		file.close();
+	}
+
+	Heap::~Heap() {
+		delete[] this->_heap;
+		this->_heap = nullptr;
+	}
+
+	bool Heap::Add(int value) {
+		int *heap;
+		int x, father, j;
+		heap = new int[_size + 1];
+
+		for (int i = 0; i < _size; ++i) {
+			heap[i] = _heap[i];
+		}
+
+		heap[_size] = value;
+		delete[] this->_heap;
+		++_size;
+		this->_heap = heap;
+
+		// przywrocenie struktury
+
+		x = _heap[_size - 1];
+		father = (_size / 2) - 1;
+		j = _size - 1;
+
+		while (x > _heap[father] && father >= 0) { // przesuwanie nowego elementu w stron� korzenia
+			_heap[j] = _heap[father];
+			_heap[father] = x;
+			j = father;
+			father = ((father + 1) / 2) - 1;
+		}
+
+		return true;		
+	}
+
+	bool Heap::Delete(int value) {
+		int j = -1;
+		int father, x;
+		bool found = false;
+
+		if (value == _heap[0]) {
+			_heap[0] = _heap[_size - 1];
+			found = true;
+		}
+		else {
+			
+			for (int i = 0; i < _size; ++i) {
+
+				if (value == _heap[i]) {
+					j = i;
+					i = i + _size;
+				}
+			}
+
+			if (j != -1)
 			{
-				w->is_black = true;
-				xparent->is_black = false;
-				LeftRotate(xparent); //rotate around x's parent
-				w = xparent->right;
+				_heap[j] = _heap[_size - 1];
 			}
-			if ((w->left == NULL || w->left->is_black) && (w->right == NULL || w->right->is_black)) //performing on NULL crashes
-			{
-				w->is_black = false;
-				x = xparent;
-				xparent = x->p;
-				xisleftchild = (xparent != NULL && x == xparent->left);
-			}
-			else {
-				if (w->right == NULL || w->right->is_black)
-				{
-					w->left->is_black = true;
-					w->is_black = false;
-					RightRotate(w);
-					w = xparent->right;
-				}
-				w->is_black = xparent->is_black;
-				xparent->is_black = true;
-				if (w->right != NULL)
-				{
-					w->right->is_black = true;
-				}
-				LeftRotate(xparent);
-				x = root;
-				xparent = NULL;
-			}
-		}
-		else //swap left and right
-		{
-			w = xparent->left;
-			if (!w->is_black)
-			{
-				w->is_black = true;
-				xparent->is_black = false;
-				RightRotate(xparent);
-				w = xparent->left;
-			}
-			if ((w->left == NULL || w->left->is_black) && (w->right == NULL || w->right->is_black))
-			{
-				w->is_black = false;
-				x = xparent;
-				xparent = x->p;
-				xisleftchild = (xparent != NULL && x == xparent->left);
-			}
-			else
-			{
-				if (w->left == NULL || w->left->is_black)
-				{
-					w->right->is_black = true;
-					w->is_black = false;
-					LeftRotate(w);
-					w = xparent->left;
-				}
-				w->is_black = xparent->is_black;
-				xparent->is_black = true;
-				if (w->left != NULL)
-				{
-					w->left->is_black = true;
-				}
-				RightRotate(xparent);
-				x = root;
-				xparent = NULL;
-			}
-		}
-	}
-	if (x != NULL) //performing is_black on NULL errors
-	{
-		x->is_black = true;
-	}
-}
-
-// Calculates the height of the tree
-// Requires a traversal of the tree, O(n)
-template <class T>
-unsigned int RedBlackTree<T>::CalculateHeight(Node<T>* node) const
-{
-	if(node == NULL) //empty so height of 0
-	{
-		return 0;
-	}
-	else
-	{
-		unsigned int tempLeft = 0; //count the left children
-		unsigned int tempRight = 0; //count the right children
-
-		if(node->left != NULL)
-		{
-			unsigned int tempLeft = CalculateHeight(node->left);
-		}
-		if(node->right != NULL)
-		{
-			unsigned int tempRight = CalculateHeight(node->right);
+			
+			found = true;
 		}
 
-		if(tempLeft > tempRight) //compares which one is more
-		{
-			return tempLeft + 1;
+		if (found) {
+			int * heap;
+			heap = new int[_size - 1];
+			--_size;
+
+			for (int i = 0; i < _size; ++i) {
+				heap[i] = _heap[i];
+			}
+
+			delete[] _heap;
+			_heap = heap;
+
+			for (int i = 1; i < _size; ++i) {
+				father = ((i + 1) / 2) - 1;
+				j = i;
+				x = _heap[i];
+
+				while (x > _heap[father] && father >= 0) {
+					_heap[j] = _heap[father];
+					_heap[father] = x;
+					j = father;
+					father = ((father + 1) / 2) - 1;
+				}
+			}
+
+			return true;
 		}
-		else
-		{
-			return tempRight + 1;
+		else {
+			return false;
 		}
 	}
 
-}
-
-//public
-
-// default constructor
-template <class T>
-RedBlackTree<T>::RedBlackTree()
-{
-	size = 0;
-	root = NULL;
-}
-
-// copy constructor, performs deep copy of parameter
-template <class T>
-RedBlackTree<T>::RedBlackTree(const RedBlackTree<T>& rbtree)
-{
-	root = new Node<T>(root->data); 
-	CopyTree(root, rbtree.GetRoot(), NULL);	
-}
-
-// destructor
-// Must deallocate memory associated with all nodes in tree
-template <class T>
-RedBlackTree<T>::~RedBlackTree()
-{
-	RemoveAll();
-}
-
-// overloaded assignment operator
-template <class T>
-RedBlackTree<T>& RedBlackTree<T>::operator=(const RedBlackTree<T>& rbtree)
-{
-	if (this != &rbtree) 
-	{
-		this->RemoveAll(root);
-		CopyTree(NULL, rbtree.root, NULL);
-		size = rbtree.size;
-	}
-	return *this;
-}
-
-// Accessor functions
-
-// Calls BSTInsert and then performs any necessary tree fixing.
-// If item already exists, do not insert and return false.
-// Otherwise, insert, increment size, and return true.
-template <class T>
-bool RedBlackTree<T>::Insert(T item)
-{
-	//performs if item is not found in tree
-	if(Search(item) == false)  
-	{
-		Node<T>* x = BSTInsert(item);  //calls BSTinsert and sets to x
-		Node<T>* y = NULL;
-		x->is_black = false;  //defaults to black node
-		while(x->p != NULL && x->p->is_black == false) //iterates until root or black parent reached
-		{
-			if(x->p == x->p->p->left)
-			{
-				y = x->p->p->right; //uncle of x
-				if(y != NULL && y->is_black == false) //NULL means black 
-				{
-					x->p->is_black = true;
-					y->is_black = true;
-					x->p->p->is_black = false;
-					x = x->p->p;
-				}
-				else
-				{
-					if(x == x->p->right)
-					{
-						x = x->p;
-						LeftRotate(x);
-					}
-					x->p->is_black = true;
-					x->p->p->is_black = false;
-					RightRotate(x->p->p);
-				}
-			}
-			else //x->p == x->p->p->right
-			{
-				y = x->p->p->left;
-				if(y != NULL && y->is_black == false)
-				{
-					x->p->is_black = true;
-					y->is_black = true;
-					x->p->p->is_black = false;
-					x = x->p->p;
-				}
-				else
-				{
-					if(x == x->p->left)
-					{
-						x = x->p;
-						RightRotate(x);
-					}
-
-					x->p->is_black = true;
-					x->p->p->is_black = false;					
-					LeftRotate(x->p->p);
-
-				}
-			}
-
+	bool Heap::Search(int value) {
+		if (value == _heap[0]) {
+			return true;
 		}
-		root->is_black = true;
-		size++; //increment size by 1
-		return true;
-	}
-	return false;
-}
+		else if (value > _heap[0]) { // na szczycie jest najwieksza wartosc, wiec jesli wyszukiwana jest wieksza niz korzen, to znaczy ze nie ma takiej wartosci
+			return false;
+		}
+		else {
 
-// Removal of an item from the tree.
-// Must deallocate deleted node after RBDeleteFixUp returns
-template <class T>
-bool RedBlackTree<T>::Remove(T item)
-{
-	if(Search(item) == false) //returns false if Search does not find item
-	{
+			for (int i = 1; i < _size; ++i) {
+				
+				if (_heap[i] == value) {
+					return true;
+				}
+			}
+		}
+
 		return false;
 	}
 
-	Node<T>* z = root;
-
-	while (z != NULL) //binary search through tree for item
-	{
-		if (item == z->data)
-			break;
-		else if (item < z->data)
-			z = z->left;
-		else
-			z = z->right;
+	int Heap::GetSize() {
+		return _size;
 	}
 
-	Node<T>* y = NULL;
-	if (z->left == NULL || z->right == NULL)
-	{
-		y = z; //y is the node to be removed
-	}
-	else
-	{
-		y = Predecessor(z); //sets y to predecessor
+	void Heap::View(std::string sp, std::string sn, int v) {
+		std::string cr, cl, cp, s;
+		cr = cl = cp = "  ";
+		cr[0] = 218; cr[1] = 196;
+		cl[0] = 192; cl[1] = 196;
+		cp[0] = 179; // uzycie kodow ascii, aby stworzyc 'ramke'
+
+		if (v < _size) {
+			s = sp; 
+			
+			if (cr == sn) { 
+				s[s.length() - 2] = ' ';
+			}
+
+			View((s + cp), cr, (2 * v + 2));
+			s = s.substr(0, sp.length() - 2);
+			std::cout << s << sn << _heap[v] << std::endl;
+			s = sp;
+
+			if (sn == cl) {
+				s[s.length() - 2] = ' ';
+			}
+
+			View((s + cp), cl, (2 * v + 1));
+		}
 	}
 
-	Node<T>* x = NULL;
-	if (y->left != NULL)
-	{
-		x = y->left;
-	}
-	else
-	{
-		x = y->right;
-	}
-	if (x != NULL)
-	{
-		x->p = y->p;
-	}
-	Node<T>* xParent = y->p;
-	bool yLCH = false;
-
-	if (y->p == NULL) //x is root
-	{
-		root = x;
-	}
-	else if (y == y->p->left) //y is predecessor
-	{
-		y->p->left = x;
-		yLCH = true;
-	}
-	else
-	{
-		y->p->right = x;
-		yLCH = false;
-	}
-
-	if (y != z)
-	{
-		z->data = y->data;
-	}
-
-	if (y->is_black)
-	{
-		RBDeleteFixUp(x, xParent, yLCH);
-	}
-
-	delete y; //DELETE Y AFTER
-	size--; //decrement
-	z = NULL;
-	return true;
 }
-
-// deletes all nodes in the tree. Calls recursive helper function.
-template <class T>
-void RedBlackTree<T>::RemoveAll()
-{
-	RemoveAll(root);
-	root = NULL;
-}
-
-// returns the number of items in the tree
-template <class T>
-unsigned int RedBlackTree<T>::Size() const
-{
-	return size;
-}
-
-// returns the height of the tree, from root to deepest null child. Calls recursive helper function.
-// Note that an empty tree should have a height of 0, and a tree with only one node will have a height of 1.
-template <class T>
-unsigned int RedBlackTree<T>::Height() const
-{
-	return CalculateHeight(root);
-}
-
-
-#endif

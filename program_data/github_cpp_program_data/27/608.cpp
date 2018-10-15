@@ -1,77 +1,97 @@
+//============================================================================
+// Name        : radix-sort.cpp
+// Author      : 
+// Date        :
+// Copyright   : 
+// Description : Implementation of radix sort in C++
+//============================================================================
 
-using namespace std;
+#include "sort.h"
+#include <iostream>
+#include <math.h>
 
-// =========================================================
+const int base = 10;
 
-//HW1P2 stack(vector)
-//Your name: Christopher Wendling
-//Complier:  g++
-//File type: implimentation file stack.cpp
+int digit(int k, int num)
+{ int r;
+r = num/(int)pow(base, k); /* integer division */
+return r % base;
+}
 
-//================================================================
-
-#include "stack.h"
-
-//Object Constructor will do nothing
-stack::stack()
-{}
-//Object Destructor calls clear function and destroys all elements of vector.
-stack::~stack()
-{ 
-	clearIt();
-}
-// 	PURPOSE: isEmpty checks vector size and returns true if empty, false otherwise.
-bool stack::isEmpty()
-{ 
-	if(el.size() == 0) 
-		return true; 
-	else 
-		return false; 
-}    
-// PURPOSE: Return false, stack will never be full.
-bool stack::isFull()
-{ 
-	return false;
-}
-// PURPOSE: adds an element to el
-void stack::push(el_t elem)
-{ 
-	el.push_back(elem);
-}
-// PURPOSE: pop calls isEmpty and if true, throws an exception (Underflow)
-//  Otherwise, removes an element from el and gives it back.
-void stack::pop(el_t& elem)
-{ 
-	if(isEmpty())
-	  throw Underflow();
-    else{ 
-		elem = el[el.size() - 1]; 
-		el.pop_back();
-	}
-}
-// PURPOSE: topElem calls isEmpty and if true, throws an exception (underflow)
-//    Otherwise, gives back the top element from el.
-void stack::topElem(el_t& elem)
-{ 
-	if(isEmpty()) 
-		throw Underflow();
-    else{ 
-		elem = el[el.size() - 1];		
-	}
-}
-//dislayAll calls isEmpty and if true, displays [ empty ].
-//  Otherwise, diplays the elements vertically.
-void stack::displayAll()
-{  
-	if(isEmpty()) 
-		cout << ".[ empty ]." << endl;
-    else 
-		for(int i = el.size() - 1; i>=0; --i){ 
-			cout << el[i] << endl; 
-		}
-}
-//  PURPOSE: destroys all elements of vector
-void stack::clearIt()
+int getMax(int arr[], int n)
 {
-	el.clear();
+    int max = arr[0];
+    int count=0;
+	for (int i = 1; i < n; i++)
+        if (arr[i] > max)
+    	max = arr[i];
+	while(max!=0){
+	max=max/10;
+	count++;
+	}
+    return count;
 }
+
+void
+RadixSort::sort(int* A, int size)
+{
+	/* we use counting sort for sorting digits */
+	//void radix_sort(int *A, int n, int d)
+	 int i, j, m;
+	/* temporary storage */
+	int *C = new int[base];
+	int *B = new int[size];
+	int d = getMax(A, size);
+	for (m = 0; m < d; m++)
+	{
+		for (i = 0; i < base; i++) 
+			C[i] = 0;
+		for (j = 0; j < size; j++)
+		{	//std::cout << digit(m, A[j]) << std::endl;
+			C[digit(m, A[j])]++;
+		}
+			
+		for (i = 1; i < base; i++)
+		{
+			C[i] += C[i-1];
+		}	
+
+		for (j = size-1; j >= 0; j--)
+		{
+			i = C[digit(m, A[j])]--;
+			B[i-1] = A[j];
+		} /* copy B -> A */
+			
+		for (j = 0; j < size; j++)
+		{
+			A[j] = B[j];
+		}		
+	}	
+	delete [] B; delete [] C;
+}
+
+  /*
+     Complete this function with the implementation of radix sort
+     algorithm.
+  */
+
+/*
+int digit(int k, int num)
+{ int r;
+r = num/(int)pow(base, k); // integer division 
+return r % base;
+}
+
+int getMax(int arr[], int n)
+{
+    int max = arr[0];
+    int n=0;
+	for (int i = 1; i < n; i++)
+        if (arr[i] > max)
+            max = arr[i];
+	while(max!=0){
+	max=max/10;
+	n++;
+	}
+    return n;
+}*/

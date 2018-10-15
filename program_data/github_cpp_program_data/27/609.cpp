@@ -1,77 +1,71 @@
+//============================================================================
+// Name        : radix-sort.cpp
+// Author      : 
+// Date        :
+// Copyright   : 
+// Description : Implementation of radix sort in C++
+//============================================================================
 
+#include "sort.h"
+#include<iostream>
 using namespace std;
 
-// =========================================================
-
-//HW1P2 stack(vector)
-//Your name: Christopher Wendling
-//Complier:  g++
-//File type: implimentation file stack.cpp
-
-//================================================================
-
-#include "stack.h"
-
-//Object Constructor will do nothing
-stack::stack()
-{}
-//Object Destructor calls clear function and destroys all elements of vector.
-stack::~stack()
-{ 
-	clearIt();
-}
-// 	PURPOSE: isEmpty checks vector size and returns true if empty, false otherwise.
-bool stack::isEmpty()
-{ 
-	if(el.size() == 0) 
-		return true; 
-	else 
-		return false; 
-}    
-// PURPOSE: Return false, stack will never be full.
-bool stack::isFull()
-{ 
-	return false;
-}
-// PURPOSE: adds an element to el
-void stack::push(el_t elem)
-{ 
-	el.push_back(elem);
-}
-// PURPOSE: pop calls isEmpty and if true, throws an exception (Underflow)
-//  Otherwise, removes an element from el and gives it back.
-void stack::pop(el_t& elem)
-{ 
-	if(isEmpty())
-	  throw Underflow();
-    else{ 
-		elem = el[el.size() - 1]; 
-		el.pop_back();
-	}
-}
-// PURPOSE: topElem calls isEmpty and if true, throws an exception (underflow)
-//    Otherwise, gives back the top element from el.
-void stack::topElem(el_t& elem)
-{ 
-	if(isEmpty()) 
-		throw Underflow();
-    else{ 
-		elem = el[el.size() - 1];		
-	}
-}
-//dislayAll calls isEmpty and if true, displays [ empty ].
-//  Otherwise, diplays the elements vertically.
-void stack::displayAll()
-{  
-	if(isEmpty()) 
-		cout << ".[ empty ].";
-    else 
-		for(int i = el.size() - 1; i>=0; --i){ 
-			cout << el[i] << endl; 
-		}
-}
-//  PURPOSE: destroys all elements of vector
-void stack::clearIt()
+int getMax(int arr[], int n)
 {
-	el.clear();
+    int mx = arr[0];
+
+    for (int i = 1; i < n; i++){
+        if (arr[i] > mx)
+            mx = arr[i];
+	}
+    return mx;
+}
+int getMin(int arr[], int n){
+	int mn = arr[0];
+    for (int i = 1; i < n; i++){
+		if (arr[i] < mn)
+			mn = arr[i];
+	}
+	if (mn < 0){
+		int min = 0- mn;
+		for(int i=0; i<n; i++){
+			arr[i] = arr[i] + min;
+		}
+	}
+    return mn;
+}
+void countSort(int arr[], int n, int exp)
+{
+    int output[n]; // output array
+    int i, count[10] = {0};
+
+    for (i = 0; i < n; i++)
+        count[ (arr[i]/exp)%10 ]++;
+
+    for (i = 1; i < 10; i++)
+        count[i] += count[i - 1];
+ 
+    for (i = n - 1; i >= 0; i--)
+    {
+        output[count[ (arr[i]/exp)%10 ] - 1] = arr[i];
+        count[ (arr[i]/exp)%10 ]--;
+    }
+
+    for (i = 0; i < n; i++)
+        arr[i] = output[i];
+}
+
+void RadixSort::sort(int A[], int size)
+{
+    int m = getMax(A, size);
+    int mn = getMin(A, size);
+    for (int exp = 1; m/exp > 0; exp *= 10)
+        countSort(A, size, exp);
+	
+	if(mn<0){
+		for(int i=0; i<size; i++){
+			A[i] = A[i] + mn;
+		}
+	}
+	
 }

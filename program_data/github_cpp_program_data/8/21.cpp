@@ -1,270 +1,137 @@
-//############################################################################
-// quadtree.cpp
+//===--- examples/Fibonacci/fibonacci.cpp - An example use of the JIT -----===//
 //
-// copyright (c) 2003 by S.H. Plantinga
-//############################################################################
-
-#include "quadtree.h"
-
-//----------------------------------------------------------------------------
-// The child type is given by the bit mask 00yx, so we have
+//                     The LLVM Compiler Infrastructure
 //
-// +--+--+
-// | 2| 3|
-// +--+--+
-// | 0| 1|
-// +--+--+
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
 //
-// For the GetNeighbour function the directions are:
+//===----------------------------------------------------------------------===//
 //
-//    3
-//    |
-// 2 -+- 1
-//    |
-//    0
-//----------------------------------------------------------------------------
-
-//############################################################################
-// QuadNode implementation
-//############################################################################
-QuadNode::QuadNode( QuadNode *myparent )
-{
-  parent = myparent;
-  is_leaf = true;
-  if ( myparent == NULL )
-    depth = 0;
-  else
-    depth = myparent->depth + 1;
-}
-
-//----------------------------------------------------------------------------
-QuadNode::~QuadNode()
-{
-  if ( !is_leaf )
-    for ( int i=0; i<4; i++ )
-      delete child[i];
-}
-
-//----------------------------------------------------------------------------
-void
-QuadNode::Split()
-{
-  Interval x1, x2, y1, y2;
-
-//  x1 = Interval( x_range.lower(), x_range.median() );//inf() is changed to lower(), mid() is changed to median()
-  x1 = Interval( x_range.lower(), median(x_range) );//inf() is changed to lower(), mid() is changed to median()
-  x2 = Interval( median(x_range), x_range.upper() );// sup() is changed to upper()
-  y1 = Interval( y_range.lower(), median(y_range) );
-  y2 = Interval( median(y_range), y_range.upper() );
-
-  for ( int i=0; i<4; i++ )
-    {
-      child[i] = new QuadNode( this );
-      child[i]->SetChildType( i );
-    }
-
-  child[0]->SetRange( x1, y1 );
-  child[1]->SetRange( x2, y1 );
-  child[2]->SetRange( x1, y2 );
-  child[3]->SetRange( x2, y2 );
-
-  is_leaf = false;
-}
-
-//############################################################################
-// QuadTree implementation
-//############################################################################
-QuadTree::QuadTree( const Interval &x, const Interval &y )
-{
-  root = new QuadNode( NULL );
-  root->SetRange( x, y );
-}
-
-//----------------------------------------------------------------------------
-QuadTree::~QuadTree()
-{
-  delete root;
-}
-
-//----------------------------------------------------------------------------
-void
-QuadTree::InsertLeaves( NodeList *l, QuadNode *n )
-{
-  if ( n->is_leaf )
-    l->push( n );
-  else
-    {
-      for ( int i=0; i<4; i++ )
-        InsertLeaves( l, n->child[i] );
-    }
-}
-
-//----------------------------------------------------------------------------
-void
-QuadTree::Balance()
-{
-  static int c1[4] = { 3, 2, 1, 0 };
-  static int c2[4] = { 2, 0, 3, 1 };
-  NodeList nodes;
-  QuadNode *n;
-  QuadNode *neighbour;
-
-  // insert all the leaves of T into a linear list
-  InsertLeaves( &nodes, root );
-
-  // while list not empty
-  while ( !nodes.empty() )
-    {
-      // remove a leaf from list
-      n = nodes.top();
-      nodes.pop();
-
-      // test if leaf has to be split
-      for ( int d=0; d<4; d++ )
-        {
-          neighbour = GetNeighbour( n, d );
-          if ( neighbour != NULL 
-                && !neighbour->is_leaf 
-                && ( !neighbour->child[c1[d]]->is_leaf ||
-                     !neighbour->child[c2[d]]->is_leaf ) )
-            {
-              // need to split this node
-              n->Split();
-
-              // add children to list
-              for ( int i=0; i<4; i++ )
-                nodes.push( n->child[i] );
-
-              // check for neighbours that need splitting
-              for ( int d=0; d<4; d++ )
-                {
-                  neighbour = GetNeighbour( n, d );
-                  if ( neighbour != NULL && neighbour->depth < n->depth )
-                    nodes.push( neighbour );
-                }
-
-              // don't need to test other directions
-              break;
-            }
-        }
-    }
-}
-
-//----------------------------------------------------------------------------
-void
-QuadTree::SplitNode( QuadNode *node )
-{
-  node->Split();
-}
-
-//----------------------------------------------------------------------------
-QuadNode *
-QuadTree::GetRoot()
-{
-  return root;
-}
-
-//----------------------------------------------------------------------------
-QuadNode *
-QuadTree::GetChild( QuadNode *node, int childtype )
-{
-  return node->child[childtype];
-}
-
-//----------------------------------------------------------------------------
-QuadNode *
-QuadTree::GetParent( QuadNode *node )
-{
-  return node->parent;
-}
-      
-//----------------------------------------------------------------------------
-// The child type is given by the bit mask 00yx, so we have
+// This small program provides an example of how to build quickly a small module
+// with function Fibonacci and execute it with the JIT.
 //
-// +--+--+
-// | 2| 3|
-// +--+--+
-// | 0| 1|
-// +--+--+
+// The goal of this snippet is to create in the memory the LLVM module
+// consisting of one function as follow:
 //
-// For the GetNeighbour function the directions are:
+//   int fib(int x) {
+//     if(x<=2) return 1;
+//     return fib(x-1)+fib(x-2);
+//   }
 //
-//    3
-//    |
-// 2 -+- 1
-//    |
-//    0
+// Once we have this, we compile the module via JIT, then execute the `fib'
+// function and return result to a driver, i.e. to a "host program".
+//
+//===----------------------------------------------------------------------===//
 
-//----------------------------------------------------------------------------
-// Return the deepest neighbour node whose depth is at most the depth of 
-// *node, or NULL if there is no such node
-QuadNode *
-QuadTree::GetNeighbour( QuadNode *node, int direction )
-{
-  static int c1[4] = { 3, 2, 1, 0 };
-  static int c2[4] = { 1, 3, 0, 2 };
-  static int c3[4] = { 2, 0, 3, 1 };
-  static int c4[4] = { 0, 1, 2, 3 };
+#include "llvm/Analysis/Verifier.h"
+#include "llvm/ExecutionEngine/GenericValue.h"
+#include "llvm/ExecutionEngine/Interpreter.h"
+#include "llvm/ExecutionEngine/JIT.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
+#include "llvm/Support/TargetSelect.h"
+#include "llvm/Support/raw_ostream.h"
+using namespace llvm;
 
-  QuadNode *m;
+static Function *CreateFibFunction(Module *M, LLVMContext &Context) {
+  // Create the fib function and insert it into module M. This function is said
+  // to return an int and take an int parameter.
+  Function *FibF =
+    cast<Function>(M->getOrInsertFunction("fib", Type::getInt32Ty(Context),
+                                          Type::getInt32Ty(Context),
+                                          (Type *)0));
 
-  if ( node->parent == NULL )
-    return NULL;
-  
-  if ( node->child_type == c1[direction] )
-    return node->parent->child[c2[direction]];
+  // Add a basic block to the function.
+  BasicBlock *BB = BasicBlock::Create(Context, "EntryBlock", FibF);
 
-  if ( node->child_type == c3[direction] )
-    return node->parent->child[c4[direction]];
+  // Get pointers to the constants.
+  Value *One = ConstantInt::get(Type::getInt32Ty(Context), 1);
+  Value *Two = ConstantInt::get(Type::getInt32Ty(Context), 2);
 
-  m = GetNeighbour( node->parent, direction );
-  if ( m == NULL || m->is_leaf )
-    return m;
+  // Get pointer to the integer argument of the add1 function...
+  Argument *ArgX = FibF->arg_begin();   // Get the arg.
+  ArgX->setName("AnArg");            // Give it a nice symbolic name for fun.
 
-  if ( node->child_type == c2[direction] )
-    return m->child[c1[direction]];
-  else
-    return m->child[c3[direction]];
+  // Create the true_block.
+  BasicBlock *RetBB = BasicBlock::Create(Context, "return", FibF);
+  // Create an exit block.
+  BasicBlock* RecurseBB = BasicBlock::Create(Context, "recurse", FibF);
+
+  // Create the "if (arg <= 2) goto exitbb"
+  Value *CondInst = new ICmpInst(*BB, ICmpInst::ICMP_SLE, ArgX, Two, "cond");
+  BranchInst::Create(RetBB, RecurseBB, CondInst, BB);
+
+  // Create: ret int 1
+  ReturnInst::Create(Context, One, RetBB);
+
+  // create fib(x-1)
+  Value *Sub = BinaryOperator::CreateSub(ArgX, One, "arg", RecurseBB);
+  CallInst *CallFibX1 = CallInst::Create(FibF, Sub, "fibx1", RecurseBB);
+  CallFibX1->setTailCall();
+
+  // create fib(x-2)
+  Sub = BinaryOperator::CreateSub(ArgX, Two, "arg", RecurseBB);
+  CallInst *CallFibX2 = CallInst::Create(FibF, Sub, "fibx2", RecurseBB);
+  CallFibX2->setTailCall();
+
+
+  // fib(x-1)+fib(x-2)
+  Value *Sum = BinaryOperator::CreateAdd(CallFibX1, CallFibX2,
+                                         "addresult", RecurseBB);
+
+  // Create the return instruction and add it to the basic block
+  ReturnInst::Create(Context, Sum, RecurseBB);
+
+  return FibF;
 }
 
-//----------------------------------------------------------------------------
-QuadNode *
-QuadTree::GetCorner( QuadNode *node, int direction )
-{
-  while ( !node->is_leaf )
-    node = node->child[direction];
-  return node;
+
+int main(int argc, char **argv) {
+  int n = argc > 1 ? atol(argv[1]) : 24;
+
+  InitializeNativeTarget();
+  LLVMContext Context;
+
+  // Create some module to put our function into it.
+  OwningPtr<Module> M(new Module("test", Context));
+
+  // We are about to create the "fib" function:
+  Function *FibF = CreateFibFunction(M.get(), Context);
+
+  // Now we going to create JIT
+  std::string errStr;
+  ExecutionEngine *EE =
+    EngineBuilder(M.get())
+    .setErrorStr(&errStr)
+    .setEngineKind(EngineKind::JIT)
+    .create();
+
+  if (!EE) {
+    errs() << argv[0] << ": Failed to construct ExecutionEngine: " << errStr
+           << "\n";
+    return 1;
+  }
+
+  errs() << "verifying... ";
+  if (verifyModule(*M)) {
+    errs() << argv[0] << ": Error constructing function!\n";
+    return 1;
+  }
+
+  errs() << "OK\n";
+  errs() << "We just constructed this LLVM module:\n\n---------\n" << *M;
+  errs() << "---------\nstarting fibonacci(" << n << ") with JIT...\n";
+
+  // Call the Fibonacci function with argument n:
+  std::vector<GenericValue> Args(1);
+  Args[0].IntVal = APInt(32, n);
+  GenericValue GV = EE->runFunction(FibF, Args);
+
+  // import result of execution
+  outs() << "Result: " << GV.IntVal << "\n";
+
+  return 0;
 }
-
-//----------------------------------------------------------------------------
-// private member
-void 
-QuadTree::WriteNode( Graphics &g, QuadNode *node )
-{
-  if ( node->is_leaf )
-    {
-      g.Line( node->x_range.lower(), node->y_range.upper(),
-              node->x_range.upper(), node->y_range.upper() );
-      g.Line( node->x_range.upper(), node->y_range.upper(),
-              node->x_range.upper(), node->y_range.lower() );
-    }
-  else
-    {
-      for ( int i=0; i<4; i++ )
-        WriteNode( g, node->child[i] );
-    }
-}
-
-//----------------------------------------------------------------------------
-void
-QuadTree::WriteToGraphics( Graphics &g )
-{
-  g.Line( root->x_range.lower(), root->y_range.lower(),
-          root->x_range.lower(), root->y_range.upper() );
-  g.Line( root->x_range.lower(), root->y_range.lower(),
-          root->x_range.upper(), root->y_range.lower() );
-  WriteNode( g, root );
-}
-
-//----------------------------------------------------------------------------
-
