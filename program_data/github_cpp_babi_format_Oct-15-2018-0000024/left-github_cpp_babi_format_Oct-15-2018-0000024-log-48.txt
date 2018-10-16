@@ -1,0 +1,15 @@
+Namespace(cuda=True, is_training_ggnn=False, left_directory='program_data/github_cpp_babi_format_Oct-15-2018-0000024', log_path='program_data/github_cpp_babi_format_Oct-15-2018-0000024/logs', loss=0, lr=0.01, manualSeed=0, model_path='program_data/github_cpp_babi_format_Oct-15-2018-0000024/left-github_cpp_babi_format_Oct-15-2018-0000024-48.cpkl', n_classes=48, n_hidden=50, n_steps=8, niter=300, right_directory='program_data/cll_github_java_babi_format_Oct-15-2018-0000024', size_vocabulary=168, state_dim=5, test_batch_size=128, testing=False, train_batch_size=128, training=True, verbal=True, workers=2)
+Traceback (most recent call last):
+  File "main_biggnn.py", line 51, in <module>
+    writer = SummaryWriter("%s/run-%03d" % (opt.log_path, run_number))
+  File "/opt/conda/lib/python3.6/site-packages/tensorboardX/writer.py", line 274, in __init__
+    self.file_writer = FileWriter(logdir=log_dir, **kwargs)
+  File "/opt/conda/lib/python3.6/site-packages/tensorboardX/writer.py", line 199, in __init__
+    event_writer = EventFileWriter(logdir, max_queue, flush_secs, filename_suffix)
+  File "/opt/conda/lib/python3.6/site-packages/tensorboardX/event_file_writer.py", line 119, in __init__
+    directory_check(self._logdir)
+  File "/opt/conda/lib/python3.6/site-packages/tensorboardX/event_file_writer.py", line 37, in directory_check
+    os.makedirs(path)
+  File "/opt/conda/lib/python3.6/os.py", line 220, in makedirs
+    mkdir(name, mode)
+PermissionError: [Errno 13] Permission denied: 'program_data/github_cpp_babi_format_Oct-15-2018-0000024/logs/run-001'

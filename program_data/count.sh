@@ -1,5 +1,5 @@
 lang=${lang:-cpp}
-out=github_"$lang"_babi_format_*-2018-00000$1
+out=github_"$lang"_babi_format_*15-2018-00000$1
 echo $out
 e=$(wc -l $out/*/*.txt | tail -1 | cut -f2 -d" ")
 v=$(cd $out > /dev/null && dmap --lang $lang | sort -n | tail -1 | cut -f1 -d"<")

@@ -1,16 +1,17 @@
 # $1 - the dataset folder containing training/testing samples
 # $2 - the size of vocabulary, start with a small number and increase it if you get errors
-lang=cpp
 directory=$1
+VOCABULARY_SIZE=${VOCABULARY_SIZE:-57}
 MEMORY=${MEMORY:-128G}
 TRAIN_SIZE=${TRAIN_SIZE:-128}
-
+MANUAL_SEED=${MANUAL_SEED:-0}
 # derive the number of classes depending on the number of files in the training folder
 nn=$(ls $directory/train | wc -l | cut -f1 -d" ")
-n=${3:-$nn}
-m=${4:-2}
-s=${5:-10}
-
+N_CLASSES=${N_CLASSES:-$nn}
+N_ITER=${N_ITER:-10}
+N_STEPS=${N_STEPS:-5}
+N_STATEDIM=${N_STATEDIM:-5}
+N_HIDDEN=${N_HIDDEN:-50}
 # the cached dataset
 cache=$(dirname $directory)/$(basename $directory)-$n
 # comment out if you want to resume computation
@@ -18,7 +19,7 @@ rm -f $cache-train.pkl
 rm -f $cache-test.pkl
 
 # the model file
-model=$directory/$(basename $directory)-$n.cpkl
+model=$directory/$(basename $directory)-$N_CLASSES
 # comment out if you want to resume computation
 #rm -f $model
 
@@ -41,9 +42,6 @@ if [ "ip-172-31-34-92" == "$(hostname)" ]; then
  docker=docker
  cuda=
 fi
-#	--n_hidden $2 \
-#       --train_batch_size 128 \
-#       --test_batch_size 32 \
 
 docker build $proxy -t progress progress
 /usr/bin/time -f %e \
@@ -51,15 +49,16 @@ docker build $proxy -t progress progress
   python main_ggnn.py \
 	$cuda \
 	--training \
-        --manualSeed 0 \
+        --manualSeed $MANUAL_SEED \
 	--model_path $model --directory $directory \
-	--n_classes $n \
-	--n_steps $5 \
-	--n_hidden 50 \
-	--niter $4 \
-	--size_vocabulary $2 \
-	--train_batch_size ${TRAIN_SIZE} \
-	--test_batch_size ${TRAIN_SIZE} \
+	--n_classes $N_CLASSES \
+	--n_steps $N_STEPS \
+	--n_hidden $N_HIDDEN \
+	--niter $N_ITER \
+	--size_vocabulary $VOCABULARY_SIZE \
+        --state_dim $N_STATEDIM \
+	--train_batch_size $TRAIN_SIZE \
+	--test_batch_size $TRAIN_SIZE \
         --workers 2 \
 	--log_path $directory/logs \
   | tee $log

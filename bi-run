@@ -11,6 +11,8 @@ N_CLASSES=${N_CLASSES:-$nn}
 MEMORY=${MEMORY:-128G}
 TRAIN_SIZE=${TRAIN_SIZE:-128}
 N_ITER=${N_ITER:-300}
+LOSS=${LOSS:-0}
+N_HIDDEN=${N_HIDDEN:-50}
 
 # the cached dataset
 cache=$(dirname $left)/$(basename $left)-$N_CLASSES
@@ -19,7 +21,7 @@ rm -f $cache-train.pkl
 rm -f $cache-test.pkl
 
 # the model file
-model=$left/left-$(basename $left)-$N_CLASSES.cpkl
+model=$left/$(basename $left)-$N_CLASSES
 # comment out if you want to resume computation
 #rm -f $model
 
@@ -54,11 +56,12 @@ docker build $proxy -t progress progress
         --right_directory $right \
 	--n_classes $N_CLASSES \
 	--n_steps $N_STEPS \
-	--n_hidden 50 \
+	--n_hidden $N_HIDDEN \
 	--niter $N_ITER \
 	--size_vocabulary $SIZE_VOCABULARY \
 	--train_batch_size $TRAIN_SIZE \
 	--test_batch_size $TRAIN_SIZE \
+        --loss $LOSS \
         --workers 2 \
 	--log_path $left/logs \
   | tee $log

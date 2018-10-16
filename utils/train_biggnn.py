@@ -54,4 +54,4 @@ def train(epoch, dataloader, net, criterion, optimizer, opt, writer):
             print('[%d/%d][%d/%d] Loss: %.4f' % (epoch, opt.niter, i, len(dataloader), loss.item()))
 
     print("Saving model................")
-    torch.save(net, opt.model_path)
+    torch.save(net, "{}/biggnn-model:{}".format(opt.model_path, epoch))

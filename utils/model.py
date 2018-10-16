@@ -135,27 +135,21 @@ class GGNN(nn.Module):
             nn.Linear(self.state_dim, 1),
             nn.Tanh(),   
         )
-
       
         self.soft_attention = nn.Sequential(
             nn.Linear(self.state_dim, self.state_dim),
             nn.LeakyReLU(),
             nn.Linear(self.state_dim, 1),
             nn.Sigmoid(),
-           
         )
 
         self.class_prediction = nn.Sequential(
             nn.Linear(opt.n_node, opt.n_hidden),
-            nn.Tanh(),
+            #nn.Tanh(),
+	    nn.LeakyReLU(),
             nn.Linear(opt.n_hidden, opt.n_classes),
             nn.Softmax(dim=1)    
         )
-
-        # self.class_prediction = nn.Sequential(
-        #     nn.Linear(opt.n_node, opt.n_classes),
-        #     nn.Softmax(dim=1)    
-        # )
 
         self._initialization()
 
@@ -190,7 +184,7 @@ class GGNN(nn.Module):
 
         soft_attention_ouput = self.soft_attention(prop_state)
         # Element wise hadamard product to get the graph representation, check Equation 7 in GGNN paper for more details
-        output = torch.mul(output,soft_attention_ouput)
+        output = torch.mul(output, soft_attention_ouput)
         output = output.sum(2)
 
         if self.is_training_ggnn == True:
@@ -246,108 +240,4 @@ class BiGGNN(nn.Module):
             concat_layer = torch.cat((left_output, right_output),1)
             output = self.fc_output(concat_layer)
             return output
-
-
-
-
-
-# class BiGGNN(nn.Module):
-#     def __init__(self, opt):
-#         super(BiGGNN, self).__init__()
-
-#         self.opt = opt
-#         self.state_dim = opt.state_dim
-#         self.annotation_dim = opt.annotation_dim
-#         self.n_edge_types = opt.n_edge_types
-#         self.n_node = opt.n_node
-#         self.n_steps = opt.n_steps
-#         self.n_classes = opt.n_classes
-
-#         for i in range(self.n_edge_types):
-#             # incoming and outgoing edge embedding
-#             in_fc = nn.Linear(self.state_dim, self.state_dim)
-#             out_fc = nn.Linear(self.state_dim, self.state_dim)
-#             self.add_module("in_{}".format(i), in_fc)
-#             self.add_module("out_{}".format(i), out_fc)
-
-#         self.in_fcs = AttrProxy(self, "in_")
-#         self.out_fcs = AttrProxy(self, "out_")
-
-#         # Propogation Model
-#         self.propogator = Propogator(self.state_dim, self.n_node, self.n_edge_types)
-
-#         # Output Model
-#         self.out = nn.Sequential(
-#             nn.Linear(self.state_dim, self.state_dim),
-#             nn.Tanh(),
-#             nn.Linear(self.state_dim, 5),
-#             nn.Tanh(),   
-#         )
-      
-#         self.soft_attention = nn.Sequential(
-#             nn.Linear(self.state_dim, self.state_dim),
-#             nn.Tanh(),
-#             nn.Linear(self.state_dim, 5),
-#             nn.Sigmoid(),
-           
-#         )
-
-#         self.fc_output = nn.Sequential(
-#             nn.Linear(10*2, 50),
-#             nn.ReLU(),
-#             nn.Linear(50, 2),
-#             nn.Softmax(dim=1)
-#         )
-
-#         self.feature_representation = nn.Sequential(
-#             nn.Linear(self.n_node, 50),
-#             nn.ReLU(),
-#             nn.Linear(50, 10)  
-#         )
-
-#         self._initialization()
-
-#     def _initialization(self):
-#         for m in self.modules():
-#             if isinstance(m, nn.Linear):
-#                 init.xavier_normal_(m.weight.data)
-#                 if m.bias is not None:
-#                     init.normal_(m.bias.data)
-
-#     def side_forward(self, prop_state, annotation, A):
-#         for i_step in range(self.n_steps):
-#             in_states = []
-#             out_states = []
-#             for i in range(self.n_edge_types):
-#                 in_states.append(self.in_fcs[i](prop_state))
-#                 out_states.append(self.out_fcs[i](prop_state))
-#             in_states = torch.stack(in_states).transpose(0, 1).contiguous()
-#             in_states = in_states.view(-1, self.n_node*self.n_edge_types, self.state_dim)
-#             out_states = torch.stack(out_states).transpose(0, 1).contiguous()
-#             out_states = out_states.view(-1, self.n_node*self.n_edge_types, self.state_dim)
-
-#             prop_state = self.propogator(in_states, out_states, prop_state, A)
-  
-#         output = self.out(prop_state)
-
-#         soft_attention_ouput = self.soft_attention(prop_state)
-#         output = torch.mul(output,soft_attention_ouput)
-#         output = output.sum(2)
-#         return output
-
-#     def forward(self, left_prop_state, left_annotation, left_A, right_prop_state, right_annotation, right_A):
-#         left_output = self.side_forward(left_prop_state, left_annotation, left_A)
-#         right_output = self.side_forward(right_prop_state, right_annotation, right_A)
-
-#         left_output = self.feature_representation(left_output)
-#         right_output = self.feature_representation(right_output)
-        
-#         if self.opt.loss == 1:
-#             return left_output, right_output
-#         else:
-#             concat_layer = torch.cat((left_output, right_output),1)
-#             output = self.fc_output(concat_layer)
-#             print(output)
-#             return output
-
 

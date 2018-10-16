@@ -84,12 +84,17 @@ def main(opt):
     opt.n_node = train_dataset.n_node
     # print("Max node : " + str(opt.n_node))
 
+    epochs = os.listdir(opt.model_path)
     if os.path.isfile(opt.model_path):
-        print("Using the saved model....")
-        net = torch.load(opt.model_path)
+       if len(epochs) == 0:
+           epoch = 0
+       else:
+           epoch = max([int(s.split(':')[1]) for s in epochs]) + 1
+       print("Using the saved model {}....".format(epoch))
+       net = torch.load("{}/biggnn-model:{}".format(opt.model_path, epoch))
     else:
-        net = BiGGNN(opt)
-        net.double()
+       net = BiGGNN(opt)
+       net.double()
 
     if opt.loss == 1:
         criterion = ContrastiveLoss()
@@ -103,7 +108,7 @@ def main(opt):
     optimizer = optim.Adam(net.parameters(), lr=opt.lr)
 
     if opt.training:
-        for epoch in range(0, opt.niter):
+        for epoch in range(epoch, opt.niter):
             train(epoch, train_dataloader, net, criterion, optimizer,  opt, writer)
             test(test_dataloader, net, criterion, optimizer, opt)
 

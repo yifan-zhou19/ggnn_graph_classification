@@ -24,7 +24,7 @@ def train(epoch, dataloader, net, criterion, optimizer, opt, writer):
         target = Variable(target)
         output = net(init_input, adj_matrix)
         
-        writer.add_graph(net, (init_input, adj_matrix), verbose=False)
+        #writer.add_graph(net, (init_input, adj_matrix), verbose=False)
 
         loss = criterion(output, target)
        
@@ -38,4 +38,4 @@ def train(epoch, dataloader, net, criterion, optimizer, opt, writer):
             # print('[%d/%d][%d/%d] Loss: %.4f' % (epoch, opt.niter, i, len(dataloader), loss.data[0]))
             print('[%d/%d][%d/%d] Loss: %.4f' % (epoch, opt.niter, i, len(dataloader), loss.item()))
 
-    torch.save(net, opt.model_path)
+    torch.save(net, "{}/ggnn-model:{}".format(opt.model_path, epoch))

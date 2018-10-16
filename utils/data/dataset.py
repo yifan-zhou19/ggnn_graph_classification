@@ -48,14 +48,21 @@ def load_program_graphs_from_directory(directory,is_train=True,n_classes=3, data
     for f in listdir(dir_path):
       if isfile(join(dir_path, f)):
          filenames.append(f)
-    int_filenames = [int(re.search('_(.*).txt', x).group(1)) for x in filenames]
+    if "_" in filenames[0]:
+      int_filenames = [int(re.search('_(.*).txt', x).group(1)) for x in filenames]
+    else:
+      int_filenames = [int(re.search('(.*).txt', x).group(1)) for x in filenames]
     ordered_filenames = sorted(int_filenames)
     lookup = {}
     for i in range(1, 1+len(ordered_filenames)):
         if is_train == True:
-           lookup[i] = join(dir_path, "train_%s.txt" % str(ordered_filenames[i-1]))
+           lookup[i] = join(dir_path, "%s.txt" % str(ordered_filenames[i-1]))
+           if not os.path.exists(lookup[i]): 
+              lookup[i] = join(dir_path, "train_%s.txt" % str(ordered_filenames[i-1]))
         else:
-           lookup[i] = join(dir_path, "test_%s.txt" % str(ordered_filenames[i-1]))
+           lookup[i] = join(dir_path, "%s.txt" % str(ordered_filenames[i-1]))
+           if not os.path.exists(lookup[i]): 
+              lookup[i] = join(dir_path, "test_%s.txt" % str(ordered_filenames[i-1]))
     for i in trange(1, 1+n_classes):
         path = lookup[i]
         # print(path)
@@ -116,7 +123,7 @@ def find_max_node_id(data_list):
                 max_node_id = item[2]
                 max_data_id = i
         i = i + 1
-    print(max_data_id)
+    # print(max_data_id)
     return max_node_id
     # return 48
 
