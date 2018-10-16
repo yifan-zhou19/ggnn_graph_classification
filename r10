@@ -1,5 +1,0 @@
-tag=${1:-Sep-29-2018}
-n=${2:-10}
-for f in program_data/cpp_babi_format_"$tag"; do
-   ./run $f 57 $n
-done

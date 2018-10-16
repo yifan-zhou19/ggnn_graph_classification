@@ -1,6 +1,7 @@
 # $1 - the dataset folder containing training/testing samples
 # $2 - the size of vocabulary, start with a small number and increase it if you get errors
 directory=$1
+epoch=${2:-0}
 VOCABULARY_SIZE=${VOCABULARY_SIZE:-57}
 MEMORY=${MEMORY:-128G}
 TRAIN_SIZE=${TRAIN_SIZE:-128}
@@ -47,7 +48,7 @@ docker build $proxy -t progress docker
   $docker run -v $(pwd):/e -w /e --shm-size $MEMORY --rm -it progress \
   python main.py \
 	$cuda \
-	--training \
+	--testing --epoch $epoch \
         --manualSeed $MANUAL_SEED \
 	--model_path $model --directory $directory \
 	--n_classes $N_CLASSES \

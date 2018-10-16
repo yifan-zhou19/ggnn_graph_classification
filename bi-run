@@ -13,6 +13,7 @@ TRAIN_SIZE=${TRAIN_SIZE:-128}
 N_ITER=${N_ITER:-300}
 LOSS=${LOSS:-0}
 N_HIDDEN=${N_HIDDEN:-50}
+TRAINING=${TRAINING:---training}
 
 # the cached dataset
 cache=$(dirname $left)/$(basename $left)-$N_CLASSES
@@ -22,6 +23,8 @@ rm -f $cache-test.pkl
 
 # the model file
 model=$left/$(basename $left)-$N_CLASSES
+mkdir -p $model
+chmod o+w $model
 # comment out if you want to resume computation
 #rm -f $model
 
@@ -44,12 +47,12 @@ if [ "ip-172-31-34-92" == "$(hostname)" ]; then
  cuda=
 fi
 
-docker build $proxy -t progress progress
+docker build $proxy -t progress docker
 /usr/bin/time -f %e \
   $docker run -v $(pwd):/e -w /e --shm-size $MEMORY --rm -it progress \
-  python main_biggnn.py \
+  python main.py \
 	$cuda \
-	--training \
+	$TRAINING \
         --manualSeed 0 \
 	--model_path $model \
         --left_directory $left \

@@ -1,7 +1,7 @@
 lang=${1:-cpp}
 #in=github_"$lang"_protobuf_format_Oct-15-2018
-in="$lang"_protobuf_format_Oct-10-2018
-out=${in/protobuf/babi}-00000${2:-26}
+in="$lang"_protobuf_format_Oct-15-2018
+out=${in/protobuf/babi}-00000${2:-23}
 cd $out > /dev/null
 k=$(docker run -v $(pwd):/e --entrypoint /opt/bin/maps -it yijun/fast:built --lang $lang | sort -n | wc -l)
 cd - > /dev/null

@@ -1,4 +1,4 @@
-in=${1:-cpp_protobuf_format_Sep-29-2018}
+in=${1:-github_cpp_protobuf_format_Oct-15-2018}
 out=${in/protobuf/babi}-$2
 cp ggnn/ggnn-$2.py ggnn/ggnn.py
 mkdir -p $out/train $out/test

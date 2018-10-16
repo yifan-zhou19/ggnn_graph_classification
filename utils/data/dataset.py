@@ -269,9 +269,9 @@ class CrossLingualProgramData():
         else:
             self.loss = loss
             if is_train:
-               left_filename = "%s/left-%s-%d-train.pkl" % (left_path, base_name, n_classes)
+               left_filename = "%s/%s-%d-train.pkl" % (left_path, base_name, n_classes)
             else:
-               left_filename = "%s/left-%s-%d-test.pkl" % (left_path, base_name, n_classes)
+               left_filename = "%s/%s-%d-test.pkl" % (left_path, base_name, n_classes)
             if os.path.exists(left_filename):
                left_file = open(left_filename, 'rb')
                buf = left_file.read()
@@ -285,9 +285,9 @@ class CrossLingualProgramData():
                out.write(buf)
                out.close()
             if is_train:
-               right_filename = "%s/right-%s-%d-train.pkl" % (right_path, base_name, n_classes)
+               right_filename = "%s/%s-%d-train.pkl" % (right_path, base_name, n_classes)
             else:
-               right_filename = "%s/right-%s-%d-test.pkl" % (right_path, base_name, n_classes)
+               right_filename = "%s/%s-%d-test.pkl" % (right_path, base_name, n_classes)
             if os.path.exists(right_filename):
                right_file = open(right_filename, 'rb')
                buf = right_file.read()

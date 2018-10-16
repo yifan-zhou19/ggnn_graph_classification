@@ -1,4 +1,4 @@
-in=${1:-cpp_protobuf_format}
+in=${1:-github_cpp_protobuf_format}
 input=${2:-CppProgramData}
 mkdir -p $in
 chmod -R o+w $in
