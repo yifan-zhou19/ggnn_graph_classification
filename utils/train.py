@@ -1,7 +1,6 @@
 import torch
 from torch.autograd import Variable
 from tensorboardX import SummaryWriter
-import model
 
 def train_ggnn(epoch, dataloader, net, criterion, optimizer, opt, writer):
     # net.train()

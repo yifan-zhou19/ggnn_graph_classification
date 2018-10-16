@@ -58,7 +58,7 @@ docker build $proxy -t progress docker
 	--testing --epoch $epoch\
         --manualSeed 0 \
 	--model_path $model \
-        --left_directory $left \
+        --directory $left \
         --right_directory $right \
 	--n_classes $N_CLASSES \
 	--n_steps $N_STEPS \

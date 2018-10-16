@@ -6,5 +6,5 @@ out2=cll_${out/cpp/java}
 cd .. > /dev/null
 	TRAIN_SIZE=64 \
 	NV_GPU="0,1" \
-	bi-run program_data/$out program_data/$out2 329 8
+	bi-run program_data/$out program_data/$out2 172 8
 cd - > /dev/null

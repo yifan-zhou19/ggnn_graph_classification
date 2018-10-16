@@ -9,7 +9,7 @@ cd .. > /dev/null
 	MEMORY=256G \
 	TRAIN_SIZE=128 \
 	VOCABULARY_SIZE=$((k-1)) \
-	N_CLASSES=3 \
+	N_CLASSES=50 \
 	N_ITER=150 \
 	N_STEPS=8 \
 	N_STATEDIM=10 \

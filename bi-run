@@ -13,23 +13,22 @@ TRAIN_SIZE=${TRAIN_SIZE:-128}
 N_ITER=${N_ITER:-300}
 LOSS=${LOSS:-0}
 N_HIDDEN=${N_HIDDEN:-50}
-TRAINING=${TRAINING:---training}
 
 # the cached dataset
-cache=$(dirname $left)/$(basename $left)-$N_CLASSES
+cache=$(dirname $left)/$N_CLASSES
 # comment out if you want to resume computation
 rm -f $cache-train.pkl
 rm -f $cache-test.pkl
 
 # the model file
-model=$left/$(basename $left)-$N_CLASSES
+model=$left/$N_CLASSES
 mkdir -p $model
 chmod o+w $model
 # comment out if you want to resume computation
 #rm -f $model
 
 # the log file
-log=$left/left-$(basename $left)-log-$N_CLASSES.txt
+log=$left/bi-log-$N_CLASSES.txt
 # comment out if you want to reset the log
 rm -f $log
 mkdir -p $left/logs
@@ -48,14 +47,14 @@ if [ "ip-172-31-34-92" == "$(hostname)" ]; then
 fi
 
 docker build $proxy -t progress docker
-/usr/bin/time -f %e \
-  $docker run -v $(pwd):/e -w /e --shm-size $MEMORY --rm -it progress \
+NV_GPU='0,1' /usr/bin/time -f %e \
+$docker run -v $(pwd):/e -w /e --shm-size $MEMORY --rm -it progress \
   python main.py \
 	$cuda \
-	$TRAINING \
+	--training \
         --manualSeed 0 \
 	--model_path $model \
-        --left_directory $left \
+        --directory $left \
         --right_directory $right \
 	--n_classes $N_CLASSES \
 	--n_steps $N_STEPS \
