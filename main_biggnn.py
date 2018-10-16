@@ -66,7 +66,7 @@ def main(opt):
 
 
     test_dataset = CrossLingualProgramData(opt.size_vocabulary, opt.left_directory,opt.right_directory, False,opt.loss, opt.n_classes,opt.data_percentage)
-    test_dataloader = bAbIDataloader(train_dataset, batch_size=opt.train_batch_size, \
+    test_dataloader = bAbIDataloader(test_dataset, batch_size=opt.train_batch_size, \
                                       shuffle=True, num_workers=2)
 
     opt.annotation_dim = 1  # for bAbI
