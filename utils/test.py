@@ -31,9 +31,17 @@ def test_ggnn(dataloader, net, criterion, optimizer, opt):
         pred = output.data.max(1, keepdim=True)[1]
         # print(pred)
 
+        all_predicted.extend(pred.data.view_as(target).cpu().numpy())
+        all_targets.extend(target.cpu().numpy())
+
         correct += pred.eq(target.data.view_as(pred)).cpu().sum()
 
     test_loss /= len(dataloader.dataset)
+
+    print('Accuracy:', accuracy_score(all_targets, all_predicted))
+    print(classification_report(all_targets, all_predicted))
+    print(confusion_matrix(all_targets, all_predicted))
+
     print('Test set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)'.format(
         test_loss, correct, len(dataloader.dataset),
         100. * correct / len(dataloader.dataset)))
