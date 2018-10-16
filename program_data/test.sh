@@ -9,7 +9,7 @@ rm -f $out/$out-$N_CLASSES.cpkl
 cd .. > /dev/null
 echo NV_GPU=1 ./test program_data/$out $epoch 
 	MEMORY=256G \
-	TRAIN_SIZE=128 \
+	TRAIN_SIZE=3 \
 	VOCABULARY_SIZE=$((k-1)) \
 	N_CLASSES=50 \
 	N_ITER=150 \

@@ -125,6 +125,11 @@ def main(opt):
             train_ggnn(epoch, train_dataloader, net, criterion, optimizer, opt, writer)
           else:
             train_biggnn(epoch, train_dataloader, net, criterion, optimizer, opt, writer)
+          if opt.right_directory == "":
+             test_ggnn(test_dataloader, net, criterion, optimizer, opt)
+          else:
+             test_biggnn(test_dataloader, net, criterion, optimizer, opt)
+
         writer.close()
 
     if opt.testing:
