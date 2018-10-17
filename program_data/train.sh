@@ -7,5 +7,5 @@ cd $out > /dev/null
 k=$(docker run -v $(pwd):/e --entrypoint /opt/bin/maps -it yijun/fast:built --lang $lang | sort -n | wc -l)
 cd - > /dev/null
 cd .. > /dev/null
-run program_data/$out $((k-1)) 50 323 8
+run program_data/$out $((k-1)) 50 150 8
 cd - > /dev/null

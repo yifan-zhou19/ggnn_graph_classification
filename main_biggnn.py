@@ -91,7 +91,6 @@ def main(opt):
         filename = "{}.{}".format(opt.model_path, opt.epoch)
     else:
         filename = opt.model_path
-    # print(filename)
     if os.path.exists(filename):
         if opt.testing:
            print("Using No. {} saved model....".format(opt.epoch))

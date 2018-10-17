@@ -3,13 +3,11 @@ from torch.autograd import Variable
 from tensorboardX import SummaryWriter
 
 def train(epoch, dataloader, net, criterion, optimizer, opt, writer):
-    # net.train()
     
     for i, (adj_matrices, target) in enumerate(dataloader, 0):
     
         net.zero_grad()
         # optimizer.zero_grad()
-        # print("------------------")
         left_adj_matrix = adj_matrices[0]
         right_adj_matrix = adj_matrices[1]
     
@@ -54,6 +52,5 @@ def train(epoch, dataloader, net, criterion, optimizer, opt, writer):
         if i % int(len(dataloader) / 10 + 1) == 0 and opt.verbal:
             print('[%d/%d][%d/%d] Loss: %.4f' % (epoch, opt.niter, i, len(dataloader), loss.item()))
 
-    print("Saving model................")
     torch.save(net, opt.model_path)
     torch.save(net, "{}.{}".format(opt.model_path, epoch))

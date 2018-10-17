@@ -3,7 +3,6 @@ from torch.autograd import Variable
 from tensorboardX import SummaryWriter
 
 def train(epoch, dataloader, net, criterion, optimizer, opt, writer):
-    # net.train()
     
     for i, (adj_matrix, target) in enumerate(dataloader, 0):
         net.zero_grad()
@@ -23,19 +22,16 @@ def train(epoch, dataloader, net, criterion, optimizer, opt, writer):
         # annotation = Variable(annotation)
         target = Variable(target)
         output = net(init_input, adj_matrix)
-        
-        writer.add_graph(net, (init_input, adj_matrix), verbose=False)
-
+        # writer.add_graph(net, (init_input, adj_matrix), verbose=False)
         loss = criterion(output, target)
-       
         loss.backward()
         optimizer.step()
 
-        writer.add_scalar('loss', loss.data.item(), int(epoch))
-       
-        
+        if writer:
+           writer.add_scalar('loss', loss.data.item(), int(epoch))
+
         if i % int(len(dataloader) / 10 + 1) == 0 and opt.verbal:
-            # print('[%d/%d][%d/%d] Loss: %.4f' % (epoch, opt.niter, i, len(dataloader), loss.data[0]))
             print('[%d/%d][%d/%d] Loss: %.4f' % (epoch, opt.niter, i, len(dataloader), loss.item()))
 
     torch.save(net, opt.model_path)
+    torch.save(net, "{}.{}".format(opt.model_path, epoch))

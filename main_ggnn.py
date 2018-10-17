@@ -35,9 +35,10 @@ parser.add_argument('--is_training_ggnn', type=bool, default=True, help='Trainin
 parser.add_argument('--training', action="store_true",help='is training')
 parser.add_argument('--testing', action="store_true",help='is testing')
 parser.add_argument('--training_percentage', type=float, default=1.0 ,help='percentage of data use for training')
-parser.add_argument('--log_path', default="logs/ggnn" ,help='log path for tensorboard')
+parser.add_argument('--log_path', default="" ,help='log path for tensorboard')
 parser.add_argument('--data_percentage', type=float, default=1.0, help='data percentage')
 parser.add_argument('--epoch', type=int, default=0, help='epoch to test')
+parser.add_argument('--loss', type=int, default=0 ,help='1 is contrastive loss, 0 is cross entropy loss')
 
 opt = parser.parse_args()
 print(opt)
@@ -62,28 +63,30 @@ if opt.cuda:
 
 # This part is the implementation to illustrate Graph-Level output from program data
 def main(opt):
-    train_dataset = MonoLanguageProgramData(opt.size_vocabulary, opt.directory, True, opt.n_classes, opt.training_percentage)
-    train_dataloader = bAbIDataloader(train_dataset, batch_size=opt.train_batch_size, \
+    if opt.training:
+       train_dataset = MonoLanguageProgramData(opt.size_vocabulary, opt.directory, True, opt.n_classes, opt.training_percentage)
+       train_dataloader = bAbIDataloader(train_dataset, batch_size=opt.train_batch_size, \
                                       shuffle=True, num_workers=2)
+       opt.n_edge_types = train_dataset.n_edge_types
+       opt.n_node = train_dataset.n_node
 
     test_dataset = MonoLanguageProgramData(opt.size_vocabulary, opt.directory, False, opt.n_classes)
     test_dataloader = bAbIDataloader(test_dataset, batch_size=opt.test_batch_size, \
                                      shuffle=True, num_workers=2)
 
     opt.annotation_dim = 1  # for bAbI
-    opt.n_edge_types = train_dataset.n_edge_types
-    opt.n_node = train_dataset.n_node
-
     if opt.testing:
-        file = "{}.{}".format(opt.model_path, opt.epoch)
+        opt.n_edge_types = test_dataset.n_edge_types
+        opt.n_node = test_dataset.n_node
+        filename = "{}.{}".format(opt.model_path, opt.epoch)
     else:
-        file = opt.model_path
-    if os.path.isfile(file):
+        filename = opt.model_path
+    if os.path.exists(filename):
         if opt.testing:
            print("Using No. {} saved model....".format(opt.epoch))
         else:
            print("Using the saved model....")
-        net = torch.load(file)
+        net = torch.load(filename)
     else:
         net = GGNN(opt)
         net.double()
@@ -106,7 +109,6 @@ def main(opt):
 
     if opt.testing:
         test(test_dataloader, net, criterion, optimizer, opt)
-
 
 if __name__ == "__main__":
     main(opt)

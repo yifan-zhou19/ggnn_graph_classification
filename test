@@ -1,33 +1,25 @@
 # $1 - the dataset folder containing training/testing samples
-# $2 - the size of vocabulary, start with a small number and increase it if you get errors
 lang=cpp
 directory=$1
 MEMORY=${MEMORY:-128G}
 TRAIN_SIZE=${TRAIN_SIZE:-128}
+EPOCH=${EPOCH:-0}
 
 # derive the number of classes depending on the number of files in the training folder
 nn=$(ls $directory/train | wc -l | cut -f1 -d" ")
-n=${3:-$nn}
-m=${4:-2}
-s=${5:-10}
+N_CLASSES=${N_CLASSES:-$nn}
+N_ITER=${N_ITER:-1}
+STEP_SIZE=${STEP_SIZE:-10}
+VOCABULARY_SIZE=${VOCABULARY_SIZE:-172}
 
 # the cached dataset
-cache=$(dirname $directory)/$(basename $directory)-$n
+cache=$(dirname $directory)/$(basename $directory)-$N_CLASSES
 # comment out if you want to resume computation
 rm -f $cache-train.pkl
 rm -f $cache-test.pkl
 
 # the model file
-model=$directory/$n.cpkl
-# comment out if you want to resume computation
-
-# the log file
-log=$directory/log-$n.txt
-# comment out if you want to reset the log
-rm -f $log
-mkdir -p $directory/logs
-
-chmod -R o+w $directory
+model=$directory/$N_CLASSES.cpkl
 
 # use the docker to run training
 proxy="--build-arg http_proxy=http://wwwcache.open.ac.uk:80 --build-arg https_proxy=http://wwwcache.open.ac.uk:80"
@@ -41,24 +33,19 @@ if [ "ip-172-31-34-92" == "$(hostname)" ]; then
  cuda=
 fi
 
-docker build $proxy -t progress progress
+# docker build $proxy -t progress progress
+
   NV_GPU=1 /usr/bin/time -f %e \
   $docker run -v $(pwd):/e -w /e --shm-size $MEMORY --rm -it progress \
   python main_ggnn.py \
 	$cuda \
-	--training \
+	--testing --epoch $EPOCH \
         --manualSeed 0 \
 	--model_path $model --directory $directory \
-	--n_classes $n \
-	--n_steps $5 \
+	--n_classes $N_CLASSES \
+	--n_steps $STEP_SIZE \
 	--n_hidden 50 \
-	--niter $4 \
-	--size_vocabulary $2 \
-	--train_batch_size ${TRAIN_SIZE} \
+	--niter $N_ITER \
+	--size_vocabulary $VOCABULARY_SIZE \
 	--test_batch_size ${TRAIN_SIZE} \
-        --workers 2 \
-	--log_path $directory/logs \
-  | tee $log
-
-# extract the accuracy performance from the log
-grep Test $log | cut -f8 -d" " | cat -n | sort -n -k8 | tee -a $log
+        --workers 2

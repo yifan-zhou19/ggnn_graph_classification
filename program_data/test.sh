@@ -1,29 +1,15 @@
-in=ex_protobuf_format_Oct-9-2018
-#in=ex_protobuf_format_Sep-29-2018
-out=${in/protobuf/babi}-$1
-cp ggnn/ggnn-$1.py ggnn/ggnn.py
-docker run --rm -v $(pwd):/e --entrypoint bash yijun/fast -c "rm -rf $out"
-mkdir -p $out/train $out/test
-chmod -R a+w $out
-if [ -f $out/maps.cpp.pkl ]; then
-   cp $out/maps.cpp.pkl .
-fi
-if [ -f $out/maps.pkl ]; then
-   cp $out/maps.pkl .
-fi
-for f in $in/*.fbs; do
-  i=$(basename $f)
-  i=${i/.fbs/}
-  if [ ! -f $out/train/train_$i.txt -o ! -f $out/test/test_$i.txt ]; then
-    ./ggnn.sh $in/$i.fbs $out/train/train_$i.txt $out/test/test_$i.txt 
-  fi
-done
-if [ -f maps.cpp.pkl ]; then
-	mv maps.cpp.pkl $out
-fi
-if [ -f maps.pkl ]; then
-	mv maps.pkl $out
-fi
-docker run -v $(pwd)/$out:/e --entrypoint bash -it ggnn -c "cp /usr/local/bin/ggnn /e/ggnn.py"
-cp $0 $out
-diff $out/train/train_1.txt $out/test/test_1.txt
+in=github_cpp_protobuf_format_Oct-15-2018
+out=${in/protobuf/babi}-00000${1:-24}
+cd $out > /dev/null
+k=$(docker run -v $(pwd):/e --entrypoint /opt/bin/maps -it yijun/fast:built | sort -n | wc -l)
+cd - > /dev/null
+cd .. > /dev/null
+        NV_GPU=1 MEMORY=256G \
+        BATCH_SIZE=512 \
+        N_ITER=1 \
+	N_CLASSES=50 \
+        EPOCH=${2:-0} \
+        STEP_SIZE=8 \
+        VOCABULARY_SIZE=$((k-1)) \
+	./test program_data/$out 
+cd - > /dev/null
