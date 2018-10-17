@@ -15,6 +15,7 @@ from utils.data.dataset import CrossLingualProgramData
 from utils.data.dataloader import bAbIDataloader
 from tensorboardX import SummaryWriter
 import os
+import sys
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=2)
@@ -63,15 +64,14 @@ torch.manual_seed(opt.manualSeed)
 
 if opt.training:
   if opt.loss == 1:
-    print("Training Bi-GGNN with contrastive loss................")
+    print("Training Bi-GGNN with contrastive loss.")
   if opt.loss == 0:
-    print("Training Bi-GGNN with cross entropy loss................")
-# model_path = "model/bi_ggnn_%s-%s-%d.ckpt" % (opt.left_directory, opt.right_directory, opt.n_classes)
-# opt.model_path = model_path
+    print("Training Bi-GGNN with cross entropy loss.")
 
 if opt.cuda:
     torch.cuda.manual_seed_all(opt.manualSeed)
 
+# This part is the implementation to illustrate Graph-Level output from program data
 def main(opt):
     if opt.training:
        train_dataset = CrossLingualProgramData(opt.size_vocabulary, opt.left_directory,opt.right_directory, True, opt.loss, opt.n_classes,opt.data_percentage)
@@ -89,13 +89,29 @@ def main(opt):
         opt.n_edge_types = test_dataset.n_edge_types
         opt.n_node = test_dataset.n_node
         filename = "{}.{}".format(opt.model_path, opt.epoch)
+        epoch = opt.epoch
     else:
         filename = opt.model_path
+        epoch = -1
     if os.path.exists(filename):
         if opt.testing:
            print("Using No. {} saved model....".format(opt.epoch))
+        dirname = os.path.dirname(filename)
+        basename = os.path.basename(filename)
+        epochs = os.listdir(dirname)
+        if len(epochs) > 0:
+           for s in epochs:
+              if s.startswith(basename) and basename != s:
+                 x = s.split(os.extsep)
+                 e = x[len(x) - 1]
+                 epoch = max(epoch, int(e))
+           if epoch != -1:
+              print("Using No. {} of the saved models...".format(epoch))
+              filename = "{}.{}".format(opt.model_path, epoch)
+        if epoch != -1:
+           print("Using No. {} saved model....".format(epoch))
         else:
-           print("Using the saved model....")
+           print("Using saved model....")
         net = torch.load(filename)
     else:
         net = BiGGNN(opt)
@@ -113,13 +129,19 @@ def main(opt):
     optimizer = optim.Adam(net.parameters(), lr=opt.lr)
 
     if opt.training:
-        for epoch in range(0, opt.niter):
+        for epoch in range(epoch+1, epoch + opt.niter):
             train(epoch, train_dataloader, net, criterion, optimizer, opt, writer)
             test(test_dataloader, net, criterion, optimizer, opt)
 
     if opt.testing:
-        test(test_dataloader, net, criterion, optimizer, opt)
-
+        print(epoch)
+        for i in range(epoch-1, epoch+1):
+              filename = "{}.{}".format(opt.model_path, i)
+              if os.path.exists(filename):
+                 net = torch.load(filename)
+                 net.cuda()
+                 optimizer = optim.Adam(net.parameters(), lr=opt.lr)
+                 test(test_dataloader, net, criterion, optimizer, opt)
 if __name__ == "__main__":
     main(opt)
 

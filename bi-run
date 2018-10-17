@@ -31,7 +31,7 @@ log=$left/left-$(basename $left)-log-$N_CLASSES.txt
 # comment out if you want to reset the log
 rm -f $log
 mkdir -p $left/logs
-chmod -R o+w $left
+chmod o+w $left/logs
 
 #chmod -R a+w $left
 # use the docker to run training

@@ -14,6 +14,7 @@ from utils.data.dataset import MonoLanguageProgramData
 from utils.data.dataloader import bAbIDataloader
 from tensorboardX import SummaryWriter
 import os
+import sys
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=2)
@@ -81,11 +82,26 @@ def main(opt):
         filename = "{}.{}".format(opt.model_path, opt.epoch)
     else:
         filename = opt.model_path
+        epoch = -1
     if os.path.exists(filename):
         if opt.testing:
            print("Using No. {} saved model....".format(opt.epoch))
+        dirname = os.path.dirname(filename)
+        basename = os.path.basename(filename)
+        epochs = os.listdir(dirname)
+        if (opt.training or opt.testing and opt.epoch==0) and len(epochs) > 0:
+           for s in epochs:
+              if s.startswith(basename) and basename != s:
+                 x = s.split(os.extsep)
+                 e = x[len(x) - 1]
+                 epoch = max(epoch, int(e))
+           if epoch != -1:
+              print("Using No. {} of the saved models...".format(epoch))
+              filename = "{}.{}".format(opt.model_path, epoch)
+        if epoch != -1:
+           print("Using No. {} saved model....".format(epoch))
         else:
-           print("Using the saved model....")
+           print("Using saved model....")
         net = torch.load(filename)
     else:
         net = GGNN(opt)
@@ -103,12 +119,16 @@ def main(opt):
     optimizer = optim.Adam(net.parameters(), lr=opt.lr)
 
     if opt.training:
-        for epoch in range(0, opt.niter):
+        for epoch in range(epoch+1, epoch + opt.niter):
             train(epoch, train_dataloader, net, criterion, optimizer, opt, writer)
             test(test_dataloader, net, criterion, optimizer, opt)
 
     if opt.testing:
-        test(test_dataloader, net, criterion, optimizer, opt)
+        for i in range(0, epoch):
+              filename = "{}.{}".format(opt.model_path, epoch)
+              if os.path.exists(filename):
+                 net = torch.load(filename)
+                 test(test_dataloader, net, criterion, optimizer, opt)
 
 if __name__ == "__main__":
     main(opt)
