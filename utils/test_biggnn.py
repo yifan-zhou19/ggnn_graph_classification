@@ -59,19 +59,13 @@ def test(dataloader, net, criterion, optimizer, opt):
             # print(pred.data.view_as(target))
            
             correct += pred.eq(target.data.view_as(pred)).cpu().sum()
-<<<<<<< HEAD
-       
-        #test_loss += loss.data[0]
-        test_loss += loss.item()
-=======
 
             all_predicted.extend(pred.data.view_as(target).cpu().numpy())
             all_targets.extend(target.cpu().numpy())
 
-        test_loss += loss.data[0]
+        test_loss += loss.item()
     
     TP, FP, TN, FN = calculate_performance(all_targets, all_predicted)
->>>>>>> cd0c15c1c436178a1ed33e953c74df94fe5395af
 
     precision = TP / (TP + FP)
     recall = TP / (TP + FN)
