@@ -54,3 +54,4 @@ def train(epoch, dataloader, net, criterion, optimizer, opt, writer):
 
     print("Saving model................")
     torch.save(net, opt.model_path)
+    torch.save(net, "{}.{}".format(opt.model_path, epoch))
