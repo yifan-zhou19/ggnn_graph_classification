@@ -9,8 +9,11 @@ N_STEPS=${N_STEPS:-$4}
 nn=$(ls $left/train | wc -l | cut -f1 -d" ")
 N_CLASSES=${N_CLASSES:-$nn}
 MEMORY=${MEMORY:-128G}
-TRAIN_SIZE=${TRAIN_SIZE:-128}
+BATCH_SIZE=${BATCH_SIZE:-128}
 N_ITER=${N_ITER:-172}
+N_HIDDEN=${N_HIDDEN:-50}
+STATE_DIM=${STATE_DIM:-5}
+PERCENTAGE=${PERCENTAGE:-1.0}
 
 # the cached dataset
 cache=$(dirname $left)/$(basename $left)-$N_CLASSES
@@ -28,6 +31,7 @@ log=$left/left-$(basename $left)-log-$N_CLASSES.txt
 # comment out if you want to reset the log
 rm -f $log
 mkdir -p $left/logs
+chmod -R o+w $left
 
 #chmod -R a+w $left
 # use the docker to run training
@@ -54,11 +58,13 @@ docker build $proxy -t progress progress
         --right_directory $right \
 	--n_classes $N_CLASSES \
 	--n_steps $N_STEPS \
-	--n_hidden 50 \
+	--n_hidden $N_HIDDEN \
 	--niter $N_ITER \
+        --state_dim $STATE_DIM \
 	--size_vocabulary $SIZE_VOCABULARY \
-	--train_batch_size $TRAIN_SIZE \
-	--test_batch_size $TRAIN_SIZE \
+	--train_batch_size $BATCH_SIZE \
+	--test_batch_size $BATCH_SIZE \
+        --data_percentage $PERCENTAGE \
         --workers 2 \
 	--log_path $left/logs \
   | tee $log

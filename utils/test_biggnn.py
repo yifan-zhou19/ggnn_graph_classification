@@ -66,12 +66,18 @@ def test(dataloader, net, criterion, optimizer, opt):
         test_loss += loss.item()
     
     TP, FP, TN, FN = calculate_performance(all_targets, all_predicted)
+    print ("{} {} {} {}\n".format(TP, FP, TN, FN))
 
-    precision = TP / (TP + FP)
-    recall = TP / (TP + FN)
+    if TP + FP > 0:
+       precision = TP / (TP + FP)
+    else:
+       precision = 0
+    if TP + FN > 0: 
+       recall = TP / (TP + FN)
+    else:
+       recall = 0
     
     test_loss /= len(dataloader.dataset)
 
     print('Test set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%), Precision: ({:.0f}%), Recall: ({:.0f}%)'.format(
-        test_loss, correct, len(dataloader.dataset),
-        100. * correct / len(dataloader.dataset), 100. * precision, 100. * recall))
+        test_loss, correct, len(dataloader.dataset), 100. * correct / len(dataloader.dataset), 100. * precision, 100. * recall))

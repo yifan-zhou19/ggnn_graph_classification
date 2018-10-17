@@ -305,7 +305,7 @@ def ggnn2txt(graph, train, test, map_folder='.'):
     algorithms = []
     node2type = True
     for i in range(0, graph.UnitLength()):
-        if (i % 3 != 0 and train != test):
+        if (i % 5 != 0 and train != test):
             out = train
         else:
             out = test

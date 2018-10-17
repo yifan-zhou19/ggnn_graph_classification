@@ -28,7 +28,7 @@ log=$directory/$(basename $directory)-log-$n.txt
 rm -f $log
 mkdir -p $directory/logs
 
-chmod -R a+w $directory
+chmod -R o+w $directory
 
 # use the docker to run training
 proxy="--build-arg http_proxy=http://wwwcache.open.ac.uk:80 --build-arg https_proxy=http://wwwcache.open.ac.uk:80"

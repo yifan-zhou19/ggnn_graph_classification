@@ -37,19 +37,23 @@ parser.add_argument('--is_training_ggnn', type=bool, default=False, help='Traini
 parser.add_argument('--training', action="store_true",help='is training')
 parser.add_argument('--testing', action="store_true",help='is testing')
 parser.add_argument('--loss', type=int, default=0 ,help='1 is contrastive loss, 0 is cross entropy loss')
-parser.add_argument('--log_path', default="logs/ggnn" ,help='log path for tensorboard')
+parser.add_argument('--log_path', default="" ,help='log path for tensorboard')
+parser.add_argument('--data_percentage', type=float, default=1.0, help='data percentage')
+parser.add_argument('--epoch', type=int, default=0, help='epoch to test')
 
 
 
 opt = parser.parse_args()
 print(opt)
-previous_runs = os.listdir(opt.log_path)
-if len(previous_runs) == 0:
+if opt.log_path != "":
+  previous_runs = os.listdir(opt.log_path)
+  if len(previous_runs) == 0:
     run_number = 1
-else:
+  else:
     run_number = max([int(s.split('run-')[1]) for s in previous_runs]) + 1
-writer = SummaryWriter("%s/run-%03d" % (opt.log_path, run_number))
-
+  writer = SummaryWriter("%s/run-%03d" % (opt.log_path, run_number))
+else:
+  writer = None
 
 if opt.manualSeed is None:
     opt.manualSeed = random.randint(1, 10000)
@@ -68,7 +72,6 @@ if opt.cuda:
     torch.cuda.manual_seed_all(opt.manualSeed)
 
 def main(opt):
-    opt.data_percentage = 1
     print("Loading data...............")
     train_dataset = CrossLingualProgramData(opt.size_vocabulary, opt.left_directory,opt.right_directory, True, opt.loss, opt.n_classes,opt.data_percentage)
     train_dataloader = bAbIDataloader(train_dataset, batch_size=opt.train_batch_size, \
@@ -84,9 +87,16 @@ def main(opt):
     opt.n_node = train_dataset.n_node
     # print("Max node : " + str(opt.n_node))
 
-    if os.path.isfile(opt.model_path):
-        print("Using the saved model....")
-        net = torch.load(opt.model_path)
+    if opt.testing:
+        file = "{}.{}".format(opt.model_path, opt.epoch)
+    else:
+        file = opt.model_path
+    if os.path.isfile(file):
+        if opt.testing:
+           print("Using No. {} saved model....".format(opt.epoch))
+        else:
+           print("Using the saved model....")
+        net = torch.load(file)
     else:
         net = BiGGNN(opt)
         net.double()
