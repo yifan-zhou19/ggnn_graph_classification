@@ -10,7 +10,7 @@ nn=$(ls $left/train | wc -l | cut -f1 -d" ")
 N_CLASSES=${N_CLASSES:-$nn}
 MEMORY=${MEMORY:-128G}
 TRAIN_SIZE=${TRAIN_SIZE:-128}
-N_ITER=${N_ITER:-300}
+N_ITER=${N_ITER:-172}
 
 # the cached dataset
 cache=$(dirname $left)/$(basename $left)-$N_CLASSES
