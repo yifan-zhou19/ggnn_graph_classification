@@ -29,7 +29,6 @@ model=$left/left-$(basename $left)-$N_CLASSES.cpkl
 # the log file
 log=$left/left-$(basename $left)-log-$N_CLASSES.txt
 # comment out if you want to reset the log
-rm -f $log
 mkdir -p $left/logs
 chmod o+w $left/logs
 
@@ -68,6 +67,3 @@ docker build $proxy -t progress progress
         --workers 2 \
 	--log_path $left/logs \
   | tee -a $log
-
-# extract the accuracy performance from the log
-grep Test $log | cut -f8 -d" " | sort -n | tee >> $log

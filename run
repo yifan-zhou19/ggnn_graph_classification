@@ -23,8 +23,6 @@ model=$directory/$n.cpkl
 
 # the log file
 log=$directory/log-$n.txt
-# comment out if you want to reset the log
-rm -f $log
 mkdir -p $directory/logs
 
 chmod -R o+w $directory
@@ -59,6 +57,3 @@ docker build $proxy -t progress progress
         --workers 2 \
 	--log_path $directory/logs \
   | tee -a $log
-
-# extract the accuracy performance from the log
-grep Test $log | cut -f8 -d" " | cat -n | sort -n -k8 | tee -a $log
