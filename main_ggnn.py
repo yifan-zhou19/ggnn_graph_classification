@@ -42,7 +42,7 @@ parser.add_argument('--loss', type=int, default=0 ,help='1 is contrastive loss, 
 
 opt = parser.parse_args()
 print(opt)
-if opt.log_path != "":
+if opt.training and opt.log_path != "":
   previous_runs = os.listdir(opt.log_path)
   if len(previous_runs) == 0:
     run_number = 1

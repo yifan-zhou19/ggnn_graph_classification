@@ -45,7 +45,7 @@ parser.add_argument('--epoch', type=int, default=0, help='epoch to test')
 
 opt = parser.parse_args()
 print(opt)
-if opt.log_path != "":
+if opt.training and opt.log_path != "":
   previous_runs = os.listdir(opt.log_path)
   if len(previous_runs) == 0:
     run_number = 1

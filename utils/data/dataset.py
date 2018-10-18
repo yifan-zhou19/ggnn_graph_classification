@@ -261,7 +261,7 @@ class CrossLingualProgramData():
         else:
            self.filename = "%s/%s-%d-test-data.pkl" % (left_path, base_name, n_classes)
         if os.path.exists(self.filename):
-           file = open(filename, 'rb')
+           file = open(self.filename, 'rb')
            buf = file.read()
            [self.left_all_data, self.right_all_data, self.loss, self.n_edge_types, self.n_node] = pyarrow.deserialize(buf)
            file.close()
