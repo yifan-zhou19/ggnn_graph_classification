@@ -87,11 +87,11 @@ def main(opt):
        test_dataset.n_edge_types = opt.n_edge_types
        test_dataset.n_node = opt.n_node
  
-       train_dataset.formatting_data()
+       train_dataset.formatting_data(opt.n_classes)
        train_dataloader = bAbIDataloader(train_dataset, batch_size=opt.train_batch_size, \
                                       shuffle=True, num_workers=2)
 
-    test_dataset.formatting_data()
+    test_dataset.formatting_data(opt.n_classes)
     test_dataloader = bAbIDataloader(test_dataset, batch_size=opt.test_batch_size, \
                                      shuffle=True, num_workers=2)
 

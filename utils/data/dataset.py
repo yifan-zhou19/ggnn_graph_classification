@@ -236,7 +236,7 @@ class MonoLanguageProgramData():
         self.n_node = max_node
         self.data = all_data
 
-    def formatting_data(self):
+    def formatting_data(self, n_classes):
         all_data = convert_program_data(self.data, 1, self.n_node)
         self.data = all_data
      
@@ -257,13 +257,13 @@ class CrossLingualProgramData():
         
         base_name = os.path.basename(left_path)
         if is_train:
-           filename = "%s/%s-%d-train-data.pkl" % (left_path, base_name, n_classes)
+           self.filename = "%s/%s-%d-train-data.pkl" % (left_path, base_name, n_classes)
         else:
-           filename = "%s/%s-%d-test-data.pkl" % (left_path, base_name, n_classes)
-        if os.path.exists(filename):
+           self.filename = "%s/%s-%d-test-data.pkl" % (left_path, base_name, n_classes)
+        if os.path.exists(self.filename):
            file = open(filename, 'rb')
            buf = file.read()
-           [data, self.loss, self.n_edge_types, self.n_node] = pyarrow.deserialize(buf)
+           [self.left_all_data, self.right_all_data, self.loss, self.n_edge_types, self.n_node] = pyarrow.deserialize(buf)
            file.close()
         else:
             self.loss = loss
@@ -317,7 +317,7 @@ class CrossLingualProgramData():
             self.left_all_data = left_all_data
             self.right_all_data = right_all_data
 
-    def formatting_data(self):
+    def formatting_data(self, n_classes):
             left_all_data_by_classes = convert_program_data_into_group(self.left_all_data, 1, self.n_node, n_classes)
             right_all_data_by_classes = convert_program_data_into_group(self.right_all_data, 1, self.n_node, n_classes)
             pairs_1 = []
@@ -346,11 +346,11 @@ class CrossLingualProgramData():
             data.extend(pairs_1)
             data.extend(pairs_0)
             random.shuffle(data)
-            buf = pyarrow.serialize([data, self.loss, self.n_edge_types, self.n_node]).to_buffer()
-            out = pyarrow.OSFile(filename, 'wb')
+            buf = pyarrow.serialize([self.left_all_data, self.right_all_data, self.loss, self.n_edge_types, self.n_node]).to_buffer()
+            out = pyarrow.OSFile(self.filename, 'wb')
             out.write(buf)
             out.close()
-        self.data = data
+            self.data = data
      
     def __getitem__(self, index):
         
