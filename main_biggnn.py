@@ -33,7 +33,6 @@ parser.add_argument('--left_directory', default="program_data/cll_github_cpp_bab
 parser.add_argument('--right_directory', default="program_data/cll_github_java_babi_format_Sep-29-2018-0000006", help='right encoded program data')
 parser.add_argument('--model_path', default="model/model.ckpt", help='path to save the model')
 parser.add_argument('--n_hidden', type=int, default=50, help='number of hidden layers')
-parser.add_argument('--size_vocabulary', type=int, default=60, help='maximum number of node types')
 parser.add_argument('--is_training_ggnn', type=bool, default=False, help='Training GGNN or BiGGNN')
 parser.add_argument('--training', action="store_true",help='is training')
 parser.add_argument('--testing', action="store_true",help='is testing')
@@ -74,13 +73,13 @@ if opt.cuda:
 # This part is the implementation to illustrate Graph-Level output from program data
 def main(opt):
     if opt.training:
-       train_dataset = CrossLingualProgramData(opt.size_vocabulary, opt.left_directory,opt.right_directory, True, opt.loss, opt.n_classes,opt.data_percentage)
+       train_dataset = CrossLingualProgramData(opt.left_directory,opt.right_directory, True, opt.loss, opt.n_classes,opt.data_percentage)
        train_dataloader = bAbIDataloader(train_dataset, batch_size=opt.train_batch_size, \
                                       shuffle=True, num_workers=2)
        opt.n_edge_types = train_dataset.n_edge_types
        opt.n_node = train_dataset.n_node
 
-    test_dataset = CrossLingualProgramData(opt.size_vocabulary, opt.left_directory,opt.right_directory, False,opt.loss, opt.n_classes,opt.data_percentage)
+    test_dataset = CrossLingualProgramData(opt.left_directory,opt.right_directory, False,opt.loss, opt.n_classes,opt.data_percentage)
     test_dataloader = bAbIDataloader(test_dataset, batch_size=opt.test_batch_size, \
                                      shuffle=True, num_workers=2)
 

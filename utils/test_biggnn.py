@@ -9,7 +9,7 @@ def test(dataloader, net, criterion, optimizer, opt):
     test_loss = 0
     correct = 0
     net.eval()
-    print("Len test data : " + str(len(dataloader.dataset)))
+    # print("Len test data : " + str(len(dataloader.dataset)))
 
     all_targets = []
     all_predicted = []
@@ -66,7 +66,7 @@ def test(dataloader, net, criterion, optimizer, opt):
         test_loss += loss.item()
     
     TP, FP, TN, FN = calculate_performance(all_targets, all_predicted)
-    print ("{} {} {} {}\n".format(TP, FP, TN, FN))
+    # print ("{} {} {} {}\n".format(TP, FP, TN, FN))
 
     if TP + FP > 0:
        precision = TP / (TP + FP)
