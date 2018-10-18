@@ -234,10 +234,10 @@ class MonoLanguageProgramData():
         # print("Max node id : " + str(max_node))
         #self.n_node = size_vocabulary
         self.n_node = max_node
-        
-        all_data = convert_program_data(all_data,1, self.n_node)
+        self.data = all_data
 
-        
+    def formatting_data(self):
+        all_data = convert_program_data(self.data, 1, self.n_node)
         self.data = all_data
      
     def __getitem__(self, index):
@@ -314,12 +314,12 @@ class CrossLingualProgramData():
             #print("Left max node id : " + str(max_left_node))
             #print("Right max node id : " + str(max_right_node))
             self.n_node = max(max_left_node, max_right_node)
-    
-    
-            left_all_data_by_classes = convert_program_data_into_group(left_all_data,1, self.n_node, n_classes)
-    
-            right_all_data_by_classes = convert_program_data_into_group(right_all_data,1, self.n_node, n_classes)
-    
+            self.left_all_data = left_all_data
+            self.right_all_data = right_all_data
+
+    def formatting_data(self):
+            left_all_data_by_classes = convert_program_data_into_group(self.left_all_data, 1, self.n_node, n_classes)
+            right_all_data_by_classes = convert_program_data_into_group(self.right_all_data, 1, self.n_node, n_classes)
             pairs_1 = []
             pairs_0 = []
     

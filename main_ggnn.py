@@ -65,19 +65,28 @@ if opt.cuda:
 def main(opt):
     if opt.training:
        train_dataset = MonoLanguageProgramData(opt.directory, True, opt.n_classes, opt.training_percentage)
-       train_dataloader = bAbIDataloader(train_dataset, batch_size=opt.train_batch_size, \
-                                      shuffle=True, num_workers=2)
-       opt.n_edge_types = train_dataset.n_edge_types
-       opt.n_node = train_dataset.n_node
 
     test_dataset = MonoLanguageProgramData(opt.directory, False, opt.n_classes)
+    opt.n_edge_types = test_dataset.n_edge_types
+    opt.n_node = test_dataset.n_node
+
+    if opt.training:
+       opt.n_edge_types = max(train_dataset.n_edge_types, test_dataset.n_edge_types)
+       opt.n_node = max(train_dataset.n_node, test_dataset.n_node)
+       train_dataset.n_edge_types = opt.n_edge_types
+       train_dataset.n_node = opt.n_node
+       test_dataset.n_edge_types = opt.n_edge_types
+       test_dataset.n_node = opt.n_node
+    
+       train_dataset.formatting_data()
+       train_dataloader = bAbIDataloader(train_dataset, batch_size=opt.train_batch_size, \
+                                      shuffle=True, num_workers=2)
+    test_dataset.formatting_data()
     test_dataloader = bAbIDataloader(test_dataset, batch_size=opt.test_batch_size, \
                                      shuffle=True, num_workers=2)
 
     opt.annotation_dim = 1  # for bAbI
     if opt.testing:
-        opt.n_edge_types = test_dataset.n_edge_types
-        opt.n_node = test_dataset.n_node
         filename = "{}.{}".format(opt.model_path, opt.epoch)
     else:
         filename = opt.model_path
