@@ -260,97 +260,94 @@ class CrossLingualProgramData():
            self.filename = "%s/%s-%d-train-data.pkl" % (left_path, base_name, n_classes)
         else:
            self.filename = "%s/%s-%d-test-data.pkl" % (left_path, base_name, n_classes)
+        self.loss = loss
+        self.data = None
         if os.path.exists(self.filename):
            file = open(self.filename, 'rb')
            buf = file.read()
-           [self.left_all_data, self.right_all_data, self.loss, self.n_edge_types, self.n_node] = pyarrow.deserialize(buf)
+           [self.data, self.n_node, self.n_edge_types] = pyarrow.deserialize(buf)
            file.close()
         else:
-            self.loss = loss
-            if is_train:
-               left_filename = "%s/left-%s-%d-train.pkl" % (left_path, base_name, n_classes)
-            else:
-               left_filename = "%s/left-%s-%d-test.pkl" % (left_path, base_name, n_classes)
-            if os.path.exists(left_filename):
-               left_file = open(left_filename, 'rb')
-               buf = left_file.read()
-               left_all_data = pyarrow.deserialize(buf)
-               left_file.close()
-            else:
-               left_all_data = load_program_graphs_from_directory(left_path,is_train,n_classes,data_percentage)
-               left_all_data = np.array(left_all_data)[0:len(left_all_data)]
-               buf = pyarrow.serialize(left_all_data).to_buffer()
-               out = pyarrow.OSFile(left_filename, 'wb')
-               out.write(buf)
-               out.close()
-            if is_train:
-               right_filename = "%s/right-%s-%d-train.pkl" % (right_path, base_name, n_classes)
-            else:
-               right_filename = "%s/right-%s-%d-test.pkl" % (right_path, base_name, n_classes)
-            if os.path.exists(right_filename):
-               right_file = open(right_filename, 'rb')
-               buf = right_file.read()
-               right_all_data = pyarrow.deserialize(buf)
-               right_file.close()
-            else:
-               right_all_data = load_program_graphs_from_directory(right_path,is_train,n_classes,data_percentage)
-               right_all_data = np.array(right_all_data)[0:len(right_all_data)]
-               buf = pyarrow.serialize(right_all_data).to_buffer()
-               out = pyarrow.OSFile(right_filename, 'wb')
-               out.write(buf)
-               out.close()
+          if is_train:
+                 left_filename = "%s/left-%s-%d-train.pkl" % (left_path, base_name, n_classes)
+          else:
+                 left_filename = "%s/left-%s-%d-test.pkl" % (left_path, base_name, n_classes)
+          if os.path.exists(left_filename):
+                 left_file = open(left_filename, 'rb')
+                 buf = left_file.read()
+                 left_all_data = pyarrow.deserialize(buf)
+                 left_file.close()
+          else:
+                 left_all_data = load_program_graphs_from_directory(left_path,is_train,n_classes,data_percentage)
+                 left_all_data = np.array(left_all_data)[0:len(left_all_data)]
+                 buf = pyarrow.serialize(left_all_data).to_buffer()
+                 out = pyarrow.OSFile(left_filename, 'wb')
+                 out.write(buf)
+                 out.close()
+          if is_train:
+                 right_filename = "%s/right-%s-%d-train.pkl" % (right_path, base_name, n_classes)
+          else:
+                 right_filename = "%s/right-%s-%d-test.pkl" % (right_path, base_name, n_classes)
+          if os.path.exists(right_filename):
+                 right_file = open(right_filename, 'rb')
+                 buf = right_file.read()
+                 right_all_data = pyarrow.deserialize(buf)
+                 right_file.close()
+          else:
+                 right_all_data = load_program_graphs_from_directory(right_path,is_train,n_classes,data_percentage)
+                 right_all_data = np.array(right_all_data)[0:len(right_all_data)]
+                 buf = pyarrow.serialize(right_all_data).to_buffer()
+                 out = pyarrow.OSFile(right_filename, 'wb')
+                 out.write(buf)
+                 out.close()
     
-            if is_train == True:
+          if is_train == True:
                 print("Number of all left training data : " + str(len(left_all_data)))
                 print("Number of all right training data : " + str(len(right_all_data)))
-            else:
+          else:
                 print("Number of all left testing data : " + str(len(left_all_data)))
                 print("Number of all right testing data : " + str(len(right_all_data)))
     
-            self.n_edge_types =  find_max_edge_id(left_all_data)
-            #self.n_node = size_vocabulary
-            max_left_node = find_max_node_id(left_all_data)
-            max_right_node = find_max_node_id(right_all_data)
-            #print("Left max node id : " + str(max_left_node))
-            #print("Right max node id : " + str(max_right_node))
-            self.n_node = max(max_left_node, max_right_node)
-            self.left_all_data = left_all_data
-            self.right_all_data = right_all_data
+          max_left_node = find_max_node_id(left_all_data)
+          max_right_node = find_max_node_id(right_all_data)
+          self.n_edge_types =  find_max_edge_id(left_all_data)
+          self.n_node = max(max_left_node, max_right_node)
+          self.left_all_data = left_all_data
+          self.right_all_data = right_all_data
 
     def formatting_data(self, n_classes):
-            left_all_data_by_classes = convert_program_data_into_group(self.left_all_data, 1, self.n_node, n_classes)
-            right_all_data_by_classes = convert_program_data_into_group(self.right_all_data, 1, self.n_node, n_classes)
-            pairs_1 = []
-            pairs_0 = []
-    
-            for i, left_class in tqdm(enumerate(left_all_data_by_classes)):
-                right_class = right_all_data_by_classes[i]
-    
-                remaining_right_class = []
-    
-                for j, other_right_class in enumerate(right_all_data_by_classes):
-                    if j != i:
-                        remaining_right_class.extend(other_right_class)
-    
-                if len(left_class) > len(right_class):
-                    left_class = left_class[:len(right_class)]
-                
-                for k, left_data_point in enumerate(left_class):
-                    righ_data_point = right_class[k]
-                    pairs_1.append((left_data_point,righ_data_point))
-                    pairs_0.append((left_data_point, random.choice(remaining_right_class)))
-    
-            print("Number of all 1 pairs data : " + str(len(pairs_1)))
-            print("Number of all 0 pairs data : " + str(len(pairs_0)))
-            data = []
-            data.extend(pairs_1)
-            data.extend(pairs_0)
-            random.shuffle(data)
-            buf = pyarrow.serialize([self.left_all_data, self.right_all_data, self.loss, self.n_edge_types, self.n_node]).to_buffer()
-            out = pyarrow.OSFile(self.filename, 'wb')
-            out.write(buf)
-            out.close()
-            self.data = data
+        if self.data is None:
+           left_all_data_by_classes = convert_program_data_into_group(self.left_all_data, 1, self.n_node, n_classes)
+           right_all_data_by_classes = convert_program_data_into_group(self.right_all_data, 1, self.n_node, n_classes)
+           pairs_1 = []
+           pairs_0 = []
+           for i, left_class in tqdm(enumerate(left_all_data_by_classes)):
+               right_class = right_all_data_by_classes[i]
+        
+               remaining_right_class = []
+        
+               for j, other_right_class in enumerate(right_all_data_by_classes):
+                   if j != i:
+                       remaining_right_class.extend(other_right_class)
+        
+               if len(left_class) > len(right_class):
+                   left_class = left_class[:len(right_class)]
+               
+               for k, left_data_point in enumerate(left_class):
+                   righ_data_point = right_class[k]
+                   pairs_1.append((left_data_point,righ_data_point))
+                   pairs_0.append((left_data_point, random.choice(remaining_right_class)))
+           data = []
+           data.extend(pairs_1)
+           data.extend(pairs_0)
+           random.shuffle(data)
+           buf = pyarrow.serialize([data, self.n_node, self.n_edge_types]).to_buffer()
+           out = pyarrow.OSFile(self.filename, 'wb')
+           out.write(buf)
+           out.close()
+           print("Number of all 1 pairs data : " + str(len(pairs_1)))
+           print("Number of all 0 pairs data : " + str(len(pairs_0)))
+           self.data = data
      
     def __getitem__(self, index):
         

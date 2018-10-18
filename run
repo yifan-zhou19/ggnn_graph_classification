@@ -9,7 +9,7 @@ TRAIN_SIZE=${TRAIN_SIZE:-128}
 nn=$(ls $directory/train | wc -l | cut -f1 -d" ")
 n=${2:-$nn}
 m=${3:-2}
-s=${4:-10}
+s=${4:-8}
 
 # the cached dataset
 cache=$(dirname $directory)/$(basename $directory)-$n
@@ -48,11 +48,10 @@ docker build $proxy -t progress progress
         --manualSeed 0 \
 	--model_path $model --directory $directory \
 	--n_classes $n \
-	--n_steps $5 \
+	--n_steps $s \
 	--n_hidden 50 \
-	--niter $4 \
+	--niter $m \
 	--train_batch_size ${TRAIN_SIZE} \
 	--test_batch_size ${TRAIN_SIZE} \
         --workers 2 \
-	--log_path $directory/logs \
-  | tee -a $log
+	--log_path $directory/logs

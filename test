@@ -9,7 +9,7 @@ EPOCH=${EPOCH:-0}
 nn=$(ls $directory/train | wc -l | cut -f1 -d" ")
 N_CLASSES=${N_CLASSES:-$nn}
 N_ITER=${N_ITER:-1}
-STEP_SIZE=${STEP_SIZE:-10}
+STEP_SIZE=${STEP_SIZE:-8}
 
 # the cached dataset
 cache=$(dirname $directory)/$(basename $directory)-$N_CLASSES
