@@ -1,10 +1,9 @@
-# $1 - the dataset folder containing training/testing samples
-# $2 - the size of vocabulary, start with a small number and increase it if you get errors
+# $1, $2 - the dataset folder containing training/testing samples
+# $3 - the propagation step size
 lang=cpp
 left=$1
 right=$2
-SIZE_VOCABULARY=${SIZE_VOCABULARY:-$3}
-N_STEPS=${N_STEPS:-$4}
+N_STEPS=${N_STEPS:-$3}
 # derive the number of classes depending on the number of files in the training folder
 nn=$(ls $left/train | wc -l | cut -f1 -d" ")
 N_CLASSES=${N_CLASSES:-$nn}
@@ -60,7 +59,6 @@ docker build $proxy -t progress progress
 	--n_hidden $N_HIDDEN \
 	--niter $N_ITER \
         --state_dim $STATE_DIM \
-	--size_vocabulary $SIZE_VOCABULARY \
 	--train_batch_size $BATCH_SIZE \
 	--test_batch_size $BATCH_SIZE \
         --data_percentage $PERCENTAGE \

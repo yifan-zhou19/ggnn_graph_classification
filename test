@@ -10,7 +10,6 @@ nn=$(ls $directory/train | wc -l | cut -f1 -d" ")
 N_CLASSES=${N_CLASSES:-$nn}
 N_ITER=${N_ITER:-1}
 STEP_SIZE=${STEP_SIZE:-10}
-VOCABULARY_SIZE=${VOCABULARY_SIZE:-172}
 
 # the cached dataset
 cache=$(dirname $directory)/$(basename $directory)-$N_CLASSES
@@ -46,6 +45,5 @@ fi
 	--n_steps $STEP_SIZE \
 	--n_hidden 50 \
 	--niter $N_ITER \
-	--size_vocabulary $VOCABULARY_SIZE \
 	--test_batch_size ${TRAIN_SIZE} \
         --workers 2

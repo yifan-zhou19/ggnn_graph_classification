@@ -7,9 +7,9 @@ TRAIN_SIZE=${TRAIN_SIZE:-128}
 
 # derive the number of classes depending on the number of files in the training folder
 nn=$(ls $directory/train | wc -l | cut -f1 -d" ")
-n=${3:-$nn}
-m=${4:-2}
-s=${5:-10}
+n=${2:-$nn}
+m=${3:-2}
+s=${4:-10}
 
 # the cached dataset
 cache=$(dirname $directory)/$(basename $directory)-$n
@@ -51,7 +51,6 @@ docker build $proxy -t progress progress
 	--n_steps $5 \
 	--n_hidden 50 \
 	--niter $4 \
-	--size_vocabulary $2 \
 	--train_batch_size ${TRAIN_SIZE} \
 	--test_batch_size ${TRAIN_SIZE} \
         --workers 2 \

@@ -31,7 +31,6 @@ parser.add_argument('--n_classes', type=int, default=104, help='manual seed')
 parser.add_argument('--directory', default="program_data/cpp_babi_format_Sep-29-2018-0000006", help='program data')
 parser.add_argument('--model_path', default="model/model.ckpt", help='path to save the model')
 parser.add_argument('--n_hidden', type=int, default=50, help='number of hidden layers')
-parser.add_argument('--size_vocabulary', type=int, default=59, help='maximum number of node types')
 parser.add_argument('--is_training_ggnn', type=bool, default=True, help='Training GGNN or BiGGNN')
 parser.add_argument('--training', action="store_true",help='is training')
 parser.add_argument('--testing', action="store_true",help='is testing')
@@ -65,13 +64,13 @@ if opt.cuda:
 # This part is the implementation to illustrate Graph-Level output from program data
 def main(opt):
     if opt.training:
-       train_dataset = MonoLanguageProgramData(opt.size_vocabulary, opt.directory, True, opt.n_classes, opt.training_percentage)
+       train_dataset = MonoLanguageProgramData(opt.directory, True, opt.n_classes, opt.training_percentage)
        train_dataloader = bAbIDataloader(train_dataset, batch_size=opt.train_batch_size, \
                                       shuffle=True, num_workers=2)
        opt.n_edge_types = train_dataset.n_edge_types
        opt.n_node = train_dataset.n_node
 
-    test_dataset = MonoLanguageProgramData(opt.size_vocabulary, opt.directory, False, opt.n_classes)
+    test_dataset = MonoLanguageProgramData(opt.directory, False, opt.n_classes)
     test_dataloader = bAbIDataloader(test_dataset, batch_size=opt.test_batch_size, \
                                      shuffle=True, num_workers=2)
 

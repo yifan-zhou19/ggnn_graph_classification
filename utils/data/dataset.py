@@ -205,7 +205,7 @@ def create_adjacency_matrix(edges, n_nodes, n_edge_types):
 
 class MonoLanguageProgramData():
    
-    def __init__(self, size_vocabulary, path, is_train, n_classes=3,data_percentage=1.0):
+    def __init__(self, path, is_train, n_classes=3,data_percentage=1.0):
         base_name = os.path.basename(path)
         if is_train:
            saved_input_filename = "%s/%s-%d-train.pkl" % (path, base_name, n_classes)
@@ -231,8 +231,9 @@ class MonoLanguageProgramData():
         self.n_edge_types =  find_max_edge_id(all_data)
         # print("Edge types : " + str(self.n_edge_types))
         max_node = find_max_node_id(all_data)
-        print("Max node id : " + str(max_node))
-        self.n_node = size_vocabulary
+        # print("Max node id : " + str(max_node))
+        #self.n_node = size_vocabulary
+        self.n_node = max_node
         
         all_data = convert_program_data(all_data,1, self.n_node)
 
@@ -252,7 +253,7 @@ class MonoLanguageProgramData():
 
 class CrossLingualProgramData():
    
-    def __init__(self, size_vocabulary, left_path, right_path, is_train, loss, n_classes=3, data_percentage=1):
+    def __init__(self, left_path, right_path, is_train, loss, n_classes=3, data_percentage=1):
         
         base_name = os.path.basename(left_path)
         if is_train:
@@ -307,12 +308,13 @@ class CrossLingualProgramData():
                 print("Number of all right testing data : " + str(len(right_all_data)))
     
             self.n_edge_types =  find_max_edge_id(left_all_data)
-            self.n_node = size_vocabulary
+            #self.n_node = size_vocabulary
             max_left_node = find_max_node_id(left_all_data)
             max_right_node = find_max_node_id(right_all_data)
+            #print("Left max node id : " + str(max_left_node))
+            #print("Right max node id : " + str(max_right_node))
+            self.n_node = max(max_left_node, max_right_node)
     
-            print("Left max node id : " + str(max_left_node))
-            print("Right max node id : " + str(max_right_node))
     
             left_all_data_by_classes = convert_program_data_into_group(left_all_data,1, self.n_node, n_classes)
     

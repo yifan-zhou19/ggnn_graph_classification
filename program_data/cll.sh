@@ -10,5 +10,5 @@ cd .. > /dev/null
 	STATE_DIM=5 \
 	N_HIDDEN=30 \
 	N_ITER=300 \
-	bi-run program_data/$out program_data/$out2 167 5
+	bi-run program_data/$out program_data/$out2 5
 cd - > /dev/null
