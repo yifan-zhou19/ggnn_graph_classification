@@ -51,7 +51,8 @@ docker build $proxy -t progress progress
 	--n_steps $s \
 	--n_hidden 50 \
 	--niter $m \
-	--train_batch_size ${TRAIN_SIZE} \
-	--test_batch_size ${TRAIN_SIZE} \
+	--train_batch_size $TRAIN_SIZE \
+	--test_batch_size $TRAIN_SIZE \
         --workers 2 \
-	--log_path $directory/logs
+	--log_path $directory/logs \
+ | tee -a $log
