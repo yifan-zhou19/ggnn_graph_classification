@@ -67,7 +67,7 @@ docker build $proxy -t progress progress
         --data_percentage $PERCENTAGE \
         --workers 2 \
 	--log_path $left/logs \
-  | tee $log
+  | tee -a $log
 
 # extract the accuracy performance from the log
 grep Test $log | cut -f8 -d" " | sort -n | tee >> $log

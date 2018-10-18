@@ -34,7 +34,7 @@ parser.add_argument('--dup', action='store_true', default=False, help='keep dupl
 parser.add_argument('--localmaps', action='store_true', default=False, help='use local maps instead of global one')
 ## Use the occurrence of type instead of label to encode nodes
 parser.add_argument('--occurrence', type=bool, default=True, help='use the <nodetype, occurrence> representation of nodes')
-parser.add_argument('--mod', type=int, default=2, help='use the <nodetype, occurrence % mod> representation of nodes')
+parser.add_argument('--mod', type=int, default=4, help='use the <nodetype, occurrence % mod> representation of nodes')
 ## Ignore the POSITION and COMMENT node types as noises to the input
 parser.add_argument('--noposition', type=bool, default=True, help='ignore POSITION and COMMENT node types')
 ## Derive the last lexical use edges from adjacent occurrences of same node encodings
@@ -305,7 +305,7 @@ def ggnn2txt(graph, train, test, map_folder='.'):
     algorithms = []
     node2type = True
     for i in range(0, graph.UnitLength()):
-        if (i % 5 != 0 and train != test):
+        if (i % 3 != 0 and train != test):
             out = train
         else:
             out = test
