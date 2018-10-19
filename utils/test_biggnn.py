@@ -67,8 +67,10 @@ def test(dataloader, net, criterion, optimizer, opt):
     
     TP, FP, TN, FN = calculate_performance(all_targets, all_predicted)
 
-    precision = TP / (TP + FP)
-    recall = TP / (TP + FN)
+    if TP + FP > 0:
+       precision = TP / (TP + FP)
+    if TP + FN > 0:
+       recall = TP / (TP + FN)
     
     test_loss /= len(dataloader.dataset)
 
