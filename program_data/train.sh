@@ -44,7 +44,7 @@ function cll_train() {
 lang1=$1
 lang2=cll_${lang1/cpp/java}
 k=$(size_voc $lang1)
-n=${1:-104}
+n=${2:-104}
 docker build -t progress ../progress
 log=$lang1/cll-log-$n.txt
 if [ ! -f $log ]; then
@@ -77,10 +77,10 @@ fi
 function train() {
    n=$1
    folder=$2
-   mll_train $folder $n $m
-   cll_train $folder $n $m
+   mll_train $folder $n
+   cll_train $folder $n
    folder=${folder/cpp/java}
-   mll_train $folder $n $m
+   mll_train $folder $n
 }
 
 for n in 104 50 25 10; do
