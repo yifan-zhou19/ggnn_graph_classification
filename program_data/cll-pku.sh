@@ -7,11 +7,13 @@ log=program_data/$lang1/cll-log-$n.txt
 mkdir -p model
 if [ ! -f $log ]; then
  mkdir -p $(dirname $log)
+ mkdir -p $(dirname $log)/logs
+ chmod o+w $(dirname $log)/logs
  touch -f $log
 fi
         NV_GPU=0 \
   /usr/bin/time -f %e \
-  nvidia-docker run -v $(dirname $(pwd)):/e -w /e --shm-size 8G --rm -it progress \
+  nvidia-docker run -v $(dirname $(pwd)):/e -w /e --shm-size 11G --rm -it progress \
   python main_biggnn.py \
 	--cuda \
 	--training \
