@@ -355,7 +355,7 @@ if __name__ == "__main__":
             start = time.time()
             if output_extension == ".pkl" or output_extension == ".pickle": 
                 with open(sys.argv[2], 'wb') as out:
-                    pickle.dump(data, out, pickle.HIGHEST_PROTOCOL)
+                    pickle.dump(data, out, 2)
             elif output_extension == ".json": 
                 with open(sys.argv[2], 'w') as out:
                     json.dump(data, out, default=jdefault)

@@ -1,10 +1,25 @@
-#docker build -t progress ../progress
+has_docker=1
+command -v docker >/dev/null 2>&1 || {
+  has_docker=0
+}
+if [ "$has_docker" == "1" ]; then
+   docker build -t progress ../progress
+fi
+NVIDIA=
+if [ "$has_docker" == "1" ]; then
+  NVIDIA='nvidia-docker run -v $(dirname $(pwd)):/e -w /e --shm-size 11G --rm -it progress'
+fi
 function size_voc() {
 	cd $1 > /dev/null
         lang=$(ls maps.*.pkl)
         lang=${lang/maps./}
         lang=${lang/.pkl/}
-	k=$(docker run -v $(pwd):/e --entrypoint /opt/bin/maps -it yijun/fast:built --lang $lang | sort -n | wc -l)
+	if [ "$has_docker" == "1" ]; then
+	   k=$(docker run -v $(pwd):/e --entrypoint /opt/bin/maps -it yijun/fast:built --lang $lang | sort -n | wc -l)
+        else
+	   #k=$(python $p/ggnn/maps.py --lang $lang | sort -n | wc -l)
+	   k=197
+	fi
 	cd - > /dev/null
 	echo $((k-1))
 }
@@ -14,9 +29,10 @@ function mll_test() {
 	lang2=${lang1/java/cpp}
 	n=$2
 	k=$(size_voc $lang1)
+	cd .. > /dev/null
 		NV_GPU=0 \
 	  /usr/bin/time -f %e \
-	  nvidia-docker run -v $(dirname $(pwd)):/e -w /e --shm-size 11G --rm -it progress \
+	  $NVIDIA \
 	  python main_ggnn.py \
 		--cuda \
 		--testing --epoch $3\
@@ -30,6 +46,7 @@ function mll_test() {
 		--size_vocabulary $k \
 		--train_batch_size 32 \
 		--test_batch_size 32
+	cd - > /dev/null
 }
 function cll_test() {
    echo === CLL $1 $2 $(($3+1)) ===
@@ -37,16 +54,10 @@ function cll_test() {
 	lang2=cll_${lang1/cpp/java}
 	n=$2
 	k=$(size_voc $lang1)
-	log=$lang1/cll-log-$n.txt
-	if [ ! -f $log ]; then
-	 mkdir -p $(dirname $log)
-	 mkdir -p $(dirname $log)/logs
-	 chmod o+w $(dirname $log)/logs
-	 touch -f $log
-	fi
+	cd .. > /dev/null
 		NV_GPU=0 \
 	  /usr/bin/time -f %e \
-	  nvidia-docker run -v $(dirname $(pwd)):/e -w /e --shm-size 11G --rm -it progress \
+	  $NVIDIA \
 	  python main_biggnn.py \
 		--cuda \
 		--testing --epoch $3\
@@ -61,6 +72,7 @@ function cll_test() {
 		--size_vocabulary $k \
 		--train_batch_size 32 \
 		--test_batch_size 32
+	cd - > /dev/null
 }
 function pick_model() {
    m=

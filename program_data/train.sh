@@ -1,10 +1,27 @@
-docker build -t progress ../progress
+has_docker=1
+command -v docker >/dev/null 2>&1 || {
+  has_docker=0
+}
+if [ "$has_docker" == "1" ]; then
+   docker build -t progress ../progress
+fi
+NVIDIA=
+if [ "$has_docker" == "1" ]; then
+  NVIDIA='nvidia-docker run -v $(dirname $(pwd)):/e -w /e --shm-size 11G --rm -it progress'
+fi
+
 function size_voc() {
+	p=$(pwd)
 	cd $1 > /dev/null
         lang=$(ls maps.*.pkl)
         lang=${lang/maps./}
         lang=${lang/.pkl/}
-	k=$(docker run -v $(pwd):/e --entrypoint /opt/bin/maps -it yijun/fast:built --lang $lang | sort -n | wc -l)
+	if [ "$has_docker" == "1" ]; then
+	   k=$(docker run -v $(pwd):/e --entrypoint /opt/bin/maps -it yijun/fast:built --lang $lang | sort -n | wc -l)
+        else
+	   #k=$(python $p/ggnn/maps.py --lang $lang | sort -n | wc -l)
+	   k=197
+	fi
 	cd - > /dev/null
 	echo $((k-1))
 }
@@ -19,19 +36,20 @@ else
 fi
 n=${2:-104}
 k=$(size_voc $lang2)
-log=$lang1/log-$n.txt
+cd .. > /dev/null
+log=program_data/$lang1/log-$n.txt
 if [ -f program_data/$lang1/$n.cpkl ]; then
    return
 fi
-mkdir -p $lang2/logs/$lang/$n
-chmod o+w $lang2/logs/$lang/$n
+mkdir -p program_data/$lang2/logs/$lang/$n
+chmod o+w program_data/$lang2/logs/$lang/$n
 if [ ! -f $log ]; then
  mkdir -p $(dirname $log)
  touch -f $log
 fi
-        NV_GPU=1 \
+NV_GPU=1 \
   /usr/bin/time -f %e \
-  nvidia-docker run -v $(dirname $(pwd)):/e -w /e --shm-size 11G --rm -it progress \
+  $NVIDIA \
   python main_ggnn.py \
 	--cuda \
 	--training \
@@ -47,6 +65,7 @@ fi
 	--train_batch_size 32 \
 	--test_batch_size 32 \
   | tee -a $log
+cd - > /dev/null
 }
 
 function cll_train() {
@@ -54,7 +73,6 @@ lang1=$1
 lang2=cll_${lang1/cpp/java}
 k=$(size_voc $lang1)
 n=${2:-104}
-docker build -t progress ../progress
 log=$lang1/cll-log-$n.txt
 if [ -f program_data/$lang1/cll-$n.cpkl ]; then
    return
@@ -65,9 +83,9 @@ if [ ! -f $log ]; then
  mkdir -p $(dirname $log)
  touch -f $log
 fi
-        NV_GPU=0 \
+NV_GPU=0 \
   /usr/bin/time -f %e \
-  nvidia-docker run -v $(dirname $(pwd)):/e -w /e --shm-size 11G --rm -it progress \
+  $NVIDIA \
   python main_biggnn.py \
 	--cuda \
 	--training \

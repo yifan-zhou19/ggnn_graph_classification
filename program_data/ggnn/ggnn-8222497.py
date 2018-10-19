@@ -348,7 +348,7 @@ def ggnn2txt(graph, train, test):
         if opt.maps:
             # Don't assume the files in the same dataset are of the same language
             with open(maps_filename, 'wb') as f:
-                pickle.dump(maps, f, pickle.HIGHEST_PROTOCOL)
+                pickle.dump(maps, f, 2)
 
 def get_descendants(child, node):
     descendants = [node]
@@ -520,7 +520,7 @@ def ggnn2txt_test(graph, test):
                     maps[str(nl.Type())] = str(1 + len(maps))
         generate_subgraphs(p, g, out)
     with open('maps.pkl', 'wb') as f:
-        pickle.dump(maps, f, pickle.HIGHEST_PROTOCOL)
+        pickle.dump(maps, f, 2)
 
 if __name__ == "__main__":
     try:
@@ -548,7 +548,7 @@ if __name__ == "__main__":
             start = time.time()
             if output_extension == ".pkl" or output_extension == ".pickle": 
                 with open(opt.argv[1], 'wb') as out:
-                    pickle.dump(data, out, pickle.HIGHEST_PROTOCOL)
+                    pickle.dump(data, out, 2)
             elif output_extension == ".json": 
                 with open(opt.argv[1], 'w') as out:
                     json.dump(data, out, default=jdefault)
