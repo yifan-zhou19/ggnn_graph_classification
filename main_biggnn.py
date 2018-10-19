@@ -90,9 +90,32 @@ def main(opt):
     opt.n_node = train_dataset.n_node
     # print("Max node : " + str(opt.n_node))
 
-    if os.path.isfile(opt.model_path):
-        print("Using the saved model....")
-        net = torch.load(opt.model_path)
+    if opt.testing:
+        filename = "{}.{}".format(opt.model_path, opt.epoch)
+        epoch = opt.epoch
+    else:
+        filename = opt.model_path
+        epoch = -1
+    if os.path.exists(filename):
+        if opt.testing:
+           print("Using No. {} saved model....".format(opt.epoch))
+        dirname = os.path.dirname(filename)
+        basename = os.path.basename(filename)
+        epochs = os.listdir(dirname)
+        if len(epochs) > 0:
+           for s in epochs:
+              if s.startswith(basename) and basename != s:
+                 x = s.split(os.extsep)
+                 e = x[len(x) - 1]
+                 epoch = max(epoch, int(e))
+           if epoch != -1:
+              print("Using No. {} of the saved models...".format(epoch))
+              filename = "{}.{}".format(opt.model_path, epoch)
+        if epoch != -1:
+           print("Using No. {} saved model....".format(epoch))
+        else:
+           print("Using saved model....")
+        net = torch.load(filename)
     else:
         net = BiGGNN(opt)
         net.double()
@@ -105,19 +128,20 @@ def main(opt):
     if opt.cuda:
         net.cuda()
         criterion.cuda()
-        
+
     optimizer = optim.Adam(net.parameters(), lr=opt.lr)
 
     if opt.training:
-        for epoch in range(0, opt.niter):
-            train(epoch, train_dataloader, net, criterion, optimizer,  opt)
-            # test(test_dataloader, net, criterion, optimizer, opt)
+        for epoch in range(epoch+1, epoch + opt.niter):
+            train(epoch, train_dataloader, net, criterion, optimizer, opt)
 
     if opt.testing:
+        filename = "{}.{}".format(opt.model_path, epoch)
+        if os.path.exists(filename):
+                 net = torch.load(filename)
+                 net.cuda()
+                 optimizer = optim.Adam(net.parameters(), lr=opt.lr)
         test(test_dataloader, net, criterion, optimizer, opt)
-
-
-
 if __name__ == "__main__":
     main(opt)
 
