@@ -1,65 +1,0 @@
-Namespace(cuda=True, directory='program_data/cpp_babi_format_Sep-29-2018-0000006', is_training_ggnn=True, log_path='program_data/cpp_babi_format_Sep-29-2018-0000006/logs', lr=0.01, manualSeed=0, model_path='program_data/cpp_babi_format_Sep-29-2018-0000006/cpp_babi_format_Sep-29-2018-0000006-104.cpkl', n_classes=104, n_hidden=50, n_steps=5, niter=150, size_vocabulary=56, state_dim=5, test_batch_size=32, testing=False, train_batch_size=32, training=True, training_percentage=1.0, verbal=True, workers=0)
-Random Seed:  0
-  0% 0/104 [00:00<?, ?it/s]  3% 3/104 [00:00<00:03, 29.38it/s]  6% 6/104 [00:00<00:03, 28.41it/s]  9% 9/104 [00:00<00:03, 26.38it/s] 12% 12/104 [00:00<00:03, 24.96it/s] 15% 16/104 [00:00<00:03, 24.40it/s] 18% 19/104 [00:00<00:03, 25.58it/s] 21% 22/104 [00:00<00:03, 22.85it/s] 25% 26/104 [00:01<00:03, 21.62it/s] 29% 30/104 [00:01<00:03, 24.07it/s] 32% 33/104 [00:01<00:03, 20.30it/s] 36% 37/104 [00:01<00:02, 22.82it/s] 39% 41/104 [00:01<00:02, 25.18it/s] 42% 44/104 [00:01<00:02, 20.28it/s] 46% 48/104 [00:02<00:02, 22.76it/s] 50% 52/104 [00:02<00:02, 24.79it/s] 53% 55/104 [00:02<00:02, 18.71it/s] 57% 59/104 [00:02<00:02, 21.40it/s] 61% 63/104 [00:02<00:01, 23.97it/s] 63% 66/104 [00:02<00:01, 25.46it/s] 66% 69/104 [00:03<00:01, 17.72it/s] 70% 73/104 [00:03<00:01, 20.40it/s] 73% 76/104 [00:03<00:01, 22.19it/s] 77% 80/104 [00:03<00:00, 24.17it/s] 81% 84/104 [00:03<00:01, 17.76it/s] 85% 88/104 [00:03<00:00, 20.49it/s] 88% 92/104 [00:04<00:00, 22.68it/s] 92% 96/104 [00:04<00:00, 25.09it/s] 96% 100/104 [00:04<00:00, 27.11it/s]100% 104/104 [00:04<00:00, 28.53it/s]
-Number of all training data : 34627
-Max node id : 52
-  0% 0/104 [00:00<?, ?it/s]  6% 6/104 [00:00<00:01, 52.16it/s] 12% 13/104 [00:00<00:01, 54.98it/s] 19% 20/104 [00:00<00:01, 56.87it/s] 26% 27/104 [00:00<00:01, 58.51it/s] 33% 34/104 [00:00<00:01, 60.18it/s] 39% 41/104 [00:00<00:01, 61.75it/s] 46% 48/104 [00:00<00:00, 62.23it/s] 52% 54/104 [00:01<00:01, 29.06it/s] 59% 61/104 [00:01<00:01, 34.65it/s] 65% 68/104 [00:01<00:00, 40.02it/s] 71% 74/104 [00:01<00:00, 44.44it/s] 78% 81/104 [00:01<00:00, 48.29it/s] 85% 88/104 [00:01<00:00, 52.00it/s] 91% 95/104 [00:01<00:00, 54.86it/s] 98% 102/104 [00:02<00:00, 57.53it/s]100% 104/104 [00:02<00:00, 50.98it/s]
-Number of all testing data : 17367
-Max node id : 55
-/opt/conda/lib/python3.6/site-packages/torch/onnx/utils.py:365: UserWarning: ONNX export failed on ATen operator stack because torch.onnx.symbolic.stack does not exist
-  .format(op_name, op_name))
-/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %98 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
-  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
-/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %161 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
-  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
-/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %224 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
-  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
-/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %287 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
-  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
-/opt/conda/lib/python3.6/site-packages/tensorboardX/pytorch_graph.py:43: UserWarning: Error getting attributes of node %350 : Dynamic = onnx::Constant[value={1}](), scope: GGNN/Propogator[propogator], error is VariableType::ID() not implemented
-  warnings.warn("Error getting attributes of node {}, error is {}".format(attrs, e))
-[0/150][0/1083] Loss: 4.6444
-[0/150][109/1083] Loss: 4.6449
-[0/150][218/1083] Loss: 4.6560
-[0/150][327/1083] Loss: 4.6453
-[0/150][436/1083] Loss: 4.6485
-[0/150][545/1083] Loss: 4.6598
-[0/150][654/1083] Loss: 4.6508
-[0/150][763/1083] Loss: 4.6446
-[0/150][872/1083] Loss: 4.5877
-[0/150][981/1083] Loss: 4.5969
-Test set: Average loss: 0.1441, Accuracy: 863/17367 (4%)
-[1/150][0/1083] Loss: 4.5936
-[1/150][109/1083] Loss: 4.6058
-[1/150][218/1083] Loss: 4.5729
-[1/150][327/1083] Loss: 4.6009
-[1/150][436/1083] Loss: 4.4021
-[1/150][545/1083] Loss: 4.5878
-[1/150][654/1083] Loss: 4.5744
-[1/150][763/1083] Loss: 4.6254
-[1/150][872/1083] Loss: 4.5887
-[1/150][981/1083] Loss: 4.5978
-Test set: Average loss: 0.1428, Accuracy: 1589/17367 (9%)
-[2/150][0/1083] Loss: 4.5662
-[2/150][109/1083] Loss: 4.5662
-[2/150][218/1083] Loss: 4.5664
-[2/150][327/1083] Loss: 4.5663
-[2/150][436/1083] Loss: 4.6290
-[2/150][545/1083] Loss: 4.5347
-[2/150][654/1083] Loss: 4.5771
-[2/150][763/1083] Loss: 4.5625
-[2/150][872/1083] Loss: 4.5347
-[2/150][981/1083] Loss: 4.5665
-Test set: Average loss: 0.1428, Accuracy: 1623/17367 (9%)
-[3/150][0/1083] Loss: 4.5890
-[3/150][109/1083] Loss: 4.5036
-[3/150][218/1083] Loss: 4.5354
-[3/150][327/1083] Loss: 4.4991
-[3/150][436/1083] Loss: 4.5347
-[3/150][545/1083] Loss: 4.4865
-[3/150][654/1083] Loss: 4.5660
-[3/150][763/1083] Loss: 4.4097
-[3/150][872/1083] Loss: 4.5663
-[3/150][981/1083] Loss: 4.5649
-Test set: Average loss: 0.1425, Accuracy: 1782/17367 (10%)
-[4/150][0/1083] Loss: 4.4783
