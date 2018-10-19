@@ -18,15 +18,15 @@ else
    lang=java
 fi
 n=${2:-104}
-k=$(size_voc $lang1)
+k=$(size_voc $lang2)
 log=$lang1/log-$n.txt
 if [ -f program_data/$lang1/$n.cpkl ]; then
    return
 fi
+mkdir -p $lang2/logs/$lang/$n
+chmod o+w $lang2/logs/$lang/$n
 if [ ! -f $log ]; then
  mkdir -p $(dirname $log)
- mkdir -p $(dirname $log)/logs/$lang/$n
- chmod o+w $(dirname $log)/logs/$lang/$n
  touch -f $log
 fi
         NV_GPU=1 \
@@ -59,10 +59,10 @@ log=$lang1/cll-log-$n.txt
 if [ -f program_data/$lang1/cll-$n.cpkl ]; then
    return
 fi
+mkdir -p $lang1/logs/biggnn/$n
+chmod o+w $lang1/logs/biggnn/$n
 if [ ! -f $log ]; then
  mkdir -p $(dirname $log)
- mkdir -p $(dirname $log)/logs/biggnn/$n
- chmod o+w $(dirname $log)/logs
  touch -f $log
 fi
         NV_GPU=0 \
@@ -95,9 +95,23 @@ function train() {
    mll_train $folder $n
 }
 
-for n in 104 50 25 10; do
-   train $n cpp_babi_format_Oct-10-2018-0000028 | tee -a status.log
-done
-for n in 50 30 10; do
-   train $n github_cpp_babi_format_Oct-10-2018-0000028 | tee -a status.log
-done
+if [ "$1" == "" ]; then
+	for n in 104 50 25 10; do
+	   train $n cpp_babi_format_Oct-10-2018-0000028 | tee -a status.log
+	done
+	for n in 50 30 10; do
+	   train $n github_cpp_babi_format_Oct-10-2018-0000028 | tee -a status.log
+	done
+elif [ "$1" == "java" ]; then
+	mll_train java_babi_format_Oct-10-2018-0000028 $2 | tee -a status.log
+elif [ "$1" == "cpp" ]; then
+	mll_train cpp_babi_format_Oct-10-2018-0000028 $2 | tee -a status.log
+elif [ "$1" == "biggnn" ]; then
+	cll_train cpp_babi_format_Oct-10-2018-0000028 $2 | tee -a status.log
+elif [ "$1" == "github_java" ]; then
+	mll_train github_java_babi_format_Oct-10-2018-0000028 $2 | tee -a status.log
+elif [ "$1" == "github_cpp" ]; then
+	mll_train github_cpp_babi_format_Oct-10-2018-0000028 $2 | tee -a status.log
+elif [ "$1" == "github_biggnn" ]; then
+	cll_train github_cpp_babi_format_Oct-10-2018-0000028 $2 | tee -a status.log
+fi

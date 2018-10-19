@@ -13,7 +13,7 @@ function mll_test() {
 	lang1=$1
 	lang2=${lang1/java/cpp}
 	n=$2
-	k=$(size_voc $lang2)
+	k=$(size_voc $lang1)
 		NV_GPU=0 \
 	  /usr/bin/time -f %e \
 	  nvidia-docker run -v $(dirname $(pwd)):/e -w /e --shm-size 11G --rm -it progress \
@@ -62,32 +62,48 @@ function cll_test() {
 		--train_batch_size 32 \
 		--test_batch_size 32
 }
+function pick_model() {
+   m=
+   model=$1
+   if [ -f $model ]; then
+    m=$(ls $model.* | cut -d"." -f3 | sort -n | tail -1)
+   fi
+   echo $m
+}
 function test() {
    n=$1
    folder=$2
-   if [ -f $folder/$n.cpkl ]; then
-    m=$(ls $folder/$n.cpkl.* | cut -d"." -f3 | sort -n | tail -1)
-    if [ "$m" != "" ]; then
+   m=$(pick_model $folder/$n.cpkl)
+   if [ "$m" != "" ]; then
        mll_test $folder $n $m
-    fi
    fi
-   if [ -f $folder/cll-$n.cpkl ]; then
-    m=$(ls $folder/cll-$n.cpkl.* | cut -d"." -f3 | sort -n | tail -1)
-    if [ "$m" != "" ]; then
+   m=$(pick_model $folder/cll-$n.cpkl)
+   if [ "$m" != "" ]; then
        cll_test $folder $n $m
-    fi
    fi
    folder=${folder/cpp/java}
-   if [ -f $folder/$n.cpkl ]; then
-    m=$(ls $folder/$n.cpkl.* | cut -d"." -f3 | sort -n | tail -1)
-    if [ "$m" != "" ]; then
+   m=$(pick_model $folder/$n.cpkl)
+   if [ "$m" != "" ]; then
        mll_test $folder $n $m
-    fi
    fi
 }
-for n in 104 50 25 10; do
-   test $n cpp_babi_format_Oct-10-2018-0000028 | tee -a status.log
-done
-for n in 50 30 10; do
-   test $n github_cpp_babi_format_Oct-10-2018-0000028 | tee -a status.log
-done
+if [ "$1" == "" ]; then
+	for n in 104 50 25 10; do
+	   test $n cpp_babi_format_Oct-10-2018-0000028 | tee -a status.log
+	done
+	for n in 50 30 10; do
+	   test $n github_cpp_babi_format_Oct-10-2018-0000028 | tee -a status.log
+	done
+elif [ "$1" == "java" ]; then
+	mll_test java_babi_format_Oct-10-2018-0000028 $2 $(pick_model java_babi_format_Oct-10-2018-0000028/$2.cpkl) | tee -a status.log
+elif [ "$1" == "cpp" ]; then
+	mll_test cpp_babi_format_Oct-10-2018-0000028 $2 $(pick_model cpp_babi_format_Oct-10-2018-0000028/$2.cpkl) | tee -a status.log
+elif [ "$1" == "biggnn" ]; then
+	cll_test cpp_babi_format_Oct-10-2018-0000028 $2 $(pick_model cpp_babi_format_Oct-10-2018-0000028/cll-$2.cpkl) | tee -a status.log
+elif [ "$1" == "github_java" ]; then
+	mll_test github_java_babi_format_Oct-10-2018-0000028 $2 $(pick_model github_java_babi_format_Oct-10-2018-0000028/$2.cpkl) | tee -a status.log
+elif [ "$1" == "github_cpp" ]; then
+	mll_test github_cpp_babi_format_Oct-10-2018-0000028 $2 $(pick_model github_cpp_babi_format_Oct-10-2018-0000028/$2.cpkl) | tee -a status.log
+elif [ "$1" == "github_biggnn" ]; then
+	cll_test github_cpp_babi_format_Oct-10-2018-0000028 $2 $(pick_model github_cpp_babi_format_Oct-10-2018-0000028/cll-$2.cpkl) | tee -a status.log
+fi
