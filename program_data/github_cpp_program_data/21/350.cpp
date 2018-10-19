@@ -1,143 +1,215 @@
-#include <iostream>
-#include <iomanip>
-#include <algorithm>
-#include <vector>
-#include <queue>
-#include <iterator>
-#include <string>
+/*
+ * Copyright Opera Wang <wangvisual AT sohu DOT com>
+ * Copyright 2011 kubtek <kubtek@mail.com>
+ *
+ * This file is part of StarDict.
+ *
+ * StarDict is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * StarDict is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with StarDict.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
-using namespace std;
+/*
+http://www.merriampark.com/ld.htm
+What is Levenshtein Distance?
 
-struct TreeNode {
-    int val;
-    TreeNode* left;
-    TreeNode* right;
-    int height;
-    TreeNode(int val) : val(val), left(nullptr), right(nullptr), height(1) {}
-};
+Levenshtein distance (LD) is a measure of the similarity between two strings, 
+which we will refer to as the source string (s) and the target string (t). 
+The distance is the number of deletions, insertions, or substitutions required
+ to transform s into t. For example,
 
-int balance(TreeNode* root) {
-    return (root->left ? root->left->height : 0) - (root->right ? root->right->height : 0); 
+    * If s is "test" and t is "test", then LD(s,t) = 0, because no transformations are needed. 
+    The strings are already identical.
+    * If s is "test" and t is "tent", then LD(s,t) = 1, because one substitution
+     (change "s" to "n") is sufficient to transform s into t.
+
+The greater the Levenshtein distance, the more different the strings are.
+
+Levenshtein distance is named after the Russian scientist Vladimir Levenshtein,
+ who devised the algorithm in 1965. If you can't spell or pronounce Levenshtein,
+ the metric is also sometimes called edit distance.
+
+The Levenshtein distance algorithm has been used in:
+
+    * Spell checking
+    * Speech recognition
+    * DNA analysis
+    * Plagiarism detection 
+*/
+
+
+#include <stdlib.h>
+#include <string.h>
+
+#include "edit-distance.h"
+
+#define OPTIMIZE_ED
+/*
+Cover transposition, in addition to deletion,
+insertion and substitution. This step is taken from:
+Berghel, Hal ; Roach, David : "An Extension of Ukkonen's 
+Enhanced Dynamic Programming ASM Algorithm"
+(http://www.acm.org/~hlb/publications/asm/asm.html)
+*/
+#define COVER_TRANSPOSITION
+
+/****************************************/
+/*Implementation of Levenshtein distance*/
+/****************************************/
+
+EditDistance::EditDistance()
+{
+    currentelements = 2500; // It's enough for most conditions :-)
+    d = (int*)malloc(sizeof(int)*currentelements);
 }
 
-void updateHeight(TreeNode* root) {
-    root->height = max(root->left ? root->left->height : 0, root->right ? root->right->height : 0) + 1; 
-};
-
-TreeNode* leftRotate(TreeNode* root) {
-    TreeNode* newRoot = root->right;
-    root->right = newRoot->left;
-    newRoot->left = root;
-    updateHeight(root);
-    updateHeight(newRoot);
-    return newRoot;
+EditDistance::~EditDistance()
+{
+//    g_print("size:%d\n",currentelements);
+    if (d) free(d);
 }
 
-TreeNode* rightRotate(TreeNode* root) {
-    TreeNode* newRoot = root->left;
-    root->left = newRoot->right;
-    newRoot->right = root;
-    updateHeight(root);
-    updateHeight(newRoot);
-    return newRoot;
-}
-
-TreeNode* rebalance(TreeNode* root) {
-    int b = balance(root);
-    if (b > 1) {
-        if (balance(root->left) < 0)
-            root->left = leftRotate(root->left);
-        return rightRotate(root);
-    } else if (b < -1) {
-        if (balance(root->right) > 0)
-            root->right = rightRotate(root->right);
-        return leftRotate(root);
-    } else {
-        return root;
+#ifdef OPTIMIZE_ED
+int EditDistance::CalEditDistance(const gunichar *s,const gunichar *t,const int limit)
+/*Compute levenshtein distance between s and t, this is using QUICK algorithm*/
+{
+    int n=0,m=0,iLenDif,k,i,j,cost;
+    // Remove leftmost matching portion of strings
+    while ( *s && (*s==*t) )
+    {
+        s++;
+		t++;
     }
-}
 
-TreeNode* insert(TreeNode* root, int val) {
-    if (!root)
-        return new TreeNode(val);
-
-    if (val < root->val) {
-        root->left = insert(root->left, val);
-    } else if (val > root->val) {
-        root->right = insert(root->right, val);
-    } else {
-        throw "key exists";
+	while (s[n])
+	{
+		n++;
+	}
+	while (t[m])
+	{
+		m++;
+	}
+	
+    // Remove rightmost matching portion of strings by decrement n and m.
+    while ( n && m && (*(s+n-1)==*(t+m-1)) )
+    {
+        n--;m--;
     }
-    updateHeight(root);
-    return rebalance(root);
-}
-
-TreeNode* remove(TreeNode* root, int val) {
-    if (!root) return nullptr;
-    if (val < root->val) {
-        root->left = remove(root->left, val);
-    } else if (val > root->val) {
-        root->right = remove(root->right, val);
-    } else {
-        if (!root->left || !root->right) {
-            TreeNode* t = root->left ? root->left : root->right;
-            delete root;
-            return t;
-        } else { 
-            TreeNode* max = root->left;
-            while (max->right) max = max->right; // max in left sub tree
-            root->val = max->val;
-            root->left = remove(root->left, max->val);
+    if ( m==0 || n==0 || d==(int*)0 )
+        return (m+n);
+    if ( m < n )
+    {
+        const gunichar * temp = s;
+        int itemp = n;
+        s = t;
+        t = temp;
+        n = m;
+        m = itemp;
+    }
+    iLenDif = m - n;
+    if ( iLenDif >= limit )
+        return iLenDif;
+    // step 1
+    n++;m++;
+//    d=(int*)malloc(sizeof(int)*m*n);
+    if ( m*n > currentelements )
+    {
+        currentelements = m*n*2;    // double the request
+        d = (int*)realloc(d,sizeof(int)*currentelements);
+        if ( (int*)0 == d )
+            return (m+n);
+    }
+    // step 2, init matrix
+    for (k=0;k<n;k++)
+        d[k] = k;
+    for (k=1;k<m;k++)
+        d[k*n] = k;
+    // step 3
+    for (i=1;i<n;i++)
+    {
+        // first calculate column, d(i,j)
+        for ( j=1;j<iLenDif+i;j++ )
+        {
+            cost = s[i-1]==t[j-1]?0:1;
+            d[j*n+i] = minimum(d[(j-1)*n+i]+1,d[j*n+i-1]+1,d[(j-1)*n+i-1]+cost);
+#ifdef COVER_TRANSPOSITION
+            if ( i>=2 && j>=2 && (d[j*n+i]-d[(j-2)*n+i-2]==2)
+                 && (s[i-2]==t[j-1]) && (s[i-1]==t[j-2]) )
+                d[j*n+i]--;
+#endif
+        }
+        // second calculate row, d(k,j)
+        // now j==iLenDif+i;
+        for ( k=1;k<=i;k++ )
+        {
+            cost = s[k-1]==t[j-1]?0:1;
+            d[j*n+k] = minimum(d[(j-1)*n+k]+1,d[j*n+k-1]+1,d[(j-1)*n+k-1]+cost);
+#ifdef COVER_TRANSPOSITION
+            if ( k>=2 && j>=2 && (d[j*n+k]-d[(j-2)*n+k-2]==2)
+                 && (s[k-2]==t[j-1]) && (s[k-1]==t[j-2]) )
+                d[j*n+k]--;
+#endif
+        }
+        // test if d(i,j) limit gets equal or exceed
+        if ( d[j*n+i] >= limit )
+        {
+            return d[j*n+i];
         }
     }
-
-    updateHeight(root);
-    return rebalance(root);
+    // d(n-1,m-1)
+    return d[n*m-1];
 }
-
-TreeNode* lookup(TreeNode* root, int val) {
-    if (!root) return nullptr;
-    if (val < root->val)
-        return lookup(root->left, val);
-    else if (val > root->val)
-        return lookup(root->right, val);
-    else
-        return root;
-}
-
-void print(TreeNode* root, bool isTail, string indent) {
-    if (!root) return;
-    if (root->right)
-        print(root->right, false, indent + (isTail ? "|     " : "      "));
-    cout << indent << (isTail ? "\\--- " : "/--- ") << root->val << endl;
-    if (root->left)
-        print(root->left, true, indent + (isTail ? "      " : "|     "));
-}
-
-int main() {
-    vector<int> keys = { 13, 2, 10, 3, 1, 12, 8, 4, 5, 7, 9, 6, 15, 14, 11 }; // 1-15
-
-    TreeNode* root = nullptr;
-    for (int key : keys) {
-        root = insert(root, key);
-        cout << "insert( " << key << ")" << endl;
-        print(root, false, "");
-        cout << endl;
-    }
-
-    for (int key = 1; key <= 15; ++key) {
-        if (!lookup(root, key)) {
-            cout << key << " not found!" << endl;
-            return 1;
+#else
+int EditDistance::CalEditDistance(const char *s,const char *t,const int limit)
+{
+    //Step 1
+    int k,i,j,n,m,cost;
+    n=strlen(s); 
+    m=strlen(t);
+    if( n!=0 && m!=0 && d!=(int*)0 )
+    {
+        m++;n++;
+        if ( m*n > currentelements )
+        {
+            currentelements = m*n*2;
+            d = (int*)realloc(d,sizeof(int)*currentelements);
+            if ( (int*)0 == d )
+                return (m+n);
         }
+        //Step 2	
+        for(k=0;k<n;k++)
+            d[k]=k;
+        for(k=0;k<m;k++)
+            d[k*n]=k;
+        //Step 3 and 4	
+        for(i=1;i<n;i++)
+            for(j=1;j<m;j++)
+            {
+                //Step 5
+                if(s[i-1]==t[j-1])
+                    cost=0;
+                else
+                    cost=1;
+                //Step 6			 
+                d[j*n+i]=minimum(d[(j-1)*n+i]+1,d[j*n+i-1]+1,d[(j-1)*n+i-1]+cost);
+#ifdef COVER_TRANSPOSITION
+                if ( i>=2 && j>=2 && (d[j*n+i]-d[(j-2)*n+i-2]==2)
+                     && (s[i-2]==t[j-1]) && (s[i-1]==t[j-2]) )
+                    d[j*n+i]--;
+#endif        
+            }
+        return d[n*m-1];
     }
-
-    for (int key = 1; key <= 15; ++key) {
-        root = remove(root, key);
-        cout << "remove(" << key << ")" << endl;
-        print(root, false, "");
-        cout << endl;
-    }
-
+    else 
+        return (n+m);
 }
-
+#endif

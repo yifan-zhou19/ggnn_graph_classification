@@ -1,97 +1,89 @@
-package spml_assignment1;
+package ru.iav.std.algorithms.strings.w3;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.PriorityQueue;
-import java.util.Set;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
 
-/**
- *
- * @author Jasper
- */
-public class Kruskal {
-    private final boolean verbose;
+public class KnuthMorrisPratt {
 
-    public Kruskal(boolean verbose) {
-        this.verbose = verbose;
+    private static final char delimiter = '$';
+
+    private int patternLength;
+
+    private char[] p;
+
+    /** Prefix function */
+    private int[] s;
+
+    private List<Integer> positions;
+
+    // Find all the occurrences of the pattern in the text and return
+    // a list of all positions in the text (starting from 0) where
+    // the pattern starts in the text.
+    public List<Integer> findPattern(String pattern, String text) {
+        positions = new ArrayList<>();
+        patternLength = pattern.length();
+        p = (pattern + delimiter + text).toLowerCase().toCharArray();
+
+        computePrefixFunction();
+
+        return positions;
     }
 
-    private List<Set<Integer>> generateUnconnectedVertices(int numVertices) {
-        List<Set<Integer>> connectedVertices = new ArrayList<>(numVertices);
-        for (int i = 0; i < numVertices; ++i) {
-            connectedVertices.add(new HashSet<>());
-            connectedVertices.get(i).add(i);
-        }
+    private void computePrefixFunction() {
+        s = new int[p.length];
+        int border = 0;
+        for (int i = 1; i < s.length; i++) {
 
-        return connectedVertices;
-    }
+            while (border > 0 && p[i] != p[border])
+                border = s[border - 1];
 
-    private void mergeSets(List<Set<Integer>> connectedVertices,
-            int start, int end) {
-        int startIndex = 0;
-        int endIndex = 0;
-        for (int i = 0; i < connectedVertices.size(); ++i) {
-            if (connectedVertices.get(i).contains(start)) {
-                startIndex = i;
-            }
-            if (connectedVertices.get(i).contains(end)) {
-                endIndex = i;
-            }
-        }
+            if (p[i] == p[border])  border++;
+            else                    border = 0;
 
-        if (startIndex != endIndex) {
-            connectedVertices.get(startIndex).addAll(
-                    connectedVertices.remove(endIndex));
+            s[i] = border;
+
+            if (i > patternLength && border >= patternLength)
+                positions.add(i - 2*patternLength);
+
         }
     }
 
-    public boolean areVerticesConnected(List<Set<Integer>> connectedVertices,
-            int v1, int v2) {
-        return connectedVertices.stream().anyMatch((connectedSet)
-                -> (connectedSet.contains(v1) && connectedSet.contains(v2)));
+    static public void main(String[] args) throws IOException {
+        new KnuthMorrisPratt().run();
     }
 
-    public Graph run(Graph graph) {
-        Graph mst = new Graph(graph.getNumberOfVertices());
-
-        PriorityQueue<Edge> edges = new PriorityQueue<>();
-        for (int i = 0; i < graph.getNumberOfVertices(); ++i) {
-            for (int j = 0; j < graph.getNumberOfVertices(); ++j) {
-                double cost = graph.getCost(i, j);
-
-                if (cost > 0.0d) {
-                    edges.add(new Edge(i, j, cost));
-                }
-            }
-        }
-
-        List<Set<Integer>> connectedVertices = generateUnconnectedVertices(
-                graph.getNumberOfVertices());
-        Edge edge = edges.poll();
-        mst.setCost(edge.getStart(), edge.getEnd(), edge.getCost());
-        int nEdgesConsidered = 0;
-        while (!edges.isEmpty()
-                && connectedVertices.size() > 1) {
-            nEdgesConsidered++;
-            edge = edges.poll();
-
-            if (!areVerticesConnected(connectedVertices, edge.getStart(),
-                    edge.getEnd())) {
-                mst.setCost(edge.getStart(), edge.getEnd(), edge.getCost());
-                mergeSets(connectedVertices, edge.getStart(), edge.getEnd());
-            }
-        }
-
-        if (connectedVertices.size() > 1) {
-            throw new IllegalArgumentException("Not all edges in the graph "
-                    + "are connected.");
-        }
-
-        if (verbose) {
-            System.out.println(nEdgesConsidered + " edges considered.");
-        }
-
-        return mst;
+    public void printPositions() {
+        positions.forEach(a -> System.out.print(a + " "));
+        System.out.println();
     }
+
+    public void run() throws IOException {
+        FastScanner scanner = new FastScanner();
+        String pattern = scanner.next();
+        String text = scanner.next();
+        findPattern(pattern, text);
+        printPositions();
+    }
+
+    private static class FastScanner {
+        StringTokenizer tok = new StringTokenizer("");
+        BufferedReader in;
+
+        FastScanner() {
+            in = new BufferedReader(new InputStreamReader(System.in));
+        }
+
+        String next() throws IOException {
+            while (!tok.hasMoreElements())
+                tok = new StringTokenizer(in.readLine());
+            return tok.nextToken();
+        }
+
+        int nextInt() throws IOException {
+            return Integer.parseInt(next());
+        }
+    }
+
 }

@@ -1,126 +1,284 @@
-//=======================================================================
-// Copyright 1997, 1998, 1999, 2000 University of Notre Dame.
-// Authors: Andrew Lumsdaine, Lie-Quan Lee, Jeremy G. Siek
-//
-// Distributed under the Boost Software License, Version 1.0. (See
-// accompanying file LICENSE_1_0.txt or copy at
-// http://www.boost.org/LICENSE_1_0.txt)
-//=======================================================================
-#include <boost/config.hpp>
-#include <assert.h>
-#include <iostream>
+#include "avl-tree.h"
 
-#include <vector>
-#include <algorithm>
-#include <utility>
-
-
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/depth_first_search.hpp>
-#include <boost/graph/visitors.hpp>
-
-/*
-  This calculates the discover finishing time.
-
-  Sample Output
-
-  Tree edge: 0 --> 2
-  Tree edge: 2 --> 1
-  Back edge: 1 --> 1
-  Finish edge: 1 --> 1
-  Tree edge: 1 --> 3
-  Back edge: 3 --> 1
-  Finish edge: 3 --> 1
-  Tree edge: 3 --> 4
-  Back edge: 4 --> 0
-  Finish edge: 4 --> 0
-  Back edge: 4 --> 1
-  Finish edge: 4 --> 1
-  Forward or cross edge: 2 --> 3
-  Finish edge: 2 --> 3
-  Finish edge: 0 --> 2
-  1 10
-  3 8
-  2 9
-  4 7
-  5 6
-
- */
-
-using namespace boost;
-using namespace std;
-
-
-template <class VisitorList>
-struct edge_categorizer : public dfs_visitor<VisitorList> {
-  typedef dfs_visitor<VisitorList> Base;
-
-  edge_categorizer(const VisitorList& v = null_visitor()) : Base(v) { }
-
-  template <class Edge, class Graph>
-  void tree_edge(Edge e, Graph& G) {
-    cout << "Tree edge: " << source(e, G) <<
-      " --> " <<  target(e, G) << endl;
-    Base::tree_edge(e, G);
-  }
-  template <class Edge, class Graph>
-  void back_edge(Edge e, Graph& G) {
-    cout << "Back edge: " << source(e, G)
-         << " --> " <<  target(e, G) << endl;
-    Base::back_edge(e, G);
-  }
-  template <class Edge, class Graph>
-  void forward_or_cross_edge(Edge e, Graph& G) {
-    cout << "Forward or cross edge: " << source(e, G)
-         << " --> " <<  target(e, G) << endl;
-    Base::forward_or_cross_edge(e, G);
-  }
-  template <class Edge, class Graph> 
-  void finish_edge(Edge e, Graph& G) { 
-    cout << "Finish edge: " << source(e, G) << 
-      " --> " <<  target(e, G) << endl; 
-    Base::finish_edge(e, G); 
-  } 
-};
-template <class VisitorList>
-edge_categorizer<VisitorList>
-categorize_edges(const VisitorList& v) {
-  return edge_categorizer<VisitorList>(v);
-}
-
-int 
-main(int , char* [])
+struct Node
 {
+    int value;
+    int height;
+    Node *leftChild;
+    Node *rightChild;
+};
 
-  using namespace boost;
-  
-  typedef adjacency_list<> Graph;
-  
-  Graph G(5);
-  add_edge(0, 2, G);
-  add_edge(1, 1, G);
-  add_edge(1, 3, G);
-  add_edge(2, 1, G);
-  add_edge(2, 3, G);
-  add_edge(3, 1, G);
-  add_edge(3, 4, G);
-  add_edge(4, 0, G);
-  add_edge(4, 1, G);
+struct Tree
+{
+    Node *root;
+};
 
-  typedef graph_traits<Graph>::vertex_descriptor Vertex;
-  typedef graph_traits<Graph>::vertices_size_type size_type;
-
-  std::vector<size_type> d(num_vertices(G));  
-  std::vector<size_type> f(num_vertices(G));
-  int t = 0;
-  depth_first_search(G, visitor(categorize_edges(
-                     make_pair(stamp_times(&d[0], t, on_discover_vertex()),
-                               stamp_times(&f[0], t, on_finish_vertex())))));
-
-  std::vector<size_type>::iterator i, j;
-  for (i = d.begin(), j = f.begin(); i != d.end(); ++i, ++j)
-    cout << *i << " " << *j << endl;
-
-  return 0;
+Node *createNode(int value)
+{
+    Node *node = new Node;
+    node->value = value;
+    node->height = 1;
+    node->leftChild = nullptr;
+    node->rightChild = nullptr;
+    return node;
 }
 
+Tree *createTree()
+{
+    Tree *tree = new Tree;
+    tree->root = nullptr;
+    return tree;
+}
+
+int countHeight(Node *node)
+{
+    return node ? node->height : 0;
+}
+
+int balanceFactor(Node *node)
+{
+    return countHeight(node->rightChild) - countHeight(node->leftChild);
+}
+
+void updateHeight(Node *node)
+{
+    int heightLeft = countHeight(node->leftChild);
+    int heightRight = countHeight(node->rightChild);
+    node->height = (heightLeft > heightRight ? heightLeft : heightRight) + 1;
+}
+
+Node *rotateRight(Node* node)
+{
+    Node *pivot = node->leftChild;
+    node->leftChild = pivot->rightChild;
+    pivot->rightChild = node;
+    updateHeight(node);
+    updateHeight(pivot);
+    return pivot;
+}
+
+Node *rotateLeft(Node* node)
+{
+    Node *pivot = node->rightChild;
+    node->rightChild = pivot->leftChild;
+    pivot->leftChild = node;
+    updateHeight(node);
+    updateHeight(pivot);
+    return pivot;
+}
+
+Node *balance(Node* node)
+{
+    updateHeight(node);
+    if (balanceFactor(node) == 2)
+    {
+        if (balanceFactor(node->rightChild) < 0)
+            node->rightChild = rotateRight(node->rightChild);
+
+        return rotateLeft(node);
+    }
+    if (balanceFactor(node) == -2)
+    {
+        if (balanceFactor(node->leftChild) > 0)
+            node->leftChild = rotateLeft(node->leftChild);
+
+        return rotateRight(node);
+    }
+    return node;
+}
+
+void addElement(Node* &node, int value)
+{
+    if (node == nullptr)
+        node = createNode(value);
+    else
+    {
+        if (node->value < value)
+            addElement(node->rightChild, value);
+        if (node->value > value)
+            addElement(node->leftChild, value);
+        node = balance(node);
+    }
+}
+
+void addElement(Tree *tree, int value)
+{
+    addElement(tree->root, value);
+}
+
+void printIncreasingOrder(Node *node)
+{
+    if (node != nullptr)
+    {
+        printIncreasingOrder(node->leftChild);
+        cout << node->value << " ";
+        printIncreasingOrder(node->rightChild);
+    }
+}
+
+void printIncreasingOrder(Tree *tree)
+{
+    printIncreasingOrder(tree->root);
+}
+
+void printDecreasingOrder(Node *node)
+{
+    if (node != nullptr)
+    {
+        printDecreasingOrder(node->rightChild);
+        cout << node->value << " ";
+        printDecreasingOrder(node->leftChild);
+    }
+}
+
+void printDecreasingOrder(Tree *tree)
+{
+    printDecreasingOrder(tree->root);
+}
+
+void printPreorder(Node *node)
+{
+    if (node != nullptr)
+    {
+        cout << "(" << node->value << " ";
+        printPreorder(node->leftChild);
+        printPreorder(node->rightChild);
+        cout << ") ";
+    }
+    else
+        cout << "NULL ";
+}
+
+void printPreorder(Tree *tree)
+{
+    printPreorder(tree->root);
+}
+
+bool exists(Node *node, int value)
+{
+    if (node != nullptr)
+    {
+        if (node->value < value)
+            return exists(node->rightChild, value);
+        if (node->value > value)
+            return exists(node->leftChild, value);
+        return true;
+    }
+    return false;
+}
+
+bool exists(Tree *tree, int value)
+{
+    return exists(tree->root, value);
+}
+
+enum NodeType
+{
+    noChildren,
+    onlyLeftChild,
+    onlyRightChild,
+    twoChildren
+};
+
+NodeType determineType(Node *node)
+{
+    if (node->leftChild == nullptr && node->rightChild == nullptr)
+        return noChildren;
+    if (node->leftChild == nullptr)
+        return onlyRightChild;
+    if (node->rightChild == nullptr)
+        return onlyLeftChild;
+
+    return twoChildren;
+}
+
+void removeNodeWithNoChildren(Node* &node)
+{
+    delete node;
+    node = nullptr;
+}
+void removeNodeWithLeftChild(Node* &node)
+{
+    Node* currentNode = node;
+    node = node->leftChild;
+    delete currentNode;
+    currentNode = nullptr;
+}
+void removeNodeWithRightChild(Node* &node)
+{
+    Node *currentNode = node;
+    node = node->rightChild;
+    delete currentNode;
+    currentNode = nullptr;
+}
+
+int findMin(Node* node)
+{
+    while (node->leftChild != nullptr)
+        node = node->leftChild;
+
+    int value = node->value;
+
+    return value;
+}
+
+void deleteElement(Node* &node, int value);
+
+void removeNodeWithTwoChildren(Node* &node)
+{
+    int value = findMin(node->rightChild);
+    deleteElement(node->rightChild, value);
+    node->value = value;
+}
+
+void deleteElement(Node* &node, int value)
+{
+    if (node != nullptr)
+    {
+        if (node->value == value)
+        {
+           NodeType currentNode = determineType(node);
+
+           switch (currentNode)
+           {
+                case noChildren:
+                    removeNodeWithNoChildren(node); break;
+                case onlyLeftChild:
+                    removeNodeWithLeftChild(node); break;
+                case onlyRightChild:
+                    removeNodeWithRightChild(node); break;
+                case twoChildren:
+                    removeNodeWithTwoChildren(node); break;
+           }
+        }
+        else
+        {
+            if (node->value > value)
+                deleteElement(node->leftChild, value);
+            else
+                deleteElement(node->rightChild, value);
+            node = balance(node);
+        }
+    }
+}
+
+void deleteElement(Tree *tree, int value)
+{
+    return deleteElement(tree->root, value);
+}
+
+void deleteNode(Node* &node)
+{
+    if (node != nullptr)
+    {
+        deleteNode(node->leftChild);
+        deleteNode(node->rightChild);
+        delete node;
+        node = nullptr;
+    }
+}
+
+void deleteTree(Tree *tree)
+{
+    deleteNode(tree->root);
+}

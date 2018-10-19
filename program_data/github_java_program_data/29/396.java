@@ -1,48 +1,39 @@
-package com.hackerrank.algo.dynamic_programming;
+package bloomfilter;
 
-import com.lqw.common.WebPath;
+import java.util.BitSet;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.util.Arrays;
-import java.util.Scanner;
+public class BloomFilterHelper {
 
-public class Knapsack {
+    public static SimpleBloomFilter OR(SimpleBloomFilter b0, SimpleBloomFilter b1) {
+        int totalElements = b0.getTotalElements() + b1.getTotalElements();
+        BitSet bb0 = b0.getBitSet();
+        BitSet bb1 = b1.getBitSet();
+        BitSet bb = new BitSet(b0.getSize() > b1.getSize() ? b0.getSize() : b1.getSize());
+        bb.or(bb0);
+        bb.or(bb1);
 
-    public static int weights[];
-
-    public static int max_weights_with_con(int first, int weights_con) {
-        if (first < 0) return 0;
-        if (weights_con >= weights[first]) {
-            return Math.max(max_weights_with_con(first, weights_con - weights[first]) + weights[first],
-                    max_weights_with_con(first - 1, weights_con));
-        } else {
-            return max_weights_with_con(first - 1, weights_con);
-        }
+        return new SimpleBloomFilter(totalElements, bb);
     }
 
-    public static void main(String[] argv) throws FileNotFoundException {
-        Scanner sc = new Scanner(new File(WebPath.getAbsolutePathWithClass("/input.txt").getPath()));
-        //        Scanner sc = new Scanner(new BufferedInputStream(System.in));
-        //        Scanner sc = new Scanner(System.in);
-        //presolve
-        //input
-        int t = sc.nextInt();
-        while (t-- > 0) {
-            int n = sc.nextInt();
-            int k = sc.nextInt();
-            weights = new int[n];
-            for (int i = 0; i < n; i++) {
-                weights[i] = sc.nextInt();
-            }
-            Arrays.sort(weights);
+    public static SimpleBloomFilter AND(SimpleBloomFilter b0, SimpleBloomFilter b1) {
+        BitSet bb0 = b0.getBitSet();
+        BitSet bb1 = b1.getBitSet();
+        BitSet bb = new BitSet(b0.getSize() > b1.getSize() ? b0.getSize() : b1.getSize());
+        bb.set(0, bb.size());
 
-            System.out.println(max_weights_with_con(n - 1, k));
-        }
+        bb.and(bb0);
+        bb.and(bb1);
 
-        //resolve
+        return new SimpleBloomFilter(bb.cardinality(), bb);
+    }
 
-        //output
-        sc.close();
+    public static SimpleBloomFilter XOR(SimpleBloomFilter b0, SimpleBloomFilter b1) {
+        BitSet bb0 = b0.getBitSet();
+        BitSet bb1 = b1.getBitSet();
+        BitSet bb = new BitSet(b0.getSize() > b1.getSize() ? b0.getSize() : b1.getSize());
+        bb.xor(bb0);
+        bb.xor(bb1);
+
+        return new SimpleBloomFilter(bb.cardinality(), bb);
     }
 }

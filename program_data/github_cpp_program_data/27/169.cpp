@@ -1,70 +1,54 @@
+#include <cmath>
+#include <cstdio>
+#include <vector>
 #include <iostream>
-#include <deque>
-#include <queue>
+#include <algorithm>
+using namespace std;
 
-class Stack {
-public:
-    // Push element x onto stack.
-	void push(int x) {
-		m_q1.push(x);
-	}
+void radix_sort(vector<int>&);
+void counting_sort(vector<int>&, int);
+void print_vector(const vector<int>&);
 
-    // Removes the element on top of the stack.
-	void pop() {
-		while (m_q1.size() != 1)
-		{
-			m_q2.push(m_q1.front());
-			m_q1.pop();
-		}
-		m_q1.pop();
-		while (!m_q2.empty())
-		{
-			m_q1.push(m_q2.front());
-			m_q2.pop();
-		}
-	}
+int main(int argc, char const *argv[]) {
+    int arr[] = {170, 45, 75, 90, 802, 24, 2, 66};
+    vector<int> vec(arr, arr + sizeof(arr)/sizeof(arr[0]));
+    radix_sort(vec);
+    print_vector(vec);
+    return 0;
+}
 
-    // Get the top element.
-	int top() {
-		while (m_q1.size() != 1)
-		{
-			m_q2.push(m_q1.front());
-			m_q1.pop();
-		}
-		int ret = m_q1.front();
-		m_q2.push(ret);
-		m_q1.pop();
-		while (!m_q2.empty())
-		{
-			m_q1.push(m_q2.front());
-			m_q2.pop();
-		}
-		return ret;
-	}
+void print_vector(const vector<int> &vec) {
+    cout << "[";
+    for (int i = 0; i < vec.size(); i++) {
+        cout << vec[i];
+        if (i != vec.size() - 1) {
+            cout << ", ";
+        }
+    }
+    cout << "]" << endl;
+}
 
-    // Return whether the stack is empty.
-	bool empty() {
-		return m_q1.empty();
-	}
+void radix_sort(vector<int> &vec) {
+    int max = vec[distance(vec.begin(), max_element(vec.begin(), vec.end()))];
+    for (int i = 1; max / i > 0; i *= 10) {
+        counting_sort(vec, i);
+    }
+}
 
-private:
-	//std::deque<int> m_q1;
-	std::queue<int> m_q1;
-	std::queue<int> m_q2;
-};
-
-int main(void)
-{
-	Stack stk;
-	stk.push(1);
-	stk.push(2);
-	stk.push(3);
-	stk.push(4);
-	stk.push(5);
-	std::cout << stk.top() << std::endl;
-	stk.pop();
-	stk.pop();
-	stk.pop();
-	std::cout << stk.top() << std::endl;
-	return 0;
+void counting_sort(vector<int> &vec, int d) {
+    vector<int> output(vec.size());
+    vector<int> count(10, 0);
+    for (int i = 0; i < vec.size(); i++) {
+        count[ (vec[i]/d)%10 ]++;
+    }
+    for (int i = 1; i < 10; i++) {
+        count[i] += count[i - 1];
+    }
+    for (int i = vec.size() - 1; i >= 0; i--) {
+        output[count[ (vec[i]/d)%10 ] - 1] = vec[i];
+        count[ (vec[i]/d)%10 ]--;
+    }
+    for (int i = 0; i < vec.size(); i++) {
+        vec[i] = output[i];
+    }
 }

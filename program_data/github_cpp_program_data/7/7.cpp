@@ -1,57 +1,44 @@
-#include<iostream>
+#include <iostream>
+#include <vector>
+#ifdef ALG_MAIN
+
 using namespace std;
-/*
-	TODO
-	Dual Pivot quicksort
-	Randomized Pivot selection
-	Median of three pivot selection
-	Iterative Quick Sort
-	Quickselect algorithm -> nth element
-*/
-void printArray(int *input, int size);
-void qsort(int *input,int low, int high);
-int partition(int *input, int low, int high);
-void swap(int *a, int *b);
+
+class Solution {
+public:
+    vector<string> res;
+
+    void move(int n, char from, char buffer, char to) {
+        if (n == 1) {
+            char *tmp = new char[10];
+            sprintf(tmp, "from %c to %c", from, to);
+            res.emplace_back(tmp);
+            return;
+        }
+        move(n - 1, from, to, buffer);
+        move(1, from, buffer, to);
+        move(n - 1, buffer, from, to);
+    }
+
+    /**
+     * @param n: the number of disks
+     * @return: the order of moves
+     */
+    vector<string> towerOfHanoi(int n) {
+        move(n, 'A', 'B', 'C');
+        return res;
+    }
+};
+
 int main() {
-	int input[] = {13,19,9,5,12,8,7,4,21,2,6,11};//{9,8,7,6,5,4,3,2,1,0,-1};
-	int size = sizeof(input) / sizeof(input[0]);
+    int n;
+    while (cin >> n) {
+        Solution solo;
+        auto res = solo.towerOfHanoi(n);
+        for (auto &iter : res) {
+            cout << iter << endl;
+        }
+    }
+}
 
-	printArray(input,size);
-	qsort(input,0,size-1);
-	printArray(input,size);
-
-	getchar();
-	return 0;
-}
-int partition(int *input, int low, int high) {
-	int i = low;
-	int x = input[high];
-
-	for (auto j = low; j < high; j++) {
-		if (input[j]<x) {
-			swap(&input[i], &input[j]);
-			i++;
-		}
-	}
-	swap(&input[i], &input[high]);
-	return i;
-}
-void qsort(int *input, int low, int high) {
-	if (low>=high) {
-		return;
-	}
-	int pivot = partition(input, low, high);
-	qsort(input, low, pivot-1);
-	qsort(input, pivot+1, high);
-}
-void swap(int *a, int *b) {
-	int temp = *a;
-	*a = *b;
-	*b = temp;
-}
-void printArray(int *input, int size) {
-	for (auto i = 0; i < size; i++) {
-		cout << input[i] << " ";
-	}
-	cout << endl;
-}
+#endif

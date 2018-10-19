@@ -1,74 +1,81 @@
-package com.csrk.excercises;
-
-/*
-Java Bubble Sort Example
-This Java bubble sort example shows how to sort an array of int using bubble
-sort algorithm. Bubble sort is the simplest sorting algorithm.
-*/
-
-public class Bubblesort {
-
-public static void main(String[] args) {
-       
-        //create an int array we want to sort using bubble sort algorithm
-        int intArray[] = new int[]{5,90,35,45,150,3};
-       
-        //print array before sorting using bubble sort algorithm
-        System.out.println("Array Before Bubble Sort");
-        for(int i=0; i < intArray.length; i++){
-                System.out.print(intArray[i] + " ");
+// https://practice.geeksforgeeks.org/problems/merge-sort/1
+{
+import java.util.*;
+class Merge_Sort
+{
+	static void printArray(int arr[])
+    {
+        int n = arr.length;
+        for (int i=0; i<n; ++i)
+            System.out.print(arr[i] + " ");
+        System.out.println();
+    }
+    static void mergeSort(int arr[], int l, int r)
+    {
+        GfG g = new GfG();
+        if (l < r)
+        {
+            int m = (l+r)/2;
+            mergeSort(arr, l, m);
+            mergeSort(arr , m+1, r);
+            g.merge(arr, l, m, r);
         }
-       
-        //sort an array using bubble sort algorithm
-        bubbleSort(intArray);
-       
-        System.out.println("");
-       
-        //print array after sorting using bubble sort algorithm
-        System.out.println("Array After Bubble Sort");
-        for(int i=0; i < intArray.length; i++){
-                System.out.print(intArray[i] + " ");
-        }
+    }
+	public static void main(String args[])
+	{
+		Scanner sc = new Scanner(System.in);
+		int T = sc.nextInt();
+		while(T>0)
+		{
+			int n = sc.nextInt();
+			Merge_Sort ms = new Merge_Sort();
+			int arr[] = new int[n];
+			for(int i=0;i<n;i++)
+				arr[i] = sc.nextInt();
+			GfG g = new GfG();
+			mergeSort(arr,0,arr.length-1);
+			ms.printArray(arr);
+		T--;
+		}
+	}
+}
 
 }
 
-private static void bubbleSort(int[] intArray) {
-       
-        /*
-         * In bubble sort, we basically traverse the array from first
-         * to array_length - 1 position and compare the element with the next one.
-         * Element is swapped with the next element if the next element is greater.
-         *
-         * Bubble sort steps are as follows.
-         *
-         * 1. Compare array[0] & array[1]
-         * 2. If array[0] > array [1] swap it.
-         * 3. Compare array[1] & array[2]
-         * 4. If array[1] > array[2] swap it.
-         * ...
-         * 5. Compare array[n-1] & array[n]
-         * 6. if [n-1] > array[n] then swap it.
-         *
-         * After this step we will have largest element at the last index.
-         *
-         * Repeat the same steps for array[1] to array[n-1]
-         *  
-         */
-       
-        int n = intArray.length;
-        int temp = 0;
-       
-        for(int i=0; i < n; i++){
-                for(int j=1; j < (n-i); j++){
-                        if(intArray[j-1] > intArray[j]){
-                                //swap the elements!
-                                temp = intArray[j-1];
-                                intArray[j-1] = intArray[j];
-                                intArray[j] = temp;
-                        }
-                       
-                }
-        }
+/*Please note that it's Function problem i.e.
+you need to write your solution in the form of Function(s) only.
+Driver Code to call/invoke your function is mentioned above.*/
 
+/* The task is to complete merge() which is used
+in below mergeSort() */
+class GfG
+{
+   // Merges two subarrays of arr[].  First subarray is arr[l..m]
+   // Second subarray is arr[m+1..r]
+    void merge(int arr[], int l, int m, int r)
+    {
+         // Your code here
+         int[] temp = new int[r-l+1];
+         int t=0, i=l, j=m+1;
+         while(i<=m && j<=r){
+             if(arr[i]<=arr[j]) temp[t++] = arr[i++];
+             else temp[t++] = arr[j++];
+         }
+         while(i<=m) temp[t++] = arr[i++];
+         while(j<=r) temp[t++] = arr[j++];
+         
+         for(t=0, i=l; i<=r;) arr[i++] = temp[t++];
+    }
 }
-}
+ /* This method is present in a class other than GfG class .
+static void mergeSort(int arr[], int l, int r)
+ {
+    GfG g = new GfG();
+    if (l < r)   
+   {
+        int m = (l+r)/2;
+        mergeSort(arr, l, m);
+        mergeSort(arr , m+1, r);
+        g.merge(arr, l, m, r);
+    }
+}*/

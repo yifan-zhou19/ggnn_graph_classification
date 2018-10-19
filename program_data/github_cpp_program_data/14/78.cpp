@@ -1,79 +1,182 @@
-/*  Permutation.cpp
- * Copyright (C) 2010, Francisco Claude, all rights reserved.
- *
- * Francisco Claude <fclaude@cs.uwaterloo.ca>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- */
+#include "LogisticRegression.hpp"
 
-#include <Permutation.h>
+#include "Utility.hpp"
 
-namespace cds_static
-{
+class LogisticRegression::impl{
 
-	Permutation::Permutation() { length = 0; }
+    Eigen::VectorXd weights{};
+    std::vector<double> costs{};
+    Eigen::MatrixXd::Index nFeatures = 0;
+    Eigen::MatrixXd::Index nTrainings = 0;
+    double bias = 0;
 
-	Permutation::~Permutation() {}
+    Eigen::MatrixXd computeSigmoid
+    (
+            Eigen::MatrixXd const& a
+    )
+    {
+        return 1.0/( (-1.0*a.array()).exp() + 1 );
+    }
 
-	uint Permutation::pi(uint i) const
-	{
-		return pi(i,1);
-	}
+    void initializeParameters ( bool nonZeroRandom );
 
-	uint Permutation::revpi(uint i) const
-	{
-		return revpi(i,1);
-	}
+public:
 
-	uint Permutation::pi(uint i, uint k) const
-	{
-		uint ret = i;
-		while(k-->0)
-			ret = pi(ret);
-		return ret;
-	}
+    impl() = default;
 
-	uint Permutation::revpi(uint i, uint k) const
-	{
-		uint ret = i;
-		while(k-->0)
-			ret = revpi(ret);
-		return ret;
-	}
+    void train
+    (
+            Eigen::MatrixXd const& X,
+            Eigen::MatrixXd const& y,
+            double learningRate,
+            Eigen::MatrixXd::Index nIterations
+    );
 
-	size_t Permutation::getLength() const
-	{
-		return length;
-	}
+    Eigen::VectorXd predict
+    (
+            Eigen::MatrixXd const& X
+    );
+    
+    double computeError
+    (
+            Eigen::MatrixXd const& XObservation,
+            Eigen::MatrixXd const& yTarget
+    );
+    
+    std::tuple<Eigen::MatrixXd, double>
+    getParameters() const
+    {
+        return { weights, bias };
+    }
 
-	void Permutation::save(ostream & fp) const
-	{
-		saveValue(fp,length);
-	}
-
-	Permutation * Permutation::load(istream & fp) {
-		uint rd = loadValue<uint>(fp);
-		size_t pos = fp.tellg();
-		fp.seekg(pos - sizeof(uint),ios::beg);
-		switch(rd) {
-			case MRRRPERM: return PermutationMRRR::load(fp);
-			break;
-			case WTPERM: return PermutationWT::load(fp);
-			break;
-		}
-		return NULL;
-	}
-
+    std::vector<double> const&
+    getCosts() const
+    {
+        return costs;
+    }
 };
+
+void LogisticRegression::impl::initializeParameters
+( bool nonZeroRandom )
+{
+    if(!nonZeroRandom)
+    {
+        weights = Eigen::VectorXd::Zero(nFeatures);
+        bias = 0.0;
+    }
+    else
+    {
+        auto limit = 1.0/std::sqrt(nFeatures);
+        weights = generateUniform(nFeatures, 1, -limit, limit);
+        bias = generateUniform(1, 1, -limit, limit)(0, 0);
+    }
+}
+
+void LogisticRegression::impl::train
+(         
+        Eigen::MatrixXd const& X,
+        Eigen::MatrixXd const& y,
+        double learningRate,
+        Eigen::MatrixXd::Index nIterations
+)
+{
+    nFeatures = X.cols();
+    nTrainings = X.rows();
+    ASSERT( nTrainings == y.rows() );
+    initializeParameters(false);
+
+    costs = std::vector<double>(nIterations);
+    for (Eigen::MatrixXd::Index i = 0; i < nIterations; ++i)
+    {
+        auto yPredict = computeSigmoid( (X*weights).array() + bias );
+        auto error = yPredict - y;
+        costs[i] = -1*
+                   (
+                           y.array()*yPredict.array().log()
+                           +
+                           (1.0-y.array())*(1.0-yPredict.array()).log()
+                   ).mean();
+        weights -= learningRate * (1.0/nTrainings)*X.transpose()*error;
+        bias -= learningRate * (1.0/nTrainings)*error.sum();
+    }
+}
+
+Eigen::VectorXd LogisticRegression::impl::predict
+(         
+        Eigen::MatrixXd const& X
+)
+{
+    return computeSigmoid
+            (
+                    (X*weights).array() + bias
+            ).unaryExpr
+            (
+                    [](auto value)
+                    {
+                        return value > 0.5 ? 1.0 : 0.0;
+                    }
+            );
+}
+
+double LogisticRegression::impl::computeError
+(         
+        Eigen::MatrixXd const& XObservation,
+        Eigen::MatrixXd const& yTarget
+)
+{
+    auto yPredict = computeSigmoid( (XObservation*weights).array() + bias );
+    return -1*
+           (
+                   yTarget.array()*yPredict.array().log()
+                   +
+                   (1.0-yTarget.array())*(1.0-yPredict.array()).log()
+           ).mean();
+}
+
+void LogisticRegression::train
+(
+        Eigen::MatrixXd const& X,
+        Eigen::MatrixXd const& y,
+        double learningRate,
+        Eigen::MatrixXd::Index nIterations
+)
+{
+    pimpl->train(X, y, learningRate, nIterations);
+}
+
+Eigen::VectorXd LogisticRegression::predict
+(
+        Eigen::MatrixXd const& X
+)
+{
+    return pimpl->predict(X);
+}
+
+double LogisticRegression::computeError
+(
+        Eigen::MatrixXd const& XObservation,
+        Eigen::MatrixXd const& yTarget
+)
+{
+    return pimpl->computeError( XObservation, yTarget );
+}
+
+std::tuple<Eigen::MatrixXd, double>
+LogisticRegression::getParameters() const
+{
+    return pimpl->getParameters();
+}
+
+std::vector<double> const&
+LogisticRegression::getCosts() const
+{
+    return pimpl->getCosts();
+}
+
+LogisticRegression::LogisticRegression()
+                   :pimpl{std::make_unique<impl>()}{
+}
+
+LogisticRegression::~LogisticRegression() = default;
+
+LogisticRegression& LogisticRegression::operator=( LogisticRegression&& ) = default;

@@ -1,33 +1,1 @@
-package algorithm.greedy.kruskal;
-
-/**
- *求一个连通无向图的最小生成树的代价（图边权值为正整数）。
-输入：
-第一行是一个整数N（1<=N<=20），表示有多少个图需要计算。以下有N个图，第i图的第一行是一个整数M（1<=M<=50），表示图的顶点数，
-第i图的第2行至1+M行为一个M*M的二维矩阵，其元素ai,j表示图的i顶点和j顶点的连接情况，如果ai,j=0，表示i顶点和j顶点不相连；如果ai,j>0，
-表示i顶点和j顶点的连接权值。
-输出：
-每个用例，用一行输出对应图的最小生成树的代价。
-1
-6
-0 6 1 5 0 0
-6 0 5 0 3 0
-1 5 0 5 6 4
-5 0 5 0 0 2
-0 3 6 0 0 6
-0 0 4 2 6 0
-
-算法难点：
-（1）边的选择要求从小到大选择，则开始显然要对边进行升序排序。
-（2）选择的边是否需要，则从判断该边加入后是否构成环入手。
-算法设计：
-（1）对边升序排序
-在此采用链式结构，通过插入排序完成。每一结点存放一条边的左右端点序号、权值及后继结点指针
-（2）边的加入是否构成环
-一开始假定各顶点分别为一组，其组号为端点序号。选择某边后，看其两个端点是否在同一组中，即所在组号是否相同，如果是，
-表示构成了环，则舍去。 如果两个端点所在的组不同，则表示可以加入，则将该边两端的组合并成同一组
- *https://www.jianshu.com/p/50f1d4e0555c
- */
-public class Kruskal {
-
-}
+// package algorithm.stringmatching;class KnuthMorrisPratt extends StringMatching {	public int next[];		public KnuthMorrisPratt(String pattern) {		super(pattern);		preprocess(pattern.length());	}		public void preprocess(int m) {		int j, t;		next = new int[m+1];		for (j = 0, t = -1, next[0] = -1; j < m; ) {			while (t >= 0 && (pattern.charAt(j) != pattern.charAt(t)) ) {				t = next[t];			}			t++;			j++;			if (j < m && (pattern.charAt(j) == pattern.charAt(t)) ) {				next[j] = next[t]; 		        	} else {		        		next[j] = t;		        	}		}		for (j=0; j <= m; j++) {			System.out.println("next[" + j + "] = " + next[j]);		}	}		public int findIn(String text) {		int     i, j, cnt = 0;		boolean trivial[] = new boolean[pattern.length()];		for (i = 0; i < trivial.length; i++) {			trivial[i] = false;		}		//pause(0, trivial, -1, false, false, cnt);      		 		for (j = 0, i = 0;  i < text.length();  i++) {			while (j == pattern.length()				 	|| (j >= 0 && pattern.charAt(j) != text.charAt(i))) {				if (j < pattern.length()) {					cnt++;				}				//if (stopRequested) return;				//if (j < m) pause(i-j, trivial, j, true, false, cnt);				j = next[j];				for (int k = 0; k < pattern.length(); k++) {					trivial[k] = (k < j);				}				//pause(i-j, trivial, -1, false, false, cnt);			}			if (j >= 0) {				cnt++;				//pause(i-j, trivial, j, false, (j+1==m), cnt);			}			j++;		}		for (i=0; i < trivial.length; i++) {			System.out.println(i+": "+ trivial[i]);		}		return i;	}		public static void main() {		String pat = "abb";		String text = "ababbababbabababbabaaba";		KnuthMorrisPratt kmp = new KnuthMorrisPratt(pat);		kmp.findIn(text);	}}

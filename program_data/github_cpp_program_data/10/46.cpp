@@ -1,46 +1,62 @@
-#include <stdio.h>
-#include <conio.h>
-#include <fstream.h>
-#include <string.h>
-#include <time.h>
-using namespace std;
-int next[100000];
-void init(char *p) {
-    int i, j, M;
-    next[0] = -1;
-    M = strlen(p);
-    for(i = 0, j = -1; i < M; i++, j++, next[i] = j)
-      while((j >= 0) && (p[j] != p[i])) j = next[j];
-}    
-int kmp(char *a, char *p) {
-    int i, j, M, N;
-    M = strlen(p);
-    N = strlen(a);
-    init(p);
-    
-    for(i = 0, j = 0; j < M && i < N; i++, j++)
-      while((j >= 0) && (p[j] != a[i])) j = next[j];
-    if(j == M) return i-M; else return i;
-}
-int obicno(char *a, char *p) {
-    int i, j, M, N;
-    M = strlen(p);
-    N = strlen(a);
-    for(i = 0, j = 0; j < M && i < N; i++, j++)
-      while((p[j] != a[i])) {i-= j -1; j = 0;}
-    if(j == M) return i-M; else return i;
-}        
-int main() {
-    ifstream in ("kmp.txt", ios::in);
-    char str[100000], pat[100000];
-    in >> str;
-    in >> pat;
-    //scanf("%s %s", str, pat);
-    long double start = clock();
-    printf("%d - (%0.18llf s)", kmp(str, pat), (start-clock())/1000);
-    long double start2 = clock();
-    printf("%d - (%0.18llf s)", obicno(str, pat), (start2-clock())/1000);
-    
-    getch();
-    return 0;
-}    
+/* -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*- */
+/*
+ *  Main authors:
+ *     Christian Schulte <schulte@gecode.org>
+ *
+ *  Copyright:
+ *     Christian Schulte, 2009
+ *
+ *  Last modified:
+ *     $Date: 2009-05-12 18:35:58 +1000 (Tue, 12 May 2009) $ by $Author: schulte $
+ *     $Revision: 9057 $
+ *
+ *  This file is part of Gecode, the generic constraint
+ *  development environment:
+ *     http://www.gecode.org
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining
+ *  a copy of this software and associated documentation files (the
+ *  "Software"), to deal in the Software without restriction, including
+ *  without limitation the rights to use, copy, modify, merge, publish,
+ *  distribute, sublicense, and/or sell copies of the Software, and to
+ *  permit persons to whom the Software is furnished to do so, subject to
+ *  the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be
+ *  included in all copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ *  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ *  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ *  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ *  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ *  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ *  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ */
+
+#include <gecode/search.hh>
+#include <gecode/search/sequential/dfs.hh>
+#ifdef GECODE_HAS_THREADS
+#include <gecode/search/parallel/dfs.hh>
+#endif
+#include <gecode/search/support.hh>
+
+namespace Gecode { namespace Search {
+
+  Engine* 
+  dfs(Space* s, size_t sz, const Options& o) {
+#ifdef GECODE_HAS_THREADS
+    Options to = o.expand();
+    if (to.threads == 1.0)
+      return new WorkerToEngine<Sequential::DFS>(s,sz,to);
+    else
+      return new Parallel::DFS(s,sz,to);
+#else
+    return new WorkerToEngine<Sequential::DFS>(s,sz,o);
+#endif
+  }
+
+}}
+
+// STATISTICS: search-other

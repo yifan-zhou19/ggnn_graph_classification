@@ -1,102 +1,183 @@
-//
-// Copyright 2012 Francisco Jerez
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the "Software"),
-// to deal in the Software without restriction, including without limitation
-// the rights to use, copy, modify, merge, publish, distribute, sublicense,
-// and/or sell copies of the Software, and to permit persons to whom the
-// Software is furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
-// THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
-// OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-//
+#include "stdafx.h"
+#include "iostream"
+#include "vector"
+#include "string"
+#include "map"
+#include <algorithm>
+#include <stdlib.h>
+#include <time.h>
+#include <stack>
+#include <sstream>
+#include <iomanip>
 
-#include "api/util.hpp"
-#include "core/queue.hpp"
+using namespace std;
+//http://www.cs.umd.edu/~meesh/420/Notes/MountNotes/lecture11-skiplist.pdf
 
-using namespace clover;
+class SkipListNode{
+public:
+	int data;
+	SkipListNode *backward;
+	vector<SkipListNode*> forward;
 
-PUBLIC cl_command_queue
-clCreateCommandQueue(cl_context ctx, cl_device_id dev,
-                     cl_command_queue_properties props,
-                     cl_int *errcode_ret) try {
-   if (!ctx)
-      throw error(CL_INVALID_CONTEXT);
+	SkipListNode(){}
 
-   if (!ctx->has_device(dev))
-      throw error(CL_INVALID_DEVICE);
+	SkipListNode(int d, int level){
+		data=d;
+		forward=vector<SkipListNode*>(level+1, NULL);
+	}
+};
 
-   if (props & ~(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE |
-                 CL_QUEUE_PROFILING_ENABLE))
-      throw error(CL_INVALID_VALUE);
+class SkipList{
+public:
+	int maxLevel;
+	SkipListNode* header;
 
-   ret_error(errcode_ret, CL_SUCCESS);
-   return new command_queue(*ctx, *dev, props);
+	SkipList(int maxLev){
+		maxLevel=maxLev;
+		header=new SkipListNode(NULL, maxLevel);
 
-} catch (error &e) {
-   ret_error(errcode_ret, e);
-   return NULL;
+		SkipListNode *sentinel =new SkipListNode(INT_MAX, maxLevel);
+		for(int i=0;i<=maxLevel;i++)
+		{
+			header->forward[i]=sentinel;
+		}
+		sentinel->backward=header;
+	}
+
+	int find(int key)
+	{
+		SkipListNode* current=header;
+
+		for(int i=maxLevel;i>=0;i--)
+		{
+			SkipListNode *next=current->forward[i];
+			while(next->data<key)
+			{
+				current=next;
+				next=current->forward[i];
+			}
+		}
+
+		current=current->forward[0];
+
+		if(current->data==key)return current->data;
+		else return NULL;
+	}
+
+	void insert(int key)
+	{
+		SkipListNode* current=header;
+		for(int i=maxLevel;i>=0;i--)
+		{
+			SkipListNode *next=current->forward[i];
+			while(next->data<key)
+			{
+				current=next;
+				next=current->forward[i];
+			}
+		}
+
+		SkipListNode* forwardNode=current->forward[0];
+		if(forwardNode->data==key)return;
+
+		SkipListNode* newNode=new SkipListNode(key, 0);
+		current->forward[0]=newNode;
+		newNode->forward[0]=forwardNode;
+		forwardNode->backward=newNode;
+		newNode->backward=current;
+
+		SkipListNode* backwardNode=current;
+
+		srand(time(NULL));
+		for(int i=1;i<=maxLevel;i++)
+		{
+			if(rand()%10<5)
+			{
+				while(forwardNode->forward.size()<i+1)
+					forwardNode=forwardNode->forward[forwardNode->forward.size()-1];
+				newNode->forward.push_back(forwardNode);
+				while(backwardNode&&backwardNode->forward.size()<i+1)
+				{
+					backwardNode=backwardNode->backward;
+				}
+				backwardNode->forward[i]=newNode;
+			}
+			else
+			{
+				break;
+			}
+		}
+	}
+
+	void erase(int key)
+	{
+		SkipListNode* current=header;
+		for(int i=maxLevel;i>=0;i--)
+		{
+			SkipListNode *next=current->forward[i];
+			while(next->data<key)
+			{
+				current=next;
+				next=current->forward[i];
+			}
+		}
+
+		SkipListNode* eraseNode=current->forward[0];
+		if(eraseNode->data!=key)return;
+		SkipListNode* backwardNode=current;
+		SkipListNode* forwardNode=eraseNode->forward[0];
+		forwardNode->backward=backwardNode;
+
+		while(true)
+		{
+			for(int i=min(backwardNode->forward.size()-1, eraseNode->forward.size()-1);i>=0;i--)
+			{
+				if(backwardNode->forward[i]==eraseNode)
+					backwardNode->forward[i]=eraseNode->forward[i];
+			}
+			if(backwardNode->forward.size()>=eraseNode->forward.size())break;
+			backwardNode=backwardNode->backward;
+		}
+		delete eraseNode;
+	}
+
+	void print()
+	{
+		for(int i=maxLevel;i>=0;i--)
+		{
+			SkipListNode *current=header;
+			while(current->forward[0])
+			{
+				if(current->forward.size()>=i+1)
+					cout<<setw(4)<<setfill('-')<<current->data<<"-->";
+				else
+					cout<<"-------";
+				current=current->forward[0];
+			}
+			cout<<endl;
+		}
+		cout<<endl;
+	}
+};
+
+
+int _tmain(int argc, _TCHAR* argv[])
+{
+	SkipList *skl=new SkipList(4);
+	srand(time(NULL));
+	for(int i=0;i<10;i++)
+	{
+		int tmp=(i+rand()%31)%17;
+		skl->insert(tmp);
+		cout<<skl->find(tmp)<<endl;
+		skl->print();
+		if(tmp%7<=2)
+		{
+			skl->erase(tmp);
+			skl->print();
+		}
+	}
+	return 0;
 }
 
-PUBLIC cl_int
-clRetainCommandQueue(cl_command_queue q) {
-   if (!q)
-      return CL_INVALID_COMMAND_QUEUE;
 
-   q->retain();
-   return CL_SUCCESS;
-}
-
-PUBLIC cl_int
-clReleaseCommandQueue(cl_command_queue q) {
-   if (!q)
-      return CL_INVALID_COMMAND_QUEUE;
-
-   if (q->release())
-      delete q;
-
-   return CL_SUCCESS;
-}
-
-PUBLIC cl_int
-clGetCommandQueueInfo(cl_command_queue q, cl_command_queue_info param,
-                      size_t size, void *buf, size_t *size_ret) {
-   if (!q)
-      return CL_INVALID_COMMAND_QUEUE;
-
-   switch (param) {
-   case CL_QUEUE_CONTEXT:
-      return scalar_property<cl_context>(buf, size, size_ret, &q->ctx);
-
-   case CL_QUEUE_DEVICE:
-      return scalar_property<cl_device_id>(buf, size, size_ret, &q->dev);
-
-   case CL_QUEUE_REFERENCE_COUNT:
-      return scalar_property<cl_uint>(buf, size, size_ret, q->ref_count());
-
-   case CL_QUEUE_PROPERTIES:
-      return scalar_property<cl_command_queue_properties>(buf, size, size_ret,
-                                                          q->props());
-
-   default:
-      return CL_INVALID_VALUE;
-   }
-}
-
-PUBLIC cl_int
-clFlush(cl_command_queue q) {
-   if (!q)
-      return CL_INVALID_COMMAND_QUEUE;
-
-   q->flush();
-   return CL_SUCCESS;
-}

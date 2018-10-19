@@ -1,137 +1,126 @@
-//===--- examples/Fibonacci/fibonacci.cpp - An example use of the JIT -----===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-// This small program provides an example of how to build quickly a small module
-// with function Fibonacci and execute it with the JIT.
-//
-// The goal of this snippet is to create in the memory the LLVM module
-// consisting of one function as follow:
-//
-//   int fib(int x) {
-//     if(x<=2) return 1;
-//     return fib(x-1)+fib(x-2);
-//   }
-//
-// Once we have this, we compile the module via JIT, then execute the `fib'
-// function and return result to a driver, i.e. to a "host program".
-//
-//===----------------------------------------------------------------------===//
-
-#include "llvm/LLVMContext.h"
-#include "llvm/Module.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Constants.h"
-#include "llvm/Instructions.h"
-#include "llvm/Analysis/Verifier.h"
-#include "llvm/ExecutionEngine/JIT.h"
-#include "llvm/ExecutionEngine/Interpreter.h"
-#include "llvm/ExecutionEngine/GenericValue.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/TargetSelect.h"
-using namespace llvm;
-
-static Function *CreateFibFunction(Module *M, LLVMContext &Context) {
-  // Create the fib function and insert it into module M. This function is said
-  // to return an int and take an int parameter.
-  Function *FibF =
-    cast<Function>(M->getOrInsertFunction("fib", Type::getInt32Ty(Context),
-                                          Type::getInt32Ty(Context),
-                                          (Type *)0));
-
-  // Add a basic block to the function.
-  BasicBlock *BB = BasicBlock::Create(Context, "EntryBlock", FibF);
-
-  // Get pointers to the constants.
-  Value *One = ConstantInt::get(Type::getInt32Ty(Context), 1);
-  Value *Two = ConstantInt::get(Type::getInt32Ty(Context), 2);
-
-  // Get pointer to the integer argument of the add1 function...
-  Argument *ArgX = FibF->arg_begin();   // Get the arg.
-  ArgX->setName("AnArg");            // Give it a nice symbolic name for fun.
-
-  // Create the true_block.
-  BasicBlock *RetBB = BasicBlock::Create(Context, "return", FibF);
-  // Create an exit block.
-  BasicBlock* RecurseBB = BasicBlock::Create(Context, "recurse", FibF);
-
-  // Create the "if (arg <= 2) goto exitbb"
-  Value *CondInst = new ICmpInst(*BB, ICmpInst::ICMP_SLE, ArgX, Two, "cond");
-  BranchInst::Create(RetBB, RecurseBB, CondInst, BB);
-
-  // Create: ret int 1
-  ReturnInst::Create(Context, One, RetBB);
-
-  // create fib(x-1)
-  Value *Sub = BinaryOperator::CreateSub(ArgX, One, "arg", RecurseBB);
-  CallInst *CallFibX1 = CallInst::Create(FibF, Sub, "fibx1", RecurseBB);
-  CallFibX1->setTailCall();
-
-  // create fib(x-2)
-  Sub = BinaryOperator::CreateSub(ArgX, Two, "arg", RecurseBB);
-  CallInst *CallFibX2 = CallInst::Create(FibF, Sub, "fibx2", RecurseBB);
-  CallFibX2->setTailCall();
+#include <string>
+#include "gtest/gtest.h"
 
 
-  // fib(x-1)+fib(x-2)
-  Value *Sum = BinaryOperator::CreateAdd(CallFibX1, CallFibX2,
-                                         "addresult", RecurseBB);
+// Fixed size
+static int TABLE_SIZE = 256;
 
-  // Create the return instruction and add it to the basic block
-  ReturnInst::Create(Context, Sum, RecurseBB);
+// string-int key value pair
+struct Node {
+  Node() = delete;
+  Node(std::string k, int v): key(k), value(v) {}
 
-  return FibF;
+  std::string key;
+  int value;
+};
+
+
+
+class HashTable {
+public:
+  HashTable() {
+    // initialize by ()
+    table = new Node*[TABLE_SIZE];
+    for (int i = 0; i < TABLE_SIZE; ++i) {
+      table[i] = nullptr;
+    }
+  }
+
+  ~HashTable() {
+    // free pointers and table
+    for (int i = 0; i < TABLE_SIZE; ++i) {
+      if (table[i]) {
+        delete table[i];
+      }
+    }
+    delete []table;
+  }
+
+  void set(std::string key, int value) {
+    auto __hash = hash(key);
+
+    // in case collision
+    while (table[__hash] && table[__hash]->key != key) {
+      __hash = hash(__hash + 1);
+    }
+
+    table[__hash] = new Node(key, value);
+  }
+
+  int search(std::string key) {
+    auto __hash = hash(key);
+
+    // in case collision
+    while (table[__hash] && table[__hash]->key != key) {
+      __hash = hash(__hash + 1);
+    }
+
+    if (!table[__hash]) {return -1;}
+    return table[__hash]->value;
+  }
+
+  bool remove(std::string key) {
+    auto __hash = hash(key);
+
+    while (table[__hash]) {
+      if (table[__hash]->key == key) {break;}
+      __hash = hash(__hash + 1);
+    }
+
+    if (!table[__hash]) {return false;}
+
+    // mark as deleted
+    delete table[__hash];
+    table[__hash] = nullptr;
+    return true;
+  }
+
+private:
+
+
+  Node **table;
+
+  // hash function: compute an index into buckets
+  int hash(std::string k) {
+    int value = 0;
+    int len = k.length();
+    for (int i = 0; i < len; ++i) {
+      value += k[i];
+    }
+    return value % TABLE_SIZE;
+  }
+
+  int hash(int k) {
+    return k % TABLE_SIZE;
+  }
+
+
+};
+
+TEST(HashTableTest, SomeTest) {
+  auto a = HashTable();
+
+  // set
+  a.set("java", 1);
+  a.set("yayyyy", 2);
+  a.set("yay", 2);
+
+  // search
+  EXPECT_EQ(a.search("yay"), 2);
+  EXPECT_EQ(a.search("yayyyy"), 2);
+  EXPECT_EQ(a.search("java"), 1);
+  EXPECT_EQ(a.search("javascript"), -1);
+
+  // remove
+  EXPECT_EQ(a.remove("javascript"), false);
+  EXPECT_EQ(a.remove("java"), true);
+  EXPECT_EQ(a.remove("yayyyy"), true);
+  EXPECT_EQ(a.search("yayyyy"), -1);
+
 }
 
-
-int main(int argc, char **argv) {
-  int n = argc > 1 ? atol(argv[1]) : 24;
-
-  InitializeNativeTarget();
-  LLVMContext Context;
-
-  // Create some module to put our function into it.
-  OwningPtr<Module> M(new Module("test", Context));
-
-  // We are about to create the "fib" function:
-  Function *FibF = CreateFibFunction(M.get(), Context);
-
-  // Now we going to create JIT
-  std::string errStr;
-  ExecutionEngine *EE =
-    EngineBuilder(M.get())
-    .setErrorStr(&errStr)
-    .setEngineKind(EngineKind::JIT)
-    .create();
-
-  if (!EE) {
-    errs() << argv[0] << ": Failed to construct ExecutionEngine: " << errStr
-           << "\n";
-    return 1;
-  }
-
-  errs() << "verifying... ";
-  if (verifyModule(*M)) {
-    errs() << argv[0] << ": Error constructing function!\n";
-    return 1;
-  }
-
-  errs() << "OK\n";
-  errs() << "We just constructed this LLVM module:\n\n---------\n" << *M;
-  errs() << "---------\nstarting fibonacci(" << n << ") with JIT...\n";
-
-  // Call the Fibonacci function with argument n:
-  std::vector<GenericValue> Args(1);
-  Args[0].IntVal = APInt(32, n);
-  GenericValue GV = EE->runFunction(FibF, Args);
-
-  // import result of execution
-  outs() << "Result: " << GV.IntVal << "\n";
-
-  return 0;
+int main(int argc, char *argv[]) {
+  ::testing::InitGoogleTest(&argc, argv);
+  int ret = RUN_ALL_TESTS();
+  return ret;
 }

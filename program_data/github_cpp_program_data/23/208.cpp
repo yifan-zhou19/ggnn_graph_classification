@@ -1,122 +1,117 @@
-#include "Queue.h"
+/**
+ * Basic Skip List implementation
+ * Based on blog: http://codeforces.com/blog/entry/13218
+**/ 
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <iostream>
+#include <queue>
 
-Queue::Queue()
+using namespace std;
+
+const int oo = 2e9;
+
+struct skip_list
 {
-	size = 0;
-	head = 0;
-	tail = 0;
-	capacity = 1;
+  // Node definition
+  struct node
+  {
+    int val;
+    deque <node*> nxt;
+    deque <node*> prv;
+    node(int val)
+      : val(val), nxt(), prv() {} 
+  } *begin, *end;
 
-	elementArray = new int[capacity];
+  // Default constructor
+  skip_list()
+  {
+     begin = new node(-oo);
+     end   = new node(+oo);
+     begin->nxt = {  end};
+     begin->prv = { NULL};
+     end  ->nxt = { NULL};
+     end  ->prv = {begin};
+  }
+
+  // find lower_bound of X
+  node *find(int x)
+  {
+    node *cur = begin;
+    int lvl = begin->nxt.size();
+    while(lvl >= 0)
+    {
+      while( (lvl<cur->nxt.size()) &&
+             (cur->nxt[lvl]->val < x))
+      {
+        cur = cur->nxt[lvl];
+      }
+      lvl--;
+    }
+    return cur->nxt[0];
+  }
+
+  // Insert x: Invariant L0 contain all elements
+  void insert(int x)
+  {
+    node *R = find(x);
+    node *L = R->prv[0];
+    node *it = new node(x);
+    int lvl = -1;
+    while(lvl==-1 || rand()&1)
+    {
+      lvl++;
+      // Create new level
+      if(lvl >= begin->nxt.size())
+      {
+        begin->nxt.push_back(NULL);
+        begin->prv.push_back(NULL);
+        end->nxt.push_back(NULL);
+        end->prv.push_back(NULL);
+      }
+      while(lvl >= L->nxt.size()) L = L->prv[lvl-1]; 
+      while(lvl >= R->nxt.size()) R = R->nxt[lvl-1];
+      L->nxt[lvl] = it;
+      R->prv[lvl] = it;
+      it->nxt.push_back(R);
+      it->prv.push_back(L);
+    }
+
+  }
+
+  // Delete element X
+  void remove(int x)
+  {
+    node *it = find(x);
+    for(int i=0; i<it->nxt.size(); ++i)
+    {
+      it->nxt[i]->prv[i] = it->prv[i];
+      it->prv[i]->nxt[i] = it->nxt[i];
+    }
+    delete it;
+    it = NULL;
+  }
+}; 
+
+int main() {
+  skip_list SL;
+  skip_list::node* nd;
+  
+  SL.insert( 5);
+  SL.insert( 4);
+  SL.insert(11);
+  SL.insert( 9);
+  SL.insert(14);
+  SL.insert( 7);
+  SL.insert( 6);
+  SL.insert( 1);
+  SL.insert( 2);
+
+  SL.remove(5);
+  nd = SL.find(5);
+  printf("%d\n",nd->val);
+  return 0;
 }
 
-Queue::Queue( int c )
-{
-	size = 0;
-	head = 0;
-	tail = 0;
-	capacity = c;
 
-	elementArray = new int[capacity];
-}
-
-Queue::~Queue()
-{
-	delete[] elementArray;
-	elementArray = nullptr;
-}
-
-void Queue::enQueue( int element )
-{
-	if (size == capacity)
-	{
-		resize( size * 2 );
-	}
-
-	elementArray[tail++] = element;
-
-	if (tail == capacity)
-	{
-		tail = 0;
-	}
-
-	size++;
-}
-
-int Queue::deQueue()
-{
-	if (isEmpty())
-	{
-		throw exception( "Empty queue error" );
-	}
-
-	int returnedEle = elementArray[head];
-
-	if (++head == capacity)
-	{
-		head = 0;
-	}
-
-	if (--size > 0 && size <= capacity / 4)
-	{
-		resize( capacity / 2 );
-	}
-
-	return returnedEle;
-}
-
-int Queue::getSize()
-{
-	return size;
-}
-
-int Queue::getCapacity()
-{
-	return capacity;
-}
-
-void Queue::printQueue()
-{
-	if (isEmpty())
-	{
-		cout << "Empty queue" << endl;
-
-		return;
-	}
-
-	for (int i = head; i < head + size; i++)
-	{
-		if (i == capacity)
-		{
-			i == 0;
-		}
-
-		cout << "Index: " << i << " Element: " << elementArray[i] << endl;
-	}
-}
-
-bool Queue::isEmpty()
-{
-	return size == 0;
-}
-
-void Queue::resize( int c )
-{
-	int* newArray = new int[c];
-
-	for (int i = 0; i < capacity; i++)
-	{
-		newArray[i] = elementArray[head + i];
-	}
-
-	// Re-position head and tail
-	head = 0;
-	tail = size;
-	capacity = c;
-
-	// Delete old array
-	delete[] elementArray;
-	// Setup new array
-	elementArray = newArray;
-}

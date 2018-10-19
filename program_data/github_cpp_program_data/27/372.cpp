@@ -1,103 +1,88 @@
+//============================================================================
+// Name        : radix-sort.cpp
+// Author      : 
+// Date        :
+// Copyright   : 
+// Description : Implementation of radix sort in C++
+//============================================================================
+
+#include "sort.h"
 #include <iostream>
+#include <vector>
+#include <cmath>
+
 using namespace std;
 
-const int MAX_SIZE = 100;
 
-class StackOverFlowException 
-{
-    public:
-        StackOverFlowException() 
-        {
-            cout << "Stack overflow" << endl;
+int power(int base, int power){
+    if ( power == 0 ) { return 1; }
+    else {
+        int value = base;
+        for ( int i = 1; i < power; ++i ) {
+            value = value * base;
         }
-};
+        return value;
+    }
+}
 
-class StackUnderFlowException 
-{
-    public:
-        StackUnderFlowException() 
-        {
-            cout << "Stack underflow" << endl;
-        }
-};
+int mod_num(int n, int exponent){
+    if ( exponent > 1 ) {
+        return n % power(10,exponent) - n % power(10,exponent-1);
+    }
+    if ( exponent == 1 ) { return n % 10; }
+}
 
-class ArrayStack 
+void
+RadixSort::sort(int A[], int size)
 {
-	private:
-	int data[MAX_SIZE];
-	int top;
+    double max = 0.0;
+    for ( int i = 0; i < size; ++i ){
+        if (A[i] > max) { max = A[i]; }
+    }
+ 
+	double list_max_size = log10(max)+1;
 	
-	public:
-	ArrayStack()
-	{
-		top = -1;
-	}
-	int Pop();
-	void Push(int number);
-	int Top();
-	int Size();
-	bool isEmpty();
-	
-};
-
-int ArrayStack::Pop() {
-	if ( top == -1 ) 
-            {            
-                throw new StackUnderFlowException();            
-            }            
-    return data[top--];   
+    for ( int i = 1; i <= list_max_size; ++i ){
+        vector<int> arrayB (10,0);
+		
+        for ( int j = 0; j < size; ++j ){
+            int tmp = mod_num(A[j],i)/(power(10,i-1));
+            ++arrayB[tmp];
+		}		
+		
+		for ( int j = 0; j < arrayB.size(); ++j ) {
+			if (j==0) { arrayB[j] = arrayB[j]; }
+			else if ( j>0 ) {
+				arrayB[j] = arrayB[j] + arrayB[j-1]; 
+			}
+		}
+		
+		int indexA;
+		int check=0;
+		int arrayC[size];
+		for ( int j = 0; j < size; ++j ) {
+			int tmp = mod_num(A[j],i)/(power(10,i-1));
+			if ( tmp == 0 ){
+				arrayC[check] = A[j];
+				++check;
+			}
+			if ( tmp > 0 ){
+				indexA = arrayB[tmp-1];
+				++arrayB[tmp-1];
+				arrayC[indexA] = A[j];
+			}
+		}
+		
+		for(int j = 0; j<size; j++){
+			A[j] = arrayC[j];
+			cout << A[j] << endl;
+		}
+		
+    }
+        
+  /*
+     Complete this function with the implementation of radix sort
+     algorithm.
+  */
+  
 }
-
-void ArrayStack::Push(int number)
-{
-	if ( top >= MAX_SIZE ) 
-    {            
-        throw new StackOverFlowException();
-    }                   
-    data[++top] = number; 
-}
-
-int ArrayStack::Top()
-{
-	return data[top];      
-	
-}
-
-int ArrayStack::Size()
-{
-	return top + 1;
-}
-
-bool ArrayStack::isEmpty()
-{
-	if (top == -1) {
-		return true;
-	} else {
-		return false;
-	}
-}
-int main() {
-	 
-	 ArrayStack s;
-	 if ( s.isEmpty() ) 
-            {
-            cout << "Stack is empty" << endl;    
-            }
-        // Push elements    
-        s.Push(100);    
-        s.Push(200);    
-        // Size of stack
-        cout << "Size of stack = " << s.Size() << endl;
-        // Top element    
-        cout << s.Top() << endl;    
-        // Pop element    
-        cout << s.Pop() << endl;
-        // Pop element    
-        cout << s.Pop() << endl;
-        // Pop element    
-     
-}
-
-
-
-

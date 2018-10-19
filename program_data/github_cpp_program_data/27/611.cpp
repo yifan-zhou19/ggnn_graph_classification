@@ -1,27 +1,54 @@
-/*      Copyright (C) 2004 Garrett A. Kajmowicz
-	This file is part of the uClibc++ Library.
+//============================================================================
+// Name        : radix-sort.cpp
+// Author      : 
+// Date        :
+// Copyright   : 
+// Description : Implementation of radix sort in C++
+//============================================================================
 
-	This library is free software; you can redistribute it and/or
-	modify it under the terms of the GNU Lesser General Public
-	License as published by the Free Software Foundation; either
-	version 2.1 of the License, or (at your option) any later version.
+#include "sort.h"
+#include <iostream>
+#include <cmath>
 
-	This library is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-	Lesser General Public License for more details.
-
-	You should have received a copy of the GNU Lesser General Public
-	License along with this library; if not, write to the Free Software
-	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
-
-#include <stack>
-
-
-namespace std{
-
-
-
-
+void
+RadixSort::sort(int A[], int size)
+{
+	/*
+	  Complete this function with the implementation of radix sort
+	  algorithm.
+	*/
+	
+	/* find max */
+	int max_number = A[0];
+	for (int i = 0; i < size;i++) {
+		if (A[i] > max_number)
+			max_number = A[i];
+	}
+    //
+    for (int base = 1; max_number/base > 0; base *= 10){//
+        int sorted_array[size]; // sorted_array array
+        int i, count[10] = {0};
+        
+        // Store count of occurrences in count[]
+        for (i = 0; i < size; i++)
+            count[ (A[i]/base)%10 ]++;
+        
+        // Change count[i] so that count[i] now contains actual position of
+        // this digit in sorted_array[]
+        for (i = 1; i < 10; i++)
+            count[i] += count[i - 1];
+        
+        // Build the sorted_array array
+        for (i = size - 1; i >= 0; i--)
+        {
+            sorted_array[count[ (A[i]/base)%10 ] - 1] = A[i];
+            count[ (A[i]/base)%10 ]--;
+        }
+        
+        // Copy the sorted_array to A[], so that A[] now
+        // contains sorted numbers according to curent digit
+        for (i = 0; i < size; i++)
+            A[i] = sorted_array[i];
+    }
+	
 }

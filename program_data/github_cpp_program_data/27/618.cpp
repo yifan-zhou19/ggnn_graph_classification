@@ -1,114 +1,98 @@
-/*************************************************************************
- *                                                                       *
- * Open Dynamics Engine, Copyright (C) 2001,2002 Russell L. Smith.       *
- * All rights reserved.  Email: russ@q12.org   Web: www.q12.org          *
- *                                                                       *
- * This library is free software; you can redistribute it and/or         *
- * modify it under the terms of EITHER:                                  *
- *   (1) The GNU Lesser General Public License as published by the Free  *
- *       Software Foundation; either version 2.1 of the License, or (at  *
- *       your option) any later version. The text of the GNU Lesser      *
- *       General Public License is included with this library in the     *
- *       file LICENSE.TXT.                                               *
- *   (2) The BSD-style license that is included with this library in     *
- *       the file LICENSE-BSD.TXT.                                       *
- *                                                                       *
- * This library is distributed in the hope that it will be useful,       *
- * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the files    *
- * LICENSE.TXT and LICENSE-BSD.TXT for more details.                     *
- *                                                                       *
- *************************************************************************/
+//============================================================================
+// Name        : radix-sort.cpp
+// Author      : 
+// Date        :
+// Copyright   : 
+// Description : Implementation of radix sort in C++
+//============================================================================
 
-@@@ this file should not be compiled any more @@@
+#include "sort.h"
+#include <iostream>
+#include "string.h"
+#include <cmath>
 
-#include <string.h>
-#include <errno.h>
-#include "stack.h"
-#include "ode/error.h"
-#include "ode/config.h"
-
-//****************************************************************************
-// unix version that uses mmap(). some systems have anonymous mmaps and some
-// need to mmap /dev/zero.
-
-#ifndef WIN32
-
-#include <unistd.h>
-#include <sys/mman.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-
-
-void dStack::init (int max_size)
-{
-  if (sizeof(long int) != sizeof(char*)) dDebug (0,"internal");
-  if (max_size <= 0) dDebug (0,"Stack::init() given size <= 0");
-
-#ifndef MMAP_ANONYMOUS
-  static int dev_zero_fd = -1;	// cached file descriptor for /dev/zero
-  if (dev_zero_fd < 0) dev_zero_fd = open ("/dev/zero", O_RDWR);
-  if (dev_zero_fd < 0) dError (0,"can't open /dev/zero (%s)",strerror(errno));
-  base = (char*) mmap (0,max_size, PROT_READ | PROT_WRITE, MAP_PRIVATE,
-		       dev_zero_fd,0);
-#else
-  base = (char*) mmap (0,max_size, PROT_READ | PROT_WRITE,
-		       MAP_PRIVATE | MAP_ANON,0,0);
-#endif
-
-  if (int(base) == -1) dError (0,"Stack::init(), mmap() failed, "
-    "max_size=%d (%s)",max_size,strerror(errno));
-  size = max_size;
-  pointer = base;
-  frame = 0;
+/* int digit(double k, int num)
+{ 
+	double base=10.0;
+	int base1=10;
+	int r;
+	r = num/(int)pow(base, k); // integer division
+	return r % base1;
 }
 
-
-void dStack::destroy()
+void
+RadixSort::sort(int A[], int size)
 {
-  munmap (base,size);
-  base = 0;
-  size = 0;
-  pointer = 0;
-  frame = 0;
+  // Complete this function with the implementation of radix sort
+  // algorithm.
+	int i, j, m;
+	int d=10;
+	int base=10;
+	// temporary storage
+	int *C = new int[base];
+	int *B = new int[size];
+	for (m = 0; m < d; m++) {
+		for (i = 0; i < base; i++) C[i] = 0;
+		for (j = 0; j < size; j++) C[digit(m, A[j])]++;
+		for (i = 1; i < base; i++) C[i] += C[i-1];
+		for (j = size-1; j >= 0; j--) {
+			i = C[digit(m, A[j])]--;
+			B[i] = A[j];
+		} // copy B -> A
+		for (j = 0; j < size; j++) A[j] = B[j];
+	}
+	delete [] B; delete [] C;
 }
+ */
 
-#endif
-
-//****************************************************************************
-
-#ifdef WIN32
-
-#include "windows.h"
-
-
-void dStack::init (int max_size)
+ // A utility function to get maximum value in arr[]
+int getMax(int A[], int size)
 {
-  if (sizeof(LPVOID) != sizeof(char*)) dDebug (0,"internal");
-  if (max_size <= 0) dDebug (0,"Stack::init() given size <= 0");
-  base = (char*) VirtualAlloc (NULL,max_size,MEM_RESERVE,PAGE_READWRITE);
-  if (base == 0) dError (0,"Stack::init(), VirtualAlloc() failed, "
-    "max_size=%d",max_size);
-  size = max_size;
-  pointer = base;
-  frame = 0;
-  committed = 0;
-
-  // get page size
-  SYSTEM_INFO info;
-  GetSystemInfo (&info);
-  pagesize = info.dwPageSize;
+    int mx = A[0];
+    for (int i = 1; i < size; i++)
+        if (A[i] > mx)
+            mx = A[i];
+    return mx;
 }
-
-
-void dStack::destroy()
+ 
+// A function to do counting sort of arr[] according to
+// the digit represented by exp.
+void countSort(int A[], int size, int exp)
 {
-  VirtualFree (base,0,MEM_RELEASE);
-  base = 0;
-  size = 0;
-  pointer = 0;
-  frame = 0;
+    int output[size]; // output array
+    int i, count[10] = {0};
+ 
+    // Store count of occurrences in count[]
+    for (i = 0; i < size; i++)
+        count[ (A[i]/exp)%10 ]++;
+ 
+    // Change count[i] so that count[i] now contains actual position of
+    // this digit in output[]
+    for (i = 1; i < 10; i++)
+        count[i] += count[i - 1];
+ 
+    // Build the output array
+    for (i = size - 1; i >= 0; i--)
+    {
+        output[count[ (A[i]/exp)%10 ] - 1] = A[i];
+        count[ (A[i]/exp)%10 ]--;
+    }
+ 
+    // Copy the output array to arr[], so that arr[] now
+    // contains sorted numbers according to curent digit
+    for (i = 0; i < size; i++)
+        A[i] = output[i];
 }
-
-#endif
+ 
+// The main function to that sorts arr[] of size n using Radix Sort
+void
+RadixSort::sort(int A[], int size)
+{
+    // Find the maximum number to know number of digits
+    int m = getMax(A, size);
+ 
+    // Do counting sort for every digit. Note that instead of passing digit
+    // number, exp is passed. exp is 10^i where i is current digit number
+    for (int exp = 1; m/exp > 0; exp *= 10)
+        countSort(A, size, exp);
+}

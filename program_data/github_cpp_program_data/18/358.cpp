@@ -1,39 +1,63 @@
-#include <stdio.h>
-#include <limits.h>
+#include <iostream>
+#include <string>
+#include <iterator>
 
-#include <Eigen/Dense>
+using std::string;      using std::cin;
+using std::cout;        using std::endl;
+using std::iterator;
 
-// http://www.geeksforgeeks.org/greedy-algorithms-set-6-dijkstras-shortest-path-algorithm/
-// Number of vertices in the graph
-// #define V 9
+void reverseString(string &);
+template <typename T> void value_swap(T & a, T & b);
 
-int minDistance(int V, int dist[], bool sptSet[]) {
-  int min = INT_MAX, min_index;
+int main()
+{
+    string str = "words";
+    string str2 = "wowzers";
+    cout << str << endl;
+    cout << str2 << endl;
+    reverseString(str2);
+    cout << str2 << endl;
 
-  for (int v = 0; v < V; v++)
-    if (sptSet[v] == false && dist[v] <= min)
-      min = dist[v], min_index = v;
+    auto e = str.size() - 1;
 
-  return min_index;
+    for(auto i = 0; i < e; ++i)
+    {
+        char temp;
+
+        temp = str.at(i);
+        str.at(i) = str.at(e);
+        str.at(e) = temp;
+        --e;
+    }
+
+    cout << str << endl;
+
+    for(string::const_iterator iter = str.end() - 1; iter != str.begin() - 1; --iter)
+    {
+        cout << *iter;
+    }
+    cout << endl;
+    return 0;
 }
 
-void dijkstra(MatrixXd Graph, int src) {
-  int V = Graph.rows();
-  int dist[V];
-  bool sptSet[V];
-  for (int i = 0; i < V; i++) {
-    dist[i] = INT_MAX, sptSet[i] = false;
-  }
-  dist[src] = 0;
-  for (int count = 0; count < V-1; count++) {
-    int u = minDistance(V, dist, sptSet);
-    sptSet[u] = true;
-    for (int v = 0; v < V; v++) {
-      if (!sptSet[v] && Graph(u, v) && dist[u] != INT_MAX
-          && dist[u] + Graph(u, v) < dist[v])
-        dist[v] = dist[u] + Graph(u, v);
+
+void reverseString(string &str)
+{
+    string::iterator start = str.begin();
+    string::iterator last = str.end() - 1;
+
+    while (start != last)
+    {
+        value_swap(*start, *last);
+        ++start;
+        --last;
     }
-  }
-  cout << dist << endl;
+}
+
+template <class T> void value_swap(T &a, T &b)
+{
+    T t = a;
+    a = b;
+    b = t;
 }
 

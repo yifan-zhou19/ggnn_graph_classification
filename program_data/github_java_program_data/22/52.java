@@ -1,127 +1,97 @@
-package interviews;
+/* package whatever; // don't place package name! */
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Stack;
+import java.util.*;
+import java.lang.*;
+import java.io.*;
 
-/**
- * Created by ssiddiqu on 3/17/18.
- */
-public class TopologicalSort {
-    public static class Node {
-        // these are all the child nodes of the current node
-        List<Node> children;
-        // value of the current node
-        int val;
-        int id;
-        // tracks whether a node has been visited or not
-        boolean visited;
-
-        /**
-         * creates a node with given id and value
-         * id is not required but kept just for identification purpose to
-         * verify the results
-         * @param id
-         * @param val
-         */
-        public Node(int id, int val) {
-            // creates a node with given value
-            this.val= val;
-            children = new LinkedList<>();
-            this.id = id;
-            visited = false;
-        }
-        public String toString() {
-            return "node id"+id+": value ="+val;
-        }
-    }
-    public static class Graph {
-        // these are all the nodes in the graph
-        // the index in the graph matches the node id
-        Node[] graph;
-        // creates a graph of given size
-        public Graph(int size) {
-            graph = new Node[size];
-        }
-        public void clearVisited() {
-            Arrays.stream(graph).forEach((nd)-> {
-                if(nd!=null) {
-                    nd.visited=false;
-                }
-            });
-        }
-        /**
-         * adds a new node with given id and value
-         * @param id
-         * @param val
-         */
-        public void addNode(int id, int val) {
-            // id must be between 0 and graph.length -1
-            // if node with given id already exists, it will be
-            // overridden
-            Node nd = new Node(id, val);
-            // update the graph nodes to keep track of the new node
-            graph[id] = nd;
-        }
-
-        /**
-         * add edge between two nodes of given ids
-         * @param fromNode
-         * @param toNode
-         */
-        public void addEdge(int fromNode, int toNode) {
-            // if the node with given id does not exist
-            if((graph[fromNode]==null)||(graph[toNode]==null)) {
-                throw new RuntimeException("Node does not exist");
-            }
-            graph[fromNode].children.add(graph[toNode]);
-        }
-
-        public void printTopologicalOrder() {
-            Stack<Node> tOrder = getTopologicalOrder();
-            tOrder.stream().forEach((nd)-> System.out.println("Visited node"+ nd));
-        }
-
-        /**
-         * For all nodes in the graph, call visitTopological
-         * @return
-         */
-        public Stack<Node> getTopologicalOrder() {
-            Stack<Node> tOrder = new Stack<Node>();
-            for(Node nd:graph) {
-                visitTopological(nd, tOrder);
-            }
-            return tOrder;
-        }
-        private void visitTopological(Node nd, Stack<Node> tOrder) {
-            if(!nd.visited) {
-                List<Node> childr= nd.children;
-                if((childr!=null)||(!childr.isEmpty())) {
-                    for(Node chld: childr) {
-                        visitTopological(chld, tOrder);
-                    }
-                }
-                nd.visited=true;
-                tOrder.add(nd);
-            }
-        }
-
-    }
-    public static void testTopologicalOrder() {
-        int sz = 7;
-        Graph graph = new Graph(sz);
-        for(int i=0; i<sz; i++ ) {
-            graph.addNode(i, i+10);
-        }
-        graph.addEdge(0,1);
-        graph.addEdge(0,5);
-        graph.addEdge(1,3);
-        graph.addEdge(5,1);
-        graph.printTopologicalOrder();
-    }
-    public static void main(String[] args) {
-        testTopologicalOrder();
-    }
-
+/* Name of the class has to be "Main" only if the class is public. */
+class Ideone
+{
+	void min_heapify(int []arr,int i,int n)
+	{
+		//System.out.println("for i= "+i);
+		while(2*i+1 <n)
+		{
+			int left=2*i+1;
+			int right=2*i+2;
+			int min;
+			
+					//System.out.println("left= "+left+" right= "+right);
+			//find max of both the child if exists
+			if(right<n && arr[right]<arr[left])
+			     min=right;
+			else //default if no right exists only left is max
+			    min=left;
+			    
+			if(arr[i]>arr[min]) 
+			   {
+			   	int temp=arr[i];
+			   	arr[i]=arr[min];
+			   	arr[min]=temp;
+			   	
+			   	i=min;
+			   }
+			 else
+			    break;
+			
+			
+		}
+		
+	}
+	void build_min_heap(int []arr,int n)
+	{
+		
+		for(int i=n/2-1;i>=0;i--)
+		   min_heapify(arr,i,n);
+		
+	}
+	void heap_sort(int []arr,int n)
+	{
+		build_min_heap(arr,n);
+		
+		System.out.println("after building heap");
+		for(int elem:arr)
+		System.out.print(elem+" ");
+		
+		   System.out.println();
+		   int temp_n=n-1;
+		for(int i=n-1;i>=0;i--)
+		{
+			//swap each time root to ith element and hence we get  max at root and last index will have that element
+			int temp=arr[0];
+			arr[0]=arr[i];
+			arr[i]=temp;
+		//	System.out.println("call for replace a[i]= "+arr[i]);
+			min_heapify(arr,0,temp_n);
+			temp_n--;
+			/*System.out.println("after swap of each");
+			for(int elem:arr)
+			System.out.print(elem+" ");
+			*/
+		}
+	}
+	public static void main (String[] args) throws java.lang.Exception
+	{
+	  Scanner sc=new Scanner(System.in);
+	  int n=sc.nextInt();
+	  int[]arr=new int[n];
+	  
+	  for(int i=0;i<n;i++)
+	     arr[i]=sc.nextInt();
+	   
+	   System.out.println("before sorting");
+	   for(int elem:arr)
+	      System.out.print(elem+" ");
+	      
+	      System.out.println();
+	      Ideone ob=new Ideone();
+	      
+	  ob.heap_sort(arr,n);   
+	  
+	   System.out.println("after sorting");
+	   for(int elem:arr)
+	      System.out.print(elem+" ");
+	      
+	      System.out.println();
+	}
 }

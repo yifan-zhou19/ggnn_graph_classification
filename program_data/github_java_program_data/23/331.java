@@ -1,55 +1,48 @@
-/*
- * Copyright (c) 2010 Henrik Gustafsson <henrik.gustafsson@fnord.se>
- *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+package cuiods.list.skiplist;
+
+/**
+ * 跳转表节点
+ * @author cuiods
  */
-package se.fnord.rt.ui;
+public class SkipListNode<T extends Comparable<? super T>> {
+    private T data;
+    /**
+     * 用数组保存其他节点的引用
+     */
+    private SkipListNode[] next;
 
-public class Queue {
-    private Integer id = null;
-    private String name = null;
-    private String description = null;
-    private boolean verified = false;
-
-    public void setName(String name) {
-        this.name = name;
+    /**
+     * @param data
+     *      节点保存的数据
+     * @param maxLevel
+     *      若跳转表最多保存n个数据，则最多的层次为[log2(n)]
+     */
+    public SkipListNode(T data, int maxLevel) {
+        this.data = data;
+        next = new SkipListNode[maxLevel];
     }
 
-    public String getName() {
-        return name;
+    public T getData() {
+        return data;
     }
 
-    public void setId(Integer id) {
-        this.id = id;
+    public void setData(T data) {
+        this.data = data;
     }
 
-    public Integer getId() {
-        return id;
+    public SkipListNode[] getNext() {
+        return next;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public SkipListNode getNext(int index) {
+        return next[index];
     }
 
-    public String getDescription() {
-        return description;
+    public void setNext(SkipListNode[] next) {
+        this.next = next;
     }
 
-    public void setVerified(boolean verified) {
-        this.verified = verified;
-    }
-
-    public boolean isVerified() {
-        return this.verified;
+    public void setNext(SkipListNode next, int i) {
+        this.next[i] = next;
     }
 }

@@ -1,31 +1,41 @@
-package net.f5.crypt;
+package ml.classification;
 
-public class Permutation {
-    int[] shuffled; // shuffled sequence
+import ml.Estimator;
+import ml.param.DoubleParam;
+import ml.param.IntParam;
+import ml.param.Param;
+import sql.DataFrame;
 
-    // The constructor of class Permutation creates a shuffled
-    // sequence of the integers 0 ... (size-1).
-    public Permutation(final int size, final F5Random random) {
-        int i, randomIndex, tmp;
-        this.shuffled = new int[size];
+public class JavaLogisticRegression extends Estimator<JavaLogisticRegressionModel> {
 
-        // To create the shuffled sequence, we initialise an array
-        // with the integers 0 ... (size-1).
-        for (i = 0; i < size; i++) {
-            // initialise with �size� integers
-            this.shuffled[i] = i;
-        }
-        int maxRandom = size; // set number of entries to shuffle
-        for (i = 0; i < size; i++) { // shuffle entries
-            randomIndex = random.getNextValue(maxRandom--);
-            tmp = this.shuffled[randomIndex];
-            this.shuffled[randomIndex] = this.shuffled[maxRandom];
-            this.shuffled[maxRandom] = tmp;
-        }
-    }
+  private IntParam _maxIter = new IntParam(this, "maxIter", "max number of iterations");
+  public IntParam maxIter() { return _maxIter; }
+  public JavaLogisticRegression setMaxIter(int value) {
+    set(_maxIter.w(value));
+    return this;
+  }
 
-    // get value #i from the shuffled sequence
-    public int getShuffled(final int i) {
-        return this.shuffled[i];
-    }
+  private DoubleParam _regParam = new DoubleParam(this, "regParam", "regularization parameter");
+  public DoubleParam regParam() { return _regParam; }
+  public JavaLogisticRegression setRegParam(double value) {
+    set(_regParam.w(value));
+    return this;
+  }
+
+  private Param<String> _featuresCol = new Param<String>(this, "featuresCol", "features column name");
+  public Param<String> featuresCol() { return _featuresCol; }
+  public JavaLogisticRegression setFeaturesCol(String value) {
+    set(_featuresCol.w(value));
+    return this;
+  }
+
+  @Override
+  public String uid() {
+    return null;
+  }
+
+  @Override
+  public JavaLogisticRegressionModel fit(DataFrame dataset) {
+    return null;
+  }
 }

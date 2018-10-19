@@ -1,31 +1,49 @@
-#include "stack.h"
-#include <assert.h>
+/************************************************************************
+ * Author: Abdelrahman Elogeel                                         
+ * Date: 4/9/2015
+ * Verification: https://leetcode.com/problems/maximum-gap/
+************************************************************************/
 
-//Constructor
-template <class T> Stack<T>::Stack(){
-  sz = 0;
-  index = NULL;
+#include <stdio.h>
+#include <vector>
+#include <unordered_map>
+#include <algorithm>
+
+int getDigits(vector<int> &nums) {
+    int max = 0;
+    for (int n : nums) {
+        int cmax = 0;
+        while (n) {
+            n /= 10;
+            ++cmax;
+        }
+        max = std::max(max, cmax);
+    }
+
+    return max;
 }
-//Push
-template <class T> void Stack<T>::push(T value){ 
-  Nodo* tmp = new Nodo(value,index);  //Se inicializa un nuevo espacio de memoria apuntando a index y con valor igual a "value"
-  index = tmp;                        //Index ahora apunta al espacio recien inicializado
-  ++sz;                               //La pila crece en 1
-}
-//Pop
-template <class T> void Stack<T>::pop(){ 
-   assert(index != NULL);             //Si la pila esta vacia, regresa SEGMENTATION FAULT
-   Nodo* tmp = index;                 //tmp apunta a index
-   index = index->nxt;                //Index apunta al siguiente en la pila
-   delete tmp;                        //tmp borra el primer elemento de la memoria
-   --sz;                              //La pila decrece en 1
-}
-//Top
-template <class T> T Stack<T>::top(){
-  assert(index != NULL);              //Si la pila esta vacia, regresa SEGMENTATION FAULT
-  return index->val;                  //Regresa el valor dentro de index
-}
-//Size
-template <class T> int Stack<T>::size(){
-  return sz;                          //Regresa la cantidad de elementos en la pila
+
+void radixSort(vector<int> &nums) {
+    unordered_map<int, vector<int>> hash;
+    char x = 0;
+    int cdigit = 1;
+    int digits = getDigits(nums);
+
+    while (digits--) {
+        for (int n : nums) {
+            int temp = n;
+            n /= cdigit;
+            x = n % 10;
+            hash[x].push_back(temp);
+        }
+
+        nums.clear();
+
+        for (int i = 0; i < 10; ++i) {
+            nums.insert(nums.end(), hash[i].begin(), hash[i].end());
+        }
+
+        hash.clear();
+        cdigit *= 10;
+    }
 }

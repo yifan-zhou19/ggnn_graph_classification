@@ -1,47 +1,39 @@
-package com.baeldung.algorithms.ga.jenetics;
+package bloomfilter;
 
-import static org.jenetics.engine.EvolutionResult.toBestPhenotype;
-import static org.jenetics.engine.limit.bySteadyFitness;
+import java.util.BitSet;
 
-import java.util.stream.Stream;
+public class BloomFilterHelper {
 
-import org.jenetics.BitChromosome;
-import org.jenetics.BitGene;
-import org.jenetics.Mutator;
-import org.jenetics.Phenotype;
-import org.jenetics.RouletteWheelSelector;
-import org.jenetics.SinglePointCrossover;
-import org.jenetics.TournamentSelector;
-import org.jenetics.engine.Engine;
-import org.jenetics.engine.EvolutionStatistics;
+    public static SimpleBloomFilter OR(SimpleBloomFilter b0, SimpleBloomFilter b1) {
+        int totalElements = b0.getTotalElements() + b1.getTotalElements();
+        BitSet bb0 = b0.getBitSet();
+        BitSet bb1 = b1.getBitSet();
+        BitSet bb = new BitSet(b0.getSize() > b1.getSize() ? b0.getSize() : b1.getSize());
+        bb.or(bb0);
+        bb.or(bb1);
 
-//The main class.
-public class Knapsack {
+        return new SimpleBloomFilter(totalElements, bb);
+    }
 
-    public static void main(String[] args) {
-        int nItems = 15;
-        double ksSize = nItems * 100.0 / 3.0;
+    public static SimpleBloomFilter AND(SimpleBloomFilter b0, SimpleBloomFilter b1) {
+        BitSet bb0 = b0.getBitSet();
+        BitSet bb1 = b1.getBitSet();
+        BitSet bb = new BitSet(b0.getSize() > b1.getSize() ? b0.getSize() : b1.getSize());
+        bb.set(0, bb.size());
 
-        KnapsackFF ff = new KnapsackFF(Stream.generate(KnapsackItem::random)
-            .limit(nItems)
-            .toArray(KnapsackItem[]::new), ksSize);
+        bb.and(bb0);
+        bb.and(bb1);
 
-        Engine<BitGene, Double> engine = Engine.builder(ff, BitChromosome.of(nItems, 0.5))
-            .populationSize(500)
-            .survivorsSelector(new TournamentSelector<>(5))
-            .offspringSelector(new RouletteWheelSelector<>())
-            .alterers(new Mutator<>(0.115), new SinglePointCrossover<>(0.16))
-            .build();
+        return new SimpleBloomFilter(bb.cardinality(), bb);
+    }
 
-        EvolutionStatistics<Double, ?> statistics = EvolutionStatistics.ofNumber();
+    public static SimpleBloomFilter XOR(SimpleBloomFilter b0, SimpleBloomFilter b1) {
+        BitSet bb0 = b0.getBitSet();
+        BitSet bb1 = b1.getBitSet();
+        BitSet bb = new BitSet(b0.getSize() > b1.getSize() ? b0.getSize() : b1.getSize());
+        bb.xor(bb0);
+        bb.xor(bb1);
 
-        Phenotype<BitGene, Double> best = engine.stream()
-            .limit(bySteadyFitness(7))
-            .limit(100)
-            .peek(statistics)
-            .collect(toBestPhenotype());
-
-        System.out.println(statistics);
-        System.out.println(best);
+        return new SimpleBloomFilter(bb.cardinality(), bb);
     }
 }

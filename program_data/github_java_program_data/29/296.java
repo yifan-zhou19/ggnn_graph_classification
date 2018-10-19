@@ -1,94 +1,79 @@
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+package bloomfilter;
+
+import java.util.BitSet;
 
 /**
- * Created by yxy on 4/19/2015.
+ * <pre>
+ *
+ * 【标题】: java bloom filter
+ * 【描述】:
+ * 【版权】: 润投科技
+ * 【作者】: wuys
+ * 【时间】: 2017-10-24 14:28
+ * </pre>
  */
-public class Knapsack {
-    public static long[] cache;
-    public static Item[] items;
+public class JavaBloomFilter {
 
-    public static void knapsack(String fileName) {
+    private   static   final   int    DEFAULT_SIZE  =   2   <<   24 ;
+    private   static   final   int [] seeds         =   new   int [] {  7 ,  11 ,  13 ,  31 ,  37 ,  61 , };
 
-        try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
-            String[] firstLine = br.readLine().split(" ");
-            int knapsackSize = Integer.parseInt(firstLine[0]);
-            int numOfItem = Integer.parseInt(firstLine[1]);
+    private BitSet bits          =   new  BitSet(DEFAULT_SIZE);
+    private  SimpleHash[]       func          =   new  SimpleHash[seeds.length];
 
-            cache = new long[knapsackSize+1];
-            for (int i = 0; i < cache.length; i++)
-                cache[i] = 0;
-            items = new Item[numOfItem+1];
-            items[0] = new Item();
+    public   static   void  main(String[] args) {
+        String value  =   " stone2083@yahoo.cn " ;
+        JavaBloomFilter filter  =   new  JavaBloomFilter();
+        System.out.println(filter.contains(value));
+        filter.add(value);
+        System.out.println(filter.contains(value));
+    }
 
-            String line;
-            int index = 1;
-            while ((line = br.readLine()) != null) {
-                String[] valueAndWeight = line.split(" ");
-                int value = Integer.parseInt(valueAndWeight[0]);
-                int weight = Integer.parseInt(valueAndWeight[1]);
+    /*获取100内质数*/
+    public static int[] getAllSeeds(){
+        return new int[]{2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97};
+    }
 
-                items[index++] = new Item(value, weight);
-            }
-
-            for (int i = 1; i <= numOfItem; i++) {
-                long[] tempCache = new long[knapsackSize+1];
-                for (int j = 0; j <= knapsackSize; j++) {
-                    tempCache[j] = pickOptWithCache(j, i);
-                }
-                cache = tempCache;  // update cache
-            }
-
-            System.out.println(/*pickOpt(knapsackSize, numOfItem)*/ cache[knapsackSize]);
-
-        } catch (IOException ex) {
-            System.out.println(ex.getMessage());
+    public  JavaBloomFilter() {
+        for  ( int  i  =   0 ; i  <  seeds.length; i ++ ) {
+            func[i]  =   new  SimpleHash(DEFAULT_SIZE, seeds[i]);
         }
     }
 
-    // has to be run in a increasing order
-    public static long pickOptWithCache(int currentKnapsackSize, int itemIndex) {
-        long withThisItem;
-        if (currentKnapsackSize >= items[itemIndex].weight) {
-            withThisItem = cache[currentKnapsackSize - items[itemIndex].weight];
-            withThisItem += items[itemIndex].value;
-        }
-        else {
-            withThisItem = 0;
-        }
-
-        long withoutThisItem = cache[currentKnapsackSize];
-
-        if (withoutThisItem >= withThisItem) {
-            return withoutThisItem;
-        }
-        else {
-            return withThisItem;
+    public   void  add(String value) {
+        for  (SimpleHash f : func) {
+            bits.set(f.hash(value),  true );
         }
     }
 
-    /*public static long pickOpt(int currentKnapsackSize, int itemIndex) {
-        if (itemIndex == 0) {
-            return 0;
+    public   boolean  contains(String value) {
+        if  (value  ==   null ) {
+            return   false ;
+        }
+        boolean  ret  =   true ;
+        for  (SimpleHash f : func) {
+            ret  =  ret  &&  bits.get(f.hash(value));
+        }
+        return  ret;
+    }
+
+    public   static   class  SimpleHash {
+
+        private   int  cap;
+        private   int  seed;
+
+        public  SimpleHash( int  cap,  int  seed) {
+            this .cap  =  cap;
+            this .seed  =  seed;
         }
 
-        long withThisItem;
-        if (currentKnapsackSize >= items[itemIndex].weight) {
-            withThisItem = pickOpt(currentKnapsackSize - items[itemIndex].weight, itemIndex - 1);
-            withThisItem += items[itemIndex].value;
-        }
-        else {
-            withThisItem = 0;
+        public   int  hash(String value) {
+            int  result  =   0 ;
+            int  len  =  value.length();
+            for  ( int  i  =   0 ; i  <  len; i ++ ) {
+                result  =  seed  *  result  +  value.charAt(i);
+            }
+            return  (cap  -   1 )  &  result;
         }
 
-        long withoutThisItem = pickOpt(currentKnapsackSize, itemIndex - 1);
-
-        if (withoutThisItem > withThisItem) {
-            return withoutThisItem;
-        }
-        else {
-            return withThisItem;
-        }
-    }*/
+    }
 }

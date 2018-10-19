@@ -1,24 +1,46 @@
+package ml.example;
 
-import java.util.*;
+import ml.*;
+import org.apache.spark.sql.SchemaRDD;
+import scala.Some;
 
-public class Permutation{
-	public static void main(String[] args){
-		Scanner scanner = new Scanner(System.in);
-		String input = scanner.nextLine();
+public class JavaLogisticRegression extends Estimator {
 
-		permutation(input);
-	}
+  private String _id;
 
-	public static void permutation(String str) { 
-    permutation("", str); 	
-	}
+  public JavaLogisticRegression(String id) {
+    _id = id;
+  }
 
-	private static void permutation(String prefix, String str) {
-    int n = str.length();
-    if (n == 0) System.out.println(prefix);
-    else {
-        for (int i = 0; i < n; i++)
-            permutation(prefix + str.charAt(i), str.substring(0, i) + str.substring(i+1, n));
+  @Override
+  public Model fit(SchemaRDD dataset, ParamMap paramMap) {
+    return null;
+  }
+
+  @Override
+  public String id() {
+    return _id;
+  }
+
+  private Param<Double> _alpha = new Param<>(this, "alpha", "regularization parameter", new Some<>(0.1));
+  public Param<Double> alpha() { return _alpha; }
+
+  public static class Model extends Transformer {
+
+    private String _id;
+
+    public Model(String id) {
+      _id = id;
     }
-	}
+
+    @Override
+    public SchemaRDD transform(SchemaRDD dataset, ParamMap paramMap) {
+      return null;
+    }
+
+    @Override
+    public String id() {
+      return _id;
+    }
+  }
 }

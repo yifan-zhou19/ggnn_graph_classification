@@ -1,43 +1,63 @@
-package homework3;
+package com.algorithmhelper.graphs.pathfinding;
 
-public class radixsort {
-	public static long[]array2;
-	long[] sort(long[]array)
-	{
-		array2=array;
-		int time=8;
-		int tmp[]=new int[1<<time];
-		long[] a=new long[array2.length];
-		int radix=1;
-		//int b=10;//2��32�η����10λʮ������
-		//��λһ��һ������
-		long s=1<<time;
-		for(int i=1;i<=4;i++)
-		{
-			for(int j=0;j<s;j++) tmp[j]=0;
-			for(int j=0;j<array2.length;j++)
-			{
-				long num=(array2[j]>>(i*time))&(s-1);
-				//radix*=10;
-				//int num2=(int)((array2[j]/radix)%10);
-				tmp[(int)num]++;
-			}
-			for(int j=1;j<s;j++)
-			{
-				tmp[j]=tmp[j]+tmp[j-1];
-			}
-			for(int j=array2.length-1;j>=0;j--)
-			{
-				long num=(array2[j]>>(i*time))&(s-1);
-				a[tmp[(int)num]-1]=array2[j];
-				tmp[(int)num]--;
-			}
-			//����һ��ԭ����
-			for(int j=0;j<array2.length;j++)
-				array2[j]=a[j];
-		}
-		a=null;
-		tmp=null;
-		return array2;
-	}
+import com.algorithmhelper.datastructures.hashing.HashSetLinearProbing;
+import com.algorithmhelper.datastructures.lists.Stack;
+import com.algorithmhelper.datastructures.lists.StackDynamicArray;
+import com.algorithmhelper.datastructures.trees.Set;
+import com.algorithmhelper.graphs.graphs.DirectedGraph;
+
+public class TopologicalSort<T extends Comparable<T>> {
+
+    private Stack<T> topologicalOrdering;
+    private Set<T> visited;
+
+    /**
+     * Initializes a TopologicalSort object and runs depth first search starting from some
+     * arbitrary vertex u.
+     *
+     * @param G, the graph
+     */
+    public TopologicalSort(DirectedGraph<T> G) {
+        if (G == null)
+            throw new IllegalArgumentException("constructor with null graph G");
+
+        topologicalOrdering = new StackDynamicArray<>();
+
+        if (G.V() == 0)
+            return;
+
+        visited = new HashSetLinearProbing<>();
+        for (T u : G.getVertices()) {
+            if (visited.contains(u))
+                continue;
+            depthFirstSearch(G, u);
+        }
+    }
+
+    /**
+     * Run the depth first search algorithm, building up the set of vertices visited and the
+     * topological ordering after the recursive calls to depthFirstSearch on vertex u's
+     * neighbors.
+     *
+     * @param G, the graph
+     * @param u, the starting vertex
+     */
+    private void depthFirstSearch(DirectedGraph<T> G, T u) {
+        visited.put(u);
+        for (T v : G.getAdjacent(u)) {
+            if (!visited.contains(v)) {
+                depthFirstSearch(G, v);
+            }
+        }
+        topologicalOrdering.push(u);
+    }
+
+    /**
+     * Returns an Iterable to the topological ordering found by the depth first search algorithm.
+     *
+     * @return an Iterable to the topological ordering found by the depth first search algorithm
+     */
+    public Iterable<T> getTopologicalOrdering() {
+        return topologicalOrdering;
+    }
 }

@@ -1,53 +1,88 @@
+#include <algorithm>
+#include <iterator>
+#include <functional>
 
-/*Given an integer n, find the nth Fibonacci number F n .
-Sample 1.
-	Input:
-	3
-	Output:
-	2
-	Explanation:
-	F3 = 2.
+#include "hash-table.h"
 
-Sample 2.
-	Input:
-	10
-	Output:
-	55
-	Explanation:
-	F 10 = 55.*/
-#include <iostream>
-#include <cassert>
 
-int fibonacci_naive(int n) {
-    if (n <= 1)
-        return n;
-
-    return fibonacci_naive(n - 1) + fibonacci_naive(n - 2);
+HashTable::HashTable()
+    : m_buckets{new std::forward_list<Pair*> [BUCKET_SIZE]}
+    , m_size{0}
+{
+    for (auto i = 0; i < BUCKET_SIZE; i++) {
+        m_buckets[i] = new std::forward_list<Pair*>;
+    }
 }
 
- int fibonacci_fast(int n) {
-     int a[n+1]={0};
-	if(n<=1)
-		a[n]=n;
-	for(int i=2;i<=n;i++)
-	{
-		a[i]=a[i-1]+a[i-2];
-	}
-    return a[n];
+HashTable::~HashTable()
+{
+    for (auto i = 0; i < BUCKET_SIZE; i++) {
+        if (m_buckets[i] != nullptr) {
+            m_buckets[i]->clear();
+            delete m_buckets[i];
+        }
+    }
 }
 
-void test_solution() {
-    assert(fibonacci_fast(3) == 2);
-    assert(fibonacci_fast(10) == 55);
-    for (int n = 0; n < 20; ++n)
-        assert(fibonacci_fast(n) == fibonacci_naive(n));
+void HashTable::insert(const std::string key, int value)
+{
+    int i = std::hash<std::string>{}(key) % BUCKET_SIZE;
+
+    auto it = std::find_if(m_buckets[i]->cbegin(), 
+        m_buckets[i]->cend(), [=] (Pair* pair) { return pair->key == key; });
+
+    if (it != m_buckets[i]->cend()) {
+        (*it)->value = value;
+        return;
+    }
+
+    m_buckets[i]->push_front(new Pair(key, value));
+    m_size++;
 }
 
-int main() {
-    int n = 0;
-    std::cin >> n;
-//   std::cout << fibonacci_naive(n) << '\n';
-//    test_solution();
-   std::cout << fibonacci_fast(n) << '\n';
-    return 0;
+int HashTable::value(const std::string key, const int defaultValue) const
+{
+    int i = std::hash<std::string>{}(key) % BUCKET_SIZE;
+
+    auto it = std::find_if(m_buckets[i]->cbegin(), 
+        m_buckets[i]->cend(), [=] (Pair* pair) { return pair->key == key; });
+
+    if (it != m_buckets[i]->cend()) {
+        return (*it)->value;
+    } else {
+        return defaultValue;
+    }
+}
+
+void HashTable::remove(const std::string key)
+{
+    int i = std::hash<std::string>{}(key) % BUCKET_SIZE;
+
+    auto it = std::find_if(m_buckets[i]->cbegin(), 
+        m_buckets[i]->cend(), [=] (Pair* pair) { return pair->key == key; });
+
+    if (it != m_buckets[i]->cend()) {
+        m_buckets[i]->remove(*it);
+        m_size--;
+    }
+}
+
+bool HashTable::contains(const std::string key) const
+{
+    int i = std::hash<std::string>{}(key) % BUCKET_SIZE;
+
+    auto it = std::find_if(m_buckets[i]->cbegin(), m_buckets[i]->cend(),
+        [key] (Pair* p) { return p->key == key; });
+
+    return it != m_buckets[i]->cend();
+}
+
+void HashTable::clear()
+{
+    for (auto i = 0; i < BUCKET_SIZE; i++) {
+        if (m_buckets[i] != nullptr) {
+            m_buckets[i]->clear();
+        }
+    }
+    m_size = 0;
 }

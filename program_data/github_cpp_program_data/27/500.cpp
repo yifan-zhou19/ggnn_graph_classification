@@ -1,55 +1,57 @@
-#include "stdafx.h"
-#include "Stack.h"
+#include <iostream>
+using namespace std;
 
+void counting_sort(int *arr, int n, int e) {
+  int C[10] = {};
+  int sorted_arr[n];
 
+  for (int j = 0; j < n; j++)
+    C[(arr[j] / e) % 10]++;
 
-Stack::Stack() : Lista()
-{
+  for (int i = 1; i < 10; i++)
+    C[i] += C[i - 1];
+
+  for (int j = n - 1; j >= 0; j--) {
+    sorted_arr[C[(arr[j] / e) % 10] - 1] = arr[j];
+    C[(arr[j] / e) % 10]--;
+  }
+
+  for (int i = 0; i < n; i++)
+    arr[i] = sorted_arr[i];
 }
 
-
-Stack::~Stack()
-{
+int getMax(int *arr, int n) {
+  int max = arr[0];
+  for (int i = 1; i < n; i++)
+    if (arr[i] > max) max = arr[i];
+  return max;
 }
 
-void Stack::push(Elemento* e)
-{
-	insertarUltimo(e);
+void radix_sort(int *arr, int n) {
+  int max = getMax(arr, n);
+  for (int e = 1; (max / e) > 0; e *= 10)
+    counting_sort(arr, n, e);
 }
 
-Elemento* Stack::peek()
-{
-	return getUltimo();
-}
+int main() {
+  int n = 10; // numer of elements
+  int arr[n];
+  srand(time(nullptr));
 
-Elemento* Stack::pop()
-{
-	Elemento* auxiliar = getUltimo();
-	moverUltimo();
-	return auxiliar;
-}
+  for (int i = 0; i < n; i++)
+    arr[i] = rand() % 201;
 
-ostream & operator<<(ostream & out, Stack& a) { //sobrecarga del operador <<
-	a.imprimir(a.peek(), out, 1);
-	return out;
-}
+  cout << "Array before radix sort: ";
 
+  for (int i = 0; i < n; i++)
+    cout << arr[i] << " ";
 
-void Stack::imprimir(Elemento * e, ostream & out, int posicion)  //se imprime el primer elemento y asi se continua hacia abajo un elemento por fila.
-{
-	if (e != NULL)
-	{
-		e->imprimir(out);
-		cout << "       Posicion numero: " << posicion << endl;
-		
-		if (peek() != NULL)
-		{
-			pop();
-			imprimir(peek(), out, posicion + 1);
-		}
+  cout << endl;
+  radix_sort(arr, n);
+  cout << "Array after radix sort: ";
 
-			
+  for (int i = 0; i < n; i++)
+    cout << arr[i] << " ";
 
-		
-	}
+  cout << endl;
 }

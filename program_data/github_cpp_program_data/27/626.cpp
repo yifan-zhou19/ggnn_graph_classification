@@ -1,41 +1,45 @@
-#include<stdio.h>
-#include<iostream>
-#include "stack.h"
-using namespace std;
-class StackEmpty {};
-class StackFull
-{
-	private:
-		int value;
-	public:
-		StackFull(int v):value(v) { }
-		int getvalue() const { return value; }
-};
+//============================================================================
+// Name        : radix-sort.cpp
+// Author      : Alan Villarreal, Christopher Spear, Sidian Wu
+// Date        : 02/14/13
+// Copyright   : what
+// Description : Implementation of radix sort in C++
+//============================================================================
 
-class JuStack
+#include "sort.h"
+#include <iostream>
+#include <vector>
+#include <cmath>
+
+void RadixSort::sort(int a[], int size)
 {
-    private:
-        int * stk;
-        int _cap,_cnt,_top;
-    public:
-        JuStack(int cap):stk(new int[cap]),_cap(cap),_top(0) { }
-        int pop() throw(StackEmpty);
-        void push(int value) throw(StackFull);
-        bool IsEmpty() const { return _cnt==0; }
-        bool IsFull() const { return _cnt == _cap; }
-        int GetCapacity() const { return _cap; }
-        int GetCount() const { return _cnt; }
-        virtual ~JuStack() { delete []stk; stk == NULL; }
-};
-int JuStack::pop() throw(StackEmpty)
-{
-	if( IsEmpty() ) throw StackEmpty();
-	_cnt--;
-	return stk[--_top];
-}
-void JuStack::push(int value) throw(StackFull)
-{
-	if(IsFull()) throw StackFull(value);
-	stk[_top++] = value;
-	++_cnt;
+	int temp;
+	int m=0;
+	bool done = false;
+	int digit = 0;
+	std::vector<std::vector<int> >buckets;
+	buckets.resize(10);
+
+	while(!done){
+		done = true;
+		//Determine which bucket each element should enter
+		for(int j=0;j<size;j++){
+			temp=(int)((a[j])/pow(10.0,digit))/*%10*/;
+			if(temp) done = false;
+			temp %= 10;
+			buckets[temp].push_back((a[j]));
+		}
+		//Transfer results of buckets back into main array
+		for(int k=0;k<10;k++){
+			for(int l=0; l<buckets[k].size();l++){
+				a[m]=buckets[k][l];
+				m++;
+			}
+			//Clear previous bucket
+			buckets[k].clear();
+		}
+		m=0;
+		digit ++;
+	}
+	buckets.clear();
 }

@@ -1,119 +1,137 @@
-#include "Quadtree.h"
+//===--- examples/Fibonacci/fibonacci.cpp - An example use of the JIT -----===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This small program provides an example of how to build quickly a small module
+// with function Fibonacci and execute it with the JIT.
+//
+// The goal of this snippet is to create in the memory the LLVM module
+// consisting of one function as follow:
+//
+//   int fib(int x) {
+//     if(x<=2) return 1;
+//     return fib(x-1)+fib(x-2);
+//   }
+//
+// Once we have this, we compile the module via JIT, then execute the `fib'
+// function and return result to a driver, i.e. to a "host program".
+//
+//===----------------------------------------------------------------------===//
 
-Quadtree::Quadtree(glm::mat4x3 _puntos, Quadtree * _padre ) :
-	puntos                  ( _puntos ),
-	padre                   ( _padre ),
-        level                   (0)
-        /*SI                      ( 0 ),
-        SD                      ( 0 ),
-        AI                      ( 0 ),
-        AD                      ( 0 )*/
-{
+#include "llvm/LLVMContext.h"
+#include "llvm/Module.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/Constants.h"
+#include "llvm/Instructions.h"
+#include "llvm/Analysis/Verifier.h"
+#include "llvm/ExecutionEngine/JIT.h"
+#include "llvm/ExecutionEngine/Interpreter.h"
+#include "llvm/ExecutionEngine/GenericValue.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/TargetSelect.h"
+using namespace llvm;
+
+static Function *CreateFibFunction(Module *M, LLVMContext &Context) {
+  // Create the fib function and insert it into module M. This function is said
+  // to return an int and take an int parameter.
+  Function *FibF =
+    cast<Function>(M->getOrInsertFunction("fib", Type::getInt32Ty(Context),
+                                          Type::getInt32Ty(Context),
+                                          (Type *)0));
+
+  // Add a basic block to the function.
+  BasicBlock *BB = BasicBlock::Create(Context, "EntryBlock", FibF);
+
+  // Get pointers to the constants.
+  Value *One = ConstantInt::get(Type::getInt32Ty(Context), 1);
+  Value *Two = ConstantInt::get(Type::getInt32Ty(Context), 2);
+
+  // Get pointer to the integer argument of the add1 function...
+  Argument *ArgX = FibF->arg_begin();   // Get the arg.
+  ArgX->setName("AnArg");            // Give it a nice symbolic name for fun.
+
+  // Create the true_block.
+  BasicBlock *RetBB = BasicBlock::Create(Context, "return", FibF);
+  // Create an exit block.
+  BasicBlock* RecurseBB = BasicBlock::Create(Context, "recurse", FibF);
+
+  // Create the "if (arg <= 2) goto exitbb"
+  Value *CondInst = new ICmpInst(*BB, ICmpInst::ICMP_SLE, ArgX, Two, "cond");
+  BranchInst::Create(RetBB, RecurseBB, CondInst, BB);
+
+  // Create: ret int 1
+  ReturnInst::Create(Context, One, RetBB);
+
+  // create fib(x-1)
+  Value *Sub = BinaryOperator::CreateSub(ArgX, One, "arg", RecurseBB);
+  CallInst *CallFibX1 = CallInst::Create(FibF, Sub, "fibx1", RecurseBB);
+  CallFibX1->setTailCall();
+
+  // create fib(x-2)
+  Sub = BinaryOperator::CreateSub(ArgX, Two, "arg", RecurseBB);
+  CallInst *CallFibX2 = CallInst::Create(FibF, Sub, "fibx2", RecurseBB);
+  CallFibX2->setTailCall();
+
+
+  // fib(x-1)+fib(x-2)
+  Value *Sum = BinaryOperator::CreateAdd(CallFibX1, CallFibX2,
+                                         "addresult", RecurseBB);
+
+  // Create the return instruction and add it to the basic block
+  ReturnInst::Create(Context, Sum, RecurseBB);
+
+  return FibF;
 }
 
-void Quadtree::Mid_point_formation(int level,int r){
-	int dheight = ceil((abs(puntos[0][0]-puntos[1][0]) + abs(puntos[0][1]-puntos[1][1])) / 2);
-	srand(time(NULL)); 
-    Mid_point_displacement(dheight,level,r);
-}
 
-vector<vector<glm::vec3*>> Quadtree::Mid_point_displacement(int dheight,int level,int r){
-    vector<vector<glm::vec3*>> ret;
-	vector<glm::vec3*> top;
-	vector<glm::vec3*> left;
-	vector<glm::vec3*> right;
-	vector<glm::vec3*> bot;
-	/*Caso base: se llega al ultimo nivel, no seguir iterando*/
-    if( level == 0){
-		top.push_back(&puntos[0]);
-		top.push_back(&puntos[3]);
-		left.push_back(&puntos[0]);
-		left.push_back(&puntos[1]);
-		bot.push_back(&puntos[1]);
-		bot.push_back(&puntos[2]);
-		right.push_back(&puntos[3]);
-		right.push_back(&puntos[2]);
-		
-    } else{
+int main(int argc, char **argv) {
+  int n = argc > 1 ? atol(argv[1]) : 24;
 
-		/*Obtencion de nuevos puntos*/
-		glm::vec3 sup = displacedpoint(puntos[0],puntos[3],dheight);    
-		glm::vec3 izq = displacedpoint(puntos[0],puntos[1],dheight);    
-		glm::vec3 abj = displacedpoint(puntos[1],puntos[2],dheight);
-		glm::vec3 der = displacedpoint(puntos[2],puntos[3],dheight);    
-		glm::vec3 mid = displacedmidpoint(sup,izq,abj,der,dheight);
-    
-		glm::mat4x3 msi(puntos[0],izq,mid,sup);    
-		glm::mat4x3 msd(sup,mid,der,puntos[3]);    
-		glm::mat4x3 mai(izq,puntos[1],abj,mid);    
-		glm::mat4x3 mad(mid,abj,puntos[2],der);
-		
-		/*Agregar quadtrees hijos y actualizar lvl*/
-		SI = new Quadtree(msi,this);
-		SD = new Quadtree(msd,this);
-		AI = new Quadtree(mai,this);
-		AD = new Quadtree(mad,this);
-    
-		this->level=level;
-		int newdh = ceil(dheight/pow(2.0,r));
+  InitializeNativeTarget();
+  LLVMContext Context;
 
-		/* Seguir el fractal*/
-		vector<vector<glm::vec3*>> QuadSI = SI->Mid_point_displacement(newdh,level-1,r);
-		vector<vector<glm::vec3*>> QuadSD = SD->Mid_point_displacement(newdh,level-1,r);
-		vector<vector<glm::vec3*>> QuadAI = AI->Mid_point_displacement(newdh,level-1,r);
-		vector<vector<glm::vec3*>> QuadAD = AD->Mid_point_displacement(newdh,level-1,r);
+  // Create some module to put our function into it.
+  OwningPtr<Module> M(new Module("test", Context));
 
-		/*Actualizar puntos para no generar quiebres*/
+  // We are about to create the "fib" function:
+  Function *FibF = CreateFibFunction(M.get(), Context);
 
-		fuse(QuadSI.at(3),QuadSD.at(1));
-		fuse(QuadSI.at(2),QuadAI.at(0));
-		fuse(QuadAD.at(1),QuadAI.at(3));
-		fuse(QuadAD.at(0),QuadSD.at(2));
+  // Now we going to create JIT
+  std::string errStr;
+  ExecutionEngine *EE =
+    EngineBuilder(M.get())
+    .setErrorStr(&errStr)
+    .setEngineKind(EngineKind::JIT)
+    .create();
 
-		top.insert(top.end(),(QuadSI.at(0)).begin(),(QuadSI.at(0)).end());
-		top.insert(top.end(),(QuadSD.at(0)).begin(),(QuadSD.at(0)).end());
+  if (!EE) {
+    errs() << argv[0] << ": Failed to construct ExecutionEngine: " << errStr
+           << "\n";
+    return 1;
+  }
 
-		left.insert(left.end(),(QuadSI.at(1)).begin(),(QuadSI.at(1)).end());
-		left.insert(left.end(),(QuadAI.at(1)).begin(),(QuadAI.at(1)).end());
+  errs() << "verifying... ";
+  if (verifyModule(*M)) {
+    errs() << argv[0] << ": Error constructing function!\n";
+    return 1;
+  }
 
-		bot.insert(bot.end(),(QuadAI.at(2)).begin(),(QuadAI.at(2)).end());
-		bot.insert(bot.end(),(QuadAD.at(2)).begin(),(QuadAD.at(2)).end());
+  errs() << "OK\n";
+  errs() << "We just constructed this LLVM module:\n\n---------\n" << *M;
+  errs() << "---------\nstarting fibonacci(" << n << ") with JIT...\n";
 
-		right.insert(right.end(),(QuadSD.at(3)).begin(),(QuadSD.at(3)).end());
-		right.insert(right.end(),(QuadAD.at(3)).begin(),(QuadAD.at(3)).end());
+  // Call the Fibonacci function with argument n:
+  std::vector<GenericValue> Args(1);
+  Args[0].IntVal = APInt(32, n);
+  GenericValue GV = EE->runFunction(FibF, Args);
 
-	}
-	ret.push_back(top);
-	ret.push_back(left);
-	ret.push_back(bot);
-	ret.push_back(right);
+  // import result of execution
+  outs() << "Result: " << GV.IntVal << "\n";
 
-	return ret;
-        
-}
-
-vector<glm::mat3>   Quadtree::Quad_to_opengl(){
-    
-    if (level == 0){
-        vector<glm::mat3> base;
-        glm::mat3 t1(puntos[0],puntos[1],puntos[2]);
-        glm::mat3 t2(puntos[0], puntos[2],puntos[3]);
-        base.push_back(t1);
-        base.push_back(t2);
-        return base;
-    }else{
-        vector<glm::mat3> ret,matsi,matsd,matai,matad;
-        matsi = SI->Quad_to_opengl();
-        matsd = SD->Quad_to_opengl();
-        matai = AI->Quad_to_opengl();
-        matad = AD->Quad_to_opengl();
-        ret.reserve(matsi.size()+matsd.size()+matai.size()+matad.size());
-        ret.insert(ret.end(),matsi.begin(),matsi.end());
-        ret.insert(ret.end(),matsd.begin(),matsd.end());
-        ret.insert(ret.end(),matai.begin(),matai.end());
-        ret.insert(ret.end(),matad.begin(),matad.end());
-        
-        return ret;
-    }
-    
+  return 0;
 }

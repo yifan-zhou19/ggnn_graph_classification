@@ -1,139 +1,193 @@
-import java.util.Random;
+/*
+ * @(#)FloydWarshall.java	ver 1.2  6/20/2005
+ *
+ * Modified by Weishuai Yang (wyang@cs.binghamton.edu).
+ * Originally written by Rahul Simha
+ *
+ */
 
-// See http://codeforces.ru/blog/entry/16780 for description
-public class SuffixTree {
-  static final String ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789\1\2";
+package org.cloudbus.cloudsim.network;
 
-  public static class Node {
-    int begin;
-    int end;
-    int depth; // distance in characters from root to this node
-    Node parent;
-    Node[] children;
-    Node suffixLink;
+/**
+ * FloydWarshall algorithm to calculate all pairs delay and predecessor matrix.
+ * 
+ * @author Rahul Simha
+ * @author Weishuai Yang
+ * @version 1.2, 6/20/2005
+ * @since CloudSim Toolkit 1.0
+ */
+public class FloydWarshall_Float {
 
-    Node(int begin, int end, int depth, Node parent) {
-      this.begin = begin;
-      this.end = end;
-      this.parent = parent;
-      this.depth = depth;
-      children = new Node[ALPHABET.length()];
-    }
+	/**
+	 * Number of vertices (when initialized)
+	 */
+	private int numVertices;
+
+	// /**
+	// * The adjacency matrix (given as input),
+	// * here I use float rather than double to save memory,
+	// * since there won't be a lot of spilting for delay,
+	// * and float is accurate enough.
+	// */
+	// private float[][] adjMatrix;
+
+	/**
+	 * Matrices used in dynamic programming
+	 */
+	private float[][] Dk, Dk_minus_one;
+
+	/**
+	 * Matrices used in dynamic programming
+	 */
+	private int[][] Pk, Pk_minus_one;
+
+	/**
+	 * initialization matrix
+	 * 
+	 * @param numVertices number of nodes
+	 */
+	public void initialize(int numVertices) {
+		this.numVertices = numVertices;
+
+		// Initialize Dk matrices.
+		Dk = new float[numVertices][];
+		Dk_minus_one = new float[numVertices][];
+		for (int i = 0; i < numVertices; i++) {
+			Dk[i] = new float[numVertices];
+			Dk_minus_one[i] = new float[numVertices];
+		}
+
+		// Initialize Pk matrices.
+		Pk = new int[numVertices][];
+		Pk_minus_one = new int[numVertices][];
+		for (int i = 0; i < numVertices; i++) {
+			Pk[i] = new int[numVertices];
+			Pk_minus_one[i] = new int[numVertices];
+		}
+
+	}
+
+	/**
+	 * calculates all pairs delay
+	 * 
+	 * @param adjMatrix original delay matrix
+	 * @return all pairs delay matrix
+	 */
+	public float[][] allPairsShortestPaths(float[][] adjMatrix) {
+		// Dk_minus_one = weights when k = -1
+		for (int i = 0; i < numVertices; i++) {
+			for (int j = 0; j < numVertices; j++) {
+				if (adjMatrix[i][j] != 0) {
+					Dk_minus_one[i][j] = adjMatrix[i][j];
+					Pk_minus_one[i][j] = i;
+				} else {
+					Dk_minus_one[i][j] = Float.MAX_VALUE;
+					Pk_minus_one[i][j] = -1;
+				}
+				// NOTE: we have set the value to infinity and will exploit
+				// this to avoid a comparison.
+			}
+		}
+
+		// Now iterate over k.
+
+		for (int k = 0; k < numVertices; k++) {
+
+			// Compute Dk[i][j], for each i,j
+
+			for (int i = 0; i < numVertices; i++) {
+				for (int j = 0; j < numVertices; j++) {
+					if (i != j) {
+
+						// D_k[i][j] = min ( D_k-1[i][j], D_k-1[i][k] + D_k-1[k][j].
+						if (Dk_minus_one[i][j] <= Dk_minus_one[i][k] + Dk_minus_one[k][j]) {
+							Dk[i][j] = Dk_minus_one[i][j];
+							Pk[i][j] = Pk_minus_one[i][j];
+						} else {
+							Dk[i][j] = Dk_minus_one[i][k] + Dk_minus_one[k][j];
+							Pk[i][j] = Pk_minus_one[k][j];
+						}
+					} else {
+						Pk[i][j] = -1;
+					}
+				}
+			}
+
+			// Now store current Dk into D_k-1
+			for (int i = 0; i < numVertices; i++) {
+				for (int j = 0; j < numVertices; j++) {
+					Dk_minus_one[i][j] = Dk[i][j];
+					Pk_minus_one[i][j] = Pk[i][j];
+				}
+			}
+
+		} // end-outermost-for
+
+		return Dk;
+
+	}
+
+	/**
+	 * gets predecessor matrix
+	 * 
+	 * @return predecessor matrix
+	 */
+	public int[][] getPK() {
+		return Pk;
+	}
+
+
+/*
+  public static void main (String[] argv)
+  {
+    // A test case.
+     *
+      double[][] adjMatrix = {
+        {0, 1, 0, 0, 1},
+        {1, 0, 1, 3, 0},
+        {0, 1, 0, 2, 0},
+        {0, 3, 2, 0, 1},
+        {1, 0, 0, 1, 0},
+      };
+
+
+      int n = adjMatrix.length;
+      FloydWarshall fwAlg = new FloydWarshall ();
+      fwAlg.initialize (n);
+      adjMatrix=fwAlg.allPairsShortestPaths (adjMatrix);
+
+	    //debug begin
+	    StringBuffer s0=new StringBuffer("Delay Information before floydwarshall:\n");
+	    for(int i=0;i<n;i++){
+	    	s0.append("Node "+i+" to others:");
+	    	for(int j=0;j<n;j++){
+	    			s0.append(LogFormatter.sprintf(" % 6.1f     ", adjMatrix[i][j]));
+
+	    	}
+	    	s0.append("\n");
+	    }
+	    Log.printLine(""+s0);
+
+
+	    int[][] Pk=fwAlg.getPK();
+
+
+	    Log.printLine("Path information");
+	    for(int i=0;i<n;i++){
+	    	for(int j=0;j<n;j++){
+	    		Log.print("From "+i+" to "+j+": ");
+		    	int pre=Pk[i][j];
+		    	while((pre!=-1)&&(pre!=i)){
+		    		Log.print(" <-  "+ pre);
+		    		pre=Pk[i][pre];
+		    		if((pre==-1)||(pre==i))
+		    			Log.print(" <-  "+ pre);
+		    	}
+				Log.printLine("\n");
+		    }
+	    }
+
   }
 
-  public static Node buildSuffixTree(CharSequence s) {
-    int n = s.length();
-    byte[] a = new byte[n];
-    for (int i = 0; i < n; i++) a[i] = (byte) ALPHABET.indexOf(s.charAt(i));
-    Node root = new Node(0, 0, 0, null);
-    Node node = root;
-    for (int i = 0, tail = 0; i < n; i++, tail++) {
-      Node last = null;
-      while (tail >= 0) {
-        Node ch = node.children[a[i - tail]];
-        while (ch != null && tail >= ch.end - ch.begin) {
-          tail -= ch.end - ch.begin;
-          node = ch;
-          ch = ch.children[a[i - tail]];
-        }
-        if (ch == null) {
-          node.children[a[i]] = new Node(i, n, node.depth + node.end - node.begin, node);
-          if (last != null) last.suffixLink = node;
-          last = null;
-        } else {
-          byte afterTail = a[ch.begin + tail];
-          if (afterTail == a[i]) {
-            if (last != null) last.suffixLink = node;
-            break;
-          } else {
-            Node splitNode = new Node(ch.begin, ch.begin + tail, node.depth + node.end - node.begin, node);
-            splitNode.children[a[i]] = new Node(i, n, ch.depth + tail, splitNode);
-            splitNode.children[afterTail] = ch;
-            ch.begin += tail;
-            ch.depth += tail;
-            ch.parent = splitNode;
-            node.children[a[i - tail]] = splitNode;
-            if (last != null) last.suffixLink = splitNode;
-            last = splitNode;
-          }
-        }
-        if (node == root) {
-          --tail;
-        } else {
-          node = node.suffixLink;
-        }
-      }
-    }
-    return root;
-  }
-
-  // random test
-  public static void main(String[] args) {
-    Random rnd = new Random(1);
-    for (int step = 0; step < 100_000; step++) {
-      int n1 = rnd.nextInt(10);
-      int n2 = rnd.nextInt(10);
-      String s1 = getRandomString(n1, rnd);
-      String s2 = getRandomString(n2, rnd);
-      // build generalized suffix tree
-      String s = s1 + '\1' + s2 + '\2';
-      Node tree = buildSuffixTree(s);
-      lcsLength = 0;
-      lcsBeginIndex = 0;
-      // find longest common substring
-      lcs(tree, s1.length(), s1.length() + s2.length() + 1);
-      int res2 = slowLcs(s1, s2);
-      if (lcsLength != res2) {
-        System.err.println(s.substring(lcsBeginIndex - 1, lcsBeginIndex + lcsLength - 1));
-        System.err.println(s1);
-        System.err.println(s2);
-        System.err.println(lcsLength + " " + res2);
-        throw new RuntimeException();
-      }
-    }
-  }
-
-  static int lcsLength;
-  static int lcsBeginIndex;
-
-  // traverse suffix tree to find longest common substring
-  public static int lcs(Node node, int i1, int i2) {
-    if (node.begin <= i1 && i1 < node.end) {
-      return 1;
-    }
-    if (node.begin <= i2 && i2 < node.end) {
-      return 2;
-    }
-    int mask = 0;
-    for (char f = 0; f < ALPHABET.length(); f++) {
-      if (node.children[f] != null) {
-        mask |= lcs(node.children[f], i1, i2);
-      }
-    }
-    if (mask == 3) {
-      int curLength = node.depth + node.end - node.begin;
-      if (lcsLength < curLength) {
-        lcsLength = curLength;
-        lcsBeginIndex = node.begin;
-      }
-    }
-    return mask;
-  }
-
-  static int slowLcs(String a, String b) {
-    int[][] lcs = new int[a.length()][b.length()];
-    int res = 0;
-    for (int i = 0; i < a.length(); i++) {
-      for (int j = 0; j < b.length(); j++) {
-        if (a.charAt(i) == b.charAt(j))
-          lcs[i][j] = 1 + (i > 0 && j > 0 ? lcs[i - 1][j - 1] : 0);
-        res = Math.max(res, lcs[i][j]);
-      }
-    }
-    return res;
-  }
-
-  static String getRandomString(int n, Random rnd) {
-    return rnd.ints(n, 0, 3).mapToObj(i -> String.valueOf((char) (i + 'a'))).reduce("", (a, b) -> a + b);
-  }
+*/
 }

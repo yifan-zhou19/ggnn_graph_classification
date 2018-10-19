@@ -1,25 +1,72 @@
-package generics;// : generics/Fibonacci.java
+package ch.fdehedin.oca.buildingblocks;
 
-// Generate a Fibonacci sequence.
-import net.mindview.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
-public class Fibonacci implements Generator<Integer> {
-    private int count = 0;
+public class HashTableHashMap {
 
-    public Integer next() {
-        return fib(count++);
-    }
+	public static void main(String[] args) {
+		List<String> list = new ArrayList<String>();
 
-    private int fib(int n) {
-        if (n < 2) return 1;
-        return fib(n - 2) + fib(n - 1);
-    }
+		list.add("eins");
+		list.add("noch eins");
+		list.add("und noch eins");
+		list.add("a 1");
 
-    public static void main(String[] args) {
-        Fibonacci gen = new Fibonacci();
-        for (int i = 0; i < 18; i++)
-            System.out.print(gen.next() + " ");
-    }
-} /*
-   * Output: 1 1 2 3 5 8 13 21 34 55 89 144 233 377 610 987 1597 2584
-   */// :~
+		Iterator<String> itList = list.iterator();
+		while (itList.hasNext()) {
+			String s = (String) itList.next();
+			if (s.equals("noch eins")) {
+				itList.remove();
+			}
+			System.out.println("string: " + s);
+		}
+		Iterator<String> itList2 = list.iterator();
+		while (itList2.hasNext()) {
+			String s = (String) itList2.next();
+			System.out.println("string 2: " + s);
+		}
+
+		HashMap<String, String> hm = new HashMap<String, String>();
+
+		hm.put("1", null);
+		hm.put("2", null);
+
+		try {
+
+			Hashtable<String, String> ht = new Hashtable<String, String>();
+
+			ht.put("1", null);
+			ht.put("2", null);
+		} catch (NullPointerException e) {
+			System.out.println("Error: " + e.getMessage());
+		}
+
+		Set<Entry<String, String>> set = hm.entrySet();
+		Iterator it = set.iterator();
+
+		while (it.hasNext()) {
+			Map.Entry<String, String> entry = (Map.Entry<String, String>) it.next();
+			System.out.println("key ist: " + entry.getKey() + " / " + entry.getValue());
+			if (entry.getKey().equals("1")) {
+				it.remove();
+			}
+		}
+
+		Set<Entry<String, String>> set2 = hm.entrySet();
+		Iterator it2 = set2.iterator();
+
+		while (it2.hasNext()) {
+			Map.Entry<String, String> entry = (Map.Entry<String, String>) it2.next();
+			System.out.println("2 key ist: " + entry.getKey() + " / " + entry.getValue());
+
+		}
+
+	}
+}

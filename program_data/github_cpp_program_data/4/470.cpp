@@ -1,42 +1,101 @@
-
-//          Copyright Oliver Kowalke 2009.
-// Distributed under the Boost Software License, Version 1.0.
-//    (See accompanying file LICENSE_1_0.txt or copy at
-//          http://www.boost.org/LICENSE_1_0.txt)
-
-#include <cstdlib>
 #include <iostream>
+#include <vector>
 
-#include <boost/range.hpp>
-#include <boost/coroutine/all.hpp>
+using namespace std;
 
-void fibonacci( boost::coroutines::asymmetric_coroutine< int >::push_type & sink)
-{
-    int first = 1, second = 1;
-    sink( first);     
-    sink( second);     
-    while ( true)
-    {
-        int third = first + second;
-        first = second;
-        second = third;
-        sink( third);     
-    }
-}
+struct DataItem {
+    int key;
+    int data;
+    DataItem(int key, int data) : key(key), data(data) {}
+};
 
-int main()
-{
-    boost::coroutines::asymmetric_coroutine< int >::pull_type source( fibonacci);
-    boost::range_iterator<
-       boost::coroutines::asymmetric_coroutine< int >::pull_type
-    >::type   it( boost::begin( source) );
-    for ( int i = 0; i < 10; ++i)
-    {
-        std::cout << * it <<  " ";
-        ++it;
+
+class hashTable {
+    vector<DataItem*> hashArray;
+    DataItem* dummyItem;
+    int SIZE = 101;
+
+public:
+    hashTable() : hashArray(SIZE, nullptr), dummyItem(new DataItem(-1, -1)) {};
+    int hashCode(int key) {
+        return key % SIZE;
     }
 
-    std::cout << "\nDone" << std::endl;
+    // Search
+    // Use linear probing to get the element ahead if the element is not found
+    // at the computed hash code.
+    DataItem* search(int key) {
+        //get the hash
+        int hashIndex = hashCode(key);
 
-    return EXIT_SUCCESS;
-}
+        //move in array until an empty
+        while(hashArray[hashIndex] != nullptr) {
+
+            if(hashArray[hashIndex]->key == key)
+                return hashArray[hashIndex];
+
+            //go to next cell
+            ++hashIndex;
+
+            //wrap around the table
+            hashIndex %= SIZE;
+        }
+
+        return nullptr;
+    }
+
+
+    // Insert
+    // Use linear probing for empty location, if an element is found at the
+    // computed hash code.
+    void insert(int key,int data) {
+        auto item = new DataItem(key, data);
+
+        //get the hash
+        int hashIndex = hashCode(key);
+
+        //move in array until an empty or deleted cell
+        while(hashArray[hashIndex] != nullptr && hashArray[hashIndex]->key != -1) {
+            //go to next cell
+            ++hashIndex;
+
+            //wrap around the table
+            hashIndex %= SIZE;
+        }
+
+        hashArray[hashIndex] = item;
+    }
+
+
+    // Delete
+    // Use linear probing to get the element ahead if an element is not found
+    // at the computed hash code.
+    // When found, store a dummy item there to keep the performance of the
+    // hash table intact.
+    DataItem* remove(DataItem* item) {
+        int key = item->key;
+
+        //get the hash
+        int hashIndex = hashCode(key);
+
+        //move in array until an empty
+        while(hashArray[hashIndex] != nullptr) {
+
+            if(hashArray[hashIndex]->key == key) {
+                struct DataItem* temp = hashArray[hashIndex];
+
+                //assign a dummy item at deleted position
+                hashArray[hashIndex] = dummyItem;
+                return temp;
+            }
+
+            //go to next cell
+            ++hashIndex;
+
+            //wrap around the table
+            hashIndex %= SIZE;
+        }
+
+        return nullptr;
+    }
+};

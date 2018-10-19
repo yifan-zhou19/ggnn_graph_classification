@@ -1,44 +1,28 @@
-public class Quicksort {
+package org.teachingkidsprogramming.section05recursion.Kata_and_Variation;
 
-	public static void quickSort(int[] array) {
-		sort(array, 0, array.length-1);
-	}
-
-	public static void sort(int[] array, int low, int high) {
-		if(high > low) {
-			int pivot = partition(array, low, high);
-			sort(array, low, pivot-1);
-			sort(array, pivot+1, high);
-		}
-	}
-
-	public static int partition(int[] array, int low, int high) {
-		int pivot = array[high];
-		int i = low-1;
-		
-		for(int j = low; j < high; j++) {
-			if(array[j] <= pivot) {
-				i++;
-				swap(array, i, j);
-			}
-		}
-
-		swap(array, i+1, high);
-		return i+1;
-	}
-
-	public static void swap(int[] array, int i, int j) {
-		int temp = array[i];
-		array[i] = array[j];
-		array[j] = temp;
-	}
-
-	public static void main(String args[]) {
-		int[] array = {3,5,2,5,2,4,7,9,65,2,1};
-		quickSort(array);
-
-		for(int i = 0; i < array.length; i++) {
-			System.out.print(array[i] + " ");
-		}
-	}
+public class TowerOfHanoi
+{
+  //fields
+  public static int index;
+  public static void main(String[] args)
+  {
+    //create some constant variables (final means they can't change after initialization)
+    final int MUN_DISCS = 5; // number of disc to move
+    final int FROM_PEG = 1; // initial 'from' peg
+    final int TO_PEG = 3; // initial 'to' peg
+    final int TEMP_PEG = 2; // initial 'temp'peg
+    //play game
+    moveDiscs(MUN_DISCS, FROM_PEG, TO_PEG, TEMP_PEG);
+    System.out.println("\nAll the discs are moved!");
+  }
+  private static void moveDiscs(int num, int fromPeg, int toPeg, int tempPeg)
+  {
+    if (num > 0)
+    {
+      moveDiscs(num - 1, fromPeg, tempPeg, toPeg);
+      index++;
+      System.out.println(index + ".Move a disc from peg " + fromPeg + "to peg" + toPeg);
+      moveDiscs(num - 1, tempPeg, toPeg, fromPeg);
+    }
+  }
 }

@@ -1,94 +1,81 @@
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-
-/**
- * Created by yxy on 4/19/2015.
+/*
+ * Created on 29-Apr-2005
+ * Created by Paul Gardner
+ * Copyright (C) 2005, 2006 Aelitis, All Rights Reserved.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * 
+ * AELITIS, SAS au capital de 46,603.30 euros
+ * 8 Allee Lenotre, La Grille Royale, 78600 Le Mesnil le Roi, France.
+ *
  */
-public class Knapsack {
-    public static long[] cache;
-    public static Item[] items;
 
-    public static void knapsack(String fileName) {
+package com.aelitis.azureus.core.util.bloom;
 
-        try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
-            String[] firstLine = br.readLine().split(" ");
-            int knapsackSize = Integer.parseInt(firstLine[0]);
-            int numOfItem = Integer.parseInt(firstLine[1]);
+import java.util.Map;
 
-            cache = new long[knapsackSize+1];
-            for (int i = 0; i < cache.length; i++)
-                cache[i] = 0;
-            items = new Item[numOfItem+1];
-            items[0] = new Item();
+import com.aelitis.azureus.core.util.bloom.impl.*;
 
-            String line;
-            int index = 1;
-            while ((line = br.readLine()) != null) {
-                String[] valueAndWeight = line.split(" ");
-                int value = Integer.parseInt(valueAndWeight[0]);
-                int weight = Integer.parseInt(valueAndWeight[1]);
-
-                items[index++] = new Item(value, weight);
-            }
-
-            for (int i = 1; i <= numOfItem; i++) {
-                long[] tempCache = new long[knapsackSize+1];
-                for (int j = 0; j <= knapsackSize; j++) {
-                    tempCache[j] = pickOptWithCache(j, i);
-                }
-                cache = tempCache;  // update cache
-            }
-
-            System.out.println(/*pickOpt(knapsackSize, numOfItem)*/ cache[knapsackSize]);
-
-        } catch (IOException ex) {
-            System.out.println(ex.getMessage());
-        }
-    }
-
-    // has to be run in a increasing order
-    public static long pickOptWithCache(int currentKnapsackSize, int itemIndex) {
-        long withThisItem;
-        if (currentKnapsackSize >= items[itemIndex].weight) {
-            withThisItem = cache[currentKnapsackSize - items[itemIndex].weight];
-            withThisItem += items[itemIndex].value;
-        }
-        else {
-            withThisItem = 0;
-        }
-
-        long withoutThisItem = cache[currentKnapsackSize];
-
-        if (withoutThisItem >= withThisItem) {
-            return withoutThisItem;
-        }
-        else {
-            return withThisItem;
-        }
-    }
-
-    /*public static long pickOpt(int currentKnapsackSize, int itemIndex) {
-        if (itemIndex == 0) {
-            return 0;
-        }
-
-        long withThisItem;
-        if (currentKnapsackSize >= items[itemIndex].weight) {
-            withThisItem = pickOpt(currentKnapsackSize - items[itemIndex].weight, itemIndex - 1);
-            withThisItem += items[itemIndex].value;
-        }
-        else {
-            withThisItem = 0;
-        }
-
-        long withoutThisItem = pickOpt(currentKnapsackSize, itemIndex - 1);
-
-        if (withoutThisItem > withThisItem) {
-            return withoutThisItem;
-        }
-        else {
-            return withThisItem;
-        }
-    }*/
+public class 
+BloomFilterFactory 
+{
+		/**
+		 * Creates a new bloom filter. 
+		 * @param max_entries The filter size.
+		 * 	a size of 10 * expected entries gives a false-positive of around 0.01%
+		 *  17* -> 0.001
+		 *  29* -> 0.0001
+		 * Each entry takes 1, 4 or 8 bits depending on type  
+		 * So, if 0.01% is acceptable and expected max entries is 100, use a filter
+		 * size of 1000.
+		 * @return
+		 */
+	
+	public static BloomFilter
+	createAddRemove4Bit(
+		int		filter_size )
+	{
+		return( new BloomFilterAddRemove4Bit( filter_size ));
+	}
+	
+	public static BloomFilter
+	createAddRemove8Bit(
+		int		filter_size )
+	{
+		return( new BloomFilterAddRemove8Bit( filter_size ));
+	}
+	
+	public static BloomFilter
+	createAddOnly(
+		int		filter_size )
+	{
+		return( new BloomFilterAddOnly( filter_size ));
+	}
+	
+	public static BloomFilter
+	createRotating(
+		BloomFilter		basis,
+		int				number )
+	{
+		{
+			return( new BloomFilterRotator( basis, number ));
+		}
+	}
+	
+	public static BloomFilter
+	deserialiseFromMap(
+		Map<String,Object>	map )
+	{
+		return( BloomFilterImpl.deserialiseFromMap(map));
+	}
 }

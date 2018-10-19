@@ -1,66 +1,52 @@
-import java.util.HashMap;
-
-public class SuffixTree {
-    private static class Node extends HashMap<Character, Node> {
-        /**
-         * Follows a link to get a child node.  If no such link
-         * exists, then create and attach an empty child node.
-         */
-        Node getOrPut(char c) {
-            Node child = this.get(c);
-            if (child == null) {
-                this.put(c, child = new Node());
-            }
-            return child;
+Author: Frederik Wegner
+Time: 22.06.17
+Tests: 11/11
+executeVariant()
+{
+    setIteration(getIteration()+1);
+    if(getIteration() < getNodeQueue().size())
+        setCurrentNode(getNodeQueue().get(getIteration()));
+}
+checkBreakCondition()
+{
+    return getIteration() < getGraph().getNodeList().size();
+}
+preProcess()
+{
+    InvalidInputException exception = new InvalidInputException("");
+    AbstractGraph g = getGraph();
+    if(g == null) throw exception;
+    if(getNodeQueue() == null) throw exception;
+    if(!(getNodeQueue().containsAll(g.getNodeList()) && g.getNodeList().containsAll(getNodeQueue()))) throw exception;
+    
+    setIteration(0);
+    ArrayList<Node<N,E>> nodes = g.getNodeList();
+    AbstractEdgeComparator<E> cmp = g.getComparator();
+    for(Node<N,E> vv : nodes) {
+        int v = getMatrixIndex(vv);
+        for(Node<N,E> ww : nodes) {
+            int w = getMatrixIndex(ww);
+            if(w == v) setM(v,w,cmp.getZero());
+            else setM(v,w,cmp.getMax());
+        }
+        for(Edge<N,E> e : (ArrayList<Edge<N,E>>)vv.getFanOut()) {
+            int w = getMatrixIndex(e.getTargetNode());
+            setM(v,w,e.getData());
         }
     }
-
-    private Node root;
-
-    /**
-     * Creates the suffix tree from the given string.
-     */
-    public SuffixTree(CharSequence source) {
-        this.root = new Node();
-        for (int i = 0; i < source.length(); i++) {
-            Node n = this.root.getOrPut(source.charAt(i));
-            for (int j = i + 1; j < source.length(); j++) {
-                n = n.getOrPut(source.charAt(j));
-            }
+    setCurrentNode(getNodeQueue().get(getIteration()));
+}
+doFunctionality()
+{
+    AbstractGraph g = getGraph();
+    AbstractEdgeComparator<E> cmp = g.getComparator();
+    ArrayList<Node<N,E>> nodes = g.getNodeList();
+    
+    for(Node<N,E> vv : nodes)
+        for(Node<N,E> ww : nodes) {
+            int v = getMatrixIndex(vv);
+            int w = getMatrixIndex(ww);
+            int u = getMatrixIndex(getCurrentNode());
+            setM(v,w,cmp.min(getM(v,w), cmp.sum(getM(v,u),getM(u,w))));
         }
-    }
-
-    public boolean contains(CharSequence target) {
-        Node n = this.root;
-        for (int i = 0; i < target.length(); i++) {
-            n = n.get(target.charAt(i));
-            if (n == null) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    public static void main(String[] args) {
-        SuffixTree sTree = new SuffixTree("bananas");
-        String[] input = new String[] {
-            "ba",
-            "ban",
-            "ana",
-            "anas",
-            "nan",
-            "anans",
-            "ananas",
-            "n",
-            "s",
-            "as",
-            "naab",
-            "baan",
-            "aan",
-        };
-        for (String s : input) {
-            String exists = sTree.contains(s) ? "exists" : "doesn't exist";
-            System.out.printf("Input: %s %s\n", s, exists);
-        }
-    }
 }

@@ -1,141 +1,182 @@
+/*//////////////////////////////////////////////////////////////////////////////////////
+// IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
+
+//  By downloading, copying, installing or using the software you agree to this license.
+//  If you do not agree to this license, do not download, install,
+//  copy or use the software.
+
+// This is a implementation of the Logistic Regression algorithm in C++ in OpenCV.
+
+// AUTHOR:
+// Rahul Kavi rahulkavi[at]live[at]com
+//
+
+// contains a subset of data from the popular Iris Dataset (taken from
+// "http://archive.ics.uci.edu/ml/datasets/Iris")
+
+// # You are free to use, change, or redistribute the code in any way you wish for
+// # non-commercial purposes, but please maintain the name of the original author.
+// # This code comes with no warranty of any kind.
+
+// #
+// # You are free to use, change, or redistribute the code in any way you wish for
+// # non-commercial purposes, but please maintain the name of the original author.
+// # This code comes with no warranty of any kind.
+
+// # Logistic Regression ALGORITHM
+
+//                           License Agreement
+//                For Open Source Computer Vision Library
+
+// Copyright (C) 2000-2008, Intel Corporation, all rights reserved.
+// Copyright (C) 2008-2011, Willow Garage Inc., all rights reserved.
+// Third party copyrights are property of their respective owners.
+
+// Redistribution and use in source and binary forms, with or without modification,
+// are permitted provided that the following conditions are met:
+
+//   * Redistributions of source code must retain the above copyright notice,
+//     this list of conditions and the following disclaimer.
+
+//   * Redistributions in binary form must reproduce the above copyright notice,
+//     this list of conditions and the following disclaimer in the documentation
+//     and/or other materials provided with the distribution.
+
+//   * The name of the copyright holders may not be used to endorse or promote products
+//     derived from this software without specific prior written permission.
+
+// This software is provided by the copyright holders and contributors "as is" and
+// any express or implied warranties, including, but not limited to, the implied
+// warranties of merchantability and fitness for a particular purpose are disclaimed.
+// In no event shall the Intel Corporation or contributors be liable for any direct,
+// indirect, incidental, special, exemplary, or consequential damages
+// (including, but not limited to, procurement of substitute goods or services;
+// loss of use, data, or profits; or business interruption) however caused
+// and on any theory of liability, whether in contract, strict liability,
+// or tort (including negligence or otherwise) arising in any way out of
+// the use of this software, even if advised of the possibility of such damage.*/
+
 #include <iostream>
-#include <numeric> 
-#include <iterator>
-#include <vector>
-#include <algorithm>
-#include <string>
+
+#include <opencv2/core.hpp>
+#include <opencv2/ml.hpp>
+#include <opencv2/highgui.hpp>
+
 using namespace std;
+using namespace cv;
+using namespace cv::ml;
 
-// Version 1 : get next permutation, same with STL next_permutaion
-//
-//      Step1: from right to left, find the first one(i) smaller than its right neighbour(i1)
-//      Step2: from right to i, find the rightest one(i2) larger than i
-//      Step3: swap i and i2, then reverse from i1 to the last
-//      Step4: check if i is first one, which means permutation ends, return
-// would ignore duplicates, e.g. {1, 1, 2} -> {1, 1, 2}, {1, 2, 1}, {2, 1, 1}
-bool nextPermutation(int *first, int *last) {
-    if (first == last || first == last - 1)
-        return false;
+static void showImage(const Mat &data, int columns, const String &name)
+{
+    Mat bigImage;
+    for(int i = 0; i < data.rows; ++i)
+    {
+        bigImage.push_back(data.row(i).reshape(0, columns));
+    }
+    imshow(name, bigImage.t());
+}
 
-    int *i = last - 1;
-    while (true) {
-        int *i1, *i2;
-        i1 = i;
-        if (*--i < *i1) {
-            i2 = last;
-            while (*i >= *--i2);
-            iter_swap(i, i2);
-            reverse(i1, last);
-            return true;
+static float calculateAccuracyPercent(const Mat &original, const Mat &predicted)
+{
+    return 100 * (float)countNonZero(original == predicted) / predicted.rows;
+}
+
+int main()
+{
+    const String filename = "../data/data01.xml";
+    cout << "**********************************************************************" << endl;
+    cout << filename
+         << " contains digits 0 and 1 of 20 samples each, collected on an Android device" << endl;
+    cout << "Each of the collected images are of size 28 x 28 re-arranged to 1 x 784 matrix"
+         << endl;
+    cout << "**********************************************************************" << endl;
+
+    Mat data, labels;
+    {
+        cout << "loading the dataset...";
+        FileStorage f;
+        if(f.open(filename, FileStorage::READ))
+        {
+            f["datamat"] >> data;
+            f["labelsmat"] >> labels;
+            f.release();
         }
-        if (i == first) {
-            reverse(first, last);
-            return false;
+        else
+        {
+            cerr << "file can not be opened: " << filename << endl;
+            return 1;
+        }
+        data.convertTo(data, CV_32F);
+        labels.convertTo(labels, CV_32F);
+        cout << "read " << data.rows << " rows of data" << endl;
+    }
+
+    Mat data_train, data_test;
+    Mat labels_train, labels_test;
+    for(int i = 0; i < data.rows; i++)
+    {
+        if(i % 2 == 0)
+        {
+            data_train.push_back(data.row(i));
+            labels_train.push_back(labels.row(i));
+        }
+        else
+        {
+            data_test.push_back(data.row(i));
+            labels_test.push_back(labels.row(i));
         }
     }
-}
+    cout << "training/testing samples count: " << data_train.rows << "/" << data_test.rows << endl;
 
+    // display sample image
+    showImage(data_train, 28, "train data");
+    showImage(data_test, 28, "test data");
 
-// Version 2 : generate all permutations
-//
-// Solution 2.1 : dfs, generate
-void dfs(vector<vector<int>>& result, vector<int>& path, vector<bool>& used, vector<int>& nums, size_t steps) {
-    if (steps == nums.size()) {
-        result.push_back(path);
-        return;
-    }
-    for (int i = 0; i < (int)nums.size(); ++i) {
-        if (!used[i]) {
-            used[i] = true;
-            path.push_back(nums[i]);
-            dfs(result, path, used, nums, steps+1);
-            path.pop_back();
-            used[i] = false;
-        }
-    }
-}
+    // simple case with batch gradient
+    cout << "training...";
+    //! [init]
+    Ptr<LogisticRegression> lr1 = LogisticRegression::create();
+    lr1->setLearningRate(0.001);
+    lr1->setIterations(10);
+    lr1->setRegularization(LogisticRegression::REG_L2);
+    lr1->setTrainMethod(LogisticRegression::BATCH);
+    lr1->setMiniBatchSize(1);
+    //! [init]
+    lr1->train(data_train, ROW_SAMPLE, labels_train);
+    cout << "done!" << endl;
 
-vector<vector<int>> permutation_dfs(vector<int> nums) {
-    vector<vector<int>> result;
-    vector<int> path;
-    vector<bool> used(nums.size(), false);
-    dfs(result, path, used, nums, 0);
-    return result;
-}
+    cout << "predicting...";
+    Mat responses;
+    lr1->predict(data_test, responses);
+    cout << "done!" << endl;
 
+    // show prediction report
+    cout << "original vs predicted:" << endl;
+    labels_test.convertTo(labels_test, CV_32S);
+    cout << labels_test.t() << endl;
+    cout << responses.t() << endl;
+    cout << "accuracy: " << calculateAccuracyPercent(labels_test, responses) << "%" << endl;
 
-// Solution 2.2 : dfs, swap
-void dfs(vector<vector<int>>& result, vector<int>& nums, size_t cur) {
-    if (cur == nums.size()-1) {
-        result.push_back(nums);
-        return;
-    }
-    for (int i = cur; i < (int)nums.size(); ++i) {
-        swap(nums[cur], nums[i]);
-        dfs(result, nums, cur+1);
-        swap(nums[cur], nums[i]);
-    }
-}
+    // save the classfier
+    const String saveFilename = "NewLR_Trained.xml";
+    cout << "saving the classifier to " << saveFilename << endl;
+    lr1->save(saveFilename);
 
-vector<vector<int>> permutation_dfs_swap(vector<int>& nums) {
-    vector<vector<int>> result;
-    dfs(result, nums, 0);
-    return result;
-}
+    // load the classifier onto new object
+    cout << "loading a new classifier from " << saveFilename << endl;
+    Ptr<LogisticRegression> lr2 = StatModel::load<LogisticRegression>(saveFilename);
 
+    // predict using loaded classifier
+    cout << "predicting the dataset using the loaded classfier...";
+    Mat responses2;
+    lr2->predict(data_test, responses2);
+    cout << "done!" << endl;
 
-// Version 3 : get k-th permutation, academic solution from Combinatorial - Canton Expression
-// 康拓展开逆过程，中介数
-// k = an*(n-1)! + an-1*(n-2)! + ... + ai*(i-1)! + ... + a2*1! + a1*0!
-string get_kth_permutation(int n, int k) {
-    // initialize a dictionary that stores 1, 2, ..., n
-    string dict(n, '0');
-    iota(dict.begin(), dict.end(), '1');
+    // calculate accuracy
+    cout << labels_test.t() << endl;
+    cout << responses2.t() << endl;
+    cout << "accuracy: " << calculateAccuracyPercent(labels_test, responses2) << "%" << endl;
 
-    // build up a look-up factorial table, which stores (n-1)!, (n-2)!, ..., 1!, 0!
-    vector<int> fact(n, 1);
-    for (int i = n-3; i >= 0; --i)
-        fact[i] = fact[i+1] * (n-i-1);
-
-    // let k be zero based
-    --k;
-
-    string res(n, '0');
-    for (int i = 0; i < n; ++i) {
-        int select = k / fact[i];
-        k %= fact[i];
-        res[i] = dict[select];
-        dict.erase(dict.begin()+select);
-    }
-    return res;
-}
-
-int main() {
-    cout << "solution 1" << endl;
-    int s[] = {1, 2, 3};
-    for (auto & i : s) cout << i << " ";
-    cout << endl;
-    while (nextPermutation(s, s+3)) {
-        for (auto & i : s) cout << i << " ";
-        cout << endl;
-    }
-
-    cout << "solution 2" << endl;
-    vector<int> nums = {1, 2, 3};
-    for (auto & v : permutation_dfs(nums)) {
-        for (auto & i : v)
-            cout << i << " ";
-        cout << endl;
-    }
-
-    cout << "solution 3" << endl;
-    for (auto & v : permutation_dfs_swap(nums)) {
-        for (auto & i : v)
-            cout << i << " ";
-        cout << endl;
-    }
-
-    cout << "solution 4" << endl;
-    cout << get_kth_permutation(8, 1000) << endl;
+    waitKey(0);
     return 0;
 }

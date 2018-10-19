@@ -1,49 +1,28 @@
-/*
- * The MIT License (MIT)
- *
- * Copyright (c) 2015 Huw David Pritchard
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
-
-#include "dijkstra.h"
-
-namespace pathfinder
-{
-    Dijkstra::Dijkstra() : Pathfinder()
-    {
+class Solution {
+public:
+    void reverse(string &s, int start, int end){
+        for(int i=0; i<(end-start+1)/2; i++){
+            char temp = s[start+i];
+            s[start+i] = s[end-i];
+            s[end-i] = temp;
+        }
     }
-
-    Dijkstra::~Dijkstra()
-    {
-
+    string reverseStr(string s, int k) {
+        string result = s;
+        if(k <= 0) return s;
+        int size = s.length();
+        if(size < k){
+            reverse(result, 0, size-1);
+        }
+        else{
+            for(int i=0; i<size; i+=2*k){
+                if(i+k-1 >= size){
+                    reverse(result, i, size-1);
+                }
+                else
+                    reverse(result, i, i+k-1);
+            }
+        }
+        return result;
     }
-
-    float Dijkstra::heuristic(INode *, INode *)
-    {
-        return 0.0f;
-    }
-
-    float Dijkstra::distance(INode *node, INode *next)
-    {
-        float dx = fabs(node->getX() - next->getX());
-        float dy = fabs(node->getY() - next->getY());
-        return sqrt(dx * dx + dy * dy);
-    }
-}
+};

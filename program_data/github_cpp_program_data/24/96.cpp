@@ -1,48 +1,67 @@
-// selectionsort.cpp
-
-#include <iostream>
-#include <vector>
-#include <cstdlib>
-
+#include<bits/stdc++.h>
 using namespace std;
-
-// selection sort
-void sel_sort(vector<int> & v)
+const int MAX = 1e4 + 5;
+/* Finds the sum of weights of the edges of the Minimum Spanning Tree.
+    Graph is represented as adjacency list using array of vectors.  MAX 
+    is an upper  limit on number of vertices.
+   g[u] represents adjacency list of vertex u,  Every element of this list 
+   is a pair<w,v>  where v is another vertex and w is weight of edge (u, v)
+  Note : Vertex numbers start with 1 and don't need to be contiguous.   */
+int spanningTree(vector <pair<int,int> > g[], int MAX)
 {
-	int i, j;
-	int n = v.size();
-
-	for (i = 0; i < n-1; i++)
-	{
-		for (j = i+1; j < n; j++)
-		{
-			if (v[i] > v[j])
-			{
-				swap(v[i], v[j]);
-			}
+	set<int> mst_not;
+	set<int> mst;
+	set<int>::iterator it;
+	int hemap[MAX];
+	for(int i=0;i<MAX;i++){
+		if(g[i].size())
+			mst_not.insert(i);
+		hemap[i]=MAX;
+	}
+	it=mst_not.begin();
+	hemap[*it]=0;
+	
+	vector< pair<int,int> >::iterator it1;
+	int n=mst_not.size();
+	int sum=0;
+	while(mst.size()!=n){
+		
+		int min = INT_MAX, min_index;
+		for (int v = 0; v < MAX; v++)
+			if (mst.find(v) == mst.end() && hemap[v] < min)
+				min = hemap[v], min_index = v;
+		
+		mst.insert(min_index);
+		sum=sum+min;
+		
+		for(it1=g[min_index].begin();it1!=g[min_index].end();it1++){
+			if(mst.find(it1->second)==mst.end() && it1->first<hemap[it1->second])
+				hemap[it1->second]=it1->first;
 		}
 	}
+	return sum;
 }
 
 int main()
 {
-	srand(time(0)); // initialize random number generator
-	int s; // initialize input size
-
-	cin >> s;
-
-	vector<int> v(s); // initialize vector with user input size
-	
-	// randomize numbers
-	for(int i=0; i < v.size(); ++i)
+	int t ;
+	cin>>t;
+	while(t--)
 	{
-		v[i] = rand() % 1000001;
+	vector <pair<int,int> > adj[MAX];
+    int n,e;
+    int w, mC;
+    cin >> n>> e;
+    for(int i = 0;i < e;++i)
+    {
+    	int x,y;
+        cin >> x >> y >> w;
+        adj[x].push_back({w, y});
+        adj[y].push_back({w, x});
+    }
+  
+    mC= spanningTree(adj, MAX);
+    cout << mC << endl;
 	}
-
-	sel_sort(v); // bubble sort;
-
-	for(int i=0; i < v.size(); ++i)
-	{
-		cout << v[i] << endl;
-	}
+    return 0;
 }

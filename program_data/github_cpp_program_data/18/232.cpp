@@ -1,64 +1,39 @@
-#include <igl/dijkstra.h>
+///////////////////////////////////////////////////////////////
+// ReverseString.cpp      Reverse String Source File         //
+// Yueyong Su                                                //
+///////////////////////////////////////////////////////////////
+#include <string>
+#include <algorithm>
+#include "ReverseStringClass.h"
+using namespace ReverseStringSpace;
+using namespace std;
 
-template <typename IndexType, typename DerivedD, typename DerivedP>
-IGL_INLINE int igl::dijkstra_compute_paths(const IndexType &source,
-                                           const std::set<IndexType> &targets,
-                                           const std::vector<std::vector<IndexType> >& VV,
-                                           Eigen::PlainObjectBase<DerivedD> &min_distance,
-                                           Eigen::PlainObjectBase<DerivedP> &previous)
+//Reverse String Method
+void ReverseStringClass::ReverseString (string &s)
 {
-  int numV = VV.size();
-  min_distance.setConstant(numV, 1, std::numeric_limits<typename DerivedD::Scalar>::infinity());
-  min_distance[source] = 0;
-  previous.setConstant(numV, 1, -1);
-  std::set<std::pair<typename DerivedD::Scalar, IndexType> > vertex_queue;
-  vertex_queue.insert(std::make_pair(min_distance[source], source));
-
-  while (!vertex_queue.empty())
-  {
-    typename DerivedD::Scalar dist = vertex_queue.begin()->first;
-    IndexType u = vertex_queue.begin()->second;
-    vertex_queue.erase(vertex_queue.begin());
-
-    if (targets.find(u)!= targets.end())
-      return u;
-
-    // Visit each edge exiting u
-    const std::vector<int> &neighbors = VV[u];
-    for (std::vector<int>::const_iterator neighbor_iter = neighbors.begin();
-         neighbor_iter != neighbors.end();
-         neighbor_iter++)
-    {
-      IndexType v = *neighbor_iter;
-      typename DerivedD::Scalar distance_through_u = dist + 1.;
-      if (distance_through_u < min_distance[v]) {
-        vertex_queue.erase(std::make_pair(min_distance[v], v));
-
-        min_distance[v] = distance_through_u;
-        previous[v] = u;
-        vertex_queue.insert(std::make_pair(min_distance[v], v));
-
-      }
-
-    }
-  }
-  //we should never get here
-  return -1;
+	int n=(int)s.size()-1;
+	if(n==-1) return;
+	int b=0;
+	while(b<n)
+	{
+		char temp=s[b];
+		s[b++]=s[n];
+		s[n--]=temp;
+	}
 }
 
-template <typename IndexType, typename DerivedP>
-IGL_INLINE void igl::dijkstra_get_shortest_path_to(const IndexType &vertex,
-                                                   const Eigen::PlainObjectBase<DerivedP> &previous,
-                                                   std::vector<IndexType> &path)
+/*
+int main(int argc, char* argv[])//a simple test main function
 {
-  IndexType source = vertex;
-  path.clear();
-  for ( ; source != -1; source = previous[source])
-    path.push_back(source);
-}
+	std::cout << "\n  " << "Reverse String Test Result: ";
+	string str="This is a string";
+	string rev=	str;
+	reverse(rev.begin(), rev.end());
+	ReverseStringClass rs;
+	rs.ReverseString(str);
+	if(str.compare(rev)==0)
+		std::cout << "Pass! \n";
+	else
+		std::cout << "Fail! \n";
+}*/
 
-#ifdef IGL_STATIC_LIBRARY
-// Explicit template specialization
-template int igl::dijkstra_compute_paths<int, Eigen::Matrix<double, -1, 1, 0, -1, 1>, Eigen::Matrix<int, -1, 1, 0, -1, 1> >(int const&, std::set<int, std::less<int>, std::allocator<int> > const&, std::vector<std::vector<int, std::allocator<int> >, std::allocator<std::vector<int, std::allocator<int> > > > const&, Eigen::PlainObjectBase<Eigen::Matrix<double, -1, 1, 0, -1, 1> >&, Eigen::PlainObjectBase<Eigen::Matrix<int, -1, 1, 0, -1, 1> >&);
-template void igl::dijkstra_get_shortest_path_to<int, Eigen::Matrix<int, -1, 1, 0, -1, 1> >(int const&, Eigen::PlainObjectBase<Eigen::Matrix<int, -1, 1, 0, -1, 1> > const&, std::vector<int, std::allocator<int> >&);
-#endif

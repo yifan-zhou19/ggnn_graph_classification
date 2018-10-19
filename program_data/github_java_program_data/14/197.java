@@ -1,34 +1,41 @@
-public class Permutation {
-	
-	public char chiffrer(char c, String key){
-		return key.charAt(c-97);	
-	}
+package ml.classification;
 
-	public char dechiffrer(char c, String key){
-		return (char) (key.indexOf(c)+97);	
-	}
+import ml.Estimator;
+import ml.param.DoubleParam;
+import ml.param.IntParam;
+import ml.param.Param;
+import sql.DataFrame;
 
-	public String chiffrer(String s, String key){
-		String s2 = "";
+public class JavaLogisticRegression extends Estimator<JavaLogisticRegressionModel> {
 
-		for(int i=0, l=s.length();i<l;i++){
-			if(s.charAt(i) >= 97 && s.charAt(i) <= 122)
-				s2 += chiffrer(s.charAt(i),key);
-			else
-				s2 += s.charAt(i);
-		}
-		return s2;
-	}
+  private IntParam _maxIter = new IntParam(this, "maxIter", "max number of iterations");
+  public IntParam maxIter() { return _maxIter; }
+  public JavaLogisticRegression setMaxIter(int value) {
+    set(_maxIter.w(value));
+    return this;
+  }
 
-	public String dechiffrer(String s, String key){
-		String s2 = "";
+  private DoubleParam _regParam = new DoubleParam(this, "regParam", "regularization parameter");
+  public DoubleParam regParam() { return _regParam; }
+  public JavaLogisticRegression setRegParam(double value) {
+    set(_regParam.w(value));
+    return this;
+  }
 
-		for(int i=0, l=s.length();i<l;i++){
-			if(s.charAt(i) >= 97 && s.charAt(i) <= 122)
-				s2 += dechiffrer(s.charAt(i),key);
-			else
-				s2 += s.charAt(i);
-		}
-		return s2;
-	}
+  private Param<String> _featuresCol = new Param<String>(this, "featuresCol", "features column name");
+  public Param<String> featuresCol() { return _featuresCol; }
+  public JavaLogisticRegression setFeaturesCol(String value) {
+    set(_featuresCol.w(value));
+    return this;
+  }
+
+  @Override
+  public String uid() {
+    return null;
+  }
+
+  @Override
+  public JavaLogisticRegressionModel fit(DataFrame dataset) {
+    return null;
+  }
 }

@@ -1,76 +1,41 @@
-package com.pwr.zpi.util;
+package ml.classification;
 
-import com.pwr.zpi.language.Formula;
+import ml.Estimator;
+import ml.param.DoubleParam;
+import ml.param.IntParam;
+import ml.param.Param;
+import sql.DataFrame;
 
-import java.util.*;
+public class JavaLogisticRegression extends Estimator<JavaLogisticRegressionModel> {
 
-import static java.util.stream.Collectors.toSet;
+  private IntParam _maxIter = new IntParam(this, "maxIter", "max number of iterations");
+  public IntParam maxIter() { return _maxIter; }
+  public JavaLogisticRegression setMaxIter(int value) {
+    set(_maxIter.w(value));
+    return this;
+  }
 
-/**
- * Class enables permute certain List.
- *
- * Based on code at http://www.programcreek.com.
- */
-public class Permutation {
+  private DoubleParam _regParam = new DoubleParam(this, "regParam", "regularization parameter");
+  public DoubleParam regParam() { return _regParam; }
+  public JavaLogisticRegression setRegParam(double value) {
+    set(_regParam.w(value));
+    return this;
+  }
 
-    static public <Formula>void  nextPermutation(ArrayList<Formula> nums, Comparator<Formula> c) {
+  private Param<String> _featuresCol = new Param<String>(this, "featuresCol", "features column name");
+  public Param<String> featuresCol() { return _featuresCol; }
+  public JavaLogisticRegression setFeaturesCol(String value) {
+    set(_featuresCol.w(value));
+    return this;
+  }
 
-        if(nums == null || nums.size()<2)
-            return;
+  @Override
+  public String uid() {
+    return null;
+  }
 
-        int p=0;
-        for(int i=nums.size()-2; i>=0; i--){
-            if(c.compare(nums.get(i), nums.get(i+1))==-1){
-                p=i;
-                break;
-            }
-        }
-
-        int q = 0;
-        for(int i=nums.size()-1; i>p; i--){
-            if(c.compare(nums.get(i), nums.get(p)) == 1){
-                q=i;
-                break;
-            }
-        }
-
-        if(p==0 && q==0){
-            reverse(nums, 0, nums.size()-1);
-            return;
-        }
-
-        reverse(nums, p, q);
-
-        if(p<nums.size()-1){
-            reverse(nums, p+1, nums.size()-1);
-        }
-    }
-
-    static private <Formula>void reverse(ArrayList<Formula> nums, int left, int right){
-        Collections.swap(nums, left, right);
-    }
-
-    public static List<ArrayList<Formula>> getAllPossiblePermutations(ArrayList<Formula> elems, Comparator<Formula> comp) {
-        Set<ArrayList<Formula>> t = new HashSet<>();
-        for (int i = 0; i < factorial(elems.size()); i++) {
-            t.add(new ArrayList<Formula>(elems));
-            Permutation.nextPermutation(elems, comp);
-        }
-
-        List<ArrayList<Formula>> res = new ArrayList<>();
-        for (int i = t.iterator().next().size(); i > 1; i--)
-            res.addAll(t = t
-                    .stream()
-                    .map(l -> new ArrayList<>(l.subList(0, l.size() - 1)))
-                    .collect(toSet()));
-
-        return res;
-    }
-
-    private static int factorial(int n) {
-        int fact = 1;
-        for (int i = 1; i <= n; i++)
-            fact *= i;
-        return fact;
-    }
+  @Override
+  public JavaLogisticRegressionModel fit(DataFrame dataset) {
+    return null;
+  }
 }
