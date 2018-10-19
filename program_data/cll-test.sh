@@ -1,11 +1,31 @@
-in=github_cpp_protobuf_format_Oct-15-2018
-out=${in/protobuf/babi}-00000${1:-24}
-out2=cll_${out/cpp/java}
-cd .. > /dev/null
-        MEMORY=256G \
-        BATCH_SIZE=3 \
-        N_ITER=1 \
-	N_CLASSES=$2 \
-        EPOCH=${3:-0} \
-	bi-test program_data/$out program_data/$out2 8
-cd - > /dev/null
+in=cpp_protobuf_format_Oct-10-2018-0000028
+lang1=${in/protobuf/babi}
+lang2=cll_${lang1/cpp/java}
+n=${1:-104}
+docker build -t progress ../progress
+log=$lang1/cll-log-$n.txt
+mkdir -p model
+if [ ! -f $log ]; then
+ mkdir -p $(dirname $log)
+ mkdir -p $(dirname $log)/logs
+ chmod o+w $(dirname $log)/logs
+ touch -f $log
+fi
+        NV_GPU=0 \
+  /usr/bin/time -f %e \
+  nvidia-docker run -v $(dirname $(pwd)):/e -w /e --shm-size 11G --rm -it progress \
+  python main_biggnn.py \
+	--cuda \
+	--testing --epoch $2\
+	--n_classes $n \
+        --left_directory  program_data/$lang1 \
+        --right_directory program_data/$lang2 \
+	--model_path program_data/$lang1/cll-$n.cpkl \
+        --state_dim 5 \
+	--n_steps 5 \
+	--n_hidden 50 \
+	--niter 200 \
+	--size_vocabulary 197 \
+	--train_batch_size 32 \
+	--test_batch_size 32 \
+  | tee -a $log

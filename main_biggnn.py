@@ -86,8 +86,12 @@ def main(opt):
                                       shuffle=True, num_workers=2)
 
     opt.annotation_dim = 1  # for bAbI
-    opt.n_edge_types = train_dataset.n_edge_types
-    opt.n_node = train_dataset.n_node
+    if opt.training:
+       opt.n_edge_types = train_dataset.n_edge_types
+       opt.n_node = train_dataset.n_node
+    else:
+       opt.n_edge_types = test_dataset.n_edge_types
+       opt.n_node = test_dataset.n_node
     # print("Max node : " + str(opt.n_node))
 
     if opt.testing:

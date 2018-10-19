@@ -21,6 +21,7 @@ fi
         --left_directory  program_data/$lang1 \
         --right_directory program_data/$lang2 \
 	--model_path program_data/$lang1/cll-$n.cpkl \
+	--log_path program_data/$lang1/logs \
         --state_dim 5 \
 	--n_steps 5 \
 	--n_hidden 50 \
