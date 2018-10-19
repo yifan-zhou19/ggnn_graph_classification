@@ -4,7 +4,6 @@ lang1=${in/protobuf/babi}
 n=${2:-104}
 docker build -t progress ../progress
 log=$lang1/log-$n.txt
-mkdir -p model
 if [ ! -f $log ]; then
  mkdir -p $(dirname $log)
  mkdir -p $(dirname $log)/logs

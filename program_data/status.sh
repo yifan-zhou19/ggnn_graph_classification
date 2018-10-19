@@ -37,7 +37,6 @@ function cll_test() {
 	n=$2
 	k=$(size_voc $lang1)
 	log=$lang1/cll-log-$n.txt
-	mkdir -p model
 	if [ ! -f $log ]; then
 	 mkdir -p $(dirname $log)
 	 mkdir -p $(dirname $log)/logs
@@ -74,7 +73,7 @@ function test() {
    if [ -f $folder/cll-$n.cpkl ]; then
     m=$(ls $folder/cll-$n.cpkl.* | cut -d"." -f3 | sort -n | tail -1)
     if [ "$m" != "" ]; then
-       echo cll_test $folder $n $m
+       cll_test $folder $n $m
     fi
    fi
    folder=${folder/cpp/java}

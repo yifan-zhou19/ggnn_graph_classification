@@ -4,7 +4,6 @@ lang2=cll_${lang1/cpp/java}
 n=${1:-104}
 docker build -t progress ../progress
 log=$lang1/cll-log-$n.txt
-mkdir -p model
 if [ ! -f $log ]; then
  mkdir -p $(dirname $log)
  mkdir -p $(dirname $log)/logs
