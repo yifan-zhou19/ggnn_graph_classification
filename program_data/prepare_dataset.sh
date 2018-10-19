@@ -1,14 +1,11 @@
 #/bin/bash
-<<<<<<< HEAD
-export MAPS=--maps
-=======
->>>>>>> 8194f5a58412850b059d846f82c9e1cbfe931118
-#for dataset in cpp java github_cpp github_java; do
-for dataset in cpp; do
-	./generate_"$dataset"_babi_format.sh
-done
-exit 0
-for dataset in java github_java; do
-	align "$dataset"_babi_format cll_"$dataset"_babi_format
-done
-align --lang2=c github_cpp_babi_format cll_github_cpp_babi_format
+#tag=${1:-Oct-10-2018-0000020}
+tag=${1:-Oct-15-2018-0000024}
+if [ ! -f maps.cpp.pkl ]; then
+   cp github_cpp_babi_format_$tag/maps.cpp.pkl .
+fi
+if [ ! -f maps.java.pkl ]; then
+   cp github_java_babi_format_$tag/maps.java.pkl .
+fi
+align.sh --lang2=java github_java_babi_format_$tag cll_github_java_babi_format_$tag
+#align.sh --lang2=java java_babi_format_$tag cll_java_babi_format_$tag
