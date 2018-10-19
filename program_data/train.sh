@@ -11,6 +11,12 @@ function size_voc() {
 
 function mll_train() {
 lang1=$1
+lang2=${1/java/cpp}
+if [ "$lang1" == "$lang2" ]; then
+   lang=cpp
+else
+   lang=java
+fi
 n=${2:-104}
 k=$(size_voc $lang1)
 log=$lang1/log-$n.txt
@@ -32,7 +38,7 @@ fi
 	--n_classes $n \
         --directory  program_data/$lang1 \
 	--model_path program_data/$lang1/$n.cpkl \
-	--log_path program_data/$lang1/logs \
+	--log_path program_data/$lang2/logs/$lang \
         --state_dim 5 \
 	--n_steps 5 \
 	--n_hidden 50 \
