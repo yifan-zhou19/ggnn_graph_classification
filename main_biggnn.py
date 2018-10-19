@@ -51,8 +51,8 @@ if opt.training and opt.log_path != "":
   if len(previous_runs) == 0:
     run_number = 1
   else:
-    run_number = max([int(s.split("%s/biggnn/%d/run-".format(opt.log_path, opt.n_classes))[1]) for s in previous_runs]) + 1
-  writer = SummaryWriter("%s/biggnn/%d/run-%03d" % (opt.log_path, opt.n_classes, run_number))
+    run_number = max([int(s.split("run-")[1]) for s in previous_runs]) + 1
+  writer = SummaryWriter("%s/run-%03d" % (opt.log_path, run_number))
 else:
   writer = None
 

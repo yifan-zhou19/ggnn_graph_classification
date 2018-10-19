@@ -25,8 +25,8 @@ if [ -f program_data/$lang1/$n.cpkl ]; then
 fi
 if [ ! -f $log ]; then
  mkdir -p $(dirname $log)
- mkdir -p $(dirname $log)/logs
- chmod o+w $(dirname $log)/logs
+ mkdir -p $(dirname $log)/logs/$lang/$n
+ chmod o+w $(dirname $log)/logs/$lang/$n
  touch -f $log
 fi
         NV_GPU=1 \
@@ -38,7 +38,7 @@ fi
 	--n_classes $n \
         --directory  program_data/$lang1 \
 	--model_path program_data/$lang1/$n.cpkl \
-	--log_path program_data/$lang2/logs/$lang \
+	--log_path program_data/$lang2/logs/$lang/$n \
         --state_dim 5 \
 	--n_steps 5 \
 	--n_hidden 50 \
@@ -61,7 +61,7 @@ if [ -f program_data/$lang1/cll-$n.cpkl ]; then
 fi
 if [ ! -f $log ]; then
  mkdir -p $(dirname $log)
- mkdir -p $(dirname $log)/logs
+ mkdir -p $(dirname $log)/logs/biggnn/$n
  chmod o+w $(dirname $log)/logs
  touch -f $log
 fi
@@ -75,7 +75,7 @@ fi
         --left_directory  program_data/$lang1 \
         --right_directory program_data/$lang2 \
 	--model_path program_data/$lang1/cll-$n.cpkl \
-	--log_path program_data/$lang1/logs \
+	--log_path program_data/$lang1/logs/biggnn/$n \
         --state_dim 5 \
 	--n_steps 5 \
 	--n_hidden 50 \
