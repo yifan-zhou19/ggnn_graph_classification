@@ -14,6 +14,9 @@ lang1=$1
 n=${2:-104}
 k=$(size_voc $lang1)
 log=$lang1/log-$n.txt
+if [ -f program_data/$lang1/$n.cpkl ]; then
+   return
+fi
 if [ ! -f $log ]; then
  mkdir -p $(dirname $log)
  mkdir -p $(dirname $log)/logs
@@ -47,6 +50,9 @@ k=$(size_voc $lang1)
 n=${2:-104}
 docker build -t progress ../progress
 log=$lang1/cll-log-$n.txt
+if [ -f program_data/$lang1/cll-$n.cpkl ]; then
+   return
+fi
 if [ ! -f $log ]; then
  mkdir -p $(dirname $log)
  mkdir -p $(dirname $log)/logs

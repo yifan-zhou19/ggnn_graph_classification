@@ -11,8 +11,9 @@ function size_voc() {
 function mll_test() {
    echo === MLL $1 $2 $(($3+1)) ===
 	lang1=$1
+	lang2=${lang1/java/cpp}
 	n=$2
-	k=$(size_voc $lang1)
+	k=$(size_voc $lang2)
 		NV_GPU=0 \
 	  /usr/bin/time -f %e \
 	  nvidia-docker run -v $(dirname $(pwd)):/e -w /e --shm-size 11G --rm -it progress \
@@ -73,14 +74,14 @@ function test() {
    if [ -f $folder/cll-$n.cpkl ]; then
     m=$(ls $folder/cll-$n.cpkl.* | cut -d"." -f3 | sort -n | tail -1)
     if [ "$m" != "" ]; then
-       echo cll_test $folder $n $m
+       cll_test $folder $n $m
     fi
    fi
    folder=${folder/cpp/java}
    if [ -f $folder/$n.cpkl ]; then
     m=$(ls $folder/$n.cpkl.* | cut -d"." -f3 | sort -n | tail -1)
     if [ "$m" != "" ]; then
-       echo mll_test $folder $n $m
+       mll_test $folder $n $m
     fi
    fi
 }
