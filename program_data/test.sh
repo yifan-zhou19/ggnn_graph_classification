@@ -63,7 +63,7 @@ function cll_test() {
 }
 function test() {
    n=$1
-   folder=cpp_babi_format_Oct-10-2018-0000028
+   folder=$2
    if [ -f $folder/$n.cpkl ]; then
     m=$(ls $folder/$n.cpkl.* | cut -d"." -f3 | sort -n | tail -1)
     if [ "$m" != "" ]; then
@@ -85,5 +85,8 @@ function test() {
    fi
 }
 for n in 104 50 25 10; do
-   test $n | tee -a status.log
+   test $n cpp_babi_format_Oct-10-2018-0000028 | tee -a status.log
+done
+for n in 50 30 10; do
+   test $n github_cpp_babi_format_Oct-10-2018-0000028 | tee -a status.log
 done
