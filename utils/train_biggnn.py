@@ -1,6 +1,5 @@
 import torch
 from torch.autograd import Variable
-import model
 
 def train(epoch, dataloader, net, criterion, optimizer, opt):
     # net.train()

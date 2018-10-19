@@ -4,4 +4,5 @@ ENV http_proxy http://wwwcache.open.ac.uk:80
 ENV https_proxy http://wwwcache.open.ac.uk:80
 # add package for progress indicator
 RUN pip install tqdm pyarrow
-RUN pip install tensorboard
+RUN pip install -U pip
+RUN pip install tensorboardX sklearn
