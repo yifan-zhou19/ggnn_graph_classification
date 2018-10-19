@@ -26,7 +26,7 @@ function mll_test() {
 		--n_steps 5 \
 		--n_hidden 50 \
 		--niter 1 \
-		--size_vocabulary 197 \
+		--size_vocabulary $k \
 		--train_batch_size 32 \
 		--test_batch_size 32
 }
@@ -73,14 +73,14 @@ function test() {
    if [ -f $folder/cll-$n.cpkl ]; then
     m=$(ls $folder/cll-$n.cpkl.* | cut -d"." -f3 | sort -n | tail -1)
     if [ "$m" != "" ]; then
-       cll_test $folder $n $m
+       echo cll_test $folder $n $m
     fi
    fi
    folder=${folder/cpp/java}
    if [ -f $folder/$n.cpkl ]; then
     m=$(ls $folder/$n.cpkl.* | cut -d"." -f3 | sort -n | tail -1)
     if [ "$m" != "" ]; then
-       mll_test $folder $n $m
+       echo mll_test $folder $n $m
     fi
    fi
 }
