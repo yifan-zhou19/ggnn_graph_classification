@@ -1,6 +1,7 @@
 import torch
 from torch.autograd import Variable
 from tensorboardX import SummaryWriter
+from shutil import copyfile
 
 def train(epoch, dataloader, net, criterion, optimizer, opt, writer):
     
@@ -49,4 +50,4 @@ def train(epoch, dataloader, net, criterion, optimizer, opt, writer):
             print('[%d/%d][%d/%d] Loss: %.4f' % (epoch, opt.niter, i, len(dataloader), loss.item()))
 
     torch.save(net, opt.model_path)
-    torch.save(net, "{}.{}".format(opt.model_path, epoch))
+    copyfile(opt.model_path, "{}.{}".format(opt.model_path, epoch))

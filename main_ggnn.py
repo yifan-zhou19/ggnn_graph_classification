@@ -13,6 +13,7 @@ from utils.data.dataset import MonoLanguageProgramData
 from utils.data.dataloader import bAbIDataloader
 from tensorboardX import SummaryWriter
 import os
+import sys
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=2)
@@ -34,15 +35,20 @@ parser.add_argument('--is_training_ggnn', type=bool, default=True, help='Trainin
 parser.add_argument('--training', action="store_true",help='is training')
 parser.add_argument('--testing', action="store_true",help='is testing')
 parser.add_argument('--training_percentage', type=float, default=1.0 ,help='percentage of data use for training')
-parser.add_argument('--log_path', default="logs/ggnn" ,help='log path for tensorboard')
+parser.add_argument('--log_path', default="" ,help='log path for tensorboard')
+parser.add_argument('--epoch', type=int, default=0, help='epoch to test')
 
 opt = parser.parse_args()
 print(opt)
-
-writer = SummaryWriter(opt.log_path)
-
-if not os.path.isdir("model"):
-    os.mkdir("model")
+if opt.training and opt.log_path != "":
+  previous_runs = os.listdir(opt.log_path)
+  if len(previous_runs) == 0:
+    run_number = 1
+  else:
+    run_number = max([int(s.split('run-')[1]) for s in previous_runs]) + 1
+  writer = SummaryWriter("%s/run-%03d" % (opt.log_path, run_number))
+else:
+  writer = None
 
 if opt.manualSeed is None:
     opt.manualSeed = random.randint(1, 10000)
@@ -55,8 +61,9 @@ if opt.cuda:
 
 # This part is the implementation to illustrate Graph-Level output from program data
 def main(opt):
-    train_dataset = MonoLanguageProgramData(opt.size_vocabulary, opt.directory, True, opt.n_classes, opt.training_percentage)
-    train_dataloader = bAbIDataloader(train_dataset, batch_size=opt.train_batch_size, \
+    if opt.training:
+       train_dataset = MonoLanguageProgramData(opt.size_vocabulary, opt.directory, True, opt.n_classes, opt.training_percentage)
+       train_dataloader = bAbIDataloader(train_dataset, batch_size=opt.train_batch_size, \
                                       shuffle=True, num_workers=2)
 
     test_dataset = MonoLanguageProgramData(opt.size_vocabulary, opt.directory, False, opt.n_classes)
@@ -64,16 +71,41 @@ def main(opt):
                                      shuffle=True, num_workers=2)
 
     opt.annotation_dim = 1  # for bAbI
-    opt.n_edge_types = train_dataset.n_edge_types
-    opt.n_node = train_dataset.n_node
-
-    if os.path.isfile(opt.model_path):
-        print("Using the saved model....")
-        net = torch.load(opt.model_path)
+    if opt.training:
+       opt.n_edge_types = train_dataset.n_edge_types
+       opt.n_node = train_dataset.n_node
+    else:
+       opt.n_edge_types = test_dataset.n_edge_types
+       opt.n_node = test_dataset.n_node
+    if opt.testing:
+        filename = "{}.{}".format(opt.model_path, opt.epoch)
+        epoch = opt.epoch
+    else:
+        filename = opt.model_path
+        epoch = -1
+    if os.path.exists(filename):
+        if opt.testing:
+           print("Using No. {} saved model....".format(opt.epoch))
+        dirname = os.path.dirname(filename)
+        basename = os.path.basename(filename)
+        epochs = os.listdir(dirname)
+        if len(epochs) > 0:
+           for s in epochs:
+              if s.startswith(basename) and basename != s:
+                 x = s.split(os.extsep)
+                 e = x[len(x) - 1]
+                 epoch = max(epoch, int(e))
+           if epoch != -1:
+              print("Using No. {} of the saved models...".format(epoch))
+              filename = "{}.{}".format(opt.model_path, epoch)
+        if epoch != -1:
+           print("Using No. {} saved model....".format(epoch))
+        else:
+           print("Using saved model....")
+        net = torch.load(filename)
     else:
         net = GGNN(opt)
         net.double()
-    
 
     criterion = nn.CrossEntropyLoss()
 
@@ -84,15 +116,17 @@ def main(opt):
     optimizer = optim.Adam(net.parameters(), lr=opt.lr)
 
     if opt.training:
-        for epoch in range(0, opt.niter):
+        for epoch in range(epoch+1, epoch + opt.niter):
             train(epoch, train_dataloader, net, criterion, optimizer, opt, writer)
-            test(test_dataloader, net, criterion, optimizer, opt)
         writer.close()
 
     if opt.testing:
+        filename = "{}.{}".format(opt.model_path, epoch)
+        if os.path.exists(filename):
+                 net = torch.load(filename)
+                 net.cuda()
+                 optimizer = optim.Adam(net.parameters(), lr=opt.lr)
         test(test_dataloader, net, criterion, optimizer, opt)
-
-
 if __name__ == "__main__":
     main(opt)
 

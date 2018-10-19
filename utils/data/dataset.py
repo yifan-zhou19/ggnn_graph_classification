@@ -195,10 +195,11 @@ def create_adjacency_matrix(edges, n_nodes, n_edge_types):
 class MonoLanguageProgramData():
    
     def __init__(self, size_vocabulary, path, is_train, n_classes=3,data_percentage=1.0):
+        base_name = os.path.basename(path)
         if is_train:
-           saved_input_filename = "%s-%d-train.pkl" % (path, n_classes)
+           saved_input_filename = "%s/%s-%d-train.pkl" % (path, base_name, n_classes)
         else:
-           saved_input_filename = "%s-%d-test.pkl" % (path, n_classes)
+           saved_input_filename = "%s/%s-%d-test.pkl" % (path, base_name, n_classes)
         if os.path.exists(saved_input_filename): 
            input_file = open(saved_input_filename, 'rb')
            buf = input_file.read()
@@ -224,7 +225,6 @@ class MonoLanguageProgramData():
         
         all_data = convert_program_data(all_data,1, self.n_node)
 
-        
         self.data = all_data
      
     def __getitem__(self, index):

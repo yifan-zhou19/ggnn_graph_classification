@@ -11,7 +11,7 @@ if [ ! -f $log ]; then
  chmod o+w $(dirname $log)/logs
  touch -f $log
 fi
-        NV_GPU=0 \
+        NV_GPU=1 \
   /usr/bin/time -f %e \
   nvidia-docker run -v $(dirname $(pwd)):/e -w /e --shm-size 11G --rm -it progress \
   python main_biggnn.py \
