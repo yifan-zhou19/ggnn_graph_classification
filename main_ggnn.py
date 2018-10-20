@@ -118,6 +118,7 @@ def main(opt):
     if opt.training:
         for epoch in range(epoch+1, epoch + opt.niter):
             train(epoch, train_dataloader, net, criterion, optimizer, opt, writer)
+            test(test_dataloader, net, criterion, optimizer, opt)
         writer.close()
 
     if opt.testing:

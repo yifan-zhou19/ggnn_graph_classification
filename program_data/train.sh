@@ -34,7 +34,7 @@ if [ "$lang1" == "$lang2" ]; then
 else
    lang=java
 fi
-n=${2:-104}
+n=$2
 k=$(size_voc $lang2)
 cd .. > /dev/null
 log=program_data/$lang1/log-$n.txt
@@ -72,7 +72,7 @@ function cll_train() {
 lang1=$1
 lang2=cll_${lang1/cpp/java}
 k=$(size_voc $lang1)
-n=${2:-104}
+n=$2
 log=$lang1/cll-log-$n.txt
 if [ -f program_data/$lang1/cll-$n.cpkl ]; then
    return
