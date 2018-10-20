@@ -17,13 +17,12 @@ function size_voc() {
         lang=${lang/maps./}
         lang=${lang/.pkl/}
 	if [ "$has_docker" == "1" ]; then
-	   k=$(docker run -v $(pwd):/e --entrypoint /opt/bin/maps -it yijun/fast:built --lang $lang | sort -n | wc -l)
+	   k=$(docker run -v $(pwd):/e --entrypoint /opt/bin/maps -it yijun/fast:built --lang $lang | sort -n | tail -1 | cut -f1 -d"<")
         else
 	   k=$(python $p/ggnn/maps.py --lang $lang | sort -n | wc -l)
-	   #k=197
 	fi
 	cd - > /dev/null
-	echo $((k-1))
+	echo $k
 }
 
 function mll_train() {
@@ -71,7 +70,7 @@ cd - > /dev/null
 function cll_train() {
 lang1=$1
 lang2=cll_${lang1/cpp/java}
-k=$(size_voc $lang1)
+k=$(size_voc $lang2)
 n=$2
 log=$lang1/cll-log-$n.txt
 if [ -f program_data/$lang1/cll-$n.cpkl ]; then

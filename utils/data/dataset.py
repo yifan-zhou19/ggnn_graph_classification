@@ -175,7 +175,8 @@ def convert_program_data_into_group(data_list, n_annotation_dim, n_nodes, n_clas
             for edge in edge_list:
                 src_idx = edge[0]
                 # print(src_idx)
-                annotation[src_idx-1][0] = 1
+                if src_idx < len(annotation):
+                   annotation[src_idx-1][0] = 1
             # print(class_output)
             class_data_list[class_output-1].append([edge_list, annotation, class_output])
     return class_data_list
@@ -188,8 +189,10 @@ def create_adjacency_matrix(edges, n_nodes, n_edge_types):
         e_type = edge[1]
         tgt_idx = edge[2]
        
-        a[tgt_idx-1][(e_type - 1) * n_nodes + src_idx - 1] =  1
-        a[src_idx-1][(e_type - 1 + n_edge_types) * n_nodes + tgt_idx - 1] =  1
+        if tgt_idx < len(a):
+           a[tgt_idx-1][(e_type - 1) * n_nodes + src_idx - 1] =  1
+        if src_idx <len(a):
+           a[src_idx-1][(e_type - 1 + n_edge_types) * n_nodes + tgt_idx - 1] =  1
     return a
 
 class MonoLanguageProgramData():

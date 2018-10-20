@@ -1,17 +1,0 @@
-/opt/conda/lib/python3.6/site-packages/sklearn/externals/joblib/externals/cloudpickle/cloudpickle.py:47: DeprecationWarning: the imp module is deprecated in favour of importlib; see the module's documentation for alternative uses
-  import imp
-Namespace(cuda=True, data_percentage=1.0, epoch=0, is_training_ggnn=False, left_directory='program_data/github_cpp_babi_format_Oct-15-2018-0000029', log_path='program_data/github_cpp_babi_format_Oct-15-2018-0000029/logs/biggnn/104', loss=0, lr=0.01, manualSeed=None, model_path='program_data/github_cpp_babi_format_Oct-15-2018-0000029/cll-104.cpkl', n_classes=104, n_hidden=50, n_steps=5, niter=200, right_directory='program_data/cll_github_java_babi_format_Oct-15-2018-0000029', size_vocabulary=172, state_dim=5, test_batch_size=32, testing=False, train_batch_size=32, training=True, verbal=True, workers=2)
-Random Seed:  3481
-Training Bi-GGNN with cross entropy loss.
-Loading data...............
-  0% 0/104 [00:00<?, ?it/s]  4% 4/104 [00:00<00:03, 29.21it/s]  8% 8/104 [00:00<00:03, 29.79it/s] 12% 13/104 [00:00<00:02, 30.54it/s] 15% 16/104 [00:00<00:04, 21.90it/s] 18% 19/104 [00:00<00:03, 23.33it/s] 23% 24/104 [00:00<00:03, 26.55it/s] 26% 27/104 [00:00<00:02, 26.78it/s] 32% 33/104 [00:01<00:02, 31.78it/s] 37% 38/104 [00:01<00:02, 28.19it/s] 41% 43/104 [00:01<00:01, 31.53it/s] 45% 47/104 [00:01<00:02, 22.27it/s]
-Traceback (most recent call last):
-  File "main_biggnn.py", line 151, in <module>
-    main(opt)
-  File "main_biggnn.py", line 79, in main
-    train_dataset = CrossLingualProgramData(opt.size_vocabulary, opt.left_directory,opt.right_directory, True, opt.loss, opt.n_classes,opt.data_percentage)
-  File "/e/utils/data/dataset.py", line 246, in __init__
-    left_all_data = load_program_graphs_from_directory(left_path,is_train,n_classes,data_percentage)
-  File "/e/utils/data/dataset.py", line 60, in load_program_graphs_from_directory
-    path = lookup[i]
-KeyError: 51

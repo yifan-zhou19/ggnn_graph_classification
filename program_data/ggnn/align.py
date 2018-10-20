@@ -29,8 +29,6 @@ for key, value in maps2.items():
     else:
         maps1[key] = len(mapping.keys())
         mapping[value] = maps1[key]
-#for key, value in mapping.items():
-#    print("%s=>%s" % (key, value))
 
 # using mapping to align the lang2 with lang1
 def aligning(source, target, mapping):
@@ -55,3 +53,7 @@ for folder in ['train', 'test']:
        if not os.path.exists(os.path.join(to_folder, folder)):
           os.makedirs(os.path.join(to_folder, folder))
        aligning(os.path.join(from_folder, folder, f), os.path.join(to_folder, folder, f), mapping)
+
+with open("maps.cll.pkl", 'wb') as f:
+   pickle.dump(mapping, f, 2)
+   f.close()

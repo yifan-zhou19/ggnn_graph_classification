@@ -54,7 +54,14 @@ function prepare_dataset() {
 	if [ ! -f maps.java.pkl ]; then
 	   cp "$java_folder"_babi_format_$tag/maps.java.pkl .
 	fi
+	mkdir -p cll_"$java_folder"_babi_format_$tag
+        chmod o+w cll_"$java_folder"_babi_format_$tag
+        chmod o+w .
 	align --lang2=java "$java_folder"_babi_format_$tag cll_"$java_folder"_babi_format_$tag
+        mv maps.cll.pkl cll_"$java_folder"_babi_format_$tag
+        rm -f maps.cpp.pkl
+        rm -f maps.java.pkl
+        chmod o-w .
 }
 
 function generate_data() {
@@ -75,5 +82,6 @@ function generate_data() {
 
 #generate_data Oct-10-2018 0000028 github_cpp
 #generate_data Oct-10-2018 0000028 cpp
-generate_data Oct-15-2018 0000023 github_cpp
-generate_data Oct-15-2018 0000023 cpp
+#generate_data Oct-15-2018 0000029 github_cpp
+#generate_data Oct-15-2018 0000029 cpp
+	prepare_dataset Oct-15-2018-0000029 github_cpp
