@@ -82,7 +82,7 @@ if [ ! -f $log ]; then
  mkdir -p $(dirname $log)
  touch -f $log
 fi
-NV_GPU=0 \
+NV_GPU=1 \
   /usr/bin/time -f %e \
   $NVIDIA \
   python main_biggnn.py \
