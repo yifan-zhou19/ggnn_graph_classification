@@ -62,7 +62,7 @@ NV_GPU=1 \
 	--niter 200 \
 	--size_vocabulary $k \
 	--train_batch_size 32 \
-	--test_batch_size 32 \
+	--test_batch_size 256 \
   | tee -a $log
 cd - > /dev/null
 }
@@ -73,6 +73,8 @@ lang2=cll_${lang1/cpp/java}
 k=$(size_voc $lang2)
 n=$2
 log=$lang1/cll-log-$n.txt
+rm -f $log
+n_iter=${3:-200}
 if [ -f program_data/$lang1/cll-$n.cpkl ]; then
    return
 fi
@@ -96,7 +98,7 @@ NV_GPU=1 \
         --state_dim 5 \
 	--n_steps 5 \
 	--n_hidden 50 \
-	--niter 200 \
+	--niter $n_iter \
 	--size_vocabulary $k \
 	--train_batch_size 32 \
 	--test_batch_size 32 \
@@ -126,7 +128,7 @@ elif [ "$1" == "java" ]; then
 elif [ "$1" == "cpp" ]; then
 	mll_train cpp_babi_format_$ver $2 | tee -a status.log
 elif [ "$1" == "biggnn" ]; then
-	cll_train cpp_babi_format_$ver $2 | tee -a status.log
+	cll_train cpp_babi_format_$ver $2 $3 | tee -a status.log
 elif [ "$1" == "github_java" ]; then
 	mll_train github_java_babi_format_$ver $2 | tee -a status.log
 elif [ "$1" == "github_cpp" ]; then
