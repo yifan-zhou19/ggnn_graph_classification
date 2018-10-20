@@ -7,7 +7,7 @@ if [ "$has_docker" == "1" ]; then
 fi
 NVIDIA=
 if [ "$has_docker" == "1" ]; then
-  NVIDIA='nvidia-docker run -v $(dirname $(pwd)):/e -w /e --shm-size 11G --rm -it progress'
+  NVIDIA="nvidia-docker run -v $(dirname $(pwd)):/e -w /e --shm-size 11G --rm -it progress"
 fi
 
 function size_voc() {

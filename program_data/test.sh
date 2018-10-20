@@ -7,7 +7,7 @@ if [ "$has_docker" == "1" ]; then
 fi
 NVIDIA=
 if [ "$has_docker" == "1" ]; then
-  NVIDIA='nvidia-docker run -v $(dirname $(pwd)):/e -w /e --shm-size 11G --rm -it progress'
+  NVIDIA="nvidia-docker run -v $(dirname $(pwd)):/e -w /e --shm-size 11G --rm -it progress"
 fi
 function size_voc() {
 	cd $1 > /dev/null
@@ -17,8 +17,7 @@ function size_voc() {
 	if [ "$has_docker" == "1" ]; then
 	   k=$(docker run -v $(pwd):/e --entrypoint /opt/bin/maps -it yijun/fast:built --lang $lang | sort -n | wc -l)
         else
-	   #k=$(python $p/ggnn/maps.py --lang $lang | sort -n | wc -l)
-	   k=197
+	   k=$(python $p/ggnn/maps.py --lang $lang | sort -n | wc -l)
 	fi
 	cd - > /dev/null
 	echo $((k-1))
@@ -75,10 +74,10 @@ function cll_test() {
 	cd - > /dev/null
 }
 function pick_model() {
-   m=
+   m=0
    model=$1
    if [ -f $model ]; then
-    m=$(ls $model.* | cut -d"." -f3 | sort -n | tail -1)
+      m=$(ls $model.* | cut -d"." -f3 | sort -n | tail -1)
    fi
    echo $m
 }
