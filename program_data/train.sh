@@ -19,8 +19,8 @@ function size_voc() {
 	if [ "$has_docker" == "1" ]; then
 	   k=$(docker run -v $(pwd):/e --entrypoint /opt/bin/maps -it yijun/fast:built --lang $lang | sort -n | wc -l)
         else
-	   #k=$(python $p/ggnn/maps.py --lang $lang | sort -n | wc -l)
-	   k=197
+	   k=$(python $p/ggnn/maps.py --lang $lang | sort -n | wc -l)
+	   #k=197
 	fi
 	cd - > /dev/null
 	echo $((k-1))
