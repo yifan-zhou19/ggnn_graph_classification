@@ -58,7 +58,7 @@ def load_program_graphs_from_directory(directory,is_train=True,n_classes=3, data
            lookup[i] = join(dir_path, "test_%s.txt" % str(ordered_filenames[i-1]))
     for i in trange(1, 1+n_classes):
         path = lookup[i]
-        # print(path)
+        print(path)
         label = i
         data_list_class_i = []
         edge_list_class_i = []
@@ -174,7 +174,6 @@ def convert_program_data_into_group(data_list, n_annotation_dim, n_nodes, n_clas
             annotation = np.zeros([n_nodes, n_annotation_dim])   
             for edge in edge_list:
                 src_idx = edge[0]
-                # print(src_idx)
                 if src_idx < len(annotation):
                    annotation[src_idx-1][0] = 1
             # print(class_output)

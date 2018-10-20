@@ -73,7 +73,6 @@ lang2=cll_${lang1/cpp/java}
 k=$(size_voc $lang2)
 n=$2
 log=$lang1/cll-log-$n.txt
-rm -f $log
 n_iter=${3:-200}
 if [ -f program_data/$lang1/cll-$n.cpkl ]; then
    return
