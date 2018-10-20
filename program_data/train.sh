@@ -113,23 +113,25 @@ function train() {
    mll_train $folder $n
 }
 
+ver=Oct-10-2018-0000028
+ver=Oct-15-2018-0000029
 if [ "$1" == "" ]; then
 	for n in 104 50 25 10; do
-	   train $n cpp_babi_format_Oct-10-2018-0000028 | tee -a status.log
+	   train $n cpp_babi_format_$ver | tee -a status.log
 	done
 	for n in 50 30 10; do
-	   train $n github_cpp_babi_format_Oct-10-2018-0000028 | tee -a status.log
+	   train $n github_cpp_babi_format_$ver | tee -a status.log
 	done
 elif [ "$1" == "java" ]; then
-	mll_train java_babi_format_Oct-10-2018-0000028 $2 | tee -a status.log
+	mll_train java_babi_format_$ver $2 | tee -a status.log
 elif [ "$1" == "cpp" ]; then
-	mll_train cpp_babi_format_Oct-10-2018-0000028 $2 | tee -a status.log
+	mll_train cpp_babi_format_$ver $2 | tee -a status.log
 elif [ "$1" == "biggnn" ]; then
-	cll_train cpp_babi_format_Oct-10-2018-0000028 $2 | tee -a status.log
+	cll_train cpp_babi_format_$ver $2 | tee -a status.log
 elif [ "$1" == "github_java" ]; then
-	mll_train github_java_babi_format_Oct-10-2018-0000028 $2 | tee -a status.log
+	mll_train github_java_babi_format_$ver $2 | tee -a status.log
 elif [ "$1" == "github_cpp" ]; then
-	mll_train github_cpp_babi_format_Oct-10-2018-0000028 $2 | tee -a status.log
+	mll_train github_cpp_babi_format_$ver $2 | tee -a status.log
 elif [ "$1" == "github_biggnn" ]; then
-	cll_train github_cpp_babi_format_Oct-10-2018-0000028 $2 | tee -a status.log
+	cll_train github_cpp_babi_format_$ver $2 | tee -a status.log
 fi
