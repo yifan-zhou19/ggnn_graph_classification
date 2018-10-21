@@ -128,5 +128,15 @@ elif [ "$1" == "github_java" ]; then
 elif [ "$1" == "github_cpp" ]; then
 	mll_test github_cpp_babi_format_$folder $2 $(pick_model github_cpp_babi_format_$folder/$2.cpkl) | tee -a test2.log
 elif [ "$1" == "github_biggnn" ]; then
-	cll_test github_cpp_babi_format_$folder $2 $(pick_model github_cpp_babi_format_$folder/cll-$2.cpkl) | tee -a test2.log
+        rm -f test2.log
+        n=2
+        while [ $2 -gt $n ]; do
+          rm -f github_cpp_babi_format_$folder/cll-$2.cpkl*
+          rm -f github_cpp_babi_format_$folder/cll-log-$2.txt
+          cp cll-$n.cpkl github_cpp_babi_format_$folder/cll-$2.cpkl
+          cp cll-$n.cpkl github_cpp_babi_format_$folder/cll-$2.cpkl.0
+          chmod o+w github_cpp_babi_format_$folder/cll-$2.cpkl
+	  cll_test github_cpp_babi_format_$folder $2 $(pick_model github_cpp_babi_format_$folder/cll-$2.cpkl) | tee -a test2.log
+          n=$(( n * 2))
+	done
 fi

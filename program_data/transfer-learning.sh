@@ -1,7 +1,8 @@
-folder=cpp_babi_format_Oct-15-2018-0000029
+#folder=cpp_babi_format_Oct-15-2018-0000029
+folder=github_cpp_babi_format_Oct-15-2018-0000029
 rm -f transfer-learning.log
-docker run --entrypoint sh -v $(pwd):/e -w /e busybox -c 'rm -rf cpp_babi_format_Oct-15-2018-0000029/logs'
-rm -rf cpp_babi_format_Oct-15-2018-0000029/logs
+docker run --entrypoint sh -v $(pwd):/e -w /e busybox -c "rm -rf $folder/logs"
+rm -rf $folder/logs
 n=2
 function prepare_data() {
    x=$1

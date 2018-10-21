@@ -134,7 +134,7 @@ elif [ "$1" == "github_java" ]; then
 elif [ "$1" == "github_cpp" ]; then
 	mll_train github_cpp_babi_format_$ver $2 | tee -a status.log
 elif [ "$1" == "github_biggnn" ]; then
-	cll_train github_cpp_babi_format_$ver $2 | tee -a status.log
+	cll_train github_cpp_babi_format_$ver $2 $3 | tee -a status.log
 else
 	cll_train $1/cpp_babi_format_$ver $2 $3 | tee -a status.log
 fi
