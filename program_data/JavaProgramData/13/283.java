@@ -1,0 +1,50 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	/*
+	 * 1000012739_26.cpp
+	 *
+	 *  Created on: 2010-10-29
+	 *      Author: ???
+	 *    	Name: ????????
+	 */
+
+
+
+	public static int Main()
+	{
+		int n; //????
+		int i;
+		int j;
+		int k;
+		int cn;
+		n = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+		int[] a = new int[n]; //????????
+		cn = 0;
+		for (i = 0;i < n;i++) //??????
+		{
+			k = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+			for (j = 0;j <= cn;j++) //??a[]??k????
+			{
+				if (a[j] == k)
+				{
+					break; //?????????
+				}
+			}
+			if (j == cn + 1) //???????????????
+			{
+				a[cn] = k;
+				cn++; //???????�??�??
+			}
+		}
+		for (i = 0;i < cn - 1;i++) //????????
+		{
+			System.out.print(a[i]);
+			System.out.print(" ");
+		}
+		System.out.print(a[cn - 1]);
+		return 0;
+	}
+}
+

@@ -1,0 +1,122 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	public static int Main()
+	{
+		int[][] a = new int[21][21];
+		int m;
+		int n;
+		int i;
+		int j;
+		m = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+		n = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+//C++ TO JAVA CONVERTER TODO TASK: The memory management function 'memset' has no equivalent in Java:
+		memset(a,0,(Integer.SIZE / Byte.SIZE));
+		for (i = 0; i < m; i++)
+		{
+			for (j = 0; j < n; j++)
+			{
+				a[i][j] = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+			}
+		}
+		for (i = 0; i < m; i++)
+		{
+			for (j = 0; j < n; j++)
+			{
+				if (i == 0 && j == 0)
+				{
+					if (a[i][j] >= a[i + 1][j] != 0 && a[i][j] >= a[i][j + 1])
+					{
+						System.out.print(i);
+						System.out.print(' ');
+						System.out.print(j);
+						System.out.print("\n");
+					}
+				}
+				else if (i == 0 && j == n - 1)
+				{
+					if (a[i][j] >= a[i][j - 1] != 0 && a[i][j] >= a[i + 1][j])
+					{
+						System.out.print(i);
+						System.out.print(' ');
+						System.out.print(j);
+						System.out.print("\n");
+					}
+				}
+				else if (i == m - 1 && j == 0)
+				{
+					if (a[i][j] >= a[i - 1][j] != 0 && a[i][j] >= a[i][j + 1])
+					{
+						System.out.print(i);
+						System.out.print(' ');
+						System.out.print(j);
+						System.out.print("\n");
+					}
+				}
+				else if (i == m - 1 && j == n - 1)
+				{
+					if (a[i][j] >= a[i - 1][j] != 0 && a[i][j] >= a[i][j - 1])
+					{
+						System.out.print(i);
+						System.out.print(' ');
+						System.out.print(j);
+						System.out.print("\n");
+					}
+				}
+				else if (i == 0 && j != 0 && j != n - 1)
+				{
+					if (a[i][j] >= a[i][j - 1] != 0 && a[i][j] >= a[i][j + 1] != 0 && a[i][j] >= a[i + 1][j])
+					{
+						System.out.print(i);
+						System.out.print(' ');
+						System.out.print(j);
+						System.out.print("\n");
+					}
+				}
+				else if (i == m - 1 && j != 0 && j != n - 1)
+				{
+					if (a[i][j] >= a[i][j - 1] != 0 && a[i][j] >= a[i][j + 1] != 0 && a[i][j] >= a[i - 1][j])
+					{
+						System.out.print(i);
+						System.out.print(' ');
+						System.out.print(j);
+						System.out.print("\n");
+					}
+				}
+				else if (j == 0 && i != 0 && i != m - 1)
+				{
+					if (a[i][j] >= a[i - 1][j] != 0 && a[i][j] >= a[i + 1][j] != 0 && a[i][j] >= a[i][j + 1])
+					{
+						System.out.print(i);
+						System.out.print(' ');
+						System.out.print(j);
+						System.out.print("\n");
+					}
+				}
+				else if (j == n - 1 && i != 0 && i != m - 1)
+				{
+					if (a[i][j] >= a[i - 1][j] != 0 && a[i][j] >= a[i + 1][j] != 0 && a[i][j] >= a[i][j - 1])
+					{
+						System.out.print(i);
+						System.out.print(' ');
+						System.out.print(j);
+						System.out.print("\n");
+					}
+				}
+				else
+				{
+					if (a[i][j] >= a[i - 1][j] != 0 && a[i][j] >= a[i + 1][j] != 0 && a[i][j] >= a[i][j - 1] != 0 && a[i][j] >= a[i][j + 1])
+					{
+						System.out.print(i);
+						System.out.print(' ');
+						System.out.print(j);
+						System.out.print("\n");
+					}
+				}
+			}
+		}
+		return 0;
+	}
+}
+

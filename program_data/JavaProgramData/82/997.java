@@ -1,0 +1,50 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	/*
+	 * 4.cpp
+	 *????????????????
+	 *  Created on: 2012-10-26
+	 *      Author: ???
+	 */
+
+	public static int Main()
+	{
+		int n; //????
+		int i;
+		int[] a = new int[101];
+		int[] b = new int[101];
+		int h = 0;
+		int t = 0;
+		int[] m = new int[101];
+		n = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+		for (i = 1;i <= n;i++) //??
+		{
+			a[i] = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+			b[i] = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+			if (90 <= a[i] != 0 && a[i] <= 140 && 60 <= b[i] != 0 && b[i] <= 90) //??????
+			{
+				h++; //????1
+				m[i] = h; //m???????
+			}
+			else // ???????
+			{
+				m[i] = h; //????????m???????
+				h = 0; //????????
+			}
+		}
+		t = m[1]; //t?????m1
+		for (i = 1;i <= n;i++)
+		{
+			if (t <= m[i])
+			{
+				t = m[i];
+			} //??t????????t???????
+		}
+		System.out.print(t);
+		return 0;
+	}
+
+}
+

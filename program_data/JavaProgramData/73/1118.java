@@ -1,0 +1,51 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	public static int Main()
+	{
+		int[][] s = new int[5][5];
+		int i;
+		int k;
+		int a = 0;
+		int b = 0;
+		int h;
+		int j;
+		for (i = 0;i < 5;i++)
+		{
+			for (k = 0;k < 5;k++)
+			{
+				String tempVar = ConsoleInput.scanfRead();
+				if (tempVar != null)
+				{
+					(s[i][k]) = Integer.parseInt(tempVar);
+				}
+			}
+		}
+		for (k = 0,a = 0;k < 5;k++)
+		{
+			for (i = 0;i < 5;i++)
+			{
+				if ((s[i][k] <= s[0][k]) && (s[i][k] <= s[1][k]) && (s[i][k] <= s[2][k]) && (s[i][k] <= s[3][k]) && (s[i][k] <= s[4][k]))
+				{
+					break;
+				}
+			}
+			if ((s[i][k] >= s[i][0]) && (s[i][k] >= s[i][1]) && (s[i][k] >= s[i][2]) && (s[i][k] >= s[i][3]) && (s[i][k] >= s[i][4]))
+			{
+				a++;
+				h = i + 1;
+				j = k + 1;
+				System.out.printf("%d %d %d",h,j,s[i][k]);
+			}
+		}
+		if (a == 0)
+		{
+			System.out.print("not found");
+		}
+		return 0;
+	}
+
+
+}
+

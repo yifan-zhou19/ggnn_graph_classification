@@ -1,0 +1,38 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	// ???????.cpp : ??????????????
+	//??????-?-?????????~~o?n?
+
+	///#include "stdafx.h"
+
+	public static int Main()
+	{
+	//int _tmain(int argc, _TCHAR* argv[])
+		String a = new String(new char[100]);
+		//char *pa=&a[0];
+		a = new Scanner(System.in).nextLine();
+		int len = a.length(); //?kk????????????
+		int kk = 0;
+		for (int i = 0;i < len;i++)
+		{
+			if (a.charAt(i) >= '0' && a.charAt(i) <= '9') //?????
+			{
+					System.out.print(a.charAt(i));
+					kk = 0;
+			}
+			else
+			{
+				if (kk == 0) //????????
+				{
+					kk++;
+					System.out.print("\n");
+				}
+			}
+		}
+		return 0;
+	}
+
+
+}

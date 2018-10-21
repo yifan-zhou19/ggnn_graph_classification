@@ -1,0 +1,36 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	public static int Main()
+	{
+		int N;
+		N = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+		int[] a = new int[100]; //??????????
+		a[99] = 1; //?????????????1
+		for (int i = 1;i <= N;i++)
+		{
+			for (int j = 0;j <= 99;j++)
+			{
+				a[j] = a[j] * 2; //?????2
+				if (a[j] >= 10) //????????10
+				{
+					a[j - 1] = a[j - 1] + 1; //?????
+					a[j] = a[j] - 10; //???10
+				}
+			}
+		}
+		int i = 0;
+		while (a[i] == 0)
+		{
+			i++; //???????????????????
+		}
+		for (int j = i;j <= 99;j++)
+		{
+			System.out.print(a[j]);
+		}
+		System.out.print("\n");
+		return 0;
+	}
+}
+

@@ -1,0 +1,75 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	public static int Main()
+	{
+	   int n;
+	   int i;
+	   int sum1 = 0;
+	   int sum2 = 0;
+	   int a;
+	   int b;
+	  String tempVar = ConsoleInput.scanfRead();
+	  if (tempVar != null)
+	  {
+		  n = Integer.parseInt(tempVar);
+	  }
+	 for (i = 0;i < n;i++)
+	 {
+					 String tempVar2 = ConsoleInput.scanfRead();
+					 if (tempVar2 != null)
+					 {
+						 a = Integer.parseInt(tempVar2);
+					 }
+					 String tempVar3 = ConsoleInput.scanfRead(" ");
+					 if (tempVar3 != null)
+					 {
+						 b = Integer.parseInt(tempVar3);
+					 }
+					 if (a == b)
+					 {
+					 sum1 = sum1 + 0;
+					 }
+				 if (a == 0 && b == 1)
+				 {
+				 sum1++;
+				 }
+				 if (a == 1 && b == 2)
+				 {
+				 sum1++;
+				 }
+				 if (a == 2 && b == 0)
+				 {
+				 sum1++;
+				 }
+				 if (a == 0 && b == 2)
+				 {
+				 sum2++;
+				 }
+				 if (a == 1 && b == 0)
+				 {
+				 sum2++;
+				 }
+				 if (a == 2 && b == 1)
+				 {
+				 sum2++;
+				 }
+
+	 }
+	 if (sum1 > sum2)
+	 {
+	  System.out.print("A");
+	 }
+	  if (sum1 == sum2)
+	  {
+	  System.out.print("Tie");
+	  }
+	  if (sum1 < sum2)
+	  {
+	  System.out.print("B");
+	  }
+	}
+
+}
+

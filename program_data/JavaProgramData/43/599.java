@@ -1,0 +1,43 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	public static int Main()
+	{
+	   int m;
+	   int i;
+	   int j;
+	   int flag = 0;
+	   String tempVar = ConsoleInput.scanfRead();
+	   if (tempVar != null)
+	   {
+		   m = Integer.parseInt(tempVar);
+	   }
+	   for (i = 3;i <= m / 2;i += 2)
+	   {
+		  {
+			for (j = 3;j <= Math.sqrt(i);j += 2)
+			{
+			if (i % j == 0)
+			{
+				flag = 1;
+			}
+			}
+			for (j = 3;j <= Math.sqrt(m - i);j += 2)
+			{
+			if ((m - i) % j == 0)
+			{
+				flag = 1;
+			}
+			}
+	  }
+		  if (flag == 0)
+		  {
+			  System.out.printf("%d %d\n",i,m - i);
+		  }
+		  flag = 0;
+	   }
+	   return 0;
+	}
+}
+

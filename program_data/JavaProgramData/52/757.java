@@ -1,0 +1,62 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	public static void Main(String[] args)
+	{
+		int m;
+		int n;
+		int i;
+		int j;
+		int t;
+//C++ TO JAVA CONVERTER TODO TASK: Java does not have an equivalent to pointers to value types:
+//ORIGINAL LINE: int *p;
+		int p;
+		String tempVar = ConsoleInput.scanfRead();
+		if (tempVar != null)
+		{
+			n = Integer.parseInt(tempVar);
+		}
+		String tempVar2 = ConsoleInput.scanfRead();
+		if (tempVar2 != null)
+		{
+			m = Integer.parseInt(tempVar2);
+		}
+//C++ TO JAVA CONVERTER TODO TASK: The memory management function 'malloc' has no equivalent in Java:
+		p = (int)malloc((Integer.SIZE / Byte.SIZE) * n);
+
+		for (i = 0;i < n;i++)
+		{
+			String tempVar3 = ConsoleInput.scanfRead();
+			if (tempVar3 != null)
+			{
+				(p + i) = Integer.parseInt(tempVar3);
+			}
+		}
+
+		for (i = 0;i < m;i++)
+		{
+			t = (p + n - 1);
+			for (j = n - 1;j >= 1;j--)
+			{
+				*(p + j) = *(p + j - 1);
+			}
+			p = t;
+		}
+
+		for (i = 0;i < n - 1;i++)
+		{
+			System.out.printf("%d ",*(p + i));
+		}
+			System.out.printf("%d",*(p + n - 1));
+
+		System.out.print("\n");
+//C++ TO JAVA CONVERTER TODO TASK: The memory management function 'free' has no equivalent in Java:
+		free(p);
+	}
+
+
+
+
+}
+

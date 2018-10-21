@@ -1,0 +1,21 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	public static int Main()
+	{
+	   int n;
+	   int m;
+	   int i;
+	   int s;
+	   while (scanf("%d %d", n, m) && n != 0 && m != 0)
+	   {
+		s = 0;
+		   for (i = 2; i <= n; i++)
+		   {
+		   s = (s + m) % i;
+		   }
+		   System.out.printf("%d\n", s + 1);
+	   }
+	}
+}

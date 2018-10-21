@@ -1,0 +1,47 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	public static int Main()
+	{
+		   int n;
+		   int[] a = new int[12];
+		   int i;
+		   int j;
+		   int s;
+		   int k;
+		   String tempVar = ConsoleInput.scanfRead();
+		   if (tempVar != null)
+		   {
+			   n = Integer.parseInt(tempVar);
+		   }
+		   a[0] = 0;
+		   a[1] = 31;
+		   a[2] = 28;
+		   a[3] = 31;
+		   a[4] = 30;
+		   a[5] = 31;
+		   a[6] = 30;
+		   a[7] = 31;
+		   a[8] = 31;
+		   a[9] = 30;
+		   a[10] = 31;
+		   a[11] = 30;
+		   for (i = 1;i <= 12;i++)
+		   {
+					  s = 13;
+					  for (j = 1;j <= i;j++)
+					  {
+						   s = s + a[j - 1];
+					  }
+					  k = s - 1 + n;
+					  if (k % 7 == 5)
+					  {
+					  System.out.printf("%d\n",i);
+					  }
+		   }
+
+	}
+
+}
+

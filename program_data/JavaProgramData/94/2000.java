@@ -1,0 +1,72 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	/*??
+	???????N????500???????????????????????????
+	
+	????
+	?2?
+	?1?? N
+	?2?? N ?????????????
+	
+	
+	????
+	????????????????????
+	*/
+	public static int Main()
+	{
+		int n;
+		int[] a = new int[500];
+		int[] b = new int[500];
+		n = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+		int k = 1;
+		for (int i = 1;i <= n;i++)
+		{
+			a[i] = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+			int z = a[i] % 2;
+			if (z == 1)
+			{
+				b[k] = a[i];
+				k++; //???????
+			}
+		}
+
+			//?????
+			for (int i = 1;i < k;i++)
+			{
+					int p = 10000;
+					int m;
+					for (int j = i;j < k;j++)
+					{
+						if (b[j] < p)
+						{
+						p = b[j];
+						m = j;
+						}
+					}
+					int t;
+					t = b[i];
+					b[i] = b[m];
+					b[m] = t;
+
+			}
+
+		for (int i = 1;i < k;i++)
+		{
+			if (i == 1)
+			{
+				System.out.print(b[i]);
+			}
+			else
+			{
+				System.out.print(",");
+				System.out.print(b[i]);
+			}
+		}
+		return 0;
+	}
+
+
+}
+

@@ -1,0 +1,24 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	public static void Main(String[] args)
+	{
+		int n;
+		int[] a = new int[7];
+		String tempVar = ConsoleInput.scanfRead();
+		if (tempVar != null)
+		{
+			n = Integer.parseInt(tempVar);
+		}
+		a[0] = n / 100;
+		a[1] = (n - a[0] * 100) / 50;
+		a[2] = (n - a[0] * 100 - a[1] * 50) / 20;
+		a[3] = (n - a[0] * 100 - a[1] * 50 - a[2] * 20) / 10;
+		a[4] = (n - a[0] * 100 - a[1] * 50 - a[2] * 20 - a[3] * 10) / 5;
+		a[5] = n - a[0] * 100 - a[1] * 50 - a[2] * 20 - a[3] * 10 - a[4] * 5;
+		System.out.printf("%d\n%d\n%d\n%d\n%d\n%d\n",a[0],a[1],a[2],a[3],a[4],a[5]);
+	}
+
+}
+

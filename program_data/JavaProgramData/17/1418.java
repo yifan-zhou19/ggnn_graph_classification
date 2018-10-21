@@ -1,0 +1,72 @@
+import java.util.*;
+
+package <missing>;
+
+public class GlobalMembers
+{
+	public static int Main()
+	{
+		String line = new String(new char[101]); //label???????
+		String label = new String(new char[101]);
+		int[] pos = new int[100]; //pos???????????
+		int left = 0; //?????????
+		int right = 0;
+		int pos_i; // ??????pos_i?????0
+		int len;
+		int i;
+		while (line = new Scanner(System.in).nextLine()) //??????
+		{
+			pos_i = -1, left = 0;
+			right = 0; //?????????????
+
+			len = line.length();
+
+			for (i = 0; i < 100; i++) //???label
+			{
+				label = tangible.StringFunctions.changeCharacter(label, i, ' ');
+			}
+
+			for (i = 0; line.charAt(i) != '\0'; i++)
+			{
+				if (line.charAt(i) == '(')
+				{
+				//???????????	
+					pos[++pos_i] = i;
+					left++;
+				}
+				  if (line.charAt(i) == ')')
+				  {
+					if (left <= right) //????????????????
+					{
+						label = tangible.StringFunctions.changeCharacter(label, i, '?'); //?????????
+					}
+					else
+					{
+						right++;
+						pos_i--;
+					}
+				  } //???????????????
+			}
+
+			if (pos_i >= 0) // ???-1????-1???????????
+			{
+				for (i = 0; i <= pos_i; i++)
+				{
+					label = tangible.StringFunctions.changeCharacter(label, pos[i], '$'); //??????????�$�
+				}
+			}
+
+
+			i = len - 1;
+
+			label = tangible.StringFunctions.changeCharacter(label, i + 1, '\0'); //???????
+
+			System.out.print(line);
+			System.out.print("\n");
+			System.out.print(label);
+			System.out.print("\n");
+		}
+	   return 0;
+	}
+}
+

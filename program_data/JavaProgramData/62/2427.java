@@ -1,0 +1,66 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	public static int Main()
+	{
+		char a;
+		char[][] s = new char[100][100];
+		int n = 0;
+		int i = 1;
+		int j = 1;
+		int[] remj = new int[100];
+		int remi;
+		int out = 0;
+		int count = 1;
+		 while (cin.get(a) && a != '\n') //?????????
+		 {
+			  if (a != ' ')
+			  {
+				count = 1;
+				s[i][j] = a;
+				j++;
+			  } //???i?????j???????????
+		  else if (a == ' ')
+		  {
+				if (count == 1)
+				{
+				remj[i] = j - 1;
+				j = 0;
+				i++;
+				s[i][j] = a;
+				j++;
+				} //????????????????i????j
+			 count++; //???????
+		  }
+		 }
+		  remj[i] = j - 1; //????????????
+		 remi = i; //remi?????
+
+		 for (i = 1;i < remi;i++)
+		 {
+			 for (j = 1;j <= remj[i];j++)
+			 {
+				System.out.print(s[i][j]);
+				out++; //?????????????
+			  if (out == remj[i]) //?????????????????
+			  {
+				  System.out.print(' ');
+				  out = 0;
+			  }
+			 }
+		 }
+		 for (j = 1;j <= remj[remi];j++)
+		 {
+			 System.out.print(s[remi][j]);
+		 }
+
+
+		return 0;
+	}
+
+
+
+
+
+}

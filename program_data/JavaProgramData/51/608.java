@@ -1,0 +1,84 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	//********************************
+	//*???n-gram????   **
+	//*?????? 1300012855 **
+	//*???2013.12.11  **
+	//********************************
+
+
+	public static int Main()
+	{
+		int glen; // ????
+		glen = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+		String ar = new String(new char[505]);
+		ar = ConsoleInput.readToWhiteSpace(true).charAt(0);
+		int slen; // ????
+		slen = ar.length();
+//C++ TO JAVA CONVERTER TODO TASK: Java does not allow declaring types within methods:
+	//	struct substr // ??????????(????????)
+	//	{
+	//		int position; // ????
+	//	}
+	//	maxstr[100];
+		int maxnum = 1; // ???????
+		int cmppo = 0;
+		int crtpo = 0;
+		int maxtype = 0;
+		int strnum = 0;
+		while (cmppo <= slen - glen) // ??????????????????
+		{
+			strnum = 0; // ???????0
+			crtpo = cmppo; // ?cmppo??????
+			while (crtpo <= slen - glen)
+			{
+				for (int i = 0; i < glen; i++)
+				{
+					if (!(*(ar.Substring(crtpo) + i) == *(ar.Substring(cmppo) + i))) // ????????????
+					{
+						break;
+					}
+					if (i == glen - 1) // ????????????strnum+
+					{
+						strnum++;
+					}
+				}
+				crtpo++; // ???????
+			}
+			if (strnum > maxnum) // ??????????
+			{
+				maxtype = 1; // ????1
+				maxstr[maxtype].position = cmppo; // ????
+				maxnum = strnum; // ????
+			}
+			else if (strnum == maxnum) // ??????????????
+			{
+				maxtype++; // ????1
+				maxstr[maxtype].position = cmppo; // ????
+			}
+			cmppo++; // ???????
+		}
+		if (maxnum == 1) // ??????????1????no
+		{
+			System.out.print("NO");
+			System.out.print("\n");
+		}
+		else
+		{
+			System.out.print(maxnum);
+			System.out.print("\n");
+			for (int j = 1; j <= maxtype; j++) // ????????
+			{
+				for (int i = 0; i < glen; i++)
+				{
+					System.out.print((ar + maxstr[j].position + i));
+				}
+				System.out.print("\n");
+			}
+		}
+		return 0;
+	}
+}
+

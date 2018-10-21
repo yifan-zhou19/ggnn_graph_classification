@@ -1,0 +1,43 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	//??????   ???   1000012729
+	public static int Main()
+	{
+		int a; //??a,b,c?A,B,C??????
+		int b;
+		int c;
+		int i;
+		String eat = new String(new char[3]); //?????????????
+		int ansa = 0; //????????
+		int ansb = 0;
+		int ansc = 0;
+		for (a = 0;a < 3;a++)
+		{
+			for (b = 0;b < 3;b++)
+			{
+				for (c = 0;c < 3;c++)
+				{
+					ansa = (b < a) + (c == a); //A??
+					ansb = (a < b) + (a < c); //B??
+					ansc = (c < b) + (b < a); //C??
+					if (ansa == a && ansb == b && ansc == c) //????????????????????
+					{
+						eat = tangible.StringFunctions.changeCharacter(eat, a, 'A'); //???????????????
+						eat = tangible.StringFunctions.changeCharacter(eat, b, 'B');
+						eat = tangible.StringFunctions.changeCharacter(eat, c, 'C');
+					}
+				}
+			}
+		}
+		for (i = 2;i >= 0;i--) //??????????????
+		{
+			System.out.print(eat.charAt(i));
+		}
+			System.out.print("\n");
+			return 0;
+	}
+
+}
+

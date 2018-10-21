@@ -1,0 +1,56 @@
+import java.util.*;
+
+/*
+ *?????
+ *???2010 - 12 - 31
+ *?????????    ????
+ */
+String line = new String(new char[101]);
+char boy;
+char girl;
+int[] sign = new int[101];
+int len;
+void answer(int);
+int main()
+{
+	line = new Scanner(System.in).nextLine();
+	int i;
+	len = line.length();
+	boy = line.charAt(0); //??????????boy
+	for (i = 1; i < len; i++)
+	{
+		if (line.charAt(i) != boy)
+		{
+			girl = line.charAt(i); //????????boy?????Girl??????????????????
+			break;
+		}
+	}
+	answer(i);
+	return 0;
+}
+void answer(int g)
+{
+	int i;
+	int j;
+	for (i = g; i < len; i++)
+	{
+		if ((sign[i] == 0) && (line.charAt(i) == girl)) //???????sign???????????????
+		{
+			sign[i]++;
+			for (j = i; j >= 0; j--)
+			{
+				if ((sign[j] == 0) && (line.charAt(j) == boy))
+				{
+					sign[j]++;
+					System.out.print(j);
+					System.out.print(" ");
+					System.out.print(i);
+					System.out.print("\n");
+					answer(i); //?????????????
+					break;
+				}
+			}
+		}
+	}
+	return;
+}
