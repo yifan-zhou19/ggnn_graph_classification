@@ -37,6 +37,7 @@ n=$2
 k=$(size_voc $lang2)
 cd .. > /dev/null
 log=program_data/$lang1/log-$n.txt
+rm -f $log
 if [ -f program_data/$lang1/$n.cpkl ]; then
    return
 fi
@@ -69,7 +70,7 @@ cd - > /dev/null
 
 function cll_train() {
 lang1=$1
-lang2=cll_${lang1/cpp/java}
+lang2=${lang1/cpp/cll_java}
 k=$(size_voc $lang2)
 n=$2
 log=$lang1/cll-log-$n.txt
@@ -134,4 +135,6 @@ elif [ "$1" == "github_cpp" ]; then
 	mll_train github_cpp_babi_format_$ver $2 | tee -a status.log
 elif [ "$1" == "github_biggnn" ]; then
 	cll_train github_cpp_babi_format_$ver $2 | tee -a status.log
+else
+	cll_train $1/cpp_babi_format_$ver $2 $3 | tee -a status.log
 fi

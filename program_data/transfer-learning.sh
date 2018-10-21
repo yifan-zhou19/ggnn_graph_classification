@@ -3,26 +3,55 @@ rm -f transfer-learning.log
 docker run --entrypoint sh -v $(pwd):/e -w /e busybox -c 'rm -rf cpp_babi_format_Oct-15-2018-0000029/logs'
 rm -rf cpp_babi_format_Oct-15-2018-0000029/logs
 n=2
+function prepare_data() {
+   x=$1
+   mkdir -p $x/$folder/train $x/$folder/test
+   mkdir -p $x/cll_${folder/cpp/java}/train $x/cll_${folder/cpp/java}/test
+   cp $folder/maps.*.pkl $x/$folder
+   cp cll_${folder/cpp/java}/maps.*.pkl $x/cll_${folder/cpp/java}/
+   for f in $(wc $folder/train/*.txt | sort -n -r | grep -v total | tail -$x | cut -f3 -d'/' | cut -f2 -d'_'); do
+       cp $folder/train/train_$f $x/$folder/train/train_$f
+       cp $folder/test/test_$f $x/$folder/test/test_$f
+       cp cll_${folder/cpp/java}/train/train_$f $x/cll_${folder/cpp/java}/train/train_$f
+       cp cll_${folder/cpp/java}/test/test_$f $x/cll_${folder/cpp/java}/test/test_$f
+   done
+   chmod -R o+w $x
+}
 function transfer() {
         n1=$((n*2))
-        m=$(grep Test $folder/cll-log-$n.txt | cat -n | sort -n -k8 | tail -1 | cut -f1)
-        p=$(grep Test $folder/cll-log-$n.txt | cat -n | sort -n -k8 | tail -1 | cut -f2 -d",")
-        percent=$(grep Test $folder/cll-log-$n.txt | cat -n | sort -n -k8 | tail -1 | cut -f2 -d"," | cut -d"(" -f2 | cut -d"%" -f1)
+        m=$(grep Test $n/$folder/cll-log-$n.txt | cat -n | sort -n -k6 -r | tail -1 | cut -f1)
+        p=$(grep Test $n/$folder/cll-log-$n.txt | cat -n | sort -n -k6 -r | tail -1 | cut -f2 -d",")
+        percent=$(grep Test $n/$folder/cll-log-$n.txt | cat -n | sort -n -k6 -r | tail -1 | cut -f2 -d"," | cut -d"(" -f2 | cut -d"%" -f1)
         echo ============= $percent
-        while [ $((percent < 55)) ]; do
-           train.sh biggnn $n 200
+        while [ "$percent" -lt "55" ]; do
+	   cp $n/$folder/cll-$n.cpkl.$m1 $n/$folder/cll-$n.cpkl
+           train.sh $n $n 20
            echo ============= $percent
         done
         m1=$((m-1))
         echo ===== transfer $n @ $m1 $p to $n1
-	rm -f $folder/cll-$n1.cpkl*
-	cp $folder/cll-$n.cpkl.$m1 $folder/cll-$n1.cpkl
-        chmod o+w $folder/cll-$n1.cpkl
-        train.sh biggnn $n1 200
+        prepare_data $n1
+	rm -f $n1/$folder/cll-$n1.cpkl*
+	cp $n/$folder/cll-$n.cpkl.$m1 $n1/$folder/cll-$n1.cpkl.0
+	cp $n/$folder/cll-$n.cpkl.$m1 $n1/$folder/cll-$n1.cpkl
+        chmod o+w $n1/$folder/cll-$n1.cpkl
+        old_percent=0
+        if [ -f cll-$n.percent ]; then
+          old_percent=$(grep -v ==== cll-$n.percent | tail -1)
+        fi
+        if [ "$percent" -gt "$old_percent" ]; then
+	  cp $n/$folder/cll-$n.cpkl.$m1 cll-$n.cpkl
+          echo ====== $m1 >> cll-$n.percent
+          echo $percent >> cll-$n.percent
+        fi
+        train.sh $n1 $n1 20
         export n=$n1
 }
-rm -f $folder/cll-2.cpkl*
-train.sh biggnn 2 200
+prepare_data 2
+cp cll-2.cpkl 2/$folder/cll-2.cpkl
+cp cll-2.cpkl 2/$folder/cll-2.cpkl.0
+chmod o+w 2/$folder/cll-2.cpkl
+train.sh 2 2 20
 for i in `seq 1 7`; do
   transfer | tee -a transfer-learning.log
 done 
