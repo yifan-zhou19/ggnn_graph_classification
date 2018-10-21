@@ -1,7 +1,7 @@
 # Program data
 ```
-CppProgramData           -- 51,999 .cpp  programs from PKU datasets, organised in 104 classes
-JavaProgramData		 -- 51,999 .java programs from PKU datasets converted from the above
+CppProgramData           -- 52,000 .cpp  programs from PKU datasets, organised in 104 classes
+JavaProgramData		 -- 52,000 .java programs from PKU datasets converted from the above
 github_cpp_program_data  --  4,932 .cpp  programs crawled from Github organised in 50 classes, 
 			     after removing clones
 github_java_program_data --  4,732 .java programs crawled from Github organised in 50 classes, 
@@ -11,8 +11,10 @@ github_java_program_data --  4,732 .java programs crawled from Github organised 
 ```
 ./gen.sh                 ## generate datasets from program data
 ./train.sh               ## train models using the datasets
-./tensorboard.sh         ## visualise training progresses in tensorboards
 ./test.sh                ## test performance of models of the latest epochs in the training processes
+./transfer-learning.sh   ## transfer cross-language learning model to problem of more classes
+./test2.sh               ## test performance on the latest epochs of transferred learning models
+./tensorboard.sh         ## visualise training progresses in tensorboards
 ```
 
 ## Auxilliary tools used in the converstions
