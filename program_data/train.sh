@@ -27,22 +27,24 @@ function size_voc() {
 
 function mll_train() {
 lang1=$1
-lang2=${1/java/cpp}
+lang2=$(dirname $lang1)/cll_$(basename $lang1)
+lang2=${lang2/cpp/java}
 if [ "$lang1" == "$lang2" ]; then
-   lang=cpp
-else
    lang=java
+else
+   lang=cpp
 fi
 n=$2
+n_iter=${3:-200}
 k=$(size_voc $lang2)
 cd .. > /dev/null
-log=program_data/$lang1/log-$n.txt
-rm -f $log
-if [ -f program_data/$lang1/$n.cpkl ]; then
+log=${lang1/java/cpp}/$lang-log-$n.txt
+if [ -f program_data/${lang1/java/cpp}/$lang-$n.cpkl ]; then
    return
 fi
-mkdir -p program_data/$lang2/logs/$lang/$n
-chmod o+w program_data/$lang2/logs/$lang/$n
+echo mkdir -p program_data/${lang1/java/cpp}/logs/$lang/$n
+mkdir -p program_data/${lang1/java/cpp}/logs/$lang/$n
+chmod o+w program_data/${lang1/java/cpp}/logs/$lang/$n
 if [ ! -f $log ]; then
  mkdir -p $(dirname $log)
  touch -f $log
@@ -56,11 +58,11 @@ NV_GPU=1 \
 	--n_classes $n \
         --directory  program_data/$lang1 \
 	--model_path program_data/$lang1/$n.cpkl \
-	--log_path program_data/$lang2/logs/$lang/$n \
+	--log_path program_data/$(basename ${lang1/java/cpp})/logs/biggnn/$n \
         --state_dim 5 \
 	--n_steps 5 \
 	--n_hidden 50 \
-	--niter 200 \
+	--niter $n_iter \
 	--size_vocabulary $k \
 	--train_batch_size 256 \
 	--test_batch_size 256 \
@@ -119,23 +121,27 @@ ver=Oct-10-2018-0000028
 ver=Oct-15-2018-0000029
 if [ "$1" == "" ]; then
 	for n in 104 50 25 10; do
-	   train $n cpp_babi_format_$ver | tee -a status.log
+	   train $n cpp_babi_format_$ver $3 | tee -a status.log
 	done
 	for n in 50 30 10; do
-	   train $n github_cpp_babi_format_$ver | tee -a status.log
+	   train $n github_cpp_babi_format_$ver $3 | tee -a status.log
 	done
 elif [ "$1" == "java" ]; then
-	mll_train java_babi_format_$ver $2 | tee -a status.log
+	mll_train java_babi_format_$ver $2 $3 | tee -a status.log
 elif [ "$1" == "cpp" ]; then
-	mll_train cpp_babi_format_$ver $2 | tee -a status.log
+	mll_train cpp_babi_format_$ver $2 $3 | tee -a status.log
 elif [ "$1" == "biggnn" ]; then
 	cll_train cpp_babi_format_$ver $2 $3 | tee -a status.log
 elif [ "$1" == "github_java" ]; then
-	mll_train github_java_babi_format_$ver $2 | tee -a status.log
+	mll_train github_java_babi_format_$ver $2 $3 | tee -a status.log
 elif [ "$1" == "github_cpp" ]; then
-	mll_train github_cpp_babi_format_$ver $2 | tee -a status.log
+	mll_train github_cpp_babi_format_$ver $2 $3 | tee -a status.log
 elif [ "$1" == "github_biggnn" ]; then
 	cll_train github_cpp_babi_format_$ver $2 $3 | tee -a status.log
 else
+     if [ "$mode" == "cll-" ]; then
 	cll_train $1 $2 $3 | tee -a status.log
+     else
+	mll_train $1 $2 $3 | tee -a status.log
+     fi
 fi
