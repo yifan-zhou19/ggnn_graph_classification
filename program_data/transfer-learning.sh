@@ -35,6 +35,7 @@ function prepare_data() {
    mkdir -p $x/${folder/cpp/java}/train $x/${folder/cpp/java}/test
    mkdir -p $x/cll_${folder/cpp/java}/train $x/cll_${folder/cpp/java}/test
    cp $folder/maps.*.pkl $x/$folder
+   cp ${folder/cpp/java}/maps.*.pkl $x/${folder/cpp/java}/
    cp cll_${folder/cpp/java}/maps.*.pkl $x/cll_${folder/cpp/java}/
    ################################################################################
    # STRATEGY 3: Prepare the datasets selectively. 
@@ -149,8 +150,9 @@ else
 fi
 n=2
 for n in 2 4 6 8 10 12 14 16 20 25 30; do
+#for n in 4 6 8 10 12 14 16 20 25 30; do
 # change to the following line for testing 
-# for n in 2; do
+ for n in 2; do
   #n=$((n*2))
   #n=$((n+1))
   for n1 in 4 6 8 10 12 14 16 20 25 30 50; do
