@@ -1,0 +1,33 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	public static void change(int a)
+	{
+		int num;
+		num = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+		a = a - 1; //????????????????1
+		if (a >= 1)
+		{
+			change(a); //???????????????????change()??????????????????
+		}
+		if (a == 0)
+		{
+			System.out.print(num);
+		}
+		else
+		{
+			System.out.print(" ");
+			System.out.print(num);
+		}
+	}
+	public static int Main()
+	{
+		int n;
+		n = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+		System.in.read(); //?????
+		change(n);
+		return 0;
+	}
+}
+

@@ -1,0 +1,72 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	//******************************************************************
+	//*?????????????? ************************************
+	//*??????? 1200012979 ***************************************
+	//*???2012.10.29 ************************************************
+	//******************************************************************
+	public static int Main()
+	{
+		int n;
+		int i;
+		int k;
+		int j;
+		int[] a = new int[100001];
+		int s;
+		int p;
+		int m;
+		n = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+		for (i = 1 ; i <= n ; i++)
+		{
+			a[i] = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+		}
+		s = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+		if (n > 1) //????????????????
+		{ //????
+		  for (k = 1 ; k <= n - 1 ; k++) //???????????????
+		  {
+			if (a[k] == s) //??????????????
+			{
+				for (j = k ; j <= n - 1 ; j++)
+				{
+					a[j] = a[j + 1];
+				}
+
+				n = n - 1; //????????
+				k = k - 1; //k?????????k???????
+			}
+		  }
+		  for (p = 1 ; p <= n ; p++)
+		  {
+			  if (p == n) //????????????
+			  {
+				  if (a[p] == s) //?????????????
+				  {
+				  p = p - 1;
+				  }
+				  break;
+			  }
+		  }
+		  if (p > 0) //???????
+		  {
+		  System.out.print(a[1]);
+		  }
+		  if (p > 1) //?????????????
+		  {
+			  for (m = 2 ; m <= p ; m++)
+			  {
+			  System.out.print(" ");
+			  System.out.print(a[m]);
+			  }
+		  }
+		}
+		else if (a[1] != s) //??????????
+		{
+			System.out.print(a[1]);
+		}
+		return 0;
+	}
+}
+

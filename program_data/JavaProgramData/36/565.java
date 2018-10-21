@@ -1,0 +1,54 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	public static void sxpl(String x)
+	{
+		int i;
+		int j;
+		int k;
+		int l;
+		char m;
+		l = x.length();
+		for (i = 0;i < l - 1;i++)
+		{
+			k = i;
+			for (j = i + 1;j < l;j++)
+			{
+				if (x[j].compareTo(x[k]) < 0)
+				{
+					k = j;
+				}
+			}
+			m = x[k];
+			x[k] = x[i];
+			x[i] = m;
+		}
+	}
+	public static void Main()
+	{
+		String a = new String(new char[50]);
+		String b = new String(new char[50]);
+		String tempVar = ConsoleInput.scanfRead();
+		if (tempVar != null)
+		{
+			a = tempVar.charAt(0);
+		}
+		String tempVar2 = ConsoleInput.scanfRead();
+		if (tempVar2 != null)
+		{
+			b = tempVar2.charAt(0);
+		}
+		sxpl(a);
+		sxpl(b);
+		if (strcmp(a,b) == 0)
+		{
+			System.out.print("YES\n");
+		}
+		else
+		{
+			System.out.print("NO\n");
+		}
+	}
+}
+

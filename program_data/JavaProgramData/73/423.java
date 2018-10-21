@@ -1,0 +1,89 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	//*******************************************************
+	//*10.26??  ????                                  *
+	//*?????  ?? 1100012844                          *
+	//*???2011?10?26?                                 *
+	//*******************************************************
+	public static int Main()
+	{
+		// ??????,????a[1][1]?a[5][5]
+		int[][] a = new int[6][6];
+		int i;
+		int j;
+		int row;
+		int colum;
+		int k;
+		int max;
+		int flag = 1;
+		int m;
+		int n;
+
+		// ????
+		for (i = 1; i <= 5; i++)
+		{
+			for (j = 1; j <= 5; j++)
+			{
+				a[i][j] = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+			}
+		}
+
+		// ????????i?????max,????row???colum ???max???
+		// colum??????,?????
+		for (i = 1; i <= 5; i++)
+		{
+			max = a[i][1]; // ????i???1?????
+			n = 1;
+			for (j = 1; j <= 5; j++)
+			{
+
+				// ??i????max???????max
+				if (a[i][j] > max)
+				{
+					max = a[i][j];
+					row = i;
+					colum = j;
+					n = 0; // n=0??max????
+				}
+			}
+
+			// ??max?????row=i,colum=1
+			if (n != 0)
+			{
+				row = i;
+				colum = 1;
+			}
+
+			// ???max?colum??????
+			m = 1;
+			for (k = 1; k <= 5; k++)
+			{
+				if (max > a[k][colum])
+				{
+					m = 0; // ??max???????m??0
+				}
+			}
+
+			// m=1?(max?colum????)???
+			if (m != 0)
+			{
+				System.out.print(row);
+				System.out.print(" ");
+				System.out.print(colum);
+				System.out.print(" ");
+				System.out.print(max);
+				flag = 0;
+			}
+		}
+
+		// ?????????flag??0,?????flag??1
+		if (flag != 0)
+		{
+			System.out.print("not found");
+		}
+		return 0;
+	}
+}
+

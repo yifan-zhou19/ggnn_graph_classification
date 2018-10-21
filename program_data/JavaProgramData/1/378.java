@@ -1,0 +1,50 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	/*
+	 * hanshu_huisu_1.cpp
+	 * Name?????
+	 *  Created on: 2010-12-7
+	 *      Author: ??
+	 */
+
+	public static int n;
+	public static int c;
+	public static int solutionnumber(int n,int c)
+	{ //n?????,c???
+		if (n == c)
+		{
+			return 1; //?n=c???????????????????????1
+		}
+		if (n < c)
+		{
+			return 0; //??n<c?????????0
+		}
+		if (n % c == 0)
+		{
+			return solutionnumber(n / c, c) + solutionnumber(n, c + 1); /*?n??c???????
+		}
+		???c????????????n???c???????*/
+		else
+		{
+			return solutionnumber(n, c + 1);
+		}
+	}
+	public static int Main()
+	{
+		int N;
+		int a;
+		N = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+		while (N > 0)
+		{
+		a = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+		System.out.print(solutionnumber(a, 2));
+		System.out.print("\n");
+		N--;
+		}
+	return 0;
+	}
+
+}
+

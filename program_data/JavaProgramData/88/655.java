@@ -1,0 +1,47 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	/*
+	 * Pointer1.8GetNumber.cpp
+	 * ????
+	 *  Created on: 2012-12-21
+	 *      Author: ???
+	 *      ??:??????????????????????????
+	 */
+	public static int Main()
+	{
+//C++ TO JAVA CONVERTER TODO TASK: Pointer arithmetic is detected on this variable, so pointers on this variable are left unchanged:
+		char * p;
+		String a = new String(new char[33]);
+		a = new Scanner(System.in).nextLine(); //??????a??????
+		p = a;
+		while (p - a <= a.length())
+		{ //???a??????
+			if (*p == '-')
+			{
+					p++;
+				while (*p >= '0' && *p <= '9')
+				{
+				p++;
+				}
+			} //?????????????
+			else if (*p >= '0' && *p <= '9') //????
+			{
+					System.out.print(p);
+				if (*(p + 1) < '0' || *(p + 1)>'9') //????????
+				{
+				System.out.print("\n");
+				}
+				p++;
+			}
+			else if (*p < '0' || *p>'9')
+			{
+				p++; //???????
+			}
+		} //while????
+
+			return 0;
+	}
+
+}

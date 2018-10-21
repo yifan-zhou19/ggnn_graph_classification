@@ -1,0 +1,117 @@
+public class student
+{
+	public String name = new String(new char[21]);
+	public int final;
+	public int cla;
+	public char stu;
+	public char west;
+	public int paper;
+	public int sch;
+}
+
+package <missing>;
+
+public class GlobalMembers
+{
+	public static int award(student p)
+	{
+		int total = 0;
+		if (p.final > 80 && p.paper > 0)
+		{
+			total += 8000;
+		}
+		if (p.final > 85 && p.cla > 80)
+		{
+			total += 4000;
+		}
+		if (p.final > 90)
+		{
+			total += 2000;
+		}
+		if (p.final > 85 && p.west == 'Y')
+		{
+			total += 1000;
+		}
+		if (p.cla > 80 && p.stu == 'Y')
+		{
+			total += 850;
+		}
+		return total;
+	}
+	public static int Main()
+	{
+		int n;
+		int i;
+		int j;
+		int all = 0;
+		student[] s = tangible.Arrays.initializeWithDefaultstudentInstances(100);
+		student[] p = tangible.Arrays.initializeWithDefaultstudentInstances(100);
+		String tempVar = ConsoleInput.scanfRead();
+		if (tempVar != null)
+		{
+			n = Integer.parseInt(tempVar);
+		}
+		for (i = 0;i < n;i++)
+		{
+			String tempVar2 = ConsoleInput.scanfRead();
+			if (tempVar2 != null)
+			{
+				s[i].name = tempVar2.charAt(0);
+			}
+			String tempVar3 = ConsoleInput.scanfRead(" ");
+			if (tempVar3 != null)
+			{
+				s[i].final = Integer.parseInt(tempVar3);
+			}
+			String tempVar4 = ConsoleInput.scanfRead(" ");
+			if (tempVar4 != null)
+			{
+				s[i].cla = Integer.parseInt(tempVar4);
+			}
+			String tempVar5 = ConsoleInput.scanfRead(" ", 1);
+			if (tempVar5 != null)
+			{
+				s[i].stu = tempVar5.charAt(0);
+			}
+			String tempVar6 = ConsoleInput.scanfRead(" ", 1);
+			if (tempVar6 != null)
+			{
+				s[i].west = tempVar6.charAt(0);
+			}
+			String tempVar7 = ConsoleInput.scanfRead(" ");
+			if (tempVar7 != null)
+			{
+				s[i].paper = Integer.parseInt(tempVar7);
+			}
+			p[i] = s[i];
+			s[i].sch = award(p[i]);
+			all += s[i].sch;
+		}
+		for (i = 0;i < n - 1;i++)
+		{
+			for (j = i + 1;j < n;j++)
+			{
+				if (s[j].sch > s[i].sch)
+				{
+					student temp = new student();
+//C++ TO JAVA CONVERTER TODO TASK: The following line was determined to be a copy assignment (rather than a reference assignment) - this should be verified and a 'copyFrom' method should be created:
+//ORIGINAL LINE: temp=s[i];
+					temp.copyFrom(s[i]);
+					s[i] = s[j];
+					s[j] = temp;
+				}
+			}
+		}
+		System.out.printf("%s\n%d\n%ld",s[0].name,s[0].sch,all);
+		return 0;
+	}
+	/*????????8000??????????80??>80???????????1??1????????????? 
+	2) ????????4000??????????85??>85????????????80??>80????????? 
+	3) ????????2000??????????90??>90????????? 
+	4) ????????1000??????????85??>85????????????? 
+	5) ????????850??????????80??>80??????????? 
+	???????????N?1 ? N ? 100??????????????N????????????
+	???????????????????????????????????????????????????*/
+
+}
+

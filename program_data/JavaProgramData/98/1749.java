@@ -1,0 +1,61 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	//********************
+	//**???????	**
+	//**?????		**
+	//**???2013.12.14**
+	//**????2.cpp	**
+	//********************
+	public static int Main()
+	{
+		char[][] word = new char[1000][40];
+		int n;
+		int i;
+		int g;
+		int temp = 1;
+		int[] cnt = new int[1000];
+		n = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+		for (i = 1; i <= n; i++)
+		{
+			word[i] = ConsoleInput.readToWhiteSpace(true).charAt(0);
+		}
+		for (i = 1; i <= n; i++)
+		{
+			cnt[i] = (cnt + i - 1) + String.valueOf(word[i]).length(); // ??????????
+
+			// ???????80???????????????????????????????????????????????
+			if ((cnt[i - 1] <= 81 && cnt[i] >= 81) || i == n)
+			{
+				for (g = temp; g < i - 1; g++) // ??????????
+				{
+					System.out.print(word[g]);
+					System.out.print(' ');
+				}
+				System.out.print(word[i - 1]);
+				if (i < n)
+				{
+					System.out.print("\n");
+				}
+				else
+				{
+					System.out.print(' ');
+					System.out.print(word[i]);
+					System.out.print("\n");
+					break;
+				}
+				temp = i;
+				cnt[i - 1] = 0; // ????????????0
+				i--; // i?1????????
+			}
+			else
+			{
+				(cnt[i])++; // ????????
+			}
+		}
+		return 0;
+	}
+
+}
+

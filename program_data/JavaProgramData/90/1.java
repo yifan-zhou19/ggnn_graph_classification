@@ -1,0 +1,55 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	public static int f(int m,int n)
+	{
+		int k;
+		if (n == 1 || m <= 1)
+		{
+			k = 1;
+		}
+		else
+		{
+			if (m >= n)
+			{
+				k = f(m, n - 1) + f(m - n, n);
+			}
+			else
+			{
+				k = f(m, n - 1);
+			}
+		}
+		return k;
+	}
+	public static void Main()
+	{
+		int[] m = new int[20];
+		int[] n = new int[20];
+		int t;
+		int i;
+		String tempVar = ConsoleInput.scanfRead();
+		if (tempVar != null)
+		{
+			t = Integer.parseInt(tempVar);
+		}
+		for (i = 0;i < t;i++)
+		{
+			String tempVar2 = ConsoleInput.scanfRead();
+			if (tempVar2 != null)
+			{
+				m[i] = Integer.parseInt(tempVar2);
+			}
+			String tempVar3 = ConsoleInput.scanfRead();
+			if (tempVar3 != null)
+			{
+				n[i] = Integer.parseInt(tempVar3);
+			}
+		}
+		for (i = 0;i < t;i++)
+		{
+			System.out.printf("%d\n",f(m[i], n[i]));
+		}
+	}
+}
+

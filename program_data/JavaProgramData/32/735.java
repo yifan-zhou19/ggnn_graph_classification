@@ -1,0 +1,85 @@
+import java.util.*;
+
+package <missing>;
+
+public class GlobalMembers
+{
+	//
+	//	?????	?????
+	//	?????	?2??????????
+	//	?????	?	? ? ? ?? 1000012733 ?
+	//	?????	2010 ? 11 ? 19 ?
+	//
+	public static int Main()
+	{
+		final int max = 100;
+		String str1 = new String(new char[max]);
+		String str2 = new String(new char[max]);
+		int[] num1 = new int[max];
+		int[] num2 = new int[max];
+		int n;
+		int i;
+		int j;
+		int k1;
+		int k2;
+		int l;
+		int p;
+		int q;
+		int len1;
+		int len2;
+		n = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+		for (i = 1; i <= n; i++)
+		{
+			System.in.read();
+//C++ TO JAVA CONVERTER TODO TASK: The memory management function 'memset' has no equivalent in Java:
+			memset(str1, 0, max);
+//C++ TO JAVA CONVERTER TODO TASK: The memory management function 'memset' has no equivalent in Java:
+			memset(str2, 0, max);
+			str1 = new Scanner(System.in).nextLine();
+			str2 = new Scanner(System.in).nextLine();
+			len1 = str1.length();
+			len2 = str2.length();
+//C++ TO JAVA CONVERTER TODO TASK: The memory management function 'memset' has no equivalent in Java:
+			memset(num1, 0, (Integer.SIZE / Byte.SIZE));
+//C++ TO JAVA CONVERTER TODO TASK: The memory management function 'memset' has no equivalent in Java:
+			memset(num2, 0, (Integer.SIZE / Byte.SIZE));
+			k1 = len1 - 1;
+			for (j = 0; j < len1; j++)
+			{
+				num1[k1] = str1.charAt(j) - '0';
+				k1--;
+			}
+			k2 = len2 - 1;
+			for (j = 0; j < len2; j++)
+			{
+				num2[k2] = str2.charAt(j) - '0';
+				k2--;
+			}
+			for (l = 0; l < len1; l++)
+			{
+				if (num1[l] >= num2[l])
+				{
+				num1[l] = num1[l] - num2[l];
+				}
+				else
+				{
+					num1[l] = num1[l] - num2[l] + 10;
+					num1[l + 1]--;
+				}
+			}
+			p = max - 1;
+			while (num1[p] == 0)
+			{
+				p--;
+			}
+			for (q = p; q > 0; q--)
+			{
+				System.out.print(num1[q]);
+			}
+			System.out.print(num1[0]);
+			System.out.print("\n");
+		}
+		return 0;
+	}
+}
+

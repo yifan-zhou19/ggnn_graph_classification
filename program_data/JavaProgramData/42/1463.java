@@ -1,0 +1,59 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	public static int Main()
+	{
+		int[] a = new int[100001];
+//C++ TO JAVA CONVERTER TODO TASK: The memory management function 'memset' has no equivalent in Java:
+		memset(a, 0, (Integer.SIZE / Byte.SIZE)); //??????
+		int n = 0;
+		int k = 0;
+		int t = 0;
+		String tempVar = ConsoleInput.scanfRead();
+		if (tempVar != null)
+		{
+			n = Integer.parseInt(tempVar);
+		}
+		for (int i = 0; i < n; i++)
+		{
+			String tempVar2 = ConsoleInput.scanfRead();
+			if (tempVar2 != null)
+			{
+				a[i] = Integer.parseInt(tempVar2);
+			}
+		}
+		String tempVar3 = ConsoleInput.scanfRead();
+		if (tempVar3 != null)
+		{
+			k = Integer.parseInt(tempVar3);
+		}
+		for (int i = 0; i < n; i++) //??????????????????
+		{
+			if (a[i] == k)
+			{
+				t++;
+			}
+		}
+		for (int l = 0;l <= t;l++) //???????????????t??
+		{
+			for (int i = 0;i < n;i++) //???????????????????????
+			{
+				if (a[i] == k)
+				{
+					for (int j = i; j < n; j++) //????????????????????????????
+					{
+						a[j] = a[j + 1];
+					}
+				}
+			}
+		}
+		System.out.printf("%d",a[0]); //??????????????
+		for (int i = 1; i < n - t; i++)
+		{
+			System.out.printf(" %d", a[i]); //????????????????????
+		}
+		return 0;
+	}
+}
+

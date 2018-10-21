@@ -1,0 +1,83 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	public static int max(int a, int b, int c, int d, int e)
+	{
+		int x = a;
+		if (b > x)
+		{
+			x = b;
+		}
+		if (c > x)
+		{
+			x = c;
+		}
+		if (d > x)
+		{
+			x = d;
+		}
+		if (e > x)
+		{
+			x = e;
+		}
+		return x;
+	}
+	public static int min(int a, int b, int c, int d, int e)
+	{
+		int x = a;
+		if (b < x)
+		{
+			x = b;
+		}
+		if (c < x)
+		{
+			x = c;
+		}
+		if (d < x)
+		{
+			x = d;
+		}
+		if (e < x)
+		{
+			x = e;
+		}
+		return x;
+	}
+
+	public static int Main()
+	{
+		int[][] sz = new int[5][5];
+		int row = 0;
+		int col = 0;
+		int refer = 0;
+		for (row = 0;row < 5;row++)
+		{
+			for (col = 0;col < 5;col++)
+			{
+				String tempVar = ConsoleInput.scanfRead();
+				if (tempVar != null)
+				{
+					sz[row][col] = Integer.parseInt(tempVar);
+				}
+			}
+		}
+		for (row = 0;row < 5;row++)
+		{
+			for (col = 0;col < 5;col++)
+			{
+				if (sz[row][col] == max(sz[row][0], sz[row][1], sz[row][2], sz[row][3], sz[row][4]) && sz[row][col] == min(sz[0][col], sz[1][col], sz[2][col], sz[3][col], sz[4][col]))
+				{
+					refer = 1;
+					System.out.printf("%d %d %d\n",row + 1,col + 1,sz[row][col]);
+				}
+			}
+		}
+		if (refer == 0)
+		{
+			System.out.print("not found");
+		}
+		return 0;
+	}
+}
+

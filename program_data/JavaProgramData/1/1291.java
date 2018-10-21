@@ -1,0 +1,52 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	/*
+	 * hehe.cpp
+	 *
+	 *  Created on: 2012-11-25
+	 *      Author:??
+	 * ???????a?????????????????a = a1 * a2 * a3 * ... * an?
+	 * ??1 < a1 <= a2 <= a3 <= ... <= an?????????????????a = a???????
+	 */
+
+	public static int sum = 1; //??????Sum
+	public static int Fact(int x, int y)
+	{
+		if (x == 1)
+		{
+			return 0; //???1???0
+		}
+		else
+		{
+			for (; y <= Math.sqrt(x); y++) //????????
+			{
+				if (x % y == 0)
+				{
+					sum = sum + Fact(x / y, y); //????????Fact(??y)
+				}
+			}
+			return 1;
+		}
+
+	}
+
+	public static int Main()
+	{
+		int n;
+		int a;
+		n = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+		for (int i = 0; i < n; i++)
+		{
+			a = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+			sum = 1; //????sum
+			Fact(a, 2); //????
+			System.out.print(sum);
+			System.out.print("\n");
+		}
+		return 0;
+	}
+
+}
+

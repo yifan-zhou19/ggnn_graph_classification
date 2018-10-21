@@ -1,0 +1,40 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	public static int Main() //?????
+	{ //?????
+		int i; //????
+		int j;
+		int n;
+		double max_dis = 0; //????????
+		double[][] a = new double[100][2]; //??????
+		double[][] dis = new double[100][100];
+		n = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+		for (i = 1;i <= n;i++) //?????????
+		{
+			a[i][0] = Double.parseDouble(ConsoleInput.readToWhiteSpace(true));
+			a[i][1] = Double.parseDouble(ConsoleInput.readToWhiteSpace(true));
+		}
+		for (i = 1;i <= n;i++) //???????????
+		{
+			for (j = i + 1;j <= n;j++)
+			{
+				dis[i][j] = Math.sqrt((a[i][0] - a[j][0]) * (a[i][0] - a[j][0]) + (a[i][1] - a[j][1]) * (a[i][1] - a[j][1]));
+			}
+		}
+		for (i = 1;i <= n;i++) //???????????
+		{
+			for (j = i + 1;j <= n;j++)
+			{
+				if (dis[i][j] > max_dis)
+				{
+				max_dis = dis[i][j];
+				}
+			}
+		}
+		System.out.printf("%.4f\n", max_dis); // ?????????????4?
+		return 0; //???????????????????
+	} //????
+}
+

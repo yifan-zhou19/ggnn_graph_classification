@@ -1,0 +1,49 @@
+import java.util.*;
+
+package <missing>;
+
+public class GlobalMembers
+{
+	/* ???????????.cpp
+	 * ??? 1200012826 ??
+	 * ???2012?12?9?
+	 */
+	public static int Main()
+	{
+		String a = new String(new char[200]);
+		int i;
+//C++ TO JAVA CONVERTER TODO TASK: Pointer arithmetic is detected on this variable, so pointers on this variable are left unchanged:
+		char * p = a;
+		String q = null;
+		a = new Scanner(System.in).nextLine();
+		while (*p != '\0')
+		{
+			if (*p == ' ')
+			{
+				if (*(p + 1) != ' ')
+				{
+					p++;
+				}
+				else
+				{
+					q = p;
+					for (p = p + 1; * p != '\0'; p++)
+					{
+						*p = (p + 1);
+					}
+					p = q;
+				}
+			}
+			if (*p != ' ')
+			{
+				p++;
+			}
+		}
+		p = a;
+		for (; * p != '\0'; p++)
+		{
+			System.out.print(p);
+		}
+		return 0;
+	}
+}

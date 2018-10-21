@@ -1,0 +1,57 @@
+import java.util.*;
+
+package <missing>;
+
+public class GlobalMembers
+{
+	/**
+	* @file 1000010424_4.cpp
+	* @author ???
+	* @date 2010?12?8
+	* @description
+	* ??????: ???????     
+	*/
+
+
+
+	public static int Main()
+	{
+		String input = new String(new char[101]); //??????
+//C++ TO JAVA CONVERTER TODO TASK: Pointer arithmetic is detected on this variable, so pointers on this variable are left unchanged:
+		char * place; //?????????
+//C++ TO JAVA CONVERTER TODO TASK: Pointer arithmetic is detected on this variable, so pointers on this variable are left unchanged:
+		char * ptr;
+
+		input = new Scanner(System.in).nextLine(); //?????
+
+		place = input;
+		ptr = input;
+
+		while (true)
+		{
+			while (*ptr != ' ' && *ptr != '\0') //?????????????
+			{
+				*place++= *ptr++; //?????????
+			}
+
+			if (*ptr == '\0') //????????
+			{
+				break;
+			}
+
+			*place++= ' '; //?????????
+
+			while (*ptr == ' ')
+			{
+				ptr++; //???????????????????????
+			}
+		}
+
+		*place = '\0'; //?????
+
+		System.out.print(input);
+		System.out.print("\n");
+
+		return 0;
+	}
+}

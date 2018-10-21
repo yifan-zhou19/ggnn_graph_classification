@@ -1,0 +1,48 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	//1000012915???
+	public static int f(int a, int min)
+	{
+		int result = 1;
+		int i;
+
+		if (a < min) //?min?a?????????a????????
+		{
+			return 0;
+		}
+
+		for (i = min;i < a;i++) //???????????????n???
+		{
+			if (a % i == 0)
+			{
+				result += f(a / i, i); //????????????????????????x???
+			}
+		}
+		return result;
+	}
+	public static int Main()
+	{
+		int n; //????
+		int i;
+		int a;
+		int[] A = new int[100];
+
+		n = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+
+		for (i = 0;i < n;i++) //??
+		{
+			a = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+			A[i] = f(a, 2); //?2?????
+		};
+
+		for (i = 0;i < n;i++)
+		{
+			System.out.print(A[i]);
+			System.out.print("\n");
+		}
+		return 0;
+	}
+}
+

@@ -1,0 +1,31 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	/**
+	 * @file    3.cpp
+	 * @author  ???
+	 * @date    2013-10-10
+	 * @description
+	 *          ????????? - ?7????????1045?
+	 */
+	public static int Main()
+	{
+		int n;
+		int Sum = 0;
+		n = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+		for (int i = 0;i != n + 1;i++)
+		{
+			int a = (i / 10); //?a?b???i????????????
+			int b = i - 10 * a;
+			if ((i % 7 != 0) & (a != 7) & (b != 7))
+			{
+				Sum += i * i; //??????1?n?7?????????????Sum?
+			}
+		}
+		System.out.print(Sum);
+		System.out.print("\n");
+		return 0;
+	}
+}
+

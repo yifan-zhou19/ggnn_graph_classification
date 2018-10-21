@@ -1,0 +1,53 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	//****************************************
+	//*???????                       
+	//*?????? 1100012789      
+	//*???2011.11.16                       
+	//****************************************
+
+	public static String line = new String(new char[100]); // line?????boy????????
+	public static char boy;
+	public static int[] flag = new int[100]; // flag??????????0???????
+	public static int[] girlNum = new int[50]; // girlNum???????????
+	public static int n;
+	public static void FindBoy(int j)
+	{
+		int i;
+		if (j != 0) // ??????????????????????
+		{
+			FindBoy(j - 1);
+		}
+		for (i = girlNum[j] - 1; flag[i] == 1 || line.charAt(i) != boy;) // ???????????
+		{
+			i--;
+		}
+		System.out.print(i);
+		System.out.print(" ");
+		System.out.print(girlNum[j]);
+		System.out.print("\n");
+		flag[girlNum[j]] = 1; // ????????
+		flag[i] = 1;
+	}
+	public static int Main()
+	{
+		int i = 1;
+		int j = 0;
+		line = tangible.StringFunctions.changeCharacter(line, 0, System.in.read()); // ??????????
+		boy = line.charAt(0);
+		while ((line[i] = System.in.read()) != '\n')
+		{
+			if (line.charAt(i) != boy) // ????????????
+			{
+				girlNum[j++] = i;
+			}
+			i++;
+		}
+		n = i;
+		FindBoy(n / 2 - 1); // ???????????
+		return 0;
+	}
+}
+

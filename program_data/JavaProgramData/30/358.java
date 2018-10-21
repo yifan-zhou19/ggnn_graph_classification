@@ -1,0 +1,38 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	/**
+	* ??
+	* 2010?10?13
+	* ?7???????
+	*/
+	public static int Main()
+	{
+		int n = 0;
+		n = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+		int i; //x ??????? g???????i??????sum?????
+		int x;
+		int g;
+		int sum = 0;
+		for (i = 1; i <= n ; i++)
+		{
+			x = i / 10;
+			g = i - (i / 10) * 10;
+			if ((i % 7 == 0) || (i == 7) || (x == 7) || (g == 7)) //??i?7????i???????7?????????
+			{
+				continue;
+			}
+			else
+			{
+				sum = sum + i * i;
+			}
+		}
+		System.out.print(sum);
+		System.out.print("\n");
+		return 0;
+	}
+
+
+}
+

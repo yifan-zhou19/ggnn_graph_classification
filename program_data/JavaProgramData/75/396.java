@@ -1,0 +1,66 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	/**
+	 * ?????????.cpp
+	 * ????????????
+	 * ??????
+	 * ???2010.11.30
+	 */
+
+	public static int Main()
+	{
+		//arrive?????????leave?????????time???????
+		int[] arrive = new int[1001];
+		int[] leave = new int[1001];
+		int[] time = new int[1000];
+		int peo; //peo??????,max???????????
+		int max;
+		int j;
+		int k;
+		char c;
+
+		for (peo = 1;; peo++)
+		{
+			arrive[peo] = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+			c = System.in.read();
+			if (c == '\n') //???????
+			{
+				break;
+			}
+		}
+		for (peo = 1;; peo++)
+		{
+			leave[peo] = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+			c = System.in.read();
+			if (c == '\n') //???????
+			{
+				break;
+			}
+		}
+
+		System.out.print(peo);
+		System.out.print(" ");
+		for (k = 1; k <= peo; k++) //?????????????
+		{
+			for (j = arrive[k]; j < leave[k]; j++)
+			{
+				time[j]++;
+			}
+		}
+		max = time[0];
+		for (k = 0; k < 1000; k++) //???????????
+		{
+			if (time[k] > max)
+			{
+				max = time[k];
+			}
+		}
+		System.out.print(max);
+		System.out.print("\n");
+
+		return 0;
+	}
+}
+

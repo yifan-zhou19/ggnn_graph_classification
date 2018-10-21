@@ -1,0 +1,73 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	/*************************
+	 ***??:??? 1200012776
+	 ***????:??3,5,7????
+	 ***??:2012?9?27?
+	 *************************/
+	public static int Main()
+	{
+		int t; //????t
+		int a;
+		int b;
+		int c;
+		t = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+		a = (t % 3 == 0), b = (t % 5 == 0), c = (t % 7 == 0); //????t???3,5,7???a,b,c??,????????????
+		if (a + b + c == 0) //??a+b+c????0
+		{
+			System.out.print("n");
+			System.out.print("\n");
+		}
+		if (a + b + c == 1) //??a+b+c????1,???,????????3,5,7??????
+		{
+			if (a == 1) //??a????1
+			{
+				System.out.print("3");
+				System.out.print("\n");
+			}
+			else
+			{
+				if (b == 1) //??b????1
+				{
+					System.out.print("5");
+					System.out.print("\n");
+				}
+				else
+				{
+					System.out.print("7");
+					System.out.print("\n");
+				}
+			}
+		}
+		if (a + b + c == 2) //??a+b+c????2,???,???????3,5,7??????
+		{
+			if (a == 0) //??a????0
+			{
+				System.out.print("5 7");
+				System.out.print("\n");
+			}
+			else
+			{
+				if (b == 0) //??b????0
+				{
+					System.out.print("3 7");
+					System.out.print("\n");
+				}
+				else
+				{
+					System.out.print("3 5");
+					System.out.print("\n");
+				}
+			}
+		}
+		if (a + b + c == 3) //??a+b+c????3,????????3,5,7??
+		{
+			System.out.print("3 5 7");
+			System.out.print("\n");
+		}
+		return 0;
+	}
+}
+

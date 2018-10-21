@@ -1,0 +1,63 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	//****************************************************** 
+	/* ? ? ?   ???
+	/* ? ?      ????                           
+	/* ? ? ? ??2010 ? 11  ?  7  ?     
+	/* ? ? ? ??????????????????????????????????????
+	/* ? ?      ?1000012752        
+	*******************************************************/ 
+	public static int Main()
+	{
+		int[] a = new int[16];
+		int i;
+		int j;
+		int k;
+		int count;
+
+//C++ TO JAVA CONVERTER TODO TASK: There are no gotos or labels in Java:
+		end3:
+		;
+		for (i = 0 ; ; i++) //????a[i]
+		{
+			count = 0;
+			a[i] = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+			if (a[i] == -1) //????-1?????
+			{
+//C++ TO JAVA CONVERTER TODO TASK: There are no gotos or labels in Java:
+				goto end1;
+			}
+			if (a[i] == 0) //????0???????????
+			{
+				for (j = 0 ; j < i ; j++) //??????j?k???????????
+				{
+					for (k = 0 ; k < i ; k++)
+					{
+						 if (a[j] == 2 * a[k]) //???2?????????????+1
+						 {
+							 count = count + 1;
+							 break;
+						 }
+					}
+				}
+				System.out.print(count);
+				System.out.print("\n");
+//C++ TO JAVA CONVERTER TODO TASK: There are no gotos or labels in Java:
+				goto end3; //??????a[i]
+			}
+
+		}
+//C++ TO JAVA CONVERTER TODO TASK: There are no gotos or labels in Java:
+	end1:
+	;
+
+		return 0;
+	}
+
+
+
+
+}
+

@@ -1,0 +1,71 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	//********************************
+	//*?????????  **
+	//*????? 1300012739 **
+	//*???2013.10.23  **
+	//********************************
+
+	public static int Main()
+	{
+		int n;
+		int m;
+		int i;
+		int j;
+		double k;
+
+		n = Integer.parseInt(ConsoleInput.readToWhiteSpace(true));
+
+		for (i = 3; i <= n / 2; i = i + 2) //?i??????n/2?????
+		{
+			int r = 0; //??r = 0??r?0?????????????
+
+			k = Math.sqrt(i);
+
+			for (j = 2; j <= k; j++) //??i?????
+			{
+				if (i % j == 0)
+				{
+					r++;
+				}
+			}
+
+			if (r != 0)
+			{
+				continue; //?????????????????n - i?
+			}
+			else
+			{
+				r = 0;
+
+				k = Math.sqrt(n - i);
+
+				for (j = 2; j <= Math.sqrt(n - i); j++) //???n - i??????
+				{
+					if ((n - i) % j == 0)
+					{
+						r++;
+					}
+				}
+			}
+
+			if (r != 0)
+			{
+				continue; //????????????????i???n- i?
+			}
+			else
+			{
+				System.out.print(i);
+				System.out.print(" ");
+				System.out.print(n - i);
+				System.out.print("\n");
+			}
+		}
+
+		return 0;
+	}
+
+}
+

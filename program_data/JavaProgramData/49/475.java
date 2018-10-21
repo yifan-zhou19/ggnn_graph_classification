@@ -1,0 +1,62 @@
+package <missing>;
+
+public class GlobalMembers
+{
+	/*
+	???????
+	????? 
+	???2011.11.11
+	*/
+	public static int len; //??????
+	public static void ishui(String a)
+	{
+		int i;
+		int j;
+		int k;
+		int l;
+		int flag;
+		for (i = 2 ; i <= len - 1 ; i++) //????????????????
+		{
+			for (j = 0 ; j < len ; j++) //?????????
+			{
+				flag = 1; //????????1
+				for (k = 0 ; k < i ; k++) //???????
+				{
+					if (!a[j + k].equals(a[j + i - (k + 1)]))
+					{
+						flag = 0; //???????
+						break;
+					}
+				}
+				if (flag == 1) //?????????
+				{
+					for (l = 0 ; l < k ; l++)
+					{
+						System.out.print(a[j + l]);
+					}
+					System.out.print("\n");
+				}
+			}
+		}
+				return;
+	}
+	public static int Main() //???
+	{
+		String a = new String(new char[500]);
+//C++ TO JAVA CONVERTER TODO TASK: The memory management function 'memset' has no equivalent in Java:
+		memset(a, ' ', (Character.SIZE / Byte.SIZE));
+		int i = 0;
+		while ((a[i] = System.in.read()) != '\n') //?????
+		{
+			i++;
+		}
+		len = i; //????????
+		ishui(a); //???????????
+		return 0;
+	} //?????
+
+
+
+
+
+}

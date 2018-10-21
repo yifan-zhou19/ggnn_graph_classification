@@ -1,0 +1,72 @@
+public class stu
+{
+	public String information = new String(new char[100]); //????????????????????????????
+	public stu next; //??????
+	public stu last; //??????????????????????????
+}
+
+package <missing>;
+
+public class GlobalMembers
+{
+	public static stu creat()
+	{
+		stu end;
+		stu p1;
+		stu p2;
+		int flag = 1;
+//C++ TO JAVA CONVERTER TODO TASK: The memory management function 'malloc' has no equivalent in Java:
+		p1 = (stu)malloc(Len);
+		p1.information = new Scanner(System.in).nextLine();
+		if (strcmp(p1.information,"end") == 0) //??????????????
+		{
+			p2 = null_Renamed;
+			flag = 0;
+		}
+		else
+		{
+			p1.last = null_Renamed; //?????????????
+		   do
+		   {
+			p2 = p1;
+//C++ TO JAVA CONVERTER TODO TASK: The memory management function 'malloc' has no equivalent in Java:
+			p1 = (stu)malloc(Len);
+			p2.next = p1; //????????????
+			p1.last = p2; //?????????????????
+			p1.information = new Scanner(System.in).nextLine();
+			if (strcmp(p1.information,"end") == 0)
+			{
+				flag = 0; //??�end�???????
+			}
+		   }while (flag == 1);
+		}
+		end = p2;
+		return end;
+	}
+	public static void printf(stu end)
+	{
+		stu p;
+		p = end;
+		while (p != null_Renamed)
+		{
+			 System.out.printf("%s\n",p.information);
+			 p = p.last; //???????????
+		}
+	}
+
+	public static int Main()
+	{
+		stu move;
+		move = creat();
+		System.out.print(move);
+	}
+
+
+
+
+
+
+
+
+
+}
