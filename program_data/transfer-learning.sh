@@ -3,11 +3,12 @@ folder=github_cpp_babi_format_Oct-15-2018-0000029
 
 ##################################################################################################
 # STRATEGY 1: How many epochs to do the initial training on the 2-class classification problem?
-INIT_N_EPOCH=200
+INIT_N_EPOCH=150
 ##################################################################################################
 # STRATEGY 2: How many epochs to do the incremental training on the larger classification problem?
-N_EPOCH=10
+# N_EPOCH=10
 # N_EPOCH=20
+N_EPOCH=$((INIT_N_EPOCH / 2))
 ##################################################################################################
 
 rm -f transfer-learning.log
@@ -55,6 +56,8 @@ function transfer() {
         echo ============= $percent
         if [ "$percent" -eq "50" ]; then
 	   cp $n/$folder/cll-$n.cpkl.$m1 $n/$folder/cll-$n.cpkl
+           N_EPOCH=$((INIT_N_EPOCH / n))
+	   #N_EPOCH=10
            train.sh $n/$folder $n $N_EPOCH
            echo ============= $percent
            return
@@ -75,6 +78,8 @@ function transfer() {
 	cp $n/$folder/cll-$n.cpkl.$m1 $n1/$folder/cll-$n1.cpkl.0
 	cp $n/$folder/cll-$n.cpkl.$m1 $n1/$folder/cll-$n1.cpkl
         chmod o+w $n1/$folder/cll-$n1.cpkl
+        N_EPOCH=$((INIT_N_EPOCH / n1))
+	#N_EPOCH=10
         train.sh $n1/$folder $n1 $N_EPOCH
 }
 prepare_data 2
@@ -95,6 +100,7 @@ if [ ! -f cll-2.percent ]; then
 	fi
 	if [ "$percent" -ge "$old_percent" ]; then
 	  cp 2/$folder/cll-2.cpkl.$m1 cll-2.cpkl
+	  cp 2/$folder/cll-2.cpkl.$m1 cll-2.cpkl.$m1
 	  echo ====== $m1 >> cll-2.percent
 	  echo $percent >> cll-2.percent
 	fi
@@ -104,6 +110,9 @@ else
 	  cp cll-2.cpkl.$m1 2/$folder/cll-2.cpkl
 	  cp cll-2.cpkl.$m1 2/$folder/cll-2.cpkl.0
 	  chmod o+w 2/$folder/cll-2.cpkl
+          N_EPOCH=$((INIT_N_EPOCH/2))
+	  #N_EPOCH=10
+          echo $N_EPOCH
 	  train.sh 2/$folder 2 $N_EPOCH
 	fi
 fi
