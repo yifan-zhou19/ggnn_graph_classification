@@ -82,8 +82,13 @@ function generate_data() {
 
 #generate_data Oct-10-2018 0000028 github_cpp
 #generate_data Oct-10-2018 0000028 cpp
-#generate_data Oct-15-2018 0000029 github_cpp
-#generate_data Oct-15-2018 0000029 cpp
+generate_data Oct-15-2018 0000029 github_cpp
+generate_data Oct-15-2018 0000029 cpp
+
 	#prepare_dataset Oct-15-2018-0000029 github_cpp
+
+        #cp cpp_babi_format_Oct-15-2018-0000029/maps.cpp.pkl .
+        #cp java_babi_format_Oct-15-2018-0000029/maps.java.pkl .
+        #chmod o+w maps.*.pkl
 	#ggnn java_protobuf_format_Oct-15-2018/89.fbs java_babi_format_Oct-15-2018-0000029/train/train_89.txt java_babi_format_Oct-15-2018-0000029/test/test_89.txt
-	prepare_dataset Oct-15-2018-0000029 cpp
+	#prepare_dataset Oct-15-2018-0000029 cpp

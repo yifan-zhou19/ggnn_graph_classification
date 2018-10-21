@@ -10,7 +10,8 @@ function prepare_data() {
    mkdir -p $x/cll_${folder/cpp/java}/train $x/cll_${folder/cpp/java}/test
    cp $folder/maps.*.pkl $x/$folder
    cp cll_${folder/cpp/java}/maps.*.pkl $x/cll_${folder/cpp/java}/
-   for f in $(wc $folder/train/*.txt | sort -n -r | grep -v total | tail -$x | cut -f3 -d'/' | cut -f2 -d'_'); do
+#   for f in $(wc $folder/train/*.txt | sort -n -r | grep -v total | tail -$x | cut -f3 -d'/' | cut -f2 -d'_'); do
+   for f in $(find $folder/train -type f -name "*.txt" | cut -f3 -d'/' | cut -f2 -d'_' | sort -n -r | tail -$x ); do
        cp $folder/train/train_$f $x/$folder/train/train_$f
        cp $folder/test/test_$f $x/$folder/test/test_$f
        cp cll_${folder/cpp/java}/train/train_$f $x/cll_${folder/cpp/java}/train/train_$f
@@ -28,7 +29,7 @@ function transfer() {
         echo ============= $percent
         if [ "$percent" -eq "50" ]; then
 	   cp $n/$folder/cll-$n.cpkl.$m1 $n/$folder/cll-$n.cpkl
-           train.sh $n $n 10
+           train.sh $n/$folder $n 10
            echo ============= $percent
            return
         fi
@@ -48,21 +49,38 @@ function transfer() {
 	cp $n/$folder/cll-$n.cpkl.$m1 $n1/$folder/cll-$n1.cpkl.0
 	cp $n/$folder/cll-$n.cpkl.$m1 $n1/$folder/cll-$n1.cpkl
         chmod o+w $n1/$folder/cll-$n1.cpkl
-        train.sh $n1 $n1 10
+        train.sh $n1/$folder $n1 10
 }
 prepare_data 2
 docker run --entrypoint sh -v $(pwd):/e -w /e busybox -c "rm -rf 2/$folder/cll-2.cpkl*"
 rm -f 2/$folder/cll-2.cpkl*
 rm -f 2/$folder/cll-log-2.txt
-m1=$(grep === cll-2.percent | tail -1 | cut -f2 -d" ")
-if [ -f cll-2.cpkl.$m1 ]; then 
-  cp cll-2.cpkl.$m1 2/$folder/cll-2.cpkl
-  cp cll-2.cpkl.$m1 2/$folder/cll-2.cpkl.0
-  chmod o+w 2/$folder/cll-2.cpkl
+if [ ! -f cll-2.percent ]; then
+	train.sh 2/$folder 2 200
+	m=$(grep Test 2/$folder/cll-log-2.txt | cat -n | sort -n -k6 -r | tail -1 | cut -f1)
+	m1=$((m-1))
+	p=$(grep Test $n/$folder/cll-log-$n.txt | cat -n | sort -n -k6 -r | tail -1 | cut -f2 -d",")
+	percent=$(grep Test $n/$folder/cll-log-$n.txt | cat -n | sort -n -k6 -r | tail -1 | cut -f2 -d"," | cut -d"(" -f2 | cut -d"%" -f1)
+	echo ============= $percent
+	old_percent=0
+	if [ -f cll-2.percent ]; then
+	  old_percent=$(grep -v ==== cll-2.percent | tail -1)
+	fi
+	if [ "$percent" -ge "$old_percent" ]; then
+	  cp 2/$folder/cll-2.cpkl.$m1 cll-2.cpkl
+	  echo ====== $m1 >> cll-2.percent
+	  echo $percent >> cll-2.percent
+	fi
+else
+        m1=$(grep === cll-2.percent | tail -1 | cut -f2 -d" ")
+	if [ -f cll-2.cpkl.$m1 ]; then 
+	  cp cll-2.cpkl.$m1 2/$folder/cll-2.cpkl
+	  cp cll-2.cpkl.$m1 2/$folder/cll-2.cpkl.0
+	  chmod o+w 2/$folder/cll-2.cpkl
+	fi
 fi
-train.sh 2 2 10
 n=2
-for i in `seq 1 7`; do
+for i in `seq 1 4`; do
   transfer $n | tee -a transfer-learning.log
   n=$((n*2))
 done 

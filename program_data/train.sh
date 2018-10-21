@@ -70,7 +70,8 @@ cd - > /dev/null
 
 function cll_train() {
 lang1=$1
-lang2=${lang1/cpp/cll_java}
+lang2=$(dirname $lang1)/cll_$(basename $lang1)
+lang2=${lang2/cpp/java}
 k=$(size_voc $lang2)
 n=$2
 log=$lang1/cll-log-$n.txt
@@ -136,5 +137,5 @@ elif [ "$1" == "github_cpp" ]; then
 elif [ "$1" == "github_biggnn" ]; then
 	cll_train github_cpp_babi_format_$ver $2 $3 | tee -a status.log
 else
-	cll_train $1/cpp_babi_format_$ver $2 $3 | tee -a status.log
+	cll_train $1 $2 $3 | tee -a status.log
 fi
