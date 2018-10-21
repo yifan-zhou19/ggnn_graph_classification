@@ -78,8 +78,8 @@ n_iter=${3:-200}
 if [ -f program_data/$lang1/cll-$n.cpkl ]; then
    return
 fi
-mkdir -p $lang1/logs/biggnn/$n
-chmod o+w $lang1/logs/biggnn/$n
+mkdir -p $(basename $lang1)/logs/biggnn/$n
+chmod o+w $(basename $lang1)/logs/biggnn/$n
 if [ ! -f $log ]; then
  mkdir -p $(dirname $log)
  touch -f $log
@@ -94,7 +94,7 @@ NV_GPU=1 \
         --left_directory  program_data/$lang1 \
         --right_directory program_data/$lang2 \
 	--model_path program_data/$lang1/cll-$n.cpkl \
-	--log_path program_data/$lang1/logs/biggnn/$n \
+	--log_path program_data/$(basename $lang1)/logs/biggnn/$n \
         --state_dim 5 \
 	--n_steps 5 \
 	--n_hidden 50 \

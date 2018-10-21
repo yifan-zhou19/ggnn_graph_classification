@@ -85,4 +85,5 @@ function generate_data() {
 #generate_data Oct-15-2018 0000029 github_cpp
 #generate_data Oct-15-2018 0000029 cpp
 	#prepare_dataset Oct-15-2018-0000029 github_cpp
+	ggnn java_protobuf_format_Oct-15-2018/89.fbs java_babi_format_Oct-15-2018-0000029/train/train_89.txt java_babi_format_Oct-15-2018-0000029/test/test_89.txt
 	prepare_dataset Oct-15-2018-0000029 cpp
