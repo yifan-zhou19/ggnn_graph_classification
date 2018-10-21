@@ -27,7 +27,7 @@ function size_voc() {
 
 function mll_train() {
 lang1=$1
-lang2=$(dirname $lang1)/cll_$(basename $lang1)
+lang2=$(dirname $lang1)/$(basename $lang1)
 lang2=${lang2/cpp/java}
 if [ "$lang1" == "$lang2" ]; then
    lang=java
@@ -38,13 +38,12 @@ n=$2
 n_iter=${3:-200}
 k=$(size_voc $lang2)
 cd .. > /dev/null
-log=${lang1/java/cpp}/$lang-log-$n.txt
-if [ -f program_data/${lang1/java/cpp}/$lang-$n.cpkl ]; then
+log=program_data/$lang1/$lang-log-$n.txt
+if [ -f program_data/$lang1/$lang-$n.cpkl ]; then
    return
 fi
-echo mkdir -p program_data/${lang1/java/cpp}/logs/$lang/$n
-mkdir -p program_data/${lang1/java/cpp}/logs/$lang/$n
-chmod o+w program_data/${lang1/java/cpp}/logs/$lang/$n
+mkdir -p program_data/$lang1/logs/$lang/$n
+chmod o+w program_data/$lang1/logs/$lang/$n
 if [ ! -f $log ]; then
  mkdir -p $(dirname $log)
  touch -f $log
@@ -67,6 +66,7 @@ NV_GPU=1 \
 	--train_batch_size 256 \
 	--test_batch_size 256 \
   | tee -a $log
+cat $log
 cd - > /dev/null
 }
 
@@ -76,7 +76,7 @@ lang2=$(dirname $lang1)/cll_$(basename $lang1)
 lang2=${lang2/cpp/java}
 k=$(size_voc $lang2)
 n=$2
-log=$lang1/cll-log-$n.txt
+log=program_data/$lang1/cll-log-$n.txt
 n_iter=${3:-200}
 if [ -f program_data/$lang1/cll-$n.cpkl ]; then
    return
