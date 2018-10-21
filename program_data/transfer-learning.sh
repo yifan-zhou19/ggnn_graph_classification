@@ -6,8 +6,8 @@ command -v docker >/dev/null 2>&1 || {
 #folder=cpp_babi_format_Oct-15-2018-0000029
 folder=github_cpp_babi_format_Oct-15-2018-0000029
 #mode="cll-"
-mode="java-"
-#mode="cpp-"
+#mode="java-"
+mode="cpp-"
 if [ "$mode" == "java-" ]; then
    folder=${folder/cpp/java}
 fi
@@ -15,7 +15,7 @@ fi
 ##################################################################################################
 # STRATEGY 1: How many epochs to do the initial training on the 2-class classification problem?
 INIT_N_EPOCH=150
-#INIT_N_EPOCH=2 # for testing
+INIT_N_EPOCH=2 # for testing
 ##################################################################################################
 # STRATEGY 2: How many epochs to do the incremental training on the larger classification problem?
 # N_EPOCH=10
@@ -152,10 +152,10 @@ n=2
 for n in 2 4 6 8 10 12 14 16 20 25 30; do
 #for n in 4 6 8 10 12 14 16 20 25 30; do
 # change to the following line for testing 
- for n in 2; do
+#for n in 2; do
   #n=$((n*2))
   #n=$((n+1))
-  for n1 in 4 6 8 10 12 14 16 20 25 30 50; do
+  for n1 in 4 6 8 10 12 14 16 20 25 30 50 80 104; do
     if [ "$n" -lt "$n1" ]; then
       transfer $n $n1 | tee -a transfer-learning.log
       break
