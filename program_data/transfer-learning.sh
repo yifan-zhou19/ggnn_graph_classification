@@ -1,3 +1,8 @@
+has_docker=1
+command -v docker >/dev/null 2>&1 || {
+  has_docker=0
+}
+
 #folder=cpp_babi_format_Oct-15-2018-0000029
 folder=github_cpp_babi_format_Oct-15-2018-0000029
 #mode="cll-"
@@ -18,7 +23,9 @@ N_EPOCH=$((INIT_N_EPOCH / 2))
 ##################################################################################################
 
 rm -f transfer-learning.log
-docker run --entrypoint sh -v $(pwd):/e -w /e busybox -c "rm -rf $folder/logs"
+if [ "$has_docker" == "1" ]; then
+   docker run --entrypoint sh -v $(pwd):/e -w /e busybox -c "rm -rf $folder/logs"
+fi
 rm -rf $folder/logs
 n=2
 function prepare_data() {
@@ -92,13 +99,14 @@ function transfer() {
         mode=$mode train.sh $n1/$folder $n1 $N_EPOCH
 }
 prepare_data 2
-docker run --entrypoint sh -v $(pwd):/e -w /e busybox -c "rm -rf 2/$folder/"$mode"2.cpkl*"
+if [ "$has_docker" == "1" ]; then
+   docker run --entrypoint sh -v $(pwd):/e -w /e busybox -c "rm -rf 2/$folder/"$mode"2.cpkl*"
+fi
 rm -f 2/$folder/"$mode"2.cpkl*
 rm -f 2/$folder/"$mode"log-2.txt
 ### Recording the epoch of best performing model
 if [ ! -f "$mode"2.percent ]; then
 	mode=$mode train.sh 2/$folder 2 $INIT_N_EPOCH
-        exit 0
 	m=$(grep Test 2/$folder/"$mode"log-2.txt | cat -n | sort -n -k6 -r | tail -1 | cut -f1)
 	m1=$((m-1))
 	p=$(grep Test $n/$folder/"$mode"log-$n.txt | cat -n | sort -n -k6 -r | tail -1 | cut -f2 -d",")
@@ -127,12 +135,10 @@ else
 	fi
 fi
 n=2
-#for n in 2 4 6 8 10 12 14 16 20 25 30 104; do
-for n in 2; do
+for n in 2 4 6 8 10 12 14 16 20 25 30; do
   #n=$((n*2))
   #n=$((n+1))
-  #for n1 in 4 6 8 10 12 14 16 20 25 30 50 104; do
-  for n1 in 4; do
+  for n1 in 4 6 8 10 12 14 16 20 25 30 50; do
     if [ "$n" -lt "$n1" ]; then
       transfer $n $n1 | tee -a transfer-learning.log
       break
