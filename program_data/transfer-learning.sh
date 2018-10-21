@@ -119,17 +119,28 @@ if [ ! -f "$mode"2.percent ]; then
 	  old_percent=$(grep -v ==== "$mode"2.percent | tail -1)
 	fi
 	if [ "$percent" -ge "$old_percent" ]; then
-	  cp 2/$folder/"$mode"2.cpkl.$m1 "$mode"2.cpkl
-	  cp 2/$folder/"$mode"2.cpkl.$m1 "$mode"2.cpkl.$m1
+          if [ "$mode" == "cll-" ]; then
+		  cp 2/$folder/"$mode"2.cpkl.$m1 "$mode"2.cpkl
+		  cp 2/$folder/"$mode"2.cpkl.$m1 "$mode"2.cpkl.$m1
+          else
+		  cp 2/$folder/2.cpkl.$m1 "$mode"2.cpkl
+		  cp 2/$folder/2.cpkl.$m1 "$mode"2.cpkl.$m1
+          fi
 	  echo ====== $m1 >> "$mode"2.percent
 	  echo $percent >> "$mode"2.percent
 	fi
 else
         m1=$(grep === "$mode"2.percent | tail -1 | cut -f2 -d" ")
 	if [ -f "$mode"2.cpkl.$m1 ]; then 
-	  cp "$mode"2.cpkl.$m1 2/$folder/"$mode"2.cpkl
-	  cp "$mode"2.cpkl.$m1 2/$folder/"$mode"2.cpkl.0
-	  chmod o+w 2/$folder/"$mode"2.cpkl
+	  if [ "$mode" == "cll-" ]; then
+	  	cp "$mode"2.cpkl.$m1 2/$folder/"$mode"2.cpkl
+		cp "$mode"2.cpkl.$m1 2/$folder/"$mode"2.cpkl.0
+	  	chmod o+w 2/$folder/"$mode"2.cpkl
+          else
+	  	cp "$mode"2.cpkl.$m1 2/$folder/2.cpkl
+		cp "$mode"2.cpkl.$m1 2/$folder/2.cpkl.0
+	  	chmod o+w 2/$folder/2.cpkl
+          fi
           N_EPOCH=$((INIT_N_EPOCH/2))
 	  #N_EPOCH=10
           echo $N_EPOCH
