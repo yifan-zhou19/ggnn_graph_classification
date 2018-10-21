@@ -74,7 +74,11 @@ function transfer() {
         percent=$(grep Test $n/$folder/"$mode"log-$n.txt | cat -n | sort -n -k6 -r | tail -1 | cut -f2 -d"," | cut -d"(" -f2 | cut -d"%" -f1)
         echo ============= $percent
         if [ "$percent" -eq "50" ]; then
-	   cp $n/$folder/"$mode"$n.cpkl.$m1 $n/$folder/"$mode"$n.cpkl
+           if [ "$mode" == "cll-" ]; then
+	      cp $n/$folder/"$mode"$n.cpkl.$m1 $n/$folder/"$mode"$n.cpkl
+           else
+	      cp $n/$folder/$n.cpkl.$m1 $n/$folder/$n.cpkl
+           fi
            N_EPOCH=$((INIT_N_EPOCH / n))
 	   #N_EPOCH=10
            mode=$mode train.sh $n/$folder $n $N_EPOCH
@@ -86,17 +90,27 @@ function transfer() {
           old_percent=$(grep -v ==== "$mode"$n.percent | tail -1)
         fi
         if [ "$percent" -ge "$old_percent" ]; then
-	  cp $n/$folder/"$mode"$n.cpkl.$m1 "$mode"$n.cpkl
-          echo ====== $m1 >> "$mode"$n.percent
-          echo $percent >> "$mode"$n.percent
+          if [ "$mode" == "cll-" ]; then
+		  cp $n/$folder/"$mode"$n.cpkl.$m1 "$mode"$n.cpkl
+          else
+		  cp $n/$folder/$n.cpkl.$m1 "$mode"$n.cpkl
+          fi
+	  echo ====== $m1 >> "$mode"$n.percent
+	  echo $percent >> "$mode"$n.percent
         fi
         echo ===== transfer $n @ $m1 $p to $n1
         prepare_data $n1
 	rm -f $n1/$folder/"$mode"$n1.cpkl*
         rm -f $n1/$folder/"$mode"log-$n1.txt
-	cp $n/$folder/"$mode"$n.cpkl.$m1 $n1/$folder/"$mode"$n1.cpkl
-	cp $n/$folder/"$mode"$n.cpkl.$m1 $n1/$folder/"$mode"$n1.cpkl.0
-        chmod o+w $n1/$folder/"$mode"$n1.cpkl
+        if [ "$mode" == "cll-" ]; then
+		cp $n/$folder/"$mode"$n.cpkl.$m1 $n1/$folder/"$mode"$n1.cpkl
+		cp $n/$folder/"$mode"$n.cpkl.$m1 $n1/$folder/"$mode"$n1.cpkl.0
+		chmod o+w $n1/$folder/"$mode"$n1.cpkl
+        else
+		cp $n/$folder/$n.cpkl.$m1 $n1/$folder/$n1.cpkl
+		cp $n/$folder/$n.cpkl.$m1 $n1/$folder/$n1.cpkl.0
+		chmod o+w $n1/$folder/$n1.cpkl
+        fi
         N_EPOCH=$((INIT_N_EPOCH / n1))
 	#N_EPOCH=10
         mode=$mode train.sh $n1/$folder $n1 $N_EPOCH
@@ -116,21 +130,15 @@ if [ ! -f "$mode"2.percent ]; then
 	p=$(grep Test $n/$folder/"$mode"log-$n.txt | cat -n | sort -n -k6 -r | tail -1 | cut -f2 -d",")
 	percent=$(grep Test $n/$folder/"$mode"log-$n.txt | cat -n | sort -n -k6 -r | tail -1 | cut -f2 -d"," | cut -d"(" -f2 | cut -d"%" -f1)
 	echo ============= $percent
-	old_percent=0
-	if [ -f "$mode"2.percent ]; then
-	  old_percent=$(grep -v ==== "$mode"2.percent | tail -1)
-	fi
-	if [ "$percent" -ge "$old_percent" ]; then
-          if [ "$mode" == "cll-" ]; then
+        if [ "$mode" == "cll-" ]; then
 		  cp 2/$folder/"$mode"2.cpkl.$m1 "$mode"2.cpkl
 		  cp 2/$folder/"$mode"2.cpkl.$m1 "$mode"2.cpkl.$m1
-          else
+        else
 		  cp 2/$folder/2.cpkl.$m1 "$mode"2.cpkl
 		  cp 2/$folder/2.cpkl.$m1 "$mode"2.cpkl.$m1
-          fi
-	  echo ====== $m1 >> "$mode"2.percent
-	  echo $percent >> "$mode"2.percent
-	fi
+        fi
+	echo ====== $m1 >> "$mode"2.percent
+	echo $percent >> "$mode"2.percent
 else
         m1=$(grep === "$mode"2.percent | tail -1 | cut -f2 -d" ")
 	if [ -f "$mode"2.cpkl.$m1 ]; then 
