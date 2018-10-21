@@ -16,7 +16,7 @@ fi
 ##################################################################################################
 # STRATEGY 1: How many epochs to do the initial training on the 2-class classification problem?
 INIT_N_EPOCH=150
-INIT_N_EPOCH=2 # for testing
+#INIT_N_EPOCH=2 # for testing
 ##################################################################################################
 # STRATEGY 2: How many epochs to do the incremental training on the larger classification problem?
 # N_EPOCH=10
@@ -150,10 +150,10 @@ else
 	fi
 fi
 n=2
-#for n in 2 4 6 8 10 12 14 16 20 25 30; do
+for n in 2 4 6 8 10 12 14 16 20 25 30 50 80; do
 #for n in 4 6 8 10 12 14 16 20 25 30; do
 # change to the following line for testing 
-for n in 2; do
+#for n in 2; do
   #n=$((n*2))
   #n=$((n+1))
   for n1 in 4 6 8 10 12 14 16 20 25 30 50 80 104; do
