@@ -18,7 +18,7 @@ function prepare_data() {
    chmod -R o+w $x
 }
 function transfer() {
-        n1=$((n*2))
+        n1=$1
         m=$(grep Test $n/$folder/cll-log-$n.txt | cat -n | sort -n -k6 -r | tail -1 | cut -f1)
         p=$(grep Test $n/$folder/cll-log-$n.txt | cat -n | sort -n -k6 -r | tail -1 | cut -f2 -d",")
         percent=$(grep Test $n/$folder/cll-log-$n.txt | cat -n | sort -n -k6 -r | tail -1 | cut -f2 -d"," | cut -d"(" -f2 | cut -d"%" -f1)
@@ -28,14 +28,6 @@ function transfer() {
            train.sh $n $n 20
            echo ============= $percent
         done
-        m1=$((m-1))
-        echo ===== transfer $n @ $m1 $p to $n1
-        prepare_data $n1
-	rm -f $n1/$folder/cll-$n1.cpkl*
-        rm -f $n1/$folder/cll-log-$n1.txt
-	cp $n/$folder/cll-$n.cpkl.$m1 $n1/$folder/cll-$n1.cpkl.0
-	cp $n/$folder/cll-$n.cpkl.$m1 $n1/$folder/cll-$n1.cpkl
-        chmod o+w $n1/$folder/cll-$n1.cpkl
         old_percent=0
         if [ -f cll-$n.percent ]; then
           old_percent=$(grep -v ==== cll-$n.percent | tail -1)
@@ -45,14 +37,23 @@ function transfer() {
           echo ====== $m1 >> cll-$n.percent
           echo $percent >> cll-$n.percent
         fi
+        m1=$((m-1))
+        echo ===== transfer $n @ $m1 $p to $n1
+        prepare_data $n1
+	rm -f $n1/$folder/cll-$n1.cpkl*
+        rm -f $n1/$folder/cll-log-$n1.txt
+	cp $n/$folder/cll-$n.cpkl.$m1 $n1/$folder/cll-$n1.cpkl.0
+	cp $n/$folder/cll-$n.cpkl.$m1 $n1/$folder/cll-$n1.cpkl
+        chmod o+w $n1/$folder/cll-$n1.cpkl
         train.sh $n1 $n1 20
-        export n=$n1
 }
 prepare_data 2
 cp cll-2.cpkl 2/$folder/cll-2.cpkl
 cp cll-2.cpkl 2/$folder/cll-2.cpkl.0
 chmod o+w 2/$folder/cll-2.cpkl
 train.sh 2 2 20
+n=2
 for i in `seq 1 7`; do
-  transfer | tee -a transfer-learning.log
+  transfer $n | tee -a transfer-learning.log
+  n=$((n*2))
 done 
