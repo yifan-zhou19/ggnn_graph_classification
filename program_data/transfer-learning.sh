@@ -158,13 +158,18 @@ else
 	fi
 fi
 n=2
-for n in 2 4 6 8 10 12 14 16 20 25 30 50 80; do
+if [ "$mode" == "cpp-" ]; then
+        extra="80 104"
+else
+	extra=
+fi
+for n in 2 4 6 8 10 12 14 16 20 25 30 50 $extra; do
 #for n in 4 6 8 10 12 14 16 20 25 30; do
 # change to the following line for testing 
 #for n in 2; do
   #n=$((n*2))
   #n=$((n+1))
-  for n1 in 4 6 8 10 12 14 16 20 25 30 50 80 104; do
+  for n1 in 4 6 8 10 12 14 16 20 25 30 50 $extra; do
     if [ "$n" -lt "$n1" ]; then
       transfer $n $n1 | tee -a transfer-learning.log
       break

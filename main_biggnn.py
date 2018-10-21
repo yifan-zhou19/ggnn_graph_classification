@@ -16,7 +16,6 @@ from utils.data.dataloader import bAbIDataloader
 from tensorboardX import SummaryWriter
 import os
 import sys
-import time
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=2)
@@ -138,11 +137,7 @@ def main(opt):
 
     if opt.training:
         for epoch in range(epoch+1, epoch + opt.niter):
-            start = time.time()
             train(epoch, train_dataloader, net, criterion, optimizer, opt, writer)
-            end = time.time()
-            print(end - start)
-            test(test_dataloader, net, criterion, optimizer, opt)
         writer.close()
 
     if opt.testing:
@@ -151,10 +146,7 @@ def main(opt):
                  net = torch.load(filename)
                  net.cuda()
                  optimizer = optim.Adam(net.parameters(), lr=opt.lr)
-        start = time.time()
         test(test_dataloader, net, criterion, optimizer, opt)
-        print((end - start)/len(test_dataset.data))
-    
 if __name__ == "__main__":
     main(opt)
 
