@@ -62,7 +62,7 @@ NV_GPU=1 \
 	--n_hidden 50 \
 	--niter 200 \
 	--size_vocabulary $k \
-	--train_batch_size 32 \
+	--train_batch_size 256 \
 	--test_batch_size 256 \
   | tee -a $log
 cd - > /dev/null
@@ -101,8 +101,8 @@ NV_GPU=1 \
 	--n_hidden 50 \
 	--niter $n_iter \
 	--size_vocabulary $k \
-	--train_batch_size 32 \
-	--test_batch_size 32 \
+	--train_batch_size 256 \
+	--test_batch_size 256 \
   | tee -a $log
 }
 

@@ -47,7 +47,7 @@ function prepare_data() {
 ################################################################################
 function transfer() {
         n=$1
-        n1=$((n*2))
+        n1=$2
 	# n1=$((n+1))
         m=$(grep Test $n/$folder/cll-log-$n.txt | cat -n | sort -n -k6 -r | tail -1 | cut -f1)
         m1=$((m-1))
@@ -75,8 +75,8 @@ function transfer() {
         prepare_data $n1
 	rm -f $n1/$folder/cll-$n1.cpkl*
         rm -f $n1/$folder/cll-log-$n1.txt
-	cp $n/$folder/cll-$n.cpkl.$m1 $n1/$folder/cll-$n1.cpkl.0
 	cp $n/$folder/cll-$n.cpkl.$m1 $n1/$folder/cll-$n1.cpkl
+	cp $n/$folder/cll-$n.cpkl.$m1 $n1/$folder/cll-$n1.cpkl.0
         chmod o+w $n1/$folder/cll-$n1.cpkl
         N_EPOCH=$((INIT_N_EPOCH / n1))
 	#N_EPOCH=10
@@ -117,9 +117,14 @@ else
 	fi
 fi
 n=2
-for i in `seq 1 4`; do
-#for i in `seq 1 49`; do
-  transfer $n | tee -a transfer-learning.log
-  n=$((n*2))
+#for n in 2 4 6 8 10 12 14 16 20 25 30; do
+for n in 4 6 8 10 12 14 16 20 25 30; do
+  #n=$((n*2))
   #n=$((n+1))
+  for n1 in 4 6 8 10 12 14 16 20 25 30 50; do
+    if [ "$n" -lt "$n1" ]; then
+      transfer $n $n1 | tee -a transfer-learning.log
+      break
+    fi
+  done
 done 
