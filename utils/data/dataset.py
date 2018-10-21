@@ -154,8 +154,8 @@ def convert_program_data(data_list, n_annotation_dim, n_nodes):
             for edge in edge_list:
                 src_idx = edge[0]
                 
-                # print(src_idx)
-                annotation[src_idx-1][0] = 1
+                if src_idx < len(annotation):
+                   annotation[src_idx-1][0] = 1
           
             class_data_list.append([edge_list, annotation, task_output])
     return class_data_list
