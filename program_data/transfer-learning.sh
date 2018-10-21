@@ -32,6 +32,7 @@ function transfer() {
         echo ===== transfer $n @ $m1 $p to $n1
         prepare_data $n1
 	rm -f $n1/$folder/cll-$n1.cpkl*
+        rm -f $n1/$folder/cll-log-$n1.txt
 	cp $n/$folder/cll-$n.cpkl.$m1 $n1/$folder/cll-$n1.cpkl.0
 	cp $n/$folder/cll-$n.cpkl.$m1 $n1/$folder/cll-$n1.cpkl
         chmod o+w $n1/$folder/cll-$n1.cpkl
