@@ -42,8 +42,8 @@ log=program_data/$lang1/$lang-log-$n.txt
 if [ -f program_data/$lang1/$lang-$n.cpkl ]; then
    return
 fi
-mkdir -p program_data/$(basename $lang1)/logs/$lang/$n
-chmod o+w program_data/$(basename $lang1)/logs/$lang/$n
+mkdir -p program_data/$(basename ${lang1/java/cpp})/logs/$lang/$n
+chmod o+w program_data/$(basename ${lang1/java/cpp})/logs/$lang/$n
 if [ ! -f $log ]; then
  mkdir -p $(dirname $log)
  touch -f $log

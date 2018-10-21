@@ -5,9 +5,10 @@ command -v docker >/dev/null 2>&1 || {
 
 #folder=cpp_babi_format_Oct-15-2018-0000029
 folder=github_cpp_babi_format_Oct-15-2018-0000029
+mode="${1:-cll}-"
 #mode="cll-"
 #mode="java-"
-mode="cpp-"
+#mode="cpp-"
 if [ "$mode" == "java-" ]; then
    folder=${folder/cpp/java}
 fi
@@ -149,10 +150,10 @@ else
 	fi
 fi
 n=2
-for n in 2 4 6 8 10 12 14 16 20 25 30; do
+#for n in 2 4 6 8 10 12 14 16 20 25 30; do
 #for n in 4 6 8 10 12 14 16 20 25 30; do
 # change to the following line for testing 
-#for n in 2; do
+for n in 2; do
   #n=$((n*2))
   #n=$((n+1))
   for n1 in 4 6 8 10 12 14 16 20 25 30 50 80 104; do
