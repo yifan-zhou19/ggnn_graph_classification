@@ -1,0 +1,1527 @@
+/opt/conda/lib/python3.6/site-packages/sklearn/externals/joblib/externals/cloudpickle/cloudpickle.py:47: DeprecationWarning: the imp module is deprecated in favour of importlib; see the module's documentation for alternative uses
+  import imp
+Namespace(cuda=True, data_percentage=1.0, epoch=0, is_training_ggnn=False, left_directory='program_data/github_cpp_babi_format_Oct-15-2018-0000029', log_path='program_data/github_cpp_babi_format_Oct-15-2018-0000029/logs/biggnn/2', loss=0, lr=0.01, manualSeed=None, model_path='program_data/github_cpp_babi_format_Oct-15-2018-0000029/cll-2.cpkl', n_classes=2, n_hidden=50, n_steps=5, niter=200, right_directory='program_data/./cll_github_java_babi_format_Oct-15-2018-0000029', size_vocabulary=171, state_dim=5, test_batch_size=32, testing=False, train_batch_size=32, training=True, verbal=True, workers=2)
+Random Seed:  4712
+Training Bi-GGNN with cross entropy loss.
+Loading data...............
+  0% 0/2 [00:00<?, ?it/s]program_data/github_cpp_babi_format_Oct-15-2018-0000029/train/train_1.txt
+program_data/github_cpp_babi_format_Oct-15-2018-0000029/train/train_2.txt
+100% 2/2 [00:00<00:00, 64.03it/s]
+  0% 0/2 [00:00<?, ?it/s]program_data/./cll_github_java_babi_format_Oct-15-2018-0000029/train/train_1.txt
+program_data/./cll_github_java_babi_format_Oct-15-2018-0000029/train/train_2.txt
+100% 2/2 [00:00<00:00, 37.53it/s]
+Number of all left training data : 97
+Number of all right training data : 89
+Left max node id : 154
+Right max node id : 154
+0it [00:00, ?it/s]2it [00:00, 11538.66it/s]
+Number of all 1 pairs data : 89
+Number of all 0 pairs data : 89
+  0% 0/2 [00:00<?, ?it/s]program_data/github_cpp_babi_format_Oct-15-2018-0000029/test/test_1.txt
+program_data/github_cpp_babi_format_Oct-15-2018-0000029/test/test_2.txt
+100% 2/2 [00:00<00:00, 237.70it/s]
+  0% 0/2 [00:00<?, ?it/s]program_data/./cll_github_java_babi_format_Oct-15-2018-0000029/test/test_1.txt
+program_data/./cll_github_java_babi_format_Oct-15-2018-0000029/test/test_2.txt
+100% 2/2 [00:00<00:00, 254.23it/s]
+Number of all left testing data : 25
+Number of all right testing data : 23
+Left max node id : 154
+Right max node id : 162
+0it [00:00, ?it/s]2it [00:00, 18477.11it/s]
+Number of all 1 pairs data : 23
+Number of all 0 pairs data : 23
+[0/200][0/6] Loss: 0.6740
+[0/200][1/6] Loss: 0.9336
+[0/200][2/6] Loss: 0.8035
+[0/200][3/6] Loss: 0.6842
+[0/200][4/6] Loss: 0.7617
+[0/200][5/6] Loss: 0.6822
+Test set: Average loss: 0.0331, Accuracy: 23/46 (50%), Precision: (50%), Recall: (100%)
+[1/200][0/6] Loss: 0.8108
+[1/200][1/6] Loss: 0.7421
+[1/200][2/6] Loss: 0.8005
+[1/200][3/6] Loss: 0.7650
+[1/200][4/6] Loss: 0.7151
+[1/200][5/6] Loss: 0.7047
+Test set: Average loss: 0.0301, Accuracy: 23/46 (50%), Precision: (0%), Recall: (0%)
+[2/200][0/6] Loss: 0.6888
+[2/200][1/6] Loss: 0.7026
+[2/200][2/6] Loss: 0.6936
+[2/200][3/6] Loss: 0.6937
+[2/200][4/6] Loss: 0.6868
+[2/200][5/6] Loss: 0.7017
+Test set: Average loss: 0.0303, Accuracy: 23/46 (50%), Precision: (50%), Recall: (100%)
+[3/200][0/6] Loss: 0.6901
+^CProcess Process-14:
+Traceback (most recent call last):
+  File "/opt/conda/lib/python3.6/multiprocessing/process.py", line 258, in _bootstrap
+    self.run()
+  File "/opt/conda/lib/python3.6/multiprocessing/process.py", line 93, in run
+    self._target(*self._args, **self._kwargs)
+  File "/opt/conda/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 57, in _worker_loop
+    samples = collate_fn([dataset[i] for i in batch_indices])
+  File "/opt/conda/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 138, in default_collate
+    return [default_collate(samples) for samples in transposed]
+  File "/opt/conda/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 138, in <listcomp>
+    return [default_collate(samples) for samples in transposed]
+  File "/opt/conda/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 138, in default_collate
+    return [default_collate(samples) for samples in transposed]
+  File "/opt/conda/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 138, in <listcomp>
+    return [default_collate(samples) for samples in transposed]
+  File "/opt/conda/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 124, in default_collate
+    return torch.stack([torch.from_numpy(b) for b in batch], 0)
+KeyboardInterrupt
+Process Process-13:
+Traceback (most recent call last):
+  File "/opt/conda/lib/python3.6/multiprocessing/process.py", line 258, in _bootstrap
+    self.run()
+  File "/opt/conda/lib/python3.6/multiprocessing/process.py", line 93, in run
+    self._target(*self._args, **self._kwargs)
+  File "/opt/conda/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 57, in _worker_loop
+    samples = collate_fn([dataset[i] for i in batch_indices])
+  File "/opt/conda/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 138, in default_collate
+    return [default_collate(samples) for samples in transposed]
+  File "/opt/conda/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 138, in <listcomp>
+    return [default_collate(samples) for samples in transposed]
+  File "/opt/conda/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 138, in default_collate
+    return [default_collate(samples) for samples in transposed]
+  File "/opt/conda/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 138, in <listcomp>
+    return [default_collate(samples) for samples in transposed]
+  File "/opt/conda/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 124, in default_collate
+    return torch.stack([torch.from_numpy(b) for b in batch], 0)
+KeyboardInterrupt
+Traceback (most recent call last):
+  File "main_biggnn.py", line 152, in <module>
+    main(opt)
+  File "main_biggnn.py", line 140, in main
+    train(epoch, train_dataloader, net, criterion, optimizer, opt, writer)
+  File "/e/utils/train_biggnn.py", line 44, in train
+    writer.add_scalar('loss', loss.data.item(), int(epoch))
+KeyboardInterrupt
+/opt/conda/lib/python3.6/site-packages/sklearn/externals/joblib/externals/cloudpickle/cloudpickle.py:47: DeprecationWarning: the imp module is deprecated in favour of importlib; see the module's documentation for alternative uses
+  import imp
+Namespace(cuda=True, data_percentage=1.0, epoch=0, is_training_ggnn=False, left_directory='program_data/github_cpp_babi_format_Oct-15-2018-0000029', log_path='program_data/github_cpp_babi_format_Oct-15-2018-0000029/logs/biggnn/2', loss=0, lr=0.01, manualSeed=None, model_path='program_data/github_cpp_babi_format_Oct-15-2018-0000029/cll-2.cpkl', n_classes=2, n_hidden=50, n_steps=5, niter=200, right_directory='program_data/./cll_github_java_babi_format_Oct-15-2018-0000029', size_vocabulary=171, state_dim=5, test_batch_size=32, testing=False, train_batch_size=32, training=True, verbal=True, workers=2)
+Random Seed:  6753
+Training Bi-GGNN with cross entropy loss.
+Loading data...............
+  0% 0/2 [00:00<?, ?it/s]program_data/github_cpp_babi_format_Oct-15-2018-0000029/train/train_1.txt
+program_data/github_cpp_babi_format_Oct-15-2018-0000029/train/train_2.txt
+100% 2/2 [00:00<00:00, 63.19it/s]
+  0% 0/2 [00:00<?, ?it/s]program_data/./cll_github_java_babi_format_Oct-15-2018-0000029/train/train_1.txt
+program_data/./cll_github_java_babi_format_Oct-15-2018-0000029/train/train_2.txt
+100% 2/2 [00:00<00:00, 37.56it/s]
+Number of all left training data : 97
+Number of all right training data : 89
+Left max node id : 154
+Right max node id : 154
+0it [00:00, ?it/s]2it [00:00, 9709.04it/s]
+Number of all 1 pairs data : 89
+Number of all 0 pairs data : 89
+  0% 0/2 [00:00<?, ?it/s]program_data/github_cpp_babi_format_Oct-15-2018-0000029/test/test_1.txt
+program_data/github_cpp_babi_format_Oct-15-2018-0000029/test/test_2.txt
+100% 2/2 [00:00<00:00, 232.71it/s]
+  0% 0/2 [00:00<?, ?it/s]program_data/./cll_github_java_babi_format_Oct-15-2018-0000029/test/test_1.txt
+program_data/./cll_github_java_babi_format_Oct-15-2018-0000029/test/test_2.txt
+100% 2/2 [00:00<00:00, 244.58it/s]
+Number of all left testing data : 25
+Number of all right testing data : 23
+Left max node id : 154
+Right max node id : 162
+0it [00:00, ?it/s]2it [00:00, 19108.45it/s]
+Number of all 1 pairs data : 23
+Number of all 0 pairs data : 23
+Using No. 2 of the saved models...
+Using No. 2 saved model....
+[3/200][0/6] Loss: 0.7048
+[3/200][1/6] Loss: 0.7439
+[3/200][2/6] Loss: 0.7389
+[3/200][3/6] Loss: 0.7474
+[3/200][4/6] Loss: 0.6895
+[3/200][5/6] Loss: 0.6909
+Test set: Average loss: 0.0306, Accuracy: 23/46 (50%), Precision: (50%), Recall: (100%)
+[4/200][0/6] Loss: 0.6911
+[4/200][1/6] Loss: 0.7069
+[4/200][2/6] Loss: 0.7051
+[4/200][3/6] Loss: 0.6855
+[4/200][4/6] Loss: 0.6983
+[4/200][5/6] Loss: 0.6953
+Test set: Average loss: 0.0302, Accuracy: 23/46 (50%), Precision: (0%), Recall: (0%)
+[5/200][0/6] Loss: 0.6972
+[5/200][1/6] Loss: 0.6852
+[5/200][2/6] Loss: 0.6915
+[5/200][3/6] Loss: 0.7002
+[5/200][4/6] Loss: 0.6927
+[5/200][5/6] Loss: 0.7549
+Test set: Average loss: 0.0302, Accuracy: 23/46 (50%), Precision: (0%), Recall: (0%)
+[6/200][0/6] Loss: 0.6884
+[6/200][1/6] Loss: 0.6928
+[6/200][2/6] Loss: 0.6943
+[6/200][3/6] Loss: 0.6967
+[6/200][4/6] Loss: 0.6853
+[6/200][5/6] Loss: 0.7002
+Test set: Average loss: 0.0300, Accuracy: 23/46 (50%), Precision: (50%), Recall: (100%)
+[7/200][0/6] Loss: 0.7078
+[7/200][1/6] Loss: 0.6850
+[7/200][2/6] Loss: 0.6855
+[7/200][3/6] Loss: 0.7080
+[7/200][4/6] Loss: 0.6950
+[7/200][5/6] Loss: 0.6977
+Test set: Average loss: 0.0301, Accuracy: 23/46 (50%), Precision: (50%), Recall: (100%)
+[8/200][0/6] Loss: 0.6921
+[8/200][1/6] Loss: 0.6928
+[8/200][2/6] Loss: 0.6914
+[8/200][3/6] Loss: 0.6936
+[8/200][4/6] Loss: 0.6888
+[8/200][5/6] Loss: 0.6874
+Test set: Average loss: 0.0303, Accuracy: 23/46 (50%), Precision: (0%), Recall: (0%)
+[9/200][0/6] Loss: 0.6765
+[9/200][1/6] Loss: 0.7231
+[9/200][2/6] Loss: 0.6917
+[9/200][3/6] Loss: 0.7016
+[9/200][4/6] Loss: 0.6950
+[9/200][5/6] Loss: 0.6951
+Test set: Average loss: 0.0302, Accuracy: 23/46 (50%), Precision: (0%), Recall: (0%)
+[10/200][0/6] Loss: 0.6876
+[10/200][1/6] Loss: 0.6920
+[10/200][2/6] Loss: 0.6977
+[10/200][3/6] Loss: 0.7018
+[10/200][4/6] Loss: 0.6873
+[10/200][5/6] Loss: 0.6960
+Test set: Average loss: 0.0303, Accuracy: 23/46 (50%), Precision: (50%), Recall: (100%)
+[11/200][0/6] Loss: 0.6817
+[11/200][1/6] Loss: 0.6963
+[11/200][2/6] Loss: 0.7134
+[11/200][3/6] Loss: 0.6855
+[11/200][4/6] Loss: 0.6952
+[11/200][5/6] Loss: 0.6964
+Test set: Average loss: 0.0301, Accuracy: 24/46 (52%), Precision: (51%), Recall: (100%)
+[12/200][0/6] Loss: 0.6920
+[12/200][1/6] Loss: 0.6899
+[12/200][2/6] Loss: 0.6948
+[12/200][3/6] Loss: 0.6937
+[12/200][4/6] Loss: 0.6860
+[12/200][5/6] Loss: 0.7031
+Test set: Average loss: 0.0302, Accuracy: 23/46 (50%), Precision: (0%), Recall: (0%)
+[13/200][0/6] Loss: 0.6836
+[13/200][1/6] Loss: 0.6909
+[13/200][2/6] Loss: 0.6875
+[13/200][3/6] Loss: 0.6884
+[13/200][4/6] Loss: 0.6950
+[13/200][5/6] Loss: 0.7029
+Test set: Average loss: 0.0301, Accuracy: 27/46 (58%), Precision: (60%), Recall: (52%)
+[14/200][0/6] Loss: 0.6933
+[14/200][1/6] Loss: 0.6890
+[14/200][2/6] Loss: 0.6896
+[14/200][3/6] Loss: 0.6807
+[14/200][4/6] Loss: 0.6887
+[14/200][5/6] Loss: 0.7032
+Test set: Average loss: 0.0299, Accuracy: 24/46 (52%), Precision: (51%), Recall: (96%)
+[15/200][0/6] Loss: 0.6817
+[15/200][1/6] Loss: 0.6827
+[15/200][2/6] Loss: 0.6939
+[15/200][3/6] Loss: 0.6933
+[15/200][4/6] Loss: 0.6768
+[15/200][5/6] Loss: 0.6878
+Test set: Average loss: 0.0304, Accuracy: 25/46 (54%), Precision: (67%), Recall: (17%)
+[16/200][0/6] Loss: 0.6934
+[16/200][1/6] Loss: 0.6829
+[16/200][2/6] Loss: 0.6629
+[16/200][3/6] Loss: 0.6958
+[16/200][4/6] Loss: 0.6935
+[16/200][5/6] Loss: 0.6828
+Test set: Average loss: 0.0294, Accuracy: 27/46 (58%), Precision: (67%), Recall: (35%)
+[17/200][0/6] Loss: 0.6890
+[17/200][1/6] Loss: 0.6633
+[17/200][2/6] Loss: 0.7225
+[17/200][3/6] Loss: 0.6998
+[17/200][4/6] Loss: 0.6876
+[17/200][5/6] Loss: 0.6782
+Test set: Average loss: 0.0294, Accuracy: 25/46 (54%), Precision: (55%), Recall: (48%)
+[18/200][0/6] Loss: 0.6615
+[18/200][1/6] Loss: 0.6657
+[18/200][2/6] Loss: 0.6932
+[18/200][3/6] Loss: 0.6752
+[18/200][4/6] Loss: 0.6498
+[18/200][5/6] Loss: 0.7030
+Test set: Average loss: 0.0292, Accuracy: 29/46 (63%), Precision: (75%), Recall: (39%)
+[19/200][0/6] Loss: 0.6360
+[19/200][1/6] Loss: 0.6794
+[19/200][2/6] Loss: 0.6656
+[19/200][3/6] Loss: 0.6352
+[19/200][4/6] Loss: 0.6816
+[19/200][5/6] Loss: 0.6618
+Test set: Average loss: 0.0272, Accuracy: 26/46 (56%), Precision: (58%), Recall: (48%)
+[20/200][0/6] Loss: 0.6254
+[20/200][1/6] Loss: 0.5814
+[20/200][2/6] Loss: 0.5944
+[20/200][3/6] Loss: 0.6111
+[20/200][4/6] Loss: 0.6008
+[20/200][5/6] Loss: 0.5478
+Test set: Average loss: 0.0248, Accuracy: 35/46 (76%), Precision: (77%), Recall: (74%)
+[21/200][0/6] Loss: 0.5863
+[21/200][1/6] Loss: 0.4888
+[21/200][2/6] Loss: 0.5056
+[21/200][3/6] Loss: 0.4446
+[21/200][4/6] Loss: 0.5079
+[21/200][5/6] Loss: 0.3405
+Test set: Average loss: 0.0245, Accuracy: 35/46 (76%), Precision: (80%), Recall: (70%)
+[22/200][0/6] Loss: 0.3904
+[22/200][1/6] Loss: 0.5200
+[22/200][2/6] Loss: 0.4727
+[22/200][3/6] Loss: 0.4915
+[22/200][4/6] Loss: 0.4214
+[22/200][5/6] Loss: 0.3820
+Test set: Average loss: 0.0235, Accuracy: 35/46 (76%), Precision: (77%), Recall: (74%)
+[23/200][0/6] Loss: 0.3882
+[23/200][1/6] Loss: 0.4182
+[23/200][2/6] Loss: 0.4377
+[23/200][3/6] Loss: 0.4934
+[23/200][4/6] Loss: 0.4033
+[23/200][5/6] Loss: 0.4252
+Test set: Average loss: 0.0200, Accuracy: 39/46 (84%), Precision: (90%), Recall: (78%)
+[24/200][0/6] Loss: 0.4061
+[24/200][1/6] Loss: 0.3749
+[24/200][2/6] Loss: 0.4459
+[24/200][3/6] Loss: 0.3450
+[24/200][4/6] Loss: 0.3654
+[24/200][5/6] Loss: 0.3256
+Test set: Average loss: 0.0171, Accuracy: 42/46 (91%), Precision: (100%), Recall: (83%)
+[25/200][0/6] Loss: 0.3878
+[25/200][1/6] Loss: 0.3946
+[25/200][2/6] Loss: 0.3166
+[25/200][3/6] Loss: 0.3489
+[25/200][4/6] Loss: 0.3887
+[25/200][5/6] Loss: 0.3138
+Test set: Average loss: 0.0219, Accuracy: 37/46 (80%), Precision: (82%), Recall: (78%)
+[26/200][0/6] Loss: 0.4238
+[26/200][1/6] Loss: 0.4243
+[26/200][2/6] Loss: 0.3882
+[26/200][3/6] Loss: 0.3797
+[26/200][4/6] Loss: 0.3149
+[26/200][5/6] Loss: 0.3154
+Test set: Average loss: 0.0190, Accuracy: 39/46 (84%), Precision: (86%), Recall: (83%)
+[27/200][0/6] Loss: 0.3799
+[27/200][1/6] Loss: 0.3519
+[27/200][2/6] Loss: 0.3208
+[27/200][3/6] Loss: 0.4154
+[27/200][4/6] Loss: 0.3252
+[27/200][5/6] Loss: 0.3139
+Test set: Average loss: 0.0207, Accuracy: 37/46 (80%), Precision: (82%), Recall: (78%)
+[28/200][0/6] Loss: 0.4075
+[28/200][1/6] Loss: 0.3252
+[28/200][2/6] Loss: 0.3446
+[28/200][3/6] Loss: 0.3464
+[28/200][4/6] Loss: 0.3501
+[28/200][5/6] Loss: 0.3134
+Test set: Average loss: 0.0186, Accuracy: 39/46 (84%), Precision: (94%), Recall: (74%)
+[29/200][0/6] Loss: 0.3528
+[29/200][1/6] Loss: 0.3149
+[29/200][2/6] Loss: 0.3741
+[29/200][3/6] Loss: 0.3318
+[29/200][4/6] Loss: 0.4084
+[29/200][5/6] Loss: 0.3134
+Test set: Average loss: 0.0212, Accuracy: 37/46 (80%), Precision: (82%), Recall: (78%)
+[30/200][0/6] Loss: 0.4025
+[30/200][1/6] Loss: 0.3136
+[30/200][2/6] Loss: 0.3757
+[30/200][3/6] Loss: 0.3133
+[30/200][4/6] Loss: 0.3493
+[30/200][5/6] Loss: 0.3138
+Test set: Average loss: 0.0183, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[31/200][0/6] Loss: 0.3210
+[31/200][1/6] Loss: 0.3476
+[31/200][2/6] Loss: 0.3225
+[31/200][3/6] Loss: 0.3477
+[31/200][4/6] Loss: 0.3449
+[31/200][5/6] Loss: 0.4225
+Test set: Average loss: 0.0191, Accuracy: 39/46 (84%), Precision: (86%), Recall: (83%)
+[32/200][0/6] Loss: 0.3538
+[32/200][1/6] Loss: 0.3456
+[32/200][2/6] Loss: 0.4592
+[32/200][3/6] Loss: 0.3458
+[32/200][4/6] Loss: 0.3173
+[32/200][5/6] Loss: 0.3921
+Test set: Average loss: 0.0247, Accuracy: 32/46 (69%), Precision: (71%), Recall: (65%)
+[33/200][0/6] Loss: 0.5255
+[33/200][1/6] Loss: 0.4317
+[33/200][2/6] Loss: 0.4015
+[33/200][3/6] Loss: 0.3775
+[33/200][4/6] Loss: 0.3345
+[33/200][5/6] Loss: 0.4163
+Test set: Average loss: 0.0178, Accuracy: 41/46 (89%), Precision: (95%), Recall: (83%)
+[34/200][0/6] Loss: 0.3480
+[34/200][1/6] Loss: 0.3687
+[34/200][2/6] Loss: 0.3331
+[34/200][3/6] Loss: 0.4075
+[34/200][4/6] Loss: 0.3147
+[34/200][5/6] Loss: 0.3697
+Test set: Average loss: 0.0224, Accuracy: 37/46 (80%), Precision: (82%), Recall: (78%)
+[35/200][0/6] Loss: 0.3769
+[35/200][1/6] Loss: 0.4214
+[35/200][2/6] Loss: 0.3572
+[35/200][3/6] Loss: 0.3428
+[35/200][4/6] Loss: 0.3387
+[35/200][5/6] Loss: 0.4281
+Test set: Average loss: 0.0209, Accuracy: 40/46 (86%), Precision: (90%), Recall: (83%)
+[36/200][0/6] Loss: 0.3248
+[36/200][1/6] Loss: 0.3367
+[36/200][2/6] Loss: 0.3467
+[36/200][3/6] Loss: 0.3778
+[36/200][4/6] Loss: 0.3759
+[36/200][5/6] Loss: 0.3994
+Test set: Average loss: 0.0218, Accuracy: 37/46 (80%), Precision: (79%), Recall: (83%)
+[37/200][0/6] Loss: 0.3177
+[37/200][1/6] Loss: 0.3191
+[37/200][2/6] Loss: 0.4452
+[37/200][3/6] Loss: 0.3773
+[37/200][4/6] Loss: 0.3504
+[37/200][5/6] Loss: 0.4806
+Test set: Average loss: 0.0244, Accuracy: 34/46 (73%), Precision: (72%), Recall: (78%)
+[38/200][0/6] Loss: 0.5029
+[38/200][1/6] Loss: 0.4073
+[38/200][2/6] Loss: 0.3894
+[38/200][3/6] Loss: 0.3228
+[38/200][4/6] Loss: 0.3966
+[38/200][5/6] Loss: 0.4725
+Test set: Average loss: 0.0237, Accuracy: 33/46 (71%), Precision: (69%), Recall: (78%)
+[39/200][0/6] Loss: 0.3536
+[39/200][1/6] Loss: 0.4095
+[39/200][2/6] Loss: 0.3849
+[39/200][3/6] Loss: 0.4491
+[39/200][4/6] Loss: 0.4381
+[39/200][5/6] Loss: 0.3752
+Test set: Average loss: 0.0235, Accuracy: 34/46 (73%), Precision: (70%), Recall: (83%)
+[40/200][0/6] Loss: 0.3619
+[40/200][1/6] Loss: 0.3728
+[40/200][2/6] Loss: 0.3936
+[40/200][3/6] Loss: 0.4618
+[40/200][4/6] Loss: 0.3650
+[40/200][5/6] Loss: 0.3509
+Test set: Average loss: 0.0216, Accuracy: 36/46 (78%), Precision: (78%), Recall: (78%)
+[41/200][0/6] Loss: 0.3134
+[41/200][1/6] Loss: 0.3450
+[41/200][2/6] Loss: 0.3808
+[41/200][3/6] Loss: 0.3452
+[41/200][4/6] Loss: 0.4008
+[41/200][5/6] Loss: 0.3415
+Test set: Average loss: 0.0193, Accuracy: 40/46 (86%), Precision: (95%), Recall: (78%)
+[42/200][0/6] Loss: 0.3266
+[42/200][1/6] Loss: 0.3447
+[42/200][2/6] Loss: 0.3794
+[42/200][3/6] Loss: 0.3934
+[42/200][4/6] Loss: 0.3215
+[42/200][5/6] Loss: 0.3149
+Test set: Average loss: 0.0196, Accuracy: 40/46 (86%), Precision: (90%), Recall: (83%)
+[43/200][0/6] Loss: 0.3726
+[43/200][1/6] Loss: 0.3164
+[43/200][2/6] Loss: 0.3582
+[43/200][3/6] Loss: 0.3133
+[43/200][4/6] Loss: 0.3497
+[43/200][5/6] Loss: 0.3300
+Test set: Average loss: 0.0182, Accuracy: 40/46 (86%), Precision: (90%), Recall: (83%)
+[44/200][0/6] Loss: 0.3762
+[44/200][1/6] Loss: 0.3516
+[44/200][2/6] Loss: 0.3137
+[44/200][3/6] Loss: 0.3134
+[44/200][4/6] Loss: 0.3140
+[44/200][5/6] Loss: 0.3134
+Test set: Average loss: 0.0185, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[45/200][0/6] Loss: 0.3692
+[45/200][1/6] Loss: 0.3229
+[45/200][2/6] Loss: 0.3162
+[45/200][3/6] Loss: 0.3152
+[45/200][4/6] Loss: 0.3633
+[45/200][5/6] Loss: 0.3134
+Test set: Average loss: 0.0189, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[46/200][0/6] Loss: 0.3226
+[46/200][1/6] Loss: 0.3133
+[46/200][2/6] Loss: 0.3346
+[46/200][3/6] Loss: 0.3796
+[46/200][4/6] Loss: 0.3497
+[46/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0225, Accuracy: 38/46 (82%), Precision: (83%), Recall: (83%)
+[47/200][0/6] Loss: 0.3160
+[47/200][1/6] Loss: 0.3276
+[47/200][2/6] Loss: 0.3362
+[47/200][3/6] Loss: 0.3445
+[47/200][4/6] Loss: 0.3145
+[47/200][5/6] Loss: 0.3147
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[48/200][0/6] Loss: 0.3134
+[48/200][1/6] Loss: 0.3133
+[48/200][2/6] Loss: 0.3135
+[48/200][3/6] Loss: 0.3474
+[48/200][4/6] Loss: 0.3154
+[48/200][5/6] Loss: 0.3135
+Test set: Average loss: 0.0196, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[49/200][0/6] Loss: 0.3159
+[49/200][1/6] Loss: 0.3135
+[49/200][2/6] Loss: 0.3133
+[49/200][3/6] Loss: 0.3133
+[49/200][4/6] Loss: 0.3133
+[49/200][5/6] Loss: 0.3688
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[50/200][0/6] Loss: 0.3133
+[50/200][1/6] Loss: 0.3133
+[50/200][2/6] Loss: 0.3445
+[50/200][3/6] Loss: 0.3135
+[50/200][4/6] Loss: 0.3168
+[50/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0170, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[51/200][0/6] Loss: 0.3133
+[51/200][1/6] Loss: 0.3133
+[51/200][2/6] Loss: 0.3135
+[51/200][3/6] Loss: 0.3445
+[51/200][4/6] Loss: 0.3133
+[51/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[52/200][0/6] Loss: 0.3446
+[52/200][1/6] Loss: 0.3133
+[52/200][2/6] Loss: 0.3135
+[52/200][3/6] Loss: 0.3133
+[52/200][4/6] Loss: 0.3133
+[52/200][5/6] Loss: 0.3134
+Test set: Average loss: 0.0170, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[53/200][0/6] Loss: 0.3134
+[53/200][1/6] Loss: 0.3133
+[53/200][2/6] Loss: 0.3134
+[53/200][3/6] Loss: 0.3445
+[53/200][4/6] Loss: 0.3133
+[53/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0205, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[54/200][0/6] Loss: 0.3133
+[54/200][1/6] Loss: 0.3445
+[54/200][2/6] Loss: 0.3133
+[54/200][3/6] Loss: 0.3133
+[54/200][4/6] Loss: 0.3133
+[54/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0196, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[55/200][0/6] Loss: 0.3133
+[55/200][1/6] Loss: 0.3133
+[55/200][2/6] Loss: 0.3133
+[55/200][3/6] Loss: 0.3133
+[55/200][4/6] Loss: 0.3445
+[55/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[56/200][0/6] Loss: 0.3445
+[56/200][1/6] Loss: 0.3133
+[56/200][2/6] Loss: 0.3133
+[56/200][3/6] Loss: 0.3133
+[56/200][4/6] Loss: 0.3133
+[56/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[57/200][0/6] Loss: 0.3133
+[57/200][1/6] Loss: 0.3445
+[57/200][2/6] Loss: 0.3133
+[57/200][3/6] Loss: 0.3133
+[57/200][4/6] Loss: 0.3133
+[57/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[58/200][0/6] Loss: 0.3133
+[58/200][1/6] Loss: 0.3133
+[58/200][2/6] Loss: 0.3133
+[58/200][3/6] Loss: 0.3133
+[58/200][4/6] Loss: 0.3445
+[58/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0170, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[59/200][0/6] Loss: 0.3133
+[59/200][1/6] Loss: 0.3133
+[59/200][2/6] Loss: 0.3133
+[59/200][3/6] Loss: 0.3133
+[59/200][4/6] Loss: 0.3445
+[59/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[60/200][0/6] Loss: 0.3445
+[60/200][1/6] Loss: 0.3133
+[60/200][2/6] Loss: 0.3133
+[60/200][3/6] Loss: 0.3133
+[60/200][4/6] Loss: 0.3133
+[60/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[61/200][0/6] Loss: 0.3445
+[61/200][1/6] Loss: 0.3133
+[61/200][2/6] Loss: 0.3133
+[61/200][3/6] Loss: 0.3133
+[61/200][4/6] Loss: 0.3133
+[61/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[62/200][0/6] Loss: 0.3133
+[62/200][1/6] Loss: 0.3133
+[62/200][2/6] Loss: 0.3133
+[62/200][3/6] Loss: 0.3133
+[62/200][4/6] Loss: 0.3445
+[62/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[63/200][0/6] Loss: 0.3133
+[63/200][1/6] Loss: 0.3133
+[63/200][2/6] Loss: 0.3133
+[63/200][3/6] Loss: 0.3133
+[63/200][4/6] Loss: 0.3445
+[63/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[64/200][0/6] Loss: 0.3133
+[64/200][1/6] Loss: 0.3133
+[64/200][2/6] Loss: 0.3445
+[64/200][3/6] Loss: 0.3133
+[64/200][4/6] Loss: 0.3133
+[64/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0196, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[65/200][0/6] Loss: 0.3133
+[65/200][1/6] Loss: 0.3133
+[65/200][2/6] Loss: 0.3133
+[65/200][3/6] Loss: 0.3445
+[65/200][4/6] Loss: 0.3133
+[65/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[66/200][0/6] Loss: 0.3133
+[66/200][1/6] Loss: 0.3133
+[66/200][2/6] Loss: 0.3133
+[66/200][3/6] Loss: 0.3445
+[66/200][4/6] Loss: 0.3133
+[66/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0196, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[67/200][0/6] Loss: 0.3133
+[67/200][1/6] Loss: 0.3133
+[67/200][2/6] Loss: 0.3133
+[67/200][3/6] Loss: 0.3445
+[67/200][4/6] Loss: 0.3133
+[67/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[68/200][0/6] Loss: 0.3133
+[68/200][1/6] Loss: 0.3133
+[68/200][2/6] Loss: 0.3445
+[68/200][3/6] Loss: 0.3133
+[68/200][4/6] Loss: 0.3133
+[68/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0196, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[69/200][0/6] Loss: 0.3133
+[69/200][1/6] Loss: 0.3133
+[69/200][2/6] Loss: 0.3445
+[69/200][3/6] Loss: 0.3133
+[69/200][4/6] Loss: 0.3133
+[69/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[70/200][0/6] Loss: 0.3445
+[70/200][1/6] Loss: 0.3133
+[70/200][2/6] Loss: 0.3133
+[70/200][3/6] Loss: 0.3133
+[70/200][4/6] Loss: 0.3133
+[70/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[71/200][0/6] Loss: 0.3133
+[71/200][1/6] Loss: 0.3445
+[71/200][2/6] Loss: 0.3133
+[71/200][3/6] Loss: 0.3133
+[71/200][4/6] Loss: 0.3133
+[71/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[72/200][0/6] Loss: 0.3133
+[72/200][1/6] Loss: 0.3133
+[72/200][2/6] Loss: 0.3133
+[72/200][3/6] Loss: 0.3133
+[72/200][4/6] Loss: 0.3445
+[72/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[73/200][0/6] Loss: 0.3133
+[73/200][1/6] Loss: 0.3445
+[73/200][2/6] Loss: 0.3133
+[73/200][3/6] Loss: 0.3133
+[73/200][4/6] Loss: 0.3133
+[73/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[74/200][0/6] Loss: 0.3133
+[74/200][1/6] Loss: 0.3133
+[74/200][2/6] Loss: 0.3133
+[74/200][3/6] Loss: 0.3133
+[74/200][4/6] Loss: 0.3445
+[74/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0205, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[75/200][0/6] Loss: 0.3133
+[75/200][1/6] Loss: 0.3133
+[75/200][2/6] Loss: 0.3133
+[75/200][3/6] Loss: 0.3445
+[75/200][4/6] Loss: 0.3133
+[75/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[76/200][0/6] Loss: 0.3133
+[76/200][1/6] Loss: 0.3133
+[76/200][2/6] Loss: 0.3133
+[76/200][3/6] Loss: 0.3133
+[76/200][4/6] Loss: 0.3445
+[76/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0196, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[77/200][0/6] Loss: 0.3445
+[77/200][1/6] Loss: 0.3133
+[77/200][2/6] Loss: 0.3133
+[77/200][3/6] Loss: 0.3133
+[77/200][4/6] Loss: 0.3133
+[77/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0196, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[78/200][0/6] Loss: 0.3133
+[78/200][1/6] Loss: 0.3133
+[78/200][2/6] Loss: 0.3445
+[78/200][3/6] Loss: 0.3133
+[78/200][4/6] Loss: 0.3133
+[78/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0196, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[79/200][0/6] Loss: 0.3133
+[79/200][1/6] Loss: 0.3133
+[79/200][2/6] Loss: 0.3133
+[79/200][3/6] Loss: 0.3445
+[79/200][4/6] Loss: 0.3133
+[79/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[80/200][0/6] Loss: 0.3133
+[80/200][1/6] Loss: 0.3133
+[80/200][2/6] Loss: 0.3133
+[80/200][3/6] Loss: 0.3133
+[80/200][4/6] Loss: 0.3445
+[80/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[81/200][0/6] Loss: 0.3133
+[81/200][1/6] Loss: 0.3133
+[81/200][2/6] Loss: 0.3133
+[81/200][3/6] Loss: 0.3133
+[81/200][4/6] Loss: 0.3445
+[81/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[82/200][0/6] Loss: 0.3133
+[82/200][1/6] Loss: 0.3133
+[82/200][2/6] Loss: 0.3133
+[82/200][3/6] Loss: 0.3445
+[82/200][4/6] Loss: 0.3133
+[82/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[83/200][0/6] Loss: 0.3133
+[83/200][1/6] Loss: 0.3133
+[83/200][2/6] Loss: 0.3133
+[83/200][3/6] Loss: 0.3445
+[83/200][4/6] Loss: 0.3133
+[83/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[84/200][0/6] Loss: 0.3133
+[84/200][1/6] Loss: 0.3133
+[84/200][2/6] Loss: 0.3445
+[84/200][3/6] Loss: 0.3133
+[84/200][4/6] Loss: 0.3133
+[84/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0170, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[85/200][0/6] Loss: 0.3133
+[85/200][1/6] Loss: 0.3445
+[85/200][2/6] Loss: 0.3133
+[85/200][3/6] Loss: 0.3133
+[85/200][4/6] Loss: 0.3133
+[85/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0170, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[86/200][0/6] Loss: 0.3133
+[86/200][1/6] Loss: 0.3133
+[86/200][2/6] Loss: 0.3133
+[86/200][3/6] Loss: 0.3445
+[86/200][4/6] Loss: 0.3133
+[86/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[87/200][0/6] Loss: 0.3133
+[87/200][1/6] Loss: 0.3133
+[87/200][2/6] Loss: 0.3133
+[87/200][3/6] Loss: 0.3133
+[87/200][4/6] Loss: 0.3445
+[87/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[88/200][0/6] Loss: 0.3133
+[88/200][1/6] Loss: 0.3133
+[88/200][2/6] Loss: 0.3133
+[88/200][3/6] Loss: 0.3133
+[88/200][4/6] Loss: 0.3445
+[88/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0196, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[89/200][0/6] Loss: 0.3133
+[89/200][1/6] Loss: 0.3133
+[89/200][2/6] Loss: 0.3133
+[89/200][3/6] Loss: 0.3133
+[89/200][4/6] Loss: 0.3133
+[89/200][5/6] Loss: 0.3688
+Test set: Average loss: 0.0170, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[90/200][0/6] Loss: 0.3133
+[90/200][1/6] Loss: 0.3133
+[90/200][2/6] Loss: 0.3133
+[90/200][3/6] Loss: 0.3445
+[90/200][4/6] Loss: 0.3133
+[90/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0196, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[91/200][0/6] Loss: 0.3133
+[91/200][1/6] Loss: 0.3133
+[91/200][2/6] Loss: 0.3133
+[91/200][3/6] Loss: 0.3133
+[91/200][4/6] Loss: 0.3133
+[91/200][5/6] Loss: 0.3688
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[92/200][0/6] Loss: 0.3133
+[92/200][1/6] Loss: 0.3445
+[92/200][2/6] Loss: 0.3133
+[92/200][3/6] Loss: 0.3133
+[92/200][4/6] Loss: 0.3133
+[92/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0170, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[93/200][0/6] Loss: 0.3445
+[93/200][1/6] Loss: 0.3133
+[93/200][2/6] Loss: 0.3133
+[93/200][3/6] Loss: 0.3133
+[93/200][4/6] Loss: 0.3133
+[93/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[94/200][0/6] Loss: 0.3133
+[94/200][1/6] Loss: 0.3445
+[94/200][2/6] Loss: 0.3133
+[94/200][3/6] Loss: 0.3133
+[94/200][4/6] Loss: 0.3133
+[94/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[95/200][0/6] Loss: 0.3133
+[95/200][1/6] Loss: 0.3133
+[95/200][2/6] Loss: 0.3445
+[95/200][3/6] Loss: 0.3133
+[95/200][4/6] Loss: 0.3133
+[95/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[96/200][0/6] Loss: 0.3133
+[96/200][1/6] Loss: 0.3133
+[96/200][2/6] Loss: 0.3133
+[96/200][3/6] Loss: 0.3445
+[96/200][4/6] Loss: 0.3133
+[96/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0196, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[97/200][0/6] Loss: 0.3133
+[97/200][1/6] Loss: 0.3133
+[97/200][2/6] Loss: 0.3445
+[97/200][3/6] Loss: 0.3133
+[97/200][4/6] Loss: 0.3133
+[97/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[98/200][0/6] Loss: 0.3445
+[98/200][1/6] Loss: 0.3133
+[98/200][2/6] Loss: 0.3133
+[98/200][3/6] Loss: 0.3133
+[98/200][4/6] Loss: 0.3133
+[98/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0170, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[99/200][0/6] Loss: 0.3133
+[99/200][1/6] Loss: 0.3445
+[99/200][2/6] Loss: 0.3133
+[99/200][3/6] Loss: 0.3133
+[99/200][4/6] Loss: 0.3133
+[99/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0196, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[100/200][0/6] Loss: 0.3133
+[100/200][1/6] Loss: 0.3133
+[100/200][2/6] Loss: 0.3133
+[100/200][3/6] Loss: 0.3133
+[100/200][4/6] Loss: 0.3445
+[100/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0196, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[101/200][0/6] Loss: 0.3133
+[101/200][1/6] Loss: 0.3445
+[101/200][2/6] Loss: 0.3133
+[101/200][3/6] Loss: 0.3133
+[101/200][4/6] Loss: 0.3133
+[101/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[102/200][0/6] Loss: 0.3133
+[102/200][1/6] Loss: 0.3133
+[102/200][2/6] Loss: 0.3445
+[102/200][3/6] Loss: 0.3133
+[102/200][4/6] Loss: 0.3133
+[102/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[103/200][0/6] Loss: 0.3445
+[103/200][1/6] Loss: 0.3133
+[103/200][2/6] Loss: 0.3133
+[103/200][3/6] Loss: 0.3133
+[103/200][4/6] Loss: 0.3133
+[103/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[104/200][0/6] Loss: 0.3133
+[104/200][1/6] Loss: 0.3445
+[104/200][2/6] Loss: 0.3133
+[104/200][3/6] Loss: 0.3133
+[104/200][4/6] Loss: 0.3133
+[104/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[105/200][0/6] Loss: 0.3133
+[105/200][1/6] Loss: 0.3133
+[105/200][2/6] Loss: 0.3445
+[105/200][3/6] Loss: 0.3133
+[105/200][4/6] Loss: 0.3133
+[105/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[106/200][0/6] Loss: 0.3133
+[106/200][1/6] Loss: 0.3133
+[106/200][2/6] Loss: 0.3445
+[106/200][3/6] Loss: 0.3133
+[106/200][4/6] Loss: 0.3133
+[106/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0170, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[107/200][0/6] Loss: 0.3445
+[107/200][1/6] Loss: 0.3133
+[107/200][2/6] Loss: 0.3133
+[107/200][3/6] Loss: 0.3133
+[107/200][4/6] Loss: 0.3133
+[107/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0196, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[108/200][0/6] Loss: 0.3133
+[108/200][1/6] Loss: 0.3133
+[108/200][2/6] Loss: 0.3133
+[108/200][3/6] Loss: 0.3445
+[108/200][4/6] Loss: 0.3133
+[108/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0196, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[109/200][0/6] Loss: 0.3133
+[109/200][1/6] Loss: 0.3133
+[109/200][2/6] Loss: 0.3133
+[109/200][3/6] Loss: 0.3445
+[109/200][4/6] Loss: 0.3133
+[109/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[110/200][0/6] Loss: 0.3133
+[110/200][1/6] Loss: 0.3133
+[110/200][2/6] Loss: 0.3133
+[110/200][3/6] Loss: 0.3445
+[110/200][4/6] Loss: 0.3133
+[110/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0170, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[111/200][0/6] Loss: 0.3133
+[111/200][1/6] Loss: 0.3445
+[111/200][2/6] Loss: 0.3133
+[111/200][3/6] Loss: 0.3133
+[111/200][4/6] Loss: 0.3133
+[111/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[112/200][0/6] Loss: 0.3133
+[112/200][1/6] Loss: 0.3133
+[112/200][2/6] Loss: 0.3445
+[112/200][3/6] Loss: 0.3133
+[112/200][4/6] Loss: 0.3133
+[112/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[113/200][0/6] Loss: 0.3133
+[113/200][1/6] Loss: 0.3445
+[113/200][2/6] Loss: 0.3133
+[113/200][3/6] Loss: 0.3133
+[113/200][4/6] Loss: 0.3133
+[113/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[114/200][0/6] Loss: 0.3133
+[114/200][1/6] Loss: 0.3133
+[114/200][2/6] Loss: 0.3445
+[114/200][3/6] Loss: 0.3133
+[114/200][4/6] Loss: 0.3133
+[114/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[115/200][0/6] Loss: 0.3445
+[115/200][1/6] Loss: 0.3133
+[115/200][2/6] Loss: 0.3133
+[115/200][3/6] Loss: 0.3133
+[115/200][4/6] Loss: 0.3133
+[115/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0170, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[116/200][0/6] Loss: 0.3445
+[116/200][1/6] Loss: 0.3133
+[116/200][2/6] Loss: 0.3133
+[116/200][3/6] Loss: 0.3133
+[116/200][4/6] Loss: 0.3133
+[116/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[117/200][0/6] Loss: 0.3133
+[117/200][1/6] Loss: 0.3133
+[117/200][2/6] Loss: 0.3133
+[117/200][3/6] Loss: 0.3133
+[117/200][4/6] Loss: 0.3133
+[117/200][5/6] Loss: 0.3688
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[118/200][0/6] Loss: 0.3133
+[118/200][1/6] Loss: 0.3133
+[118/200][2/6] Loss: 0.3445
+[118/200][3/6] Loss: 0.3133
+[118/200][4/6] Loss: 0.3133
+[118/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0170, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[119/200][0/6] Loss: 0.3445
+[119/200][1/6] Loss: 0.3133
+[119/200][2/6] Loss: 0.3133
+[119/200][3/6] Loss: 0.3133
+[119/200][4/6] Loss: 0.3133
+[119/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[120/200][0/6] Loss: 0.3133
+[120/200][1/6] Loss: 0.3133
+[120/200][2/6] Loss: 0.3133
+[120/200][3/6] Loss: 0.3133
+[120/200][4/6] Loss: 0.3133
+[120/200][5/6] Loss: 0.3688
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[121/200][0/6] Loss: 0.3133
+[121/200][1/6] Loss: 0.3445
+[121/200][2/6] Loss: 0.3133
+[121/200][3/6] Loss: 0.3133
+[121/200][4/6] Loss: 0.3133
+[121/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[122/200][0/6] Loss: 0.3133
+[122/200][1/6] Loss: 0.3133
+[122/200][2/6] Loss: 0.3133
+[122/200][3/6] Loss: 0.3445
+[122/200][4/6] Loss: 0.3133
+[122/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0170, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[123/200][0/6] Loss: 0.3133
+[123/200][1/6] Loss: 0.3445
+[123/200][2/6] Loss: 0.3133
+[123/200][3/6] Loss: 0.3133
+[123/200][4/6] Loss: 0.3133
+[123/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[124/200][0/6] Loss: 0.3133
+[124/200][1/6] Loss: 0.3133
+[124/200][2/6] Loss: 0.3133
+[124/200][3/6] Loss: 0.3133
+[124/200][4/6] Loss: 0.3445
+[124/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[125/200][0/6] Loss: 0.3133
+[125/200][1/6] Loss: 0.3133
+[125/200][2/6] Loss: 0.3133
+[125/200][3/6] Loss: 0.3133
+[125/200][4/6] Loss: 0.3445
+[125/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0196, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[126/200][0/6] Loss: 0.3445
+[126/200][1/6] Loss: 0.3133
+[126/200][2/6] Loss: 0.3133
+[126/200][3/6] Loss: 0.3133
+[126/200][4/6] Loss: 0.3133
+[126/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0170, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[127/200][0/6] Loss: 0.3133
+[127/200][1/6] Loss: 0.3133
+[127/200][2/6] Loss: 0.3133
+[127/200][3/6] Loss: 0.3133
+[127/200][4/6] Loss: 0.3445
+[127/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0196, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[128/200][0/6] Loss: 0.3133
+[128/200][1/6] Loss: 0.3133
+[128/200][2/6] Loss: 0.3133
+[128/200][3/6] Loss: 0.3133
+[128/200][4/6] Loss: 0.3445
+[128/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[129/200][0/6] Loss: 0.3133
+[129/200][1/6] Loss: 0.3133
+[129/200][2/6] Loss: 0.3133
+[129/200][3/6] Loss: 0.3133
+[129/200][4/6] Loss: 0.3133
+[129/200][5/6] Loss: 0.3688
+Test set: Average loss: 0.0196, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[130/200][0/6] Loss: 0.3133
+[130/200][1/6] Loss: 0.3133
+[130/200][2/6] Loss: 0.3133
+[130/200][3/6] Loss: 0.3445
+[130/200][4/6] Loss: 0.3133
+[130/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[131/200][0/6] Loss: 0.3133
+[131/200][1/6] Loss: 0.3133
+[131/200][2/6] Loss: 0.3133
+[131/200][3/6] Loss: 0.3133
+[131/200][4/6] Loss: 0.3445
+[131/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[132/200][0/6] Loss: 0.3133
+[132/200][1/6] Loss: 0.3133
+[132/200][2/6] Loss: 0.3445
+[132/200][3/6] Loss: 0.3133
+[132/200][4/6] Loss: 0.3133
+[132/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[133/200][0/6] Loss: 0.3133
+[133/200][1/6] Loss: 0.3133
+[133/200][2/6] Loss: 0.3133
+[133/200][3/6] Loss: 0.3133
+[133/200][4/6] Loss: 0.3445
+[133/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[134/200][0/6] Loss: 0.3133
+[134/200][1/6] Loss: 0.3445
+[134/200][2/6] Loss: 0.3133
+[134/200][3/6] Loss: 0.3133
+[134/200][4/6] Loss: 0.3133
+[134/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[135/200][0/6] Loss: 0.3133
+[135/200][1/6] Loss: 0.3445
+[135/200][2/6] Loss: 0.3133
+[135/200][3/6] Loss: 0.3133
+[135/200][4/6] Loss: 0.3133
+[135/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0170, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[136/200][0/6] Loss: 0.3133
+[136/200][1/6] Loss: 0.3133
+[136/200][2/6] Loss: 0.3133
+[136/200][3/6] Loss: 0.3445
+[136/200][4/6] Loss: 0.3133
+[136/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[137/200][0/6] Loss: 0.3133
+[137/200][1/6] Loss: 0.3133
+[137/200][2/6] Loss: 0.3445
+[137/200][3/6] Loss: 0.3133
+[137/200][4/6] Loss: 0.3133
+[137/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[138/200][0/6] Loss: 0.3133
+[138/200][1/6] Loss: 0.3133
+[138/200][2/6] Loss: 0.3133
+[138/200][3/6] Loss: 0.3445
+[138/200][4/6] Loss: 0.3133
+[138/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0214, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[139/200][0/6] Loss: 0.3133
+[139/200][1/6] Loss: 0.3133
+[139/200][2/6] Loss: 0.3133
+[139/200][3/6] Loss: 0.3133
+[139/200][4/6] Loss: 0.3133
+[139/200][5/6] Loss: 0.3688
+Test set: Average loss: 0.0170, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[140/200][0/6] Loss: 0.3133
+[140/200][1/6] Loss: 0.3133
+[140/200][2/6] Loss: 0.3133
+[140/200][3/6] Loss: 0.3445
+[140/200][4/6] Loss: 0.3133
+[140/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[141/200][0/6] Loss: 0.3445
+[141/200][1/6] Loss: 0.3133
+[141/200][2/6] Loss: 0.3133
+[141/200][3/6] Loss: 0.3133
+[141/200][4/6] Loss: 0.3133
+[141/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0196, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[142/200][0/6] Loss: 0.3445
+[142/200][1/6] Loss: 0.3133
+[142/200][2/6] Loss: 0.3133
+[142/200][3/6] Loss: 0.3133
+[142/200][4/6] Loss: 0.3133
+[142/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[143/200][0/6] Loss: 0.3133
+[143/200][1/6] Loss: 0.3133
+[143/200][2/6] Loss: 0.3445
+[143/200][3/6] Loss: 0.3133
+[143/200][4/6] Loss: 0.3133
+[143/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0196, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[144/200][0/6] Loss: 0.3133
+[144/200][1/6] Loss: 0.3133
+[144/200][2/6] Loss: 0.3133
+[144/200][3/6] Loss: 0.3133
+[144/200][4/6] Loss: 0.3133
+[144/200][5/6] Loss: 0.3688
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[145/200][0/6] Loss: 0.3445
+[145/200][1/6] Loss: 0.3133
+[145/200][2/6] Loss: 0.3133
+[145/200][3/6] Loss: 0.3133
+[145/200][4/6] Loss: 0.3133
+[145/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[146/200][0/6] Loss: 0.3445
+[146/200][1/6] Loss: 0.3133
+[146/200][2/6] Loss: 0.3133
+[146/200][3/6] Loss: 0.3133
+[146/200][4/6] Loss: 0.3133
+[146/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[147/200][0/6] Loss: 0.3133
+[147/200][1/6] Loss: 0.3133
+[147/200][2/6] Loss: 0.3445
+[147/200][3/6] Loss: 0.3133
+[147/200][4/6] Loss: 0.3133
+[147/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[148/200][0/6] Loss: 0.3133
+[148/200][1/6] Loss: 0.3133
+[148/200][2/6] Loss: 0.3445
+[148/200][3/6] Loss: 0.3133
+[148/200][4/6] Loss: 0.3133
+[148/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0196, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[149/200][0/6] Loss: 0.3133
+[149/200][1/6] Loss: 0.3133
+[149/200][2/6] Loss: 0.3445
+[149/200][3/6] Loss: 0.3133
+[149/200][4/6] Loss: 0.3133
+[149/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[150/200][0/6] Loss: 0.3133
+[150/200][1/6] Loss: 0.3133
+[150/200][2/6] Loss: 0.3133
+[150/200][3/6] Loss: 0.3133
+[150/200][4/6] Loss: 0.3133
+[150/200][5/6] Loss: 0.3688
+Test set: Average loss: 0.0196, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[151/200][0/6] Loss: 0.3133
+[151/200][1/6] Loss: 0.3133
+[151/200][2/6] Loss: 0.3445
+[151/200][3/6] Loss: 0.3133
+[151/200][4/6] Loss: 0.3133
+[151/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[152/200][0/6] Loss: 0.3133
+[152/200][1/6] Loss: 0.3133
+[152/200][2/6] Loss: 0.3133
+[152/200][3/6] Loss: 0.3133
+[152/200][4/6] Loss: 0.3133
+[152/200][5/6] Loss: 0.3688
+Test set: Average loss: 0.0170, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[153/200][0/6] Loss: 0.3133
+[153/200][1/6] Loss: 0.3133
+[153/200][2/6] Loss: 0.3133
+[153/200][3/6] Loss: 0.3133
+[153/200][4/6] Loss: 0.3445
+[153/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[154/200][0/6] Loss: 0.3133
+[154/200][1/6] Loss: 0.3133
+[154/200][2/6] Loss: 0.3133
+[154/200][3/6] Loss: 0.3445
+[154/200][4/6] Loss: 0.3133
+[154/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[155/200][0/6] Loss: 0.3133
+[155/200][1/6] Loss: 0.3133
+[155/200][2/6] Loss: 0.3445
+[155/200][3/6] Loss: 0.3133
+[155/200][4/6] Loss: 0.3133
+[155/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[156/200][0/6] Loss: 0.3133
+[156/200][1/6] Loss: 0.3133
+[156/200][2/6] Loss: 0.3133
+[156/200][3/6] Loss: 0.3133
+[156/200][4/6] Loss: 0.3133
+[156/200][5/6] Loss: 0.3688
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[157/200][0/6] Loss: 0.3445
+[157/200][1/6] Loss: 0.3133
+[157/200][2/6] Loss: 0.3133
+[157/200][3/6] Loss: 0.3133
+[157/200][4/6] Loss: 0.3133
+[157/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0170, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[158/200][0/6] Loss: 0.3133
+[158/200][1/6] Loss: 0.3133
+[158/200][2/6] Loss: 0.3133
+[158/200][3/6] Loss: 0.3445
+[158/200][4/6] Loss: 0.3133
+[158/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[159/200][0/6] Loss: 0.3133
+[159/200][1/6] Loss: 0.3133
+[159/200][2/6] Loss: 0.3133
+[159/200][3/6] Loss: 0.3445
+[159/200][4/6] Loss: 0.3133
+[159/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[160/200][0/6] Loss: 0.3133
+[160/200][1/6] Loss: 0.3133
+[160/200][2/6] Loss: 0.3133
+[160/200][3/6] Loss: 0.3133
+[160/200][4/6] Loss: 0.3445
+[160/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[161/200][0/6] Loss: 0.3133
+[161/200][1/6] Loss: 0.3133
+[161/200][2/6] Loss: 0.3133
+[161/200][3/6] Loss: 0.3445
+[161/200][4/6] Loss: 0.3133
+[161/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[162/200][0/6] Loss: 0.3133
+[162/200][1/6] Loss: 0.3445
+[162/200][2/6] Loss: 0.3133
+[162/200][3/6] Loss: 0.3133
+[162/200][4/6] Loss: 0.3133
+[162/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0170, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[163/200][0/6] Loss: 0.3445
+[163/200][1/6] Loss: 0.3133
+[163/200][2/6] Loss: 0.3133
+[163/200][3/6] Loss: 0.3133
+[163/200][4/6] Loss: 0.3133
+[163/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[164/200][0/6] Loss: 0.3133
+[164/200][1/6] Loss: 0.3133
+[164/200][2/6] Loss: 0.3133
+[164/200][3/6] Loss: 0.3445
+[164/200][4/6] Loss: 0.3133
+[164/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[165/200][0/6] Loss: 0.3133
+[165/200][1/6] Loss: 0.3133
+[165/200][2/6] Loss: 0.3133
+[165/200][3/6] Loss: 0.3445
+[165/200][4/6] Loss: 0.3133
+[165/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[166/200][0/6] Loss: 0.3133
+[166/200][1/6] Loss: 0.3133
+[166/200][2/6] Loss: 0.3445
+[166/200][3/6] Loss: 0.3133
+[166/200][4/6] Loss: 0.3133
+[166/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[167/200][0/6] Loss: 0.3133
+[167/200][1/6] Loss: 0.3445
+[167/200][2/6] Loss: 0.3133
+[167/200][3/6] Loss: 0.3133
+[167/200][4/6] Loss: 0.3133
+[167/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[168/200][0/6] Loss: 0.3133
+[168/200][1/6] Loss: 0.3133
+[168/200][2/6] Loss: 0.3445
+[168/200][3/6] Loss: 0.3133
+[168/200][4/6] Loss: 0.3133
+[168/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[169/200][0/6] Loss: 0.3133
+[169/200][1/6] Loss: 0.3133
+[169/200][2/6] Loss: 0.3445
+[169/200][3/6] Loss: 0.3133
+[169/200][4/6] Loss: 0.3133
+[169/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[170/200][0/6] Loss: 0.3133
+[170/200][1/6] Loss: 0.3133
+[170/200][2/6] Loss: 0.3133
+[170/200][3/6] Loss: 0.3445
+[170/200][4/6] Loss: 0.3133
+[170/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[171/200][0/6] Loss: 0.3133
+[171/200][1/6] Loss: 0.3133
+[171/200][2/6] Loss: 0.3445
+[171/200][3/6] Loss: 0.3133
+[171/200][4/6] Loss: 0.3133
+[171/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0170, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[172/200][0/6] Loss: 0.3133
+[172/200][1/6] Loss: 0.3133
+[172/200][2/6] Loss: 0.3445
+[172/200][3/6] Loss: 0.3133
+[172/200][4/6] Loss: 0.3133
+[172/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[173/200][0/6] Loss: 0.3133
+[173/200][1/6] Loss: 0.3133
+[173/200][2/6] Loss: 0.3445
+[173/200][3/6] Loss: 0.3133
+[173/200][4/6] Loss: 0.3133
+[173/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[174/200][0/6] Loss: 0.3133
+[174/200][1/6] Loss: 0.3133
+[174/200][2/6] Loss: 0.3133
+[174/200][3/6] Loss: 0.3133
+[174/200][4/6] Loss: 0.3445
+[174/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[175/200][0/6] Loss: 0.3133
+[175/200][1/6] Loss: 0.3133
+[175/200][2/6] Loss: 0.3133
+[175/200][3/6] Loss: 0.3133
+[175/200][4/6] Loss: 0.3445
+[175/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[176/200][0/6] Loss: 0.3133
+[176/200][1/6] Loss: 0.3133
+[176/200][2/6] Loss: 0.3133
+[176/200][3/6] Loss: 0.3133
+[176/200][4/6] Loss: 0.3133
+[176/200][5/6] Loss: 0.3688
+Test set: Average loss: 0.0170, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[177/200][0/6] Loss: 0.3133
+[177/200][1/6] Loss: 0.3133
+[177/200][2/6] Loss: 0.3133
+[177/200][3/6] Loss: 0.3445
+[177/200][4/6] Loss: 0.3133
+[177/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0196, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[178/200][0/6] Loss: 0.3133
+[178/200][1/6] Loss: 0.3133
+[178/200][2/6] Loss: 0.3133
+[178/200][3/6] Loss: 0.3133
+[178/200][4/6] Loss: 0.3445
+[178/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[179/200][0/6] Loss: 0.3133
+[179/200][1/6] Loss: 0.3133
+[179/200][2/6] Loss: 0.3133
+[179/200][3/6] Loss: 0.3445
+[179/200][4/6] Loss: 0.3133
+[179/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0170, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[180/200][0/6] Loss: 0.3133
+[180/200][1/6] Loss: 0.3445
+[180/200][2/6] Loss: 0.3133
+[180/200][3/6] Loss: 0.3133
+[180/200][4/6] Loss: 0.3133
+[180/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[181/200][0/6] Loss: 0.3133
+[181/200][1/6] Loss: 0.3133
+[181/200][2/6] Loss: 0.3133
+[181/200][3/6] Loss: 0.3133
+[181/200][4/6] Loss: 0.3445
+[181/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[182/200][0/6] Loss: 0.3133
+[182/200][1/6] Loss: 0.3445
+[182/200][2/6] Loss: 0.3133
+[182/200][3/6] Loss: 0.3133
+[182/200][4/6] Loss: 0.3133
+[182/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0196, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[183/200][0/6] Loss: 0.3445
+[183/200][1/6] Loss: 0.3133
+[183/200][2/6] Loss: 0.3133
+[183/200][3/6] Loss: 0.3133
+[183/200][4/6] Loss: 0.3133
+[183/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[184/200][0/6] Loss: 0.3133
+[184/200][1/6] Loss: 0.3133
+[184/200][2/6] Loss: 0.3133
+[184/200][3/6] Loss: 0.3133
+[184/200][4/6] Loss: 0.3445
+[184/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[185/200][0/6] Loss: 0.3133
+[185/200][1/6] Loss: 0.3445
+[185/200][2/6] Loss: 0.3133
+[185/200][3/6] Loss: 0.3133
+[185/200][4/6] Loss: 0.3133
+[185/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[186/200][0/6] Loss: 0.3133
+[186/200][1/6] Loss: 0.3133
+[186/200][2/6] Loss: 0.3133
+[186/200][3/6] Loss: 0.3133
+[186/200][4/6] Loss: 0.3133
+[186/200][5/6] Loss: 0.3688
+Test set: Average loss: 0.0196, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[187/200][0/6] Loss: 0.3133
+[187/200][1/6] Loss: 0.3133
+[187/200][2/6] Loss: 0.3133
+[187/200][3/6] Loss: 0.3133
+[187/200][4/6] Loss: 0.3445
+[187/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[188/200][0/6] Loss: 0.3133
+[188/200][1/6] Loss: 0.3133
+[188/200][2/6] Loss: 0.3133
+[188/200][3/6] Loss: 0.3445
+[188/200][4/6] Loss: 0.3133
+[188/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[189/200][0/6] Loss: 0.3133
+[189/200][1/6] Loss: 0.3133
+[189/200][2/6] Loss: 0.3133
+[189/200][3/6] Loss: 0.3445
+[189/200][4/6] Loss: 0.3133
+[189/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[190/200][0/6] Loss: 0.3133
+[190/200][1/6] Loss: 0.3133
+[190/200][2/6] Loss: 0.3133
+[190/200][3/6] Loss: 0.3133
+[190/200][4/6] Loss: 0.3445
+[190/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0196, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[191/200][0/6] Loss: 0.3133
+[191/200][1/6] Loss: 0.3133
+[191/200][2/6] Loss: 0.3445
+[191/200][3/6] Loss: 0.3133
+[191/200][4/6] Loss: 0.3133
+[191/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[192/200][0/6] Loss: 0.3133
+[192/200][1/6] Loss: 0.3133
+[192/200][2/6] Loss: 0.3133
+[192/200][3/6] Loss: 0.3445
+[192/200][4/6] Loss: 0.3133
+[192/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0170, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[193/200][0/6] Loss: 0.3133
+[193/200][1/6] Loss: 0.3133
+[193/200][2/6] Loss: 0.3445
+[193/200][3/6] Loss: 0.3133
+[193/200][4/6] Loss: 0.3133
+[193/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[194/200][0/6] Loss: 0.3133
+[194/200][1/6] Loss: 0.3133
+[194/200][2/6] Loss: 0.3133
+[194/200][3/6] Loss: 0.3133
+[194/200][4/6] Loss: 0.3133
+[194/200][5/6] Loss: 0.3688
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[195/200][0/6] Loss: 0.3133
+[195/200][1/6] Loss: 0.3445
+[195/200][2/6] Loss: 0.3133
+[195/200][3/6] Loss: 0.3133
+[195/200][4/6] Loss: 0.3133
+[195/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[196/200][0/6] Loss: 0.3133
+[196/200][1/6] Loss: 0.3445
+[196/200][2/6] Loss: 0.3133
+[196/200][3/6] Loss: 0.3133
+[196/200][4/6] Loss: 0.3133
+[196/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[197/200][0/6] Loss: 0.3133
+[197/200][1/6] Loss: 0.3133
+[197/200][2/6] Loss: 0.3133
+[197/200][3/6] Loss: 0.3133
+[197/200][4/6] Loss: 0.3445
+[197/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0170, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[198/200][0/6] Loss: 0.3133
+[198/200][1/6] Loss: 0.3133
+[198/200][2/6] Loss: 0.3133
+[198/200][3/6] Loss: 0.3133
+[198/200][4/6] Loss: 0.3445
+[198/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0188, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[199/200][0/6] Loss: 0.3445
+[199/200][1/6] Loss: 0.3133
+[199/200][2/6] Loss: 0.3133
+[199/200][3/6] Loss: 0.3133
+[199/200][4/6] Loss: 0.3133
+[199/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0170, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[200/200][0/6] Loss: 0.3133
+[200/200][1/6] Loss: 0.3133
+[200/200][2/6] Loss: 0.3133
+[200/200][3/6] Loss: 0.3133
+[200/200][4/6] Loss: 0.3445
+[200/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
+[201/200][0/6] Loss: 0.3133
+[201/200][1/6] Loss: 0.3133
+[201/200][2/6] Loss: 0.3133
+[201/200][3/6] Loss: 0.3445
+[201/200][4/6] Loss: 0.3133
+[201/200][5/6] Loss: 0.3133
+Test set: Average loss: 0.0179, Accuracy: 41/46 (89%), Precision: (91%), Recall: (87%)
