@@ -847,7 +847,7 @@ if __name__ == "__main__":
             if output_extension == ".pkl" or output_extension == ".pickle": 
                 with open(opt.argv[1], 'wb') as out:
                     pickle.dump(data, out, 2)
-            elif output_extension == ".json" and len(opt.argv) < 2: 
+            elif output_extension == ".json" and len(opt.argv) <= 2: 
                 with open(opt.argv[1], 'w') as out:
                     json.dump(data, out, default=jdefault)
             elif output_extension == ".txt" and len(opt.argv) > 2: 
