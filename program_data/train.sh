@@ -3,7 +3,7 @@ command -v docker >/dev/null 2>&1 || {
   has_docker=0
 }
 if [ "$has_docker" == "1" ]; then
-   docker build -t progress ../progress
+   docker build -t progress ../docker
 fi
 NVIDIA=
 if [ "$has_docker" == "1" ]; then

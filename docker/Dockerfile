@@ -6,3 +6,4 @@ ENV https_proxy http://wwwcache.open.ac.uk:80
 RUN pip install tqdm pyarrow
 RUN pip install -U pip
 RUN pip install tensorboardX sklearn
+RUN pip install graph_nets tensorflow_gpu tensorflow_probability_gpu
