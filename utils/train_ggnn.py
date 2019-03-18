@@ -6,6 +6,7 @@ from shutil import copyfile
 def train(epoch, dataloader, net, criterion, optimizer, opt, writer):
     
     for i, (adj_matrix, target) in enumerate(dataloader, 0):
+
         net.zero_grad()
 
         # padding = torch.zeros(len(annotation), opt.n_node, opt.state_dim - opt.annotation_dim).double()
@@ -23,11 +24,16 @@ def train(epoch, dataloader, net, criterion, optimizer, opt, writer):
         # annotation = Variable(annotation)
         target = Variable(target)
         output = net(init_input, adj_matrix)
-
+        # print(output.shape)
+        # print(target.shape)
+        # print(output)
+        # print(target)
         loss = criterion(output, target)
         loss.backward()
         optimizer.step()
 
+        # print(loss)
+        # print(epoch)
         writer.add_scalar('loss', loss.data.item(), int(epoch))
         if i % int(len(dataloader) / 10 + 1) == 0 and opt.verbal:
             print('[%d/%d][%d/%d] Loss: %.4f' % (epoch, opt.niter, i, len(dataloader), loss.item()))

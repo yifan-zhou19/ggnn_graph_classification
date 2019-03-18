@@ -41,9 +41,9 @@ def load_graphs_from_file(file_name):
 def load_program_graphs_from_directory(directory,is_train=True,n_classes=3, data_percentage=1.0):
     data_list = []
     if is_train == True:
-            dir_path =  os.path.join(directory,"train")
+        dir_path =  os.path.join(directory,"train")
     else:
-            dir_path =  os.path.join(directory,"test")
+        dir_path =  os.path.join(directory,"test")
     filenames = []
     for f in listdir(dir_path):
       if isfile(join(dir_path, f)):
@@ -64,10 +64,11 @@ def load_program_graphs_from_directory(directory,is_train=True,n_classes=3, data
         edge_list_class_i = []
         target_list_class_i = []
 
+        print("--------------------------")
         with open(path,'r') as f:
             for line in f: 
                 if len(line.strip()) == 0:
-
+                    print(edge_list_class_i)
                     data_list_class_i.append([edge_list_class_i,target_list_class_i])
                     edge_list_class_i = []
                     target_list_class_i = []
@@ -79,8 +80,16 @@ def load_program_graphs_from_directory(directory,is_train=True,n_classes=3, data
 
                         target_list_class_i.append([label])
                     else:
+
                         for j in range(len(line_tokens)):
-                            digits.append(int(line_tokens[j]))
+                            if "," in line_tokens[j]:
+                                splits = line_tokens[j].split(",")
+                                node_id = splits[0]
+                                node_type = splits[1]
+                                digits.append(int(node_id))
+                            else:
+                                digits.append(int(line_tokens[j]))
+
                         edge_list_class_i.append(digits)
 
         if data_percentage < 1.0:
@@ -88,6 +97,7 @@ def load_program_graphs_from_directory(directory,is_train=True,n_classes=3, data
             slicing = int(len(data_list_class_i)*data_percentage)
             print("Remaining data : " + str(slicing) + "......")
             data_list_class_i = data_list_class_i[:slicing]
+
 
         data_list.extend(data_list_class_i)
 
@@ -223,7 +233,8 @@ class MonoLanguageProgramData():
         # print("Edge types : " + str(self.n_edge_types))
         max_node = find_max_node_id(all_data)
         print("Max node id : " + str(max_node))
-        self.n_node = size_vocabulary
+        # self.n_node = size_vocabulary
+        self.n_node = max_node
         
         all_data = convert_program_data(all_data,1, self.n_node)
 

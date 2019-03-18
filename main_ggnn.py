@@ -17,17 +17,17 @@ import sys
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=2)
-parser.add_argument('--train_batch_size', type=int, default=32, help='input batch size')
-parser.add_argument('--test_batch_size', type=int, default=32, help='input batch size')
-parser.add_argument('--state_dim', type=int, default=5, help='GGNN hidden state size')
+parser.add_argument('--train_batch_size', type=int, default=5, help='input batch size')
+parser.add_argument('--test_batch_size', type=int, default=5, help='input batch size')
+parser.add_argument('--state_dim', type=int, default=15, help='GGNN hidden state size')
 parser.add_argument('--n_steps', type=int, default=10, help='propogation steps number of GGNN')
 parser.add_argument('--niter', type=int, default=150, help='number of epochs to train for')
 parser.add_argument('--lr', type=float, default=0.01, help='learning rate')
 parser.add_argument('--cuda', action='store_true', help='enables cuda')
 parser.add_argument('--verbal', type=bool, default=True, help='print training info or not')
 parser.add_argument('--manualSeed', type=int, help='manual seed')
-parser.add_argument('--n_classes', type=int, default=104, help='manual seed')
-parser.add_argument('--directory', default="program_data/cpp_babi_format_Sep-29-2018-0000006", help='program data')
+parser.add_argument('--n_classes', type=int, default=10, help='manual seed')
+parser.add_argument('--directory', default="program_data/github_java_sort_function_babi", help='program data')
 parser.add_argument('--model_path', default="model/model.ckpt", help='path to save the model')
 parser.add_argument('--n_hidden', type=int, default=50, help='number of hidden layers')
 parser.add_argument('--size_vocabulary', type=int, default=59, help='maximum number of node types')
@@ -35,20 +35,21 @@ parser.add_argument('--is_training_ggnn', type=bool, default=True, help='Trainin
 parser.add_argument('--training', action="store_true",help='is training')
 parser.add_argument('--testing', action="store_true",help='is testing')
 parser.add_argument('--training_percentage', type=float, default=1.0 ,help='percentage of data use for training')
-parser.add_argument('--log_path', default="" ,help='log path for tensorboard')
+parser.add_argument('--log_path', default="logs/" ,help='log path for tensorboard')
 parser.add_argument('--epoch', type=int, default=0, help='epoch to test')
 
 opt = parser.parse_args()
 print(opt)
 if opt.training and opt.log_path != "":
-  previous_runs = os.listdir(opt.log_path)
-  if len(previous_runs) == 0:
-    run_number = 1
-  else:
-    run_number = max([int(s.split("run-")[1]) for s in previous_runs]) + 1
-  writer = SummaryWriter("%s/run-%03d" % (opt.log_path, run_number))
+    # previous_runs = os.listdir(opt.log_path)
+    # if len(previous_runs) == 0:
+    #     run_number = 1
+    # else:
+        # run_number = max([int(s.split("run-")[1]) for s in previous_runs]) + 1
+    # writer = SummaryWriter("%s/run-%03d" % (opt.log_path, run_number))
+    writer = SummaryWriter(opt.log_path)
 else:
-  writer = None
+    writer = None
 
 if opt.manualSeed is None:
     opt.manualSeed = random.randint(1, 10000)
