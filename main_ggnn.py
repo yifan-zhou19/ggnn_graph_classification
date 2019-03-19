@@ -98,24 +98,24 @@ def main(opt):
         filename = opt.model_path
         epoch = -1
     if os.path.exists(filename):
-        # if opt.testing:
-        #    print("Using No. {} saved model....".format(opt.epoch))
-        # dirname = os.path.dirname(filename)
-        # basename = os.path.basename(filename)
-        # epochs = os.listdir(dirname)
-        # if len(epochs) > 0:
-        #    for s in epochs:
-        #       if s.startswith(basename) and basename != s:
-        #          x = s.split(os.extsep)
-        #          e = x[len(x) - 1]
-        #          epoch = max(epoch, int(e))
-        #    if epoch != -1:
-        #       print("Using No. {} of the saved models...".format(epoch))
-        #       filename = "{}.{}".format(opt.model_path, epoch)
-        # if epoch != -1:
-        #    print("Using No. {} saved model....".format(epoch))
-        # else:
-        #    print("Using saved model....")
+        if opt.testing:
+           print("Using No. {} saved model....".format(opt.epoch))
+        dirname = os.path.dirname(filename)
+        basename = os.path.basename(filename)
+        epochs = os.listdir(dirname)
+        if len(epochs) > 0:
+           for s in epochs:
+              if s.startswith(basename) and basename != s:
+                 x = s.split(os.extsep)
+                 e = x[len(x) - 1]
+                 epoch = max(epoch, int(e))
+           if epoch != -1:
+              print("Using No. {} of the saved models...".format(epoch))
+              filename = "{}.{}".format(opt.model_path, epoch)
+        if epoch != -1:
+           print("Using No. {} saved model....".format(epoch))
+        else:
+           print("Using saved model....")
         net = torch.load(filename)
     else:
         net = GGNN(opt)
