@@ -225,7 +225,7 @@ def create_adjacency_matrix(edges, n_nodes, n_edge_types):
 
 def create_embedding_matrix(node_id_edges, node_type_edges, n_nodes, pretrained_embeddings):
     a = np.zeros([n_nodes, 30])
-    print(a.shape)
+    # print(a.shape)
     for i in range(len(node_id_edges)):
         node_type = node_type_edges[i][0]
         # print(node_type)
