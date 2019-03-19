@@ -146,8 +146,8 @@ class GGNN(nn.Module):
         )
 
         self.class_prediction = nn.Sequential(
-            nn.Linear(opt.n_node, opt.n_hidden),
-            nn.Tanh(),
+            nn.Linear(opt.state_dim, opt.n_hidden),
+            nn.LeakyReLU(),
             nn.Linear(opt.n_hidden, opt.n_classes),
             nn.Softmax(dim=1)    
         )
@@ -184,17 +184,19 @@ class GGNN(nn.Module):
             prop_state = self.propogator(in_states, out_states, prop_state, A)
        
         # print("Prop state : " + str(prop_state.shape))
-        output = self.out(prop_state)
-
+        # output = self.out(prop_state)
         # print("Out : " + str(output.shape))
 
         soft_attention_ouput = self.soft_attention(prop_state)
+        # print("Soft : " + str(soft_attention_ouput.shape))
         # Element wise hadamard product to get the graph representation, check Equation 7 in GGNN paper for more details
-        output = torch.mul(output,soft_attention_ouput)
-        output = output.sum(2)
-
+        output = torch.mul(prop_state,soft_attention_ouput)
+        # print("Out : " + str(output.shape))
+        output = output.sum(1)
+        # print(output.shape)
         if self.is_training_ggnn == True:
             output = self.class_prediction(output)
+        # print(output.shape)
 
         return output
 

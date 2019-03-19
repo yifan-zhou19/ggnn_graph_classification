@@ -6,9 +6,9 @@ from shutil import copyfile
 def train(epoch, dataloader, net, criterion, optimizer, opt, writer):
     
     for i, (adj_matrix, embedding_matrix, target) in enumerate(dataloader, 0):
-
+        # print("----------------")
         net.zero_grad()
-
+        # print(embedding_matrix)
         # padding = torch.zeros(len(annotation), opt.n_node, opt.state_dim - opt.annotation_dim).double()
         # init_input = torch.cat((annotation, padding), 2)
         # init_input = torch.zeros(len(adj_matrix), opt.n_node, opt.state_dim).double()
