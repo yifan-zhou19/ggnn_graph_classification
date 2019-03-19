@@ -227,9 +227,9 @@ def create_embedding_matrix(node_id_edges, node_type_edges, n_nodes, pretrained_
     a = np.zeros([n_nodes, 30])
    
     for i in range(len(node_id_edges)):
-        src_idx = node_type_edges[i][0]
-
-        a[src_idx] = pretrained_embeddings[int(src_idx)]
+        node_type = node_type_edges[i][0]
+        src_idx = node_id_edges[i][0]
+        a[src_idx] = pretrained_embeddings[int(node_type)]
     return a
 
 class MonoLanguageProgramData():
