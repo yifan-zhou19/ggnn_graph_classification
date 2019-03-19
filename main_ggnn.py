@@ -5,6 +5,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+import pickle
+
 from utils.model import GGNN
 from utils.model import ClassPrediction
 from utils.train_ggnn import train
@@ -19,7 +21,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=2)
 parser.add_argument('--train_batch_size', type=int, default=5, help='input batch size')
 parser.add_argument('--test_batch_size', type=int, default=5, help='input batch size')
-parser.add_argument('--state_dim', type=int, default=15, help='GGNN hidden state size')
+parser.add_argument('--state_dim', type=int, default=30, help='GGNN hidden state size')
 parser.add_argument('--n_steps', type=int, default=10, help='propogation steps number of GGNN')
 parser.add_argument('--niter', type=int, default=150, help='number of epochs to train for')
 parser.add_argument('--lr', type=float, default=0.01, help='learning rate')
@@ -37,17 +39,19 @@ parser.add_argument('--testing', action="store_true",help='is testing')
 parser.add_argument('--training_percentage', type=float, default=1.0 ,help='percentage of data use for training')
 parser.add_argument('--log_path', default="logs/" ,help='log path for tensorboard')
 parser.add_argument('--epoch', type=int, default=0, help='epoch to test')
+parser.add_argument('--pretrained_embeddings', default="embedding/fast_pretrained_vectors.pkl", help='pretrained embeddings url, there are 2 objects in this file, the first object is the embedding matrix, the other is the lookup dictionary')
+
 
 opt = parser.parse_args()
 print(opt)
 if opt.training and opt.log_path != "":
-    # previous_runs = os.listdir(opt.log_path)
-    # if len(previous_runs) == 0:
-    #     run_number = 1
-    # else:
-        # run_number = max([int(s.split("run-")[1]) for s in previous_runs]) + 1
-    # writer = SummaryWriter("%s/run-%03d" % (opt.log_path, run_number))
-    writer = SummaryWriter(opt.log_path)
+    previous_runs = os.listdir(opt.log_path)
+    if len(previous_runs) == 0:
+        run_number = 1
+    else:
+        run_number = max([int(s.split("run-")[1]) for s in previous_runs]) + 1
+    writer = SummaryWriter("%s/run-%03d" % (opt.log_path, run_number))
+    # writer = SummaryWriter(opt.log_path)
 else:
     writer = None
 
@@ -62,12 +66,21 @@ if opt.cuda:
 
 # This part is the implementation to illustrate Graph-Level output from program data
 def main(opt):
+    with open(opt.pretrained_embeddings, 'rb') as fh:
+        embeddings, embed_lookup = pickle.load(fh,encoding='latin1')
+        # print(len(embeddings))
+        # print(embed_lookup.keys())
+
+        opt.embeddings = embeddings
+        opt.embed_lookup = embed_lookup
+
+
     if opt.training:
-       train_dataset = MonoLanguageProgramData(opt.size_vocabulary, opt.directory, True, opt.n_classes, opt.training_percentage)
+       train_dataset = MonoLanguageProgramData(opt.size_vocabulary, opt.embeddings, opt.directory, True, opt.n_classes, opt.training_percentage)
        train_dataloader = bAbIDataloader(train_dataset, batch_size=opt.train_batch_size, \
                                       shuffle=True, num_workers=2)
 
-    test_dataset = MonoLanguageProgramData(opt.size_vocabulary, opt.directory, False, opt.n_classes)
+    test_dataset = MonoLanguageProgramData(opt.size_vocabulary, opt.embeddings, opt.directory, False, opt.n_classes)
     test_dataloader = bAbIDataloader(test_dataset, batch_size=opt.test_batch_size, \
                                      shuffle=True, num_workers=2)
 
@@ -116,6 +129,7 @@ def main(opt):
 
     optimizer = optim.Adam(net.parameters(), lr=opt.lr)
 
+    # embedding_matrix = train_dataset.embedding_matrix
     if opt.training:
         for epoch in range(epoch+1, epoch + opt.niter):
             train(epoch, train_dataloader, net, criterion, optimizer, opt, writer)

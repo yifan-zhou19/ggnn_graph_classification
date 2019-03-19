@@ -38,8 +38,17 @@ def load_graphs_from_file(file_name):
     # print(data_list)
     return data_list
 
-def load_program_graphs_from_directory(directory,is_train=True,n_classes=3, data_percentage=1.0):
-    data_list = []
+
+def lookup_vector(node_type, embeddings):
+    # look_up_vector = embed_loopkup[node_type]
+
+    nodes.append(embeddings[int(n)])
+
+
+def load_program_graphs_from_directory(directory, is_train=True,n_classes=3, data_percentage=1.0):
+
+    node_id_data_list = []
+    node_type_data_list = []
     if is_train == True:
         dir_path =  os.path.join(directory,"train")
     else:
@@ -60,20 +69,25 @@ def load_program_graphs_from_directory(directory,is_train=True,n_classes=3, data
         path = lookup[i]
         print(path)
         label = i
-        data_list_class_i = []
-        edge_list_class_i = []
+        node_id_data_list_class_i = []
+        node_type_data_list_class_i = []
+        node_id_edge_list_class_i = []
+        node_type_edge_list_class_i = []
         target_list_class_i = []
 
         print("--------------------------")
         with open(path,'r') as f:
             for line in f: 
                 if len(line.strip()) == 0:
-                    print(edge_list_class_i)
-                    data_list_class_i.append([edge_list_class_i,target_list_class_i])
-                    edge_list_class_i = []
+                    # print(edge_list_class_i)
+                    node_id_data_list_class_i.append([node_id_edge_list_class_i,target_list_class_i])
+                    node_type_data_list_class_i.append([node_type_edge_list_class_i,target_list_class_i])
+                    node_id_edge_list_class_i = []
+                    node_type_edge_list_class_i = []
                     target_list_class_i = []
                 else:
-                    digits = []
+                    node_id_digits = []
+                    node_type_digits = []
                     line_tokens = line.split(" ")
                     
                     if line_tokens[0] == "?":
@@ -86,22 +100,27 @@ def load_program_graphs_from_directory(directory,is_train=True,n_classes=3, data
                                 splits = line_tokens[j].split(",")
                                 node_id = splits[0]
                                 node_type = splits[1]
-                                digits.append(int(node_id))
+                                node_id_digits.append(int(node_id))
+                                node_type_digits.append(int(node_type))
                             else:
-                                digits.append(int(line_tokens[j]))
+                                node_id_digits.append(int(line_tokens[j]))
+                                node_type_digits.append(int(line_tokens[j]))
 
-                        edge_list_class_i.append(digits)
+                        node_id_edge_list_class_i.append(node_id_digits)
+                        node_type_edge_list_class_i.append(node_type_digits)
 
-        if data_percentage < 1.0:
-            print("Cutting down " + str(data_percentage) + " of all data......")
-            slicing = int(len(data_list_class_i)*data_percentage)
-            print("Remaining data : " + str(slicing) + "......")
-            data_list_class_i = data_list_class_i[:slicing]
+        # if data_percentage < 1.0:
+        #     print("Cutting down " + str(data_percentage) + " of all data......")
+        #     slicing = int(len(node_id_data_list_class_i)*data_percentage)
+        #     print("Remaining data : " + str(slicing) + "......")
+        #     node_id_data_list_class_i = node_id_data_list_class_i[:slicing]
 
 
-        data_list.extend(data_list_class_i)
+        node_id_data_list.extend(node_id_data_list_class_i)
+        node_type_data_list.extend(node_type_data_list_class_i)
 
-    return data_list
+    # print(node_embeddings)
+    return node_id_data_list, node_type_data_list
 
 def find_max_edge_id(data_list):
     max_edge_id = 0
@@ -204,9 +223,18 @@ def create_adjacency_matrix(edges, n_nodes, n_edge_types):
            a[src_idx-1][(e_type - 1 + n_edge_types) * n_nodes + tgt_idx - 1] =  1
     return a
 
+def create_embedding_matrix(node_id_edges, node_type_edges, n_nodes, pretrained_embeddings):
+    a = np.zeros([n_nodes, 30])
+   
+    for i in range(len(node_id_edges)):
+        src_idx = node_type_edges[i][0]
+
+        a[src_idx] = pretrained_embeddings[int(src_idx)]
+    return a
+
 class MonoLanguageProgramData():
    
-    def __init__(self, size_vocabulary, path, is_train, n_classes=3,data_percentage=1.0):
+    def __init__(self, size_vocabulary, embeddings, path, is_train, n_classes=3,data_percentage=1.0):
         base_name = os.path.basename(path)
         if is_train:
            saved_input_filename = "%s/%s-%d-train.pkl" % (path, base_name, n_classes)
@@ -215,37 +243,51 @@ class MonoLanguageProgramData():
         if os.path.exists(saved_input_filename): 
            input_file = open(saved_input_filename, 'rb')
            buf = input_file.read()
-           all_data = pyarrow.deserialize(buf)
+           all_data_node_id, all_data_node_type = pyarrow.deserialize(buf)
            input_file.close()
         else:
-           all_data = load_program_graphs_from_directory(path,is_train,n_classes,data_percentage)
-           all_data = np.array(all_data)[0:len(all_data)]
-           buf = pyarrow.serialize(all_data).to_buffer()
+           all_data_node_id, all_data_node_type = load_program_graphs_from_directory(path, is_train,n_classes,data_percentage)
+           all_data_node_id = np.array(all_data_node_id)[0:len(all_data_node_id)]
+           all_data_node_type = np.array(all_data_node_type)[0:len(all_data_node_type)]
+           buf = pyarrow.serialize((all_data_node_id, all_data_node_type)).to_buffer()
            out = pyarrow.OSFile(saved_input_filename, 'wb')
            out.write(buf)
            out.close()
-       
-        if is_train == True:
-            print("Number of all training data : " + str(len(all_data)))
-        else:
-            print("Number of all testing data : " + str(len(all_data)))
-        self.n_edge_types =  find_max_edge_id(all_data)
-        # print("Edge types : " + str(self.n_edge_types))
-        max_node = find_max_node_id(all_data)
-        print("Max node id : " + str(max_node))
-        # self.n_node = size_vocabulary
-        self.n_node = max_node
         
-        all_data = convert_program_data(all_data,1, self.n_node)
+        self.pretrained_embeddings = embeddings
+        # print(all_data_node_id)
+        if is_train == True:
+            print("Number of all training data : " + str(len(all_data_node_id)))
+        else:
+            print("Number of all testing data : " + str(len(all_data_node_id)))
+        self.n_edge_types =  find_max_edge_id(all_data_node_id)
+        # print("Edge types : " + str(self.n_edge_types))
+        max_node_id = find_max_node_id(all_data_node_id)
+        max_node_type = find_max_node_id(all_data_node_type)
+        print("Max node id : " + str(max_node_id))
+        print("Max node type : " + str(max_node_type))
+        # self.n_node = size_vocabulary
+        self.n_node_by_id = max_node_id
+        self.n_node = max_node_id # set n_node = n_node_by_id
+        self.n_node_by_type = max_node_type
+        
+        all_data_node_id = convert_program_data(all_data_node_id,1, self.n_node_by_id)
+        all_data_node_type = convert_program_data(all_data_node_type,1, self.n_node_by_type)
 
-        self.data = all_data
-     
+        self.all_data_node_id = all_data_node_id
+        self.all_data_node_type = all_data_node_type
+        
+        self.data = all_data_node_id
+        # self.embedding_matrix = create_embedding_matrix(self.data, self.n_node,  self.pretrained_embeddings)
+
     def __getitem__(self, index):
         
         am = create_adjacency_matrix(self.data[index][0], self.n_node, self.n_edge_types)
+        embedding_matrix = create_embedding_matrix(self.all_data_node_id[index][0], self.all_data_node_type[index][0], self.n_node,  self.pretrained_embeddings)
+        # embedding = embeddings[int(node_type)]
         # annotation = self.data[index][1]
         target = self.data[index][2] - 1
-        return am, target
+        return am, embedding_matrix, target
 
     def __len__(self):
         return len(self.data)
